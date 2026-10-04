@@ -1,0 +1,449 @@
+
+/* ================= Phase A: integrations, join requests, compare+, spend, credits, enterprise, alerts ================= */
+const credOf = b => (b && b.credits && Number.isFinite(+b.credits.balance)) ? +b.credits.balance : ((b && b.balance_cents) || 0);
+const crTxt = c => fmt(Math.round(c||0));
+const usdTxt = c => '≈ '+money(c||0);
+const shortCr = c => { const a=Math.abs(c); return a>=1e6?(c/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M':a>=1e4?Math.round(c/1e3)+'k':fmt(c); };
+
+/* ---------- conversions: event labels incl. sale / qualified / rejected ---------- */
+Object.assign(EVL, {sale:['Sale','--sky-ink'], qualified:['Qualified','--lime-ink'], rejected:['Rejected','--coral']});
+
+/* ---------- integrations ---------- */
+const INTG_COL=['#5b3df5','#0e9e73','#e08a2b','#3d5ad6','#c2463f','#8a3fd1','#0b8dbf'];
+function intLogo(it, big){
+  const ini=esc((String(it.name||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase());
+  const c=INTG_COL[hashN(it.id||it.name)%INTG_COL.length];
+  return `<span class="ilogo${big?' lg':''}" style="--ic:${c}">${it.logo?`<img src="${esc(it.logo)}" alt="" onerror="this.remove()">`:''}<b>${ini}</b></span>`;
+}
+const pbKey = () => { const m=/\/pb\/([^/?#]+)/.exec(S.pb||''); return m?m[1]:''; };
+const intUrl = it => String(it.postback_template||'').replace('<key>', pbKey()||'<key>');
+async function loadIntegrations(force){
+  if (S.integ && !force) return S.integ;
+  try { S.integ = await api('GET','/api/integrations'); } catch(e){ S.integ = {items:[], error:e.message}; }
+  return S.integ;
+}
+function intCard(it){
+  const cust=it.id==='custom';
+  return `<article class="card icard ${it.connected?'on':''}">
+    <div class="ic-top">${intLogo(it)}<div class="ic-n"><b>${esc(it.name)}</b><small>${esc(it.category||'Other')}</small></div>${it.connected?'<span class="chip g"><i class="d"></i>Connected</span>':''}</div>
+    <div class="ic-chips">${cust?'<span class="chip v">Any network, CRM or bot</span>':it.verified?`<span class="chip g">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} Verified macros</span>`:'<span class="chip y">Check macros with your manager</span>'}</div>
+    <div class="ic-ev">${(it.events||[]).map(e=>`<span class="evp">${esc((EVL[e]||[e])[0])}</span>`).join('')}</div>
+    <div class="ic-foot"><small class="faint">${it.connected?(it.events_30d!=null?`${fmt(it.events_30d)} events · 30 days`:'Connected')+(it.last_event_at?` · last ${ago(it.last_event_at)}`:''):'Not connected yet'}</small><button class="btn sm ${it.connected?'':'primary'}" data-act="int-open" data-id="${esc(it.id)}">${it.connected?'Open':'Connect'}</button></div></article>`;
+}
+async function drawIntegrations(){
+  const el=$('#cvbody'); if(!el) return;
+  el.innerHTML=`<div class="int-grid">${'<div class="card" style="height:190px"><div class="sk" style="height:100%"></div></div>'.repeat(6)}</div>`;
+  const d=await loadIntegrations(); if (S.page!=='conversions'||S.cvTab!=='integrations') return;
+  const items=d.items||[];
+  if (!items.length){ el.innerHTML=`<section class="card"><div class="empty"><span class="ei">${I.link}</span><h3>Integrations are on their way</h3><p>${esc(d.error||'Use your postback URL with any network or tracker for now.')}</p><button class="btn sm" data-act="cv-tab" data-v="postback">Open postback URL</button></div></section>`; return; }
+  const cats=['All',...[...new Set(items.map(i=>i.category||'Other'))]]; S.icat=cats.includes(S.icat)?S.icat:'All';
+  const shown=items.filter(i=>S.icat==='All'||(i.category||'Other')===S.icat).sort((a,b)=>(a.id==='custom')-(b.id==='custom')||(b.connected-a.connected));
+  el.innerHTML=`<div class="int-head"><div><h2>Affiliate programs &amp; trackers</h2><p class="muted">Pick where your deposits come from. Each one gets a ready postback URL with your key and the right macros.</p></div>
+      <div class="pills">${cats.map(c=>`<button class="pill-btn" data-act="int-cat" data-v="${esc(c)}" aria-pressed="${S.icat===c}">${esc(c)}</button>`).join('')}</div></div>
+    <div class="int-grid">${shown.map(intCard).join('')}</div>
+    <div class="note" style="margin-top:4px"><b>Not on the list?</b> Use <b>Custom postback</b>. It works with any program, tracker, CRM or your own bot.</div>`;
+}
+function openIntegration(id){
+  const it=((S.integ&&S.integ.items)||[]).find(x=>x.id===id); if(!it) return;
+  const url=intUrl(it);
+  sheet(`${intLogo(it,1)}<h2>${esc(it.name)}<small>${esc(it.category||'')}${it.connected?' · Connected':''}</small></h2>`, `
+    ${it.verified?`<div class="okbar">${I.checkc}<span>Macro names checked against ${esc(it.name)}’s public docs.</span></div>`:it.id==='custom'?'':`<div class="note warn"><b>Check the macro names with your affiliate manager.</b> Programs sometimes rename them. The rest of the link stays the same.</div>`}
+    <div class="field"><span class="lbl">Your postback URL</span><div class="codeblock">${hlUrl(url)}</div><div class="row-in" style="justify-content:flex-end"><button class="btn sm primary" data-act="copy" data-v="${esc(url)}">${I.copy} Copy URL</button></div>${it.macros_note?`<span class="hint">${esc(it.macros_note)}</span>`:''}</div>
+    ${(it.setup_steps||[]).length?`<div class="field"><span class="lbl">Setup</span><ol class="howto">${it.setup_steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${esc(s)}</span></li>`).join('')}</ol></div>`:''}
+    <div class="box"><h4>Status</h4><div class="kv"><span>Events it sends</span><span>${(it.events||[]).map(e=>esc((EVL[e]||[e])[0])).join(', ')||'—'}</span></div><div class="kv"><span>Last event</span><span>${it.last_event_at?esc(when(it.last_event_at)):'None yet'}</span></div>${it.events_30d!=null?`<div class="kv"><span>Last 30 days</span><span>${fmt(it.events_30d)} events</span></div>`:''}</div>
+    ${it.docs_url?`<a class="link" href="${esc(it.docs_url)}" target="_blank" rel="noopener">${esc(it.name)} postback docs ${I.ext}</a>`:''}
+    <div id="interr"></div>${it.connected?`<button class="btn lg wide" data-act="close">Done</button>`:`<button class="btn primary lg wide" data-act="int-connect" data-id="${esc(it.id)}">${I.check} I’ve added it, mark as connected</button>`}`);
+}
+async function connectIntegration(btn){
+  btn.disabled=true; try { await api('POST','/api/integrations/'+encodeURIComponent(btn.dataset.id)+'/connect',{}); toast('Connected. New events will show the network name.'); closeSheet(); await loadIntegrations(true); drawIntegrations(); }
+  catch(e){ $('#interr').innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; }
+}
+
+/* ---------- join-request mode ---------- */
+const jrOn = c => c && c.join_mode==='request';
+function jrPreview(c, botName){
+  const t=(c&&c.offer_text)||'Welcome 👋 Tap below to get your offer.', b=(c&&c.offer_btn)||'Open offer', u=String((c&&c.offer_url)||'').replace(/\{tg_id\}/g,'6123448812').replace(/\{click_id\}/g,'c_8F3k2');
+  let host=''; try{ host=u?new URL(u).host+new URL(u).pathname+new URL(u).search:''; }catch{ host=u; }
+  return `<div class="tgp" aria-label="Preview of the Telegram message"><div class="tgp-h"><span class="tgp-av">${I.bot}</span><span><b>${esc(botName||'Your bot')}</b><small>bot</small></span></div>
+    <div class="tgp-b"><div class="tgp-msg">${esc(t)}<span class="tgp-t">${clock(Date.now())}</span></div><div class="tgp-btn">${esc(b)} ${I.ext}</div>${host?`<small class="tgp-u">Opens ${esc(host)}</small>`:''}</div></div>`;
+}
+function jrFields(c){
+  return `<div class="field"><label for="jro">Welcome message</label><textarea class="inp" id="jro" rows="4" maxlength="1000" placeholder="Welcome 👋 Tap below to get today’s offer.">${esc(c.offer_text||'')}</textarea></div>
+    <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:150px"><label for="jrb">Button text</label><input class="inp" id="jrb" maxlength="60" value="${esc(c.offer_btn||'')}" placeholder="Get the offer"></div>
+      <div class="field" style="flex:2;min-width:200px"><label for="jru">Offer link</label><input class="inp" id="jru" inputmode="url" value="${esc(c.offer_url||'')}" placeholder="https://partner.com/offer?sub1={tg_id}"></div></div>
+    <span class="hint">Put <button type="button" class="kbd" data-act="jr-ins" data-v="{tg_id}">{tg_id}</button> where your program expects the sub ID (often <b>sub1</b>). Joinvoo swaps in each person’s Telegram ID, so their deposit comes back matched. <button type="button" class="kbd" data-act="jr-ins" data-v="{click_id}">{click_id}</button> works too.</span>`;
+}
+const jrWhy = `<div class="jr-why"><span class="jr-i">${I.target}</span><div><b>So every deposit can be matched to the exact person and ad.</b><span>People tap “Request to join”, the bot lets them in instantly and sends this message. Your offer link carries their Telegram ID, so the program reports deposits for that exact person.</span></div></div>`;
+function bindJrPreview(c, bot){
+  const upd=()=>{ const pv=$('#jrpv'); if(pv) pv.innerHTML=jrPreview({offer_text:$('#jro').value,offer_btn:$('#jrb').value,offer_url:$('#jru').value}, bot); };
+  ['#jro','#jrb','#jru'].forEach(s=>{ const e=$(s); e&&e.addEventListener('input',upd); });
+}
+const jrBody = () => ({join_mode:'request', offer_text:$('#jro').value.trim(), offer_btn:$('#jrb').value.trim(), offer_url:$('#jru').value.trim()});
+function jrValid(b){ if(!b.offer_text) return 'Write a short welcome message.'; if(b.offer_url && !/^https?:\/\//.test(b.offer_url)) return 'The offer link must start with https://'; if(b.offer_url && !/\{tg_id\}|\{click_id\}/.test(b.offer_url)) return 'Add {tg_id} to the offer link so deposits can be matched.'; return ''; }
+function openJr(id){
+  const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot='@'+((c.bots&&c.bots[0])||'your_bot');
+  sheet(`<h2>Request-to-join<small>${esc(c.title)}</small></h2>`, `${jrWhy}
+    <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields(c)}
+      <div class="field"><span class="lbl">Preview</span><div id="jrpv">${jrPreview(c,bot)}</div></div>
+      <div id="jrerr"></div><button class="btn primary lg wide" type="submit">${jrOn(c)?'Save':'Turn on request-to-join'}</button></form>`);
+  bindJrPreview(c,bot);
+  $('#jrf').addEventListener('submit', async e=>{ e.preventDefault(); const b=jrBody(), v=jrValid(b); if(v){ $('#jrerr').innerHTML=`<div class="err">${esc(v)}</div>`; return; }
+    try { await api('PATCH','/api/channels/'+c.id,b); closeSheet(); toast('Request-to-join is on. New joiners get your welcome message.'); await refreshChans(); drawChannels(); }
+    catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+async function jrToggle(btn){
+  const c=S.chans.channels.find(x=>String(x.id)===String(btn.dataset.id)); if(!c) return;
+  if (!jrOn(c)){ if(!c.offer_text) return openJr(c.id); }
+  btn.disabled=true;
+  try { await api('PATCH','/api/channels/'+c.id,{join_mode:jrOn(c)?'link':'request'}); await refreshChans(); drawChannels(); toast(jrOn(c)?'Back to direct invite links':'Request-to-join is on'); }
+  catch(e){ toast(e.message,false); btn.disabled=false; }
+}
+function jrCardSection(c){
+  if (!FEAT('join_requests') || c.type==='bot') return '';
+  const on=jrOn(c);
+  return `<div class="chan-sec jr-sec ${on?'on':''}"><div class="prow2"><span class="jr-t"><b>Request-to-join + welcome message</b><small>Recommended for FTD tracking</small></span><button class="switch" data-act="jr-toggle" data-id="${c.id}" role="switch" aria-checked="${on}" aria-label="Request-to-join mode"></button></div>
+    ${on?`<div class="jr-sum"><span class="tgp-mini">${esc((c.offer_text||'').slice(0,90))}${(c.offer_text||'').length>90?'…':''}</span><button class="link" data-act="jr-edit" data-id="${c.id}">Edit message ${I.arrow}</button></div>`:`<span class="hint">So every deposit can be matched to the exact person and ad.</span>`}</div>`;
+}
+function jrStepHtml(){
+  const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
+  return `<div class="step"><div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>
+    <span class="step-ico">${I.coin}</span><h1>Track deposits too?</h1><p class="lede">Turn on request-to-join with a welcome message. It’s the easiest way to see who deposits, not just who joins.</p>
+    ${jrWhy}
+    <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields({...c,offer_text:c.offer_text||'Welcome 👋 Thanks for joining! Tap below to get today’s offer.',offer_btn:c.offer_btn||'Get the offer'})}
+      <div class="field"><span class="lbl">Preview</span><div id="jrpv"></div></div>
+      <div id="jrerr"></div><button class="btn primary lg wide" type="submit">Turn on and continue ${I.arrow}</button></form>
+    <button class="btn ghost" data-act="jr-skip">Not now, keep direct invite links</button></div>`;
+}
+function bindJrStep(){
+  const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
+  bindJrPreview(c,bot); const e=new Event('input'); $('#jro').dispatchEvent(e);
+  $('#jrf').addEventListener('submit', async ev=>{ ev.preventDefault(); const b=jrBody(), v=jrValid(b); if(v){ $('#jrerr').innerHTML=`<div class="err">${esc(v)}</div>`; return; }
+    try { await api('PATCH','/api/channels/'+c.id,b); await refreshChans(); W.channel=S.chans.channels.find(x=>x.id===c.id)||c; W.jrSeen=true; toast('Request-to-join is on'); drawStep(); }
+    catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+
+/* ---------- compare: days / weeks / months / custom A vs B, funnel compare, cohorts ---------- */
+const CMODES=[['months','Months'],['weeks','Weeks'],['days','Days'],['custom','Custom A vs B']];
+const cmodeSeg = () => `<div class="seg cmode" role="group" aria-label="Compare by">${CMODES.map(([k,l])=>`<button data-act="cmp-mode" data-v="${k}" aria-pressed="${(S.cmpMode||'months')===k}">${l}</button>`).join('')}</div>`;
+const PMET={joins:['Joins',fmt,compact],ftd:['First deposits',fmt,compact],revenue_cents:['Revenue',money0,moneyC],spend_cents:['Spend',money0,moneyC,false],cost_per_join_cents:['Cost per join',v=>money(v||0),v=>moneyC(v),false],cost_per_ftd_cents:['Cost per FTD',v=>money(v||0),v=>moneyC(v),false],roas:['ROAS',v=>(+v||0).toFixed(2)+'×',v=>(+v||0).toFixed(1)+'×'],ftd_rate:['FTD rate',v=>(+v||0).toFixed(1)+'%',v=>(+v||0).toFixed(0)+'%'],clicks:['Clicks',fmt,compact],reg:['Sign-ups',fmt,compact],sales:['Sales',fmt,compact]};
+const PRESETS6=[['today','Today vs yesterday'],['week','This week vs last week'],['month','This month vs last month']];
+function presetRanges(k){ const t=new Date(); t.setHours(0,0,0,0); if (k==='today') return [[ymd(t),ymd(t)],[ymd(addDays(t,-1)),ymd(addDays(t,-1))]];
+  if (k==='week'){ const ws=addDays(t,-((t.getDay()+6)%7)), n=Math.round((t-ws)/864e5); return [[ymd(ws),ymd(t)],[ymd(addDays(ws,-7)),ymd(addDays(ws,-7+n))]]; }
+  const m0=new Date(t.getFullYear(),t.getMonth(),1), p0=new Date(t.getFullYear(),t.getMonth()-1,1), n=t.getDate()-1, p1=new Date(Math.min(addDays(p0,n),new Date(t.getFullYear(),t.getMonth(),0)));
+  return [[ymd(m0),ymd(t)],[ymd(p0),ymd(p1)]]; }
+const cmpPresets = () => `<div class="pills cpre" role="group" aria-label="${tt('cmp.quick','Quick compare')}">${PRESETS6.map(([k,l])=>`<button class="pill-btn" data-act="cmp-preset" data-v="${k}" aria-pressed="${S.cmpMode==='custom'&&S.cPreset===k}">${tt('cmp.p.'+k,l)}</button>`).join('')}</div>`;
+function cmpRanges(){
+  const t=new Date(), mode=S.cmpMode;
+  if (mode==='days'){ const a0=addDays(t,-13); return {a:[ymd(a0),ymd(t)], b:[ymd(addDays(a0,-14)),ymd(addDays(a0,-1))], g:'day', la:'Last 14 days', lb:'14 days before'}; }
+  if (mode==='weeks'){ const ws=new Date(t); ws.setHours(0,0,0,0); ws.setDate(ws.getDate()-((ws.getDay()+6)%7)); const a0=addDays(ws,-49); return {a:[ymd(a0),ymd(t)], b:[ymd(addDays(a0,-56)),ymd(addDays(a0,-1))], g:'week', la:'Last 8 weeks', lb:'8 weeks before'}; }
+  if (mode==='custom'){ const A=S.cA||[ymd(addDays(t,-6)),ymd(t)], B=S.cB||[ymd(addDays(t,-13)),ymd(addDays(t,-7))], span=Math.round((parseYmd(A[1])-parseYmd(A[0]))/864e5)+1; const f=([x,y])=>parseYmd(x).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+parseYmd(y).toLocaleDateString('en-US',{month:'short',day:'numeric'}); const pl=S.cPreset&&{today:['Today','Yesterday'],week:['This week','Last week'],month:['This month so far','Same days last month']}[S.cPreset]; return {a:A,b:B,g:span>62?'week':'day',la:pl?tt('cmp.pl.a.'+S.cPreset,pl[0]):'A · '+f(A),lb:pl?tt('cmp.pl.b.'+S.cPreset,pl[1]):'B · '+f(B)}; }
+  const m0=new Date(t.getFullYear(),t.getMonth(),1), p0=new Date(t.getFullYear(),t.getMonth()-1,1), p1=new Date(t.getFullYear(),t.getMonth(),0);
+  return {a:[ymd(m0),ymd(t)], b:[ymd(p0),ymd(p1)], g:'day', la:'This month', lb:'Last month'};
+}
+const dchip = (a,b,up=true) => { if(!b) return a?'<span class="delta up">New</span>':'<span class="delta flat">—</span>'; const d=(a-b)/b*100; if(Math.abs(d)<.5) return '<span class="delta flat">0%</span>'; const g=(d>0)===up; return `<span class="delta ${g?'up':'dn'}">${d>0?I.up:I.dn}${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(1)}%</span>`; };
+async function viewCompare(){
+  S.cmpMode=S.cmpMode||store.get('cmpMode','months');
+  if (S.cmpMode==='months'){ await viewCompareMonths(); if (S.page!=='compare') return; const ph=$('#view .ph'); if(ph){ const act=ph.querySelector('.ph-act'); act&&act.insertAdjacentHTML('afterbegin',cmodeSeg()); ph.insertAdjacentHTML('afterend',cmpPresets()+'<section class="card cmp-ins" id="cmpins"></section>'); loadCmpInsights(); } appendCmpExtras(); return; }
+  S.redraw=[]; const R=cmpRanges(), cust=S.cmpMode==='custom';
+  $('#view').innerHTML=`<div class="view">
+    <div class="ph"><div><div class="eyebrow">${I.compare.replace('<svg','<svg style="width:15px;height:15px"')} Compare periods</div><h1>${cust?'A vs B':S.cmpMode==='weeks'?'Week by week':'Day by day'}</h1><p>${esc(R.la)} against ${esc(R.lb.toLowerCase())}. Bars are now, the line is before.</p></div><div class="ph-act">${cmodeSeg()}</div></div>
+    ${cmpPresets()}<section class="card cmp-ins" id="cmpins"></section>
+    ${cust?`<section class="card ab-pick"><div class="abr"><span class="abt a">A</span><input class="inp" type="date" id="caf" value="${R.a[0]}" aria-label="A from"><span>to</span><input class="inp" type="date" id="cat" value="${R.a[1]}" aria-label="A to"></div><div class="abr"><span class="abt b">B</span><input class="inp" type="date" id="cbf" value="${R.b[0]}" aria-label="B from"><span>to</span><input class="inp" type="date" id="cbt" value="${R.b[1]}" aria-label="B to"></div><button class="btn primary" data-act="cmp-ab">Compare</button></section>`:''}
+    <section class="card cmp-hero" id="pdhero"><div class="cmp-hl"><span class="sk" style="display:block;height:38px;width:70%"></span></div><div class="cmp-nums">${'<div class="cmp-n"><span class="sk" style="height:24px;width:70%"></span></div>'.repeat(4)}</div></section>
+    <section class="card"><div class="cmp-ctl"><div class="seg" role="group" aria-label="Metric">${Object.entries(PMET).map(([k,m])=>`<button data-act="pmet" data-v="${k}" aria-pressed="${(S.pmet||'joins')===k}">${m[0]}</button>`).join('')}</div><div class="legend"><span><i style="background:var(--brand)"></i>${esc(R.la)}</span><span><i class="ln" style="background:var(--ink);opacity:.55"></i>${esc(R.lb)}</span></div></div>
+      <div class="cchart" id="pchart"><div class="sk" style="height:260px;margin:10px"></div></div></section>
+    <div id="cmpx"></div></div>`;
+  let r; try { r=await api('GET',`/api/compare/periods?a_from=${R.a[0]}&a_to=${R.a[1]}&b_from=${R.b[0]}&b_to=${R.b[1]}&group=${R.g}&${tzq()}${chq()}`); }
+  catch(e){ $('#pchart').innerHTML=`<div class="empty"><span class="ei">${I.compare}</span><h3>Period compare isn’t available yet</h3><p>${esc(e.message)}</p><button class="btn sm" data-act="cmp-mode" data-v="months">Compare months instead</button></div>`; $('#pdhero').hidden=true; appendCmpExtras(); return; }
+  if (S.page!=='compare') return; S.pd={...r,R}; drawPeriods(true); appendCmpExtras(); loadCmpInsights();
+}
+async function loadCmpInsights(){
+  const el=$('#cmpins'); if(!el) return; const R=cmpRanges();
+  el.innerHTML=`<div class="ci-joe">${joeFace(44,{animate:false})}</div><div class="ci-b"><span class="sk" style="display:block;height:16px;width:80%"></span><span class="sk" style="display:block;height:16px;width:55%;margin-top:8px"></span></div>`;
+  let r; try { r=await api('GET',`/api/compare/insights?a_from=${R.a[0]}&a_to=${R.a[1]}&b_from=${R.b[0]}&b_to=${R.b[1]}&${tzq()}${chq()}`); } catch { el.remove(); return; }
+  if (!$('#cmpins')) return; const s=r.sentences||[]; if(!s.length){ el.remove(); return; }
+  const H={ftd:'FTDs',joins:'Joins',revenue_cents:'Revenue',cost_per_ftd_cents:'Cost/FTD',roas:'ROAS',spend_cents:'Spend',clicks:'Clicks'};
+  el.innerHTML=`<div class="ci-joe">${joeFace(44,{mood:(r.highlights||[]).filter(h=>h.good===false).length>1?'warn':'good'})}</div><div class="ci-b"><span class="ci-eb">${tt('cmp.joe','Joe’s read')} · ${esc(R.la)} ${tt('cmp.vs','vs')} ${esc(R.lb)}</span><p class="ci-h">${esc(s[0])}</p>${s.length>1?`<p class="ci-s">${s.slice(1).map(esc).join(' ')}</p>`:''}
+    <div class="ci-hl">${(r.highlights||[]).filter(h=>h.delta_pct!=null).map(h=>`<span class="ci-c ${h.good?'g':'r'}">${esc(tt('cmp.m.'+h.metric,H[h.metric]||h.metric))} ${h.delta_pct>=0?'+':''}${(+h.delta_pct).toFixed(Math.abs(h.delta_pct)<10?1:0)}%</span>`).join('')}</div></div>`;
+}
+function drawPeriods(anim){
+  const P=S.pd; if(!P) return; const R=P.R, A=(P.a&&P.a.totals)||{}, B=(P.b&&P.b.totals)||{}, k=S.pmet||'joins', M=PMET[k]||PMET.joins;
+  const d=B[k]?(A[k]-B[k])/B[k]*100:NaN, up=d>0, good=up===(M[3]!==false);
+  const h2=!A[k]&&!B[k]?`No ${M[0].toLowerCase()} yet`:!isFinite(d)?`${M[1](A[k])} <span class="serif">${M[0].toLowerCase()}</span>`:Math.abs(d)<.5?`${M[0]} <span class="serif">level</span>`:`${M[0]} <span class="serif ${good?'':'dn'}">${up?'up':'down'} ${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0)}%</span>`;
+  const hero=$('#pdhero'); if (hero){ hero.hidden=false;
+    hero.innerHTML=`<div class="cmp-hl"><span class="eb">${esc(R.la)} vs ${esc(R.lb)}</span><h2>${h2}</h2><p>${M[1](A[k]||0)} now against ${M[1](B[k]||0)} before.${A.spend_cents?` Spend ${money0(A.spend_cents)}, cost per first deposit ${A.ftd?money(A.spend_cents/A.ftd):'—'}.`:''}</p></div>
+      <div class="cmp-nums">${[['clicks','Clicks',fmt],['joins','Joins',fmt],['ftd','First deposits',fmt],['revenue_cents','Revenue',money0]].map(([x,l,f])=>`<div class="cmp-n"><small>${l}</small><b>${f(A[x]||0)}</b><span>${f(B[x]||0)} before ${dchip(A[x]||0,B[x]||0)}</span></div>`).join('')}</div>`; }
+  const el=$('#pchart'); if(!el) return; const sa=(P.a&&P.a.series)||[], sb=(P.b&&P.b.series)||[];
+  const draw=a=>drawOverlay(el, sa, sb, k, M, R, a); draw(anim); S.redraw=[()=>draw(false)];
+}
+function drawOverlay(el, sa, sb, k, M, R, anim){
+  const n=Math.max(sa.length,sb.length,1), W=Math.max(280,el.clientWidth-14), mob=W<560, L=mob?36:48, Rr=10, T=22, H1=mob?190:250, B=30, H=T+H1+B, iw=W-L-Rr, slot=iw/n;
+  const va=i=>(sa[i]&&sa[i][k])||0, vb=i=>(sb[i]&&sb[i][k])||0, max=niceMax(Math.max(4,...Array.from({length:n},(_,i)=>Math.max(va(i),vb(i))))*1.05), y=v=>T+H1-v/max*H1, x=i=>L+slot*i+slot/2;
+  const bw=Math.max(4,Math.min(mob?22:34,slot*.56)), cb=css('--brand'), c2=css('--brand-2'), ink=css('--ink');
+  let g=`<defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${cb}"/></linearGradient></defs>`;
+  for(let i=0;i<=4;i++){ const v=max*i/4; g+=`<line class="gl" x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${M[2](v)}</text>`; }
+  const lab=i=>{ const key=(sa[i]||sb[i]||{}).key||''; if(/^\d{4}-\d{2}$/.test(key)) return mName(key,{month:'short'}); if(/^\d{4}-\d{2}-\d{2}$/.test(key)) return parseYmd(key).toLocaleDateString('en-US',{month:'short',day:'numeric'}); return key; };
+  const step=Math.max(1,Math.ceil(n/(mob?5:9)));
+  for(let i=0;i<n;i++){ const h=Math.max(va(i)?3:0,T+H1-y(va(i)));
+    g+=`<rect class="slot" data-i="${i}" x="${L+slot*i}" y="${T-14}" width="${slot}" height="${H1+14}"/><g data-g="${i}"><rect class="bar" x="${x(i)-bw/2}" y="${T+H1-h}" width="${bw}" height="${h}" rx="${Math.min(7,bw/3)}" fill="url(#pbg)" ${anim&&!reduced?`style="animation-delay:${Math.min(i*30,600)}ms"`:'style="animation:none"'}/></g>`;
+    if (i%step===0||i===n-1) g+=`<text class="ml" x="${x(i)}" y="${T+H1+18}" text-anchor="middle">${esc(lab(i))}</text>`; }
+  if (sb.length){ const pts=Array.from({length:sb.length},(_,i)=>[x(i),y(vb(i))]); g+=`<path d="${smooth(pts)}" fill="none" stroke="${ink}" stroke-opacity=".55" stroke-width="2" stroke-dasharray="5 4" ${anim&&!reduced?'style="animation:fade .8s .3s both"':''}/>`; pts.forEach(([px,py])=>g+=`<circle cx="${px}" cy="${py}" r="3" fill="${css('--surface')}" stroke="${ink}" stroke-opacity=".6" stroke-width="1.6"/>`); }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(M[0])}: now vs before">${g}</svg>`;
+  const svg=el.querySelector('svg'); let tip=null;
+  const show=i=>{ svg.querySelectorAll('g[data-g]').forEach(z=>z.style.opacity=z.dataset.g==i?1:.45); if(!tip){ tip=document.createElement('div'); tip.className='tip'; el.appendChild(tip); }
+    const ka=(sa[i]||{}).key, kb=(sb[i]||{}).key;
+    tip.innerHTML=`<div class="th">${esc(M[0])}</div><div class="tr"><span><i style="background:${cb}"></i>${esc(ka||'—')}</span><b>${M[1](va(i))}</b></div><div class="tr"><span><i style="background:${ink};opacity:.55"></i>${esc(kb||'—')}</span><b>${M[1](vb(i))}</b></div><div class="tf">${vb(i)?`${va(i)>=vb(i)?'▲':'▼'} ${Math.abs((va(i)-vb(i))/vb(i)*100).toFixed(1)}% vs before`:'Nothing before to compare'}</div>`;
+    const sc=el.clientWidth/W, tw=tip.offsetWidth; let lx=x(i)*sc-tw/2; lx=Math.max(4,Math.min(el.clientWidth-tw-4,lx)); tip.style.left=lx+'px'; tip.style.top=Math.max(0,y(Math.max(va(i),vb(i)))*sc-tip.offsetHeight-4)+'px'; };
+  const hide=()=>{ tip&&tip.remove(); tip=null; svg.querySelectorAll('g[data-g]').forEach(z=>z.style.opacity=1); };
+  svg.querySelectorAll('.slot').forEach(s=>{ s.addEventListener('pointerenter',()=>show(+s.dataset.i)); s.addEventListener('pointerdown',()=>show(+s.dataset.i)); }); svg.addEventListener('pointerleave',hide);
+}
+/* funnel compare + cohorts (shown under every compare mode) */
+const FSTEPS=[['clicks','Clicks'],['joins','Joins'],['reg','Sign-ups'],['ftd','First deposits'],['dep','Repeat deposits']];
+const FDIMS=[['campaign','Campaigns'],['platform','Platforms'],['channel','Channels'],['country','Countries'],['source','Sources']];
+function appendCmpExtras(){
+  const v=$('#view .view'); if(!v || $('#fcmp')) return;
+  v.insertAdjacentHTML('beforeend', `<section class="card" id="ccmp"><div class="card-h"><h2>${tt('cmp.camp','Campaign vs campaign')}</h2><div class="seg" role="group">${[['joins','Joins'],['ftd','FTDs'],['spend_cents','Spend']].map(([k,l])=>`<button data-act="ccm" data-v="${k}" aria-pressed="${(S.ccm||'joins')===k}">${tt('cmp.m.'+k,l)}</button>`).join('')}</div></div><div id="ccpick" class="ccpick"></div><div class="cchart" id="ccchart"><div class="sk" style="height:220px;margin:10px"></div></div></section><section class="card" id="fcmp"><div class="card-h"><h2>Funnel compare</h2><div class="seg" role="group" aria-label="Funnel compare by"><button data-act="fmode" data-v="period" aria-pressed="${(S.fmode||'period')==='period'}">Two periods</button><button data-act="fmode" data-v="seg" aria-pressed="${S.fmode==='seg'}">Two segments</button></div></div><div id="fctl"></div><div id="fbody"><div class="sk" style="height:220px;margin:12px 18px 18px"></div></div></section>
+    <section class="card" id="cohorts"><div class="card-h"><h2>Deposit cohorts</h2><span class="sub">People who joined each week, and how many deposited within 1, 7 and 30 days</span></div><div id="cobody"><div class="sk" style="height:220px;margin:12px 18px 18px"></div></div></section>`);
+  loadFunnel(); loadCohorts(); loadCampLines();
+}
+const CCOL=['#5b3df5','#12b886','#e08a2b'];
+async function loadCampLines(){
+  const pk=$('#ccpick'), el=$('#ccchart'); if(!pk||!el) return; const R=cmpRanges();
+  if (!S.ccKeys){ try { const br=await api('GET',`/api/breakdown?dim=campaign&from=${R.a[0]}&to=${R.a[1]}&${tzq()}${chq()}`); S.ccKeys=(br.rows||[]).filter(r=>!/^\(no /.test(r.key)).slice(0,8).map(r=>r.key); } catch { S.ccKeys=[]; } }
+  if (!S.ccSel||!S.ccSel.length) S.ccSel=S.ccKeys.slice(0,2);
+  pk.innerHTML=S.ccKeys.length?`<span class="hint">${tt('cmp.pick','Pick up to 3')}</span>${S.ccKeys.map(k=>{ const i=S.ccSel.indexOf(k); return `<button class="ccb ${i>=0?'on':''}" data-act="ccpick" data-v="${esc(k)}" style="--cc:${i>=0?CCOL[i]:'var(--line-2)'}">${esc(k)}</button>`; }).join('')}`:`<p class="hint">${tt('cmp.nocamp','Tag your links with utm_campaign to compare campaigns.')}</p>`;
+  if (!S.ccSel.length){ el.innerHTML=''; return; }
+  let r; try { r=await api('GET',`/api/compare/campaigns?names=${encodeURIComponent(S.ccSel.join(','))}&from=${R.a[0]}&to=${R.a[1]}&group=${R.g}&${tzq()}${chq()}`); } catch(e){ el.innerHTML=`<div class="empty" style="padding:20px"><p>${esc(e.message)}</p></div>`; return; }
+  if (!$('#ccchart')) return; S.ccData=r.series||{}; const draw=()=>drawCampLines($('#ccchart')); draw(); S.redraw=[...(S.redraw||[]),draw];
+}
+function drawCampLines(el){
+  if(!el) return; const k=S.ccm||'joins', names=S.ccSel.filter(n=>S.ccData&&S.ccData[n]), sers=names.map(n=>S.ccData[n]); if(!sers.length){ el.innerHTML=''; return; }
+  const n=Math.max(...sers.map(s=>s.length)), W=Math.max(280,el.clientWidth-14), mob=W<560, L=mob?38:48, Rr=10, Tt=16, H1=mob?170:220, B=26, H=Tt+H1+B, iw=W-L-Rr, x=i=>L+(n>1?iw*i/(n-1):iw/2);
+  const f=k==='spend_cents'?moneyC:compact, max=niceMax(Math.max(4,...sers.flatMap(s=>s.map(p=>p[k]||0)))), y=v=>Tt+H1-v/max*H1; let g='';
+  for(let i=0;i<=4;i++){ const v=max*i/4; g+=`<line class="gl" x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${f(v)}</text>`; }
+  const keys=sers[0].map(p=>p.key), step=Math.max(1,Math.ceil(n/(mob?4:8))); keys.forEach((kk,i)=>{ if(i%step===0||i===n-1) g+=`<text class="ml" x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(/^\d{4}-\d{2}-\d{2}$/.test(kk)?parseYmd(kk).toLocaleDateString('en-US',{month:'short',day:'numeric'}):kk)}</text>`; });
+  sers.forEach((s,j)=>{ const pts=s.map((p,i)=>[x(i),y(p[k]||0)]); g+=`<path d="${smooth(pts)}" fill="none" stroke="${CCOL[j]}" stroke-width="2.6" stroke-linecap="round"/>`; const lp=pts[pts.length-1]; if(lp) g+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="4" fill="${CCOL[j]}" stroke="${css('--surface')}" stroke-width="2"/>`; });
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(tt('cmp.camp','Campaign vs campaign'))}">${g}</svg><div class="legend" style="padding:4px 6px 0 ${L}px">${names.map((nm,j)=>`<span><i style="background:${CCOL[j]}"></i>${esc(nm)} · <b>${f(S.ccData[nm].reduce((a,p)=>a+(p[k]||0),0))}</b></span>`).join('')}</div>`;
+}
+async function loadFunnel(){
+  const el=$('#fbody'), ctl=$('#fctl'); if(!el) return; const R=cmpRanges();
+  try {
+    if ((S.fmode||'period')==='period'){ ctl.innerHTML='';
+      const [a,b]=await Promise.all([api('GET',`/api/funnel?from=${R.a[0]}&to=${R.a[1]}&dim=none&${tzq()}${chq()}`), api('GET',`/api/funnel?from=${R.b[0]}&to=${R.b[1]}&dim=none&${tzq()}${chq()}`)]);
+      drawFunnelCmp({label:R.la,counts:a.a.counts},{label:R.lb,counts:b.a.counts}); }
+    else { S.fdim=S.fdim||'campaign'; const q=`from=${R.a[0]}&to=${R.a[1]}&${tzq()}${chq()}`;
+      const br=await api('GET',`/api/breakdown?dim=${S.fdim}&${q}`); const keys=(br.rows||[]).map(r=>r.key).slice(0,40);
+      if (!keys.includes(S.fa)) S.fa=keys[0]; if (!keys.includes(S.fb)||S.fb===S.fa) S.fb=keys.find(k=>k!==S.fa);
+      ctl.innerHTML=`<div class="fsel"><select class="sel" id="fdim" aria-label="Compare">${FDIMS.map(([k,l])=>`<option value="${k}" ${S.fdim===k?'selected':''}>${l}</option>`).join('')}</select><select class="sel a" id="fa" aria-label="A">${keys.map(k=>`<option ${k===S.fa?'selected':''}>${esc(k)}</option>`).join('')}</select><span class="faint">vs</span><select class="sel b" id="fb" aria-label="B">${keys.map(k=>`<option ${k===S.fb?'selected':''}>${esc(k)}</option>`).join('')}</select></div>`;
+      if (!S.fa||!S.fb){ el.innerHTML=`<div class="empty" style="padding:24px"><p>Need at least two ${esc(FDIMS.find(x=>x[0]===S.fdim)[1].toLowerCase())} with clicks in ${esc(R.la.toLowerCase())}.</p></div>`; return; }
+      const f=await api('GET',`/api/funnel?dim=${S.fdim}&a=${encodeURIComponent(S.fa)}&b=${encodeURIComponent(S.fb)}&${q}`);
+      drawFunnelCmp(f.a, f.b||{label:S.fb,counts:{}}); }
+  } catch(e){ el.innerHTML=`<div class="empty" style="padding:24px"><p>${esc(e.message)}</p></div>`; }
+}
+function drawFunnelCmp(A,B){
+  const el=$('#fbody'); if(!el) return; const ca=A.counts||{}, cb=B.counts||{}, ta=Math.max(1,ca.clicks||0), tb=Math.max(1,cb.clicks||0);
+  const conv=(c,i)=>i&&c[FSTEPS[i-1][0]]?(c[FSTEPS[i][0]]||0)/c[FSTEPS[i-1][0]]*100:null;
+  el.innerHTML=`<div class="fc"><div class="fc-head"><span></span><span class="fa"><i></i>${esc(A.label)}</span><span class="fb"><i></i>${esc(B.label)}</span><span class="fd">A vs B</span></div>
+    ${FSTEPS.map(([k,l],i)=>{ const a=ca[k]||0, b=cb[k]||0, pa=conv(ca,i), pb=conv(cb,i);
+      return `<div class="fc-row"><span class="fl"><b>${l}</b>${i?`<small>${pa!=null?pa.toFixed(1)+'%':'—'} / ${pb!=null?pb.toFixed(1)+'%':'—'} from ${FSTEPS[i-1][1].toLowerCase()}</small>`:'<small>Start of the funnel</small>'}</span>
+        <span class="fv a"><span class="fbar"><i style="width:${Math.max(a?2:0,a/ta*100)}%"></i></span><b>${fmt(a)}</b>${i&&pa!=null?`<small class="drop">−${(100-pa).toFixed(0)}% drop</small>`:''}</span>
+        <span class="fv b"><span class="fbar"><i style="width:${Math.max(b?2:0,b/tb*100)}%"></i></span><b>${fmt(b)}</b>${i&&pb!=null?`<small class="drop">−${(100-pb).toFixed(0)}% drop</small>`:''}</span>
+        <span class="fd">${i?(pa!=null&&pb!=null&&pb?dchip(pa,pb):'<span class="delta flat">—</span>'):dchip(a,b)}</span></div>`; }).join('')}
+    <p class="hint" style="padding:6px 0 0">Bars are each side’s share of its own clicks. The A vs B chip compares conversion from the step before${''}.</p></div>`;
+}
+async function loadCohorts(){
+  const el=$('#cobody'); if(!el) return;
+  let r; try { r=await api('GET',`/api/cohorts?weeks=8&${tzq()}${chq()}`); } catch(e){ el.innerHTML=`<div class="empty" style="padding:24px"><p>${esc(e.message)}</p></div>`; return; }
+  const rows=r.rows||[]; if(!rows.length){ el.innerHTML='<div class="empty" style="padding:24px"><p>Cohorts appear once people start joining.</p></div>'; return; }
+  const mx=Math.max(.0001,...rows.map(x=>Math.max(x.rate_d7||0,x.rate_d30||0)));
+  const cell=(v,rate)=>v==null?'<td class="hc na" data-l="">Too early</td>':`<td class="hc" style="--h:${(rate||0)/mx}"><b>${fmt(v)}</b>${rate!=null?`<small>${(rate*100).toFixed(1)}%</small>`:''}</td>`;
+  const wk=x=>x.start?parseYmd(x.start).toLocaleDateString('en-US',{month:'short',day:'numeric'}):x.cohort;
+  el.innerHTML=`<div class="tbl-wrap"><table class="t rt coh"><thead><tr><th>Joined week of</th><th>Joins</th><th>FTD in 1 day</th><th>FTD in 7 days</th><th>FTD in 30 days</th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td class="k">${esc(wk(x))}<small class="faint" style="margin-left:6px;font-weight:500">${esc(x.cohort||'')}</small></td><td data-l="Joins">${fmt(x.joins)}</td>${cell(x.ftd_d1,x.joins?x.ftd_d1/x.joins:null).replace('data-l=""','data-l="1 day"').replace('<td class="hc"','<td class="hc" data-l="1 day"')}${cell(x.ftd_d7,x.rate_d7).replace('<td class="hc"','<td class="hc" data-l="7 days"')}${cell(x.ftd_d30,x.rate_d30).replace('<td class="hc"','<td class="hc" data-l="30 days"')}</tr>`).join('')}</tbody></table></div>
+    <p class="hint" style="padding:8px 20px 16px">Darker means more of that week’s joiners deposited. Recent weeks fill in as days pass.</p>`;
+}
+
+/* ---------- ad spend ---------- */
+function spendCols(){ return FEAT('spend') && (S.dim==='campaign'||S.dim==='platform'); }
+const roasTxt = v => v==null?'—':v.toFixed(2)+'×';
+async function openSpend(){
+  const today=ymd(new Date()), camps=(S.brows||[]).map(r=>r.key).filter(k=>!/^\(no /.test(k)).slice(0,60);
+  sheet(`<h2>Ad spend<small>Add what you spent to see cost per join, cost per FTD and ROAS</small></h2>`, `
+    <div class="seg" role="group" aria-label="How"><button data-act="sp-tab" data-v="one" aria-pressed="${(S.spTab||'one')==='one'}">Add one</button><button data-act="sp-tab" data-v="csv" aria-pressed="${S.spTab==='csv'}">Paste CSV</button></div>
+    <form id="spf" ${S.spTab==='csv'?'hidden':''} style="display:flex;flex-direction:column;gap:14px">
+      <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:140px"><label for="spd">Date</label><input class="inp" type="date" id="spd" value="${today}" max="${today}"></div>
+        <div class="field" style="flex:1;min-width:140px"><label for="spp">Platform</label><select class="sel" id="spp">${PLATS().map(p=>`<option value="${p}">${PLAT[p].name}</option>`).join('')}<option value="other">Other</option></select></div></div>
+      <div class="field"><label for="spc">Campaign</label><input class="inp" id="spc" list="spcl" placeholder="Same name as your utm_campaign"><datalist id="spcl">${camps.map(c=>`<option value="${esc(c)}">`).join('')}</datalist><span class="hint">Use the exact campaign name from your link so it lines up. Leave empty for all campaigns.</span></div>
+      <div class="field"><label for="spa">Amount (USD)</label><input class="inp num" id="spa" inputmode="decimal" placeholder="120.50"></div>
+      <div id="sperr"></div><button class="btn primary lg wide" type="submit">${I.plus} Add spend</button></form>
+    <form id="spcsv" ${S.spTab==='csv'?'':'hidden'} style="display:flex;flex-direction:column;gap:12px">
+      <div class="field"><label for="spt">Paste rows</label><textarea class="inp mono" id="spt" rows="7" placeholder="date,platform,campaign,amount&#10;${today},meta,Spring_Sale_Broad,120.50&#10;${today},tiktok,TT_Spark_Creators,64"></textarea><span class="hint">One row per line: date, platform (meta, tiktok, snap or other), campaign, amount. Export from Ads Manager and keep these four columns.</span></div>
+      <div id="spcerr"></div><button class="btn primary lg wide" type="submit">Import rows</button></form>
+    <div class="field"><span class="lbl">Recent spend</span><div id="splist" class="box"><div class="sk" style="height:80px;margin:10px 0"></div></div></div>`);
+  $('#spf').addEventListener('submit', async e=>{ e.preventDefault();
+    try { await api('POST','/api/spend',{date:$('#spd').value,platform:$('#spp').value,campaign:$('#spc').value.trim(),amount:$('#spa').value.trim(),currency:'USD'}); toast('Spend added'); $('#spa').value=''; drawSpendList(); spendChanged(); }
+    catch(err){ $('#sperr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+  $('#spcsv').addEventListener('submit', async e=>{ e.preventDefault(); const txt=$('#spt').value;
+    try { let r; if (DEMO) r=await api('POST','/api/spend/import',txt); else { const x=await fetch('/api/spend/import',{method:'POST',credentials:'same-origin',headers:{'content-type':'text/csv'},body:txt}); r=await x.json().catch(()=>({})); if(!x.ok||r.error) throw new Error(r.error||'Import failed'); }
+      toast(`Imported ${fmt(r.imported||0)} rows${r.skipped?`, skipped ${r.skipped}`:''}`); $('#spt').value=''; drawSpendList(); spendChanged(); }
+    catch(err){ $('#spcerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+  drawSpendList();
+}
+async function drawSpendList(){
+  const el=$('#splist'); if(!el) return; const [f,t]=range();
+  let r; try { r=await api('GET',`/api/spend?from=${ymd(addDays(new Date(),-60))}&to=${t}`); } catch(e){ el.innerHTML=`<p class="hint" style="padding:12px 0">${esc(e.message)}</p>`; return; }
+  const rows=(r.rows||[]).slice(0,12);
+  el.innerHTML=rows.length?rows.map(x=>`<div class="kv"><span>${esc(parseYmd(x.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}))} · ${x.platform&&PLAT[x.platform]?PLAT[x.platform].name:'Other'} · ${esc(x.campaign||'')}</span><span style="display:inline-flex;align-items:center;gap:8px">${money(x.amount_cents)}${x.source==='sample'?'<small class="faint">sample</small>':`<button class="btn sm ghost" data-act="sp-del" data-id="${esc(x.id)}" aria-label="Delete">${I.x}</button>`}</span></div>`).join(''):'<p class="hint" style="padding:12px 0">Nothing yet. Add your first day of spend above.</p>';
+}
+function spendChanged(){ if (S.page==='campaigns') loadBreakdown(); if (S.page==='overview') loadOverview(false); }
+
+/* ---------- credits (wallet) ---------- */
+const RANK_COL={Bronze:['#C9844E','#8A4F22'],Silver:['#B8BFCC','#6C7383'],Gold:['#F2C14E','#A0700B'],Platinum:['#8FD3E0','#2C7C8C'],Diamond:['#A99BFF','#5B3DF5']};
+function rankBadge(name, size=44){ const [a,b]=RANK_COL[name]||['#C8C3E6','#5B3DF5']; const id='rb'+hashN(name+size);
+  return `<svg class="rbadge" width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><path d="M24 3l17 7v12c0 11-7.3 19.6-17 23C14.3 41.6 7 33 7 22V10z" fill="url(#${id})"/><path d="M24 7.5l13 5.4V22c0 8.6-5.4 15.5-13 18.6C16.4 37.5 11 30.6 11 22v-9.1z" fill="#fff" fill-opacity=".18"/><path d="M24 14l2.9 6 6.6.8-4.9 4.5 1.3 6.5L24 28.6l-5.9 3.2 1.3-6.5-4.9-4.5 6.6-.8z" fill="#fff"/></svg>`; }
+function creditsArt(rank){
+  const m=/<svg class="person"[\s\S]*?<\/svg>/.exec(STAGE_HTML), person=m?m[0]:'';
+  const coins=Array.from({length:9},(_,i)=>`<span class="coin2" style="--x:${[8,22,70,84,40,58,14,90,32][i]}%;--d:${(i*0.7).toFixed(1)}s;--s:${[1,.8,1.1,.7,.9,1,.75,.85,.95][i]}">c</span>`).join('');
+  return `<div class="cr-art" id="crart" aria-hidden="true"><div class="cr-glow" data-depth="6"></div>
+    <div class="cr-layer" data-depth="10">${coins}</div>
+    <div class="cr-badges" data-depth="18">${['Bronze','Silver','Gold','Platinum','Diamond'].map((r,i)=>`<span class="cr-b ${r===rank?'cur':''}" style="--i:${i}">${rankBadge(r,r===rank?46:30)}</span>`).join('')}</div>
+    <div class="cr-person" data-depth="4">${person}</div></div>`;
+}
+function parallax(){
+  const art=$('#crart'); if(!art||reduced||matchMedia('(pointer:coarse)').matches) return;
+  const host=art.closest('.cr-hero'); host.addEventListener('pointermove',e=>{ const r=host.getBoundingClientRect(), dx=(e.clientX-r.left)/r.width-.5, dy=(e.clientY-r.top)/r.height-.5;
+    art.querySelectorAll('[data-depth]').forEach(l=>{ const d=+l.dataset.depth; l.style.transform=`translate(${(-dx*d).toFixed(1)}px,${(-dy*d).toFixed(1)}px)`; }); });
+  host.addEventListener('pointerleave',()=>art.querySelectorAll('[data-depth]').forEach(l=>l.style.transform=''));
+}
+function countCr(el,to){ if(!el) return; if(reduced){ el.textContent=crTxt(to); return; } const t0=performance.now(); const f=n=>{ const p=Math.min(1,(n-t0)/1200), e=1-Math.pow(1-p,3); el.textContent=crTxt(to*e); if(p<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+const bonusFor = (cents, b, promoPct=0) => { let p=0; if (FEAT('credits_bonus')) for (const t of ((b&&b.bonus_tiers)||[])) if (cents>=t.min_cents) p=Math.max(p,t.bonus_pct); p+=promoPct||0; return {pct:p, credits:Math.round(cents*p/100)}; };
+function creditsPricing(b){ const P=PRICE(), M=(b&&b.month)||{}, cp=(b&&b.custom_pricing)||{}, base=cp.base_cents??M.base_cents??P.base_cents, inc=cp.included??M.included??P.included, pj=cp.per_join_cents??M.per_join_cents??P.per_join_cents, fj=(b&&b.free_joins_gift)||P.free_joins;
+  return `${fj?`Your first ${fmt(fj)} tracked joins are free. `:''}The plan is ${crTxt(base)} credits a month with ${fmt(inc)} tracked joins, then ${pj} credits per extra join. Organic joins and deposit events are free.${cp.note?' '+esc(cp.note):''}`; }
+const enterpriseCard = () => FEAT('enterprise')?`<section class="card ent"><span class="ent-i">${I.bolt}</span><div><b>Big volume? Talk to us.</b><span>Custom pricing, a dedicated manager and a private line for teams sending 100k+ clicks a month.</span></div><button class="btn dark" data-act="sales">Talk to sales ${I.arrow}</button></section>`:'';
+async function viewWallet(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view"><div id="bv"><div class="sk" style="height:300px;border-radius:30px"></div></div></div>`;
+  let b; try { [b]=await Promise.all([api('GET','/api/billing'), (S.methods=null, loadMethods(true)), loadCountries()]); } catch { return; } S.bill=b;
+  if (!S.me.country && !S.geo){ try{ S.geo=await api('GET','/api/geo'); }catch{ S.geo={country:null}; } }
+  if (S.page!=='wallet') return;
+  const M=b.month||{}, P=PRICE(), cr=credOf(b), C=b.credits||{balance:cr,bought:b.deposited_cents||0,bonus:b.credit_cents||0,used:b.used_cents||0}, rk=FEAT('ranks')&&b.rank?b.rank:null, ranks=b.ranks||[];
+  const perJoin=(b.custom_pricing&&b.custom_pricing.per_join_cents)??M.per_join_cents??P.per_join_cents, over=Math.max(0,(M.joins||0)-(M.included||P.included)), avail=S.methods||[];
+  const hIcon=k=>({deposit:[I.plus,'var(--mint-soft)','var(--mint-ink)'],bonus:[I.sparkles,'var(--cream)','var(--cream-ink)'],welcome:[I.sparkles,'var(--brand-soft)','var(--brand-text)'],refcredit:[I.earn,'var(--brand-soft)','var(--brand-text)'],plan:[I.cal,'var(--sunk)','var(--muted)'],joins:[I.join,'var(--sunk)','var(--muted)'],adjust:[I.bolt,'var(--amber-soft)','var(--amber-ink)']})[k]||[I.coin,'var(--sunk)','var(--muted)'];
+  const tiers=[10000,50000,100000,500000], promo=FEAT('credits_bonus')&&b.promo&&(!b.promo.ends_at||b.promo.ends_at>Date.now())?b.promo:null;
+  const ri=rk?Math.max(0,ranks.findIndex(r=>r.name===rk.name)):0, nxt=rk&&rk.next, cur=ranks[ri]||{min_cents:0}, nmin=nxt?(ranks[ri+1]||{}).min_cents||(rk.lifetime_cents+nxt.need_cents):0;
+  const prog=nxt?Math.min(100,Math.max(3,((rk.lifetime_cents||0)-(cur.min_cents||0))/Math.max(1,nmin-(cur.min_cents||0))*100)):100;
+  $('#bv').outerHTML = `<div id="paystate" hidden></div>${countryPrompt('wallet')}
+    <section class="cr-hero"><div class="cr-copy">
+        <div class="cr-top"><span class="cr-eb">${I.coin} Joinvoo Credits</span>${rk?`<span class="tierpill">${rankBadge(rk.name,18)} ${esc(rk.name)}</span>`:''}</div>
+        <div class="cr-big"><span id="crn">${crTxt(cr)}</span><small>credits</small></div>
+        <div class="cr-usd">${usdTxt(cr)} · 1 credit = $0.01</div>
+        <div class="w-split"><div><small>Bought</small><b>${crTxt(C.bought)}</b></div><div><small>Bonus</small><b>+${crTxt(C.bonus)}</b></div><div><small>Used</small><b>${crTxt(C.used)}</b></div></div>
+        <div class="w-act"><button class="btn light lg" data-act="deposit">${I.plus} Buy credits</button><button class="btn glass lg" data-act="chat">${I.chat} Billing question</button></div>
+        <small class="cr-note">${I.lock} Credits can’t be withdrawn. Only referral earnings can.</small></div>
+      ${creditsArt(rk&&rk.name)}</section>
+    ${b.billing_on&&b.tracking===false?`<div class="note warn"><b>Tracking is paused.</b> ${b.state==='need_plan'?`Add at least ${crTxt(M.base_cents||P.base_cents)} credits to start this month.`:'Buy credits to start again.'} Your ads keep working meanwhile.</div>`:''}
+    ${b.free_joins_left>0?`<div class="note"><b>🎁 ${fmt(b.free_joins_left)} of ${fmt(b.free_joins_gift||P.free_joins)} free joins left.</b> No credits needed yet.</div>`:''}
+    ${trialCard(b)}${planCard(b)}
+    ${promo?`<section class="promo"><span class="promo-t">${I.sparkles}<span><b>${esc(promo.code)}</b> · +${promo.bonus_pct}% bonus credits${promo.ends_at?` · ends in ${Math.max(1,Math.ceil((promo.ends_at-Date.now())/864e5))} day${Math.ceil((promo.ends_at-Date.now())/864e5)>1?'s':''}`:''}</span></span><button class="btn sm" data-act="buy-tier" data-v="500" data-promo="${esc(promo.code)}">Use code</button></section>`:''}
+    <section class="card buy"><div class="card-h"><h2>Buy credits</h2><span class="sub">${FEAT('credits_bonus')?'Bigger top-ups get bonus credits':'1 credit = $0.01'}</span></div>
+      <div class="tiers4">${tiers.map(c=>{ const bo=bonusFor(c,b); return `<button class="tcard ${c===50000?'tpop':''}" data-act="buy-tier" data-v="${c/100}">${c===50000?'<em>Most popular</em>':''}<span class="tc-usd">$${fmt(c/100)}</span><b>${crTxt(c)}</b><small>credits</small>${bo.credits?`<span class="tc-bonus">+${crTxt(bo.credits)} bonus</span>`:'<span class="tc-bonus none">No bonus</span>'}</button>`; }).join('')}</div>
+      <p class="hint" style="padding:0 20px 18px">${creditsPricing(b)}${rk&&rk.join_discount_pct?` Your ${esc(rk.name)} rank takes ${rk.join_discount_pct}% off every extra join.`:''}</p></section>
+    ${rk?`<section class="card rankc"><div class="card-h"><h2>${rankBadge(rk.name,26)} ${esc(rk.name)} rank</h2><span class="sub">Based on ${money0(rk.lifetime_cents||0)} of lifetime top-ups</span></div>
+      <div class="ladder">${ranks.map((r,i)=>`<div class="rung ${i<ri?'done':i===ri?'cur':''}" style="--i:${i}">${rankBadge(r.name,i===ri?40:30)}<b>${esc(r.name)}</b><small>${r.min_cents?money0(r.min_cents):'Start'}</small></div>`).join('')}<div class="ladder-ln"><i style="width:${ranks.length>1?((ri+(nxt?prog/100:0))/(ranks.length-1)*100):100}%"></i></div></div>
+      <div class="rank-b"><div>${nxt?`<p class="rank-next">Top up <b>${money0(nxt.need_cents)}</b> more to reach <b>${esc(nxt.name)}</b>.</p><div class="meter"><i style="width:${prog}%"></i></div>`:'<p class="rank-next"><b>You’re at the top rank.</b> Thank you for growing with us.</p>'}</div>
+        <ul class="perks">${(rk.perks||[]).map(p=>`<li>${I.check}${esc(p)}</li>`).join('')}${nxt&&ranks[ri+1]?(ranks[ri+1].perks||[]).map(p=>`<li class="lock">${I.lock}${esc(p)} <small>at ${esc(nxt.name)}</small></li>`).join(''):''}</ul></div></section>`:''}
+    <div class="usage">
+      <section class="card"><small>Joins this month</small><b>${fmt(M.joins||0)}</b><div class="meter"><i style="width:${Math.min(100,pct(M.joins||0,M.included||P.included))}%"></i></div><span>${fmt(Math.min(M.joins||0,M.included||P.included))} of ${fmt(M.included||P.included)} included${over?` · ${fmt(over)} extra`:''}</span></section>
+      <section class="card"><small>Used this month</small><b>${crTxt(M.cents||0)}</b><span>credits · ${usdTxt(M.cents||0)}</span></section>
+      <section class="card"><small>Per extra join</small><b>${perJoin} credits</b><span>Same price in every country</span></section></div>
+    <div class="grid2" style="align-items:start">
+      <section class="card"><div class="card-h"><h2>Credit activity</h2></div><div style="padding-bottom:6px">${b.history&&b.history.length?b.history.map(h=>{ const [ic,bg,fg]=hIcon(h.kind); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg}">${ic}</span><span><b>${esc(h.note||h.kind)}${h.kind==='bonus'?' <span class="chip y" style="height:20px;font-size:11px">Bonus</span>':''}</b><small>${when(h.created_at)}${h.amount_cents?' · '+usdTxt(Math.abs(h.amount_cents)).replace('≈ ',''):''}</small></span><span class="amt" style="color:${h.amount_cents<0?'var(--muted)':'var(--mint-ink)'}">${h.amount_cents<0?'−':'+'}${crTxt(Math.abs(h.amount_cents))}</span></div>`; }).join(''):`<div class="empty"><p>Nothing yet.</p></div>`}</div></section>
+      <div class="stack">
+        ${methodsCard(avail)}
+        <section class="card"><div class="card-h"><h2>Top-ups</h2></div><div style="padding-bottom:6px">${(b.deposits||[]).length?b.deposits.map(d=>{ const [t,bg,fg]=mIcon({type:d.provider,label:depLabel(d)}); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg};font-weight:800;font-size:12px">${t}</span><span><b>${money(d.amount_cents)} via ${esc(depLabel(d))}</b><small>${when(d.created_at)} · ${crTxt(d.amount_cents)} credits</small></span><span class="chip ${d.status==='paid'?'g':d.status==='rejected'?'r':'y'}">${d.status==='paid'?'Added':d.status==='rejected'?'Not received':d.status==='awaiting'?'Not sent yet':'Confirming'}</span></div>`; }).join(''):`<div class="empty" style="padding:28px 18px"><span class="ei">${I.wallet}</span><p>Your top-ups will show up here.</p></div>`}</div></section></div></div>
+    ${enterpriseCard()}`;
+  countCr($('#crn'),cr); parallax(); payReturn();
+  const ref=new URLSearchParams(location.search).get('ref');
+  if (ref && !DEMO) { try { const v=await api('GET','/api/billing/verify?ref='+encodeURIComponent(ref)); if(v.status==='paid'){ toast('Payment received. Credits added.'); confetti(); history.replaceState(null,'',location.pathname+'#wallet'); viewWallet(); refreshBal(); } } catch{} }
+}
+async function applyPromo(btn){
+  const D=S.dep, code=($('#dpromo').value||'').trim(); if(!code){ D.promo=''; D.promoPct=0; drawDeposit(); return; }
+  btn.disabled=true;
+  try { const r=await api('GET','/api/billing/promo?code='+encodeURIComponent(code)); D.amt=+($('#damt').value||D.amt);
+    if (r.valid){ D.promo=code.toUpperCase(); D.promoPct=r.bonus_pct||0; D.promoMsg=r.message||''; toast(r.message||'Code applied'); } else { D.promo=''; D.promoPct=0; D.promoMsg=r.message||'That code isn’t valid.'; }
+    drawDeposit(); }
+  catch(e){ toast(e.message,false); btn.disabled=false; }
+}
+function buySummary(amt){
+  const D=S.dep||{}, c=Math.round((amt||0)*100), bo=bonusFor(c,S.bill,D.promoPct||0);
+  return `<div class="bsum"><span>You get</span><b>${crTxt(c+bo.credits)} credits</b><small>${crTxt(c)}${bo.credits?` + ${crTxt(bo.credits)} bonus (${bo.pct}%)`:''}${D.promo?` · code ${esc(D.promo)}`:''}</small></div>`;
+}
+
+/* ---------- enterprise / talk to sales ---------- */
+function openSales(){
+  const me=S.me||{};
+  sheet(`<h2>Talk to us<small>Big volume, custom pricing, a dedicated manager</small></h2>`, `<form id="slf" style="display:flex;flex-direction:column;gap:14px">
+    <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:150px"><label for="sl1">Name</label><input class="inp" id="sl1" value="${esc(me.name||'')}" autocomplete="name"></div><div class="field" style="flex:1;min-width:180px"><label for="sl2">Email</label><input class="inp" id="sl2" type="email" required value="${esc(me.email||'')}" autocomplete="email"></div></div>
+    <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:150px"><label for="sl3">Company</label><input class="inp" id="sl3" autocomplete="organization"></div><div class="field" style="flex:1;min-width:150px"><label for="sl4">Telegram</label><input class="inp" id="sl4" placeholder="@username"></div></div>
+    <div class="field"><label for="sl5">Clicks per month</label><select class="sel" id="sl5"><option>Under 100k</option><option>100k – 500k</option><option>500k – 2M</option><option>2M+</option></select></div>
+    <div class="field"><span class="lbl">Where you run ads</span><div class="checks">${['Meta','TikTok','Snapchat','Google','Other'].map(p=>`<label class="ck"><input type="checkbox" value="${p}" ${p==='Meta'?'checked':''}><span>${p}</span></label>`).join('')}</div></div>
+    <div class="field"><label for="sl6">Anything else?</label><textarea class="inp" id="sl6" rows="3" placeholder="Your channels, verticals, what you need"></textarea></div>
+    <div id="slerr"></div><button class="btn primary lg wide" type="submit">Send to our team ${I.arrow}</button></form>`);
+  $('#slf').addEventListener('submit', async e=>{ e.preventDefault(); const b=e.submitter; b.disabled=true;
+    try { await api('POST','/api/sales',{name:$('#sl1').value.trim(),email:$('#sl2').value.trim(),company:$('#sl3').value.trim(),telegram:$('#sl4').value.trim(),monthly_volume:$('#sl5').value,platforms:$$('#slf .checks input:checked').map(x=>x.value),message:$('#sl6').value.trim()});
+      $('.sheet-b').innerHTML=`<div class="okbar">${I.checkc}<span>Thanks! Our team will reach out within one business day.</span></div><button class="btn lg wide" data-act="close">Close</button>`; }
+    catch(err){ $('#slerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+}
+
+/* ---------- Telegram alerts ---------- */
+const ALERTS=[['daily_report','Morning summary','Every day at 8:00 your time: joins, FTDs, revenue, spend, ROAS and cost per FTD'],['no_joins_2h','No joins for 2 hours','When a channel that usually gets joins goes quiet'],['no_ftd_campaign','No deposits from a campaign today','A campaign with deposits yesterday has none by 18:00'],['ftd_live','Live first deposits','A ping the moment someone deposits'],['token_errors','Ad platform errors','When Meta, TikTok or Snapchat rejects your events'],['links_low','Invite links running low','Before visitors fall back to the backup link'],['paused','Tracking paused','When your credits run out'],['cpa_spike','Cost per FTD spike','When cost per first deposit jumps against last week']];
+async function openAlerts(){
+  try { api('PATCH','/api/me',{tz:Intl.DateTimeFormat().resolvedOptions().timeZone}).catch(()=>{}); } catch {}
+  if (!FEAT('alerts')){ sheet('<h2>Telegram alerts<small>Coming soon</small></h2>', `<div class="empty" style="padding:24px 8px"><span class="ei">${I.bolt}</span><h3>Alerts in Telegram are coming soon</h3><p>A daily report and instant pings for deposits, errors and low invite links, straight to your Telegram.</p></div><button class="btn lg wide" data-act="close">OK</button>`); return; }
+  sheet('<h2>Telegram alerts<small>Reports and pings from Joinvoo’s bot</small></h2>', '<div class="sk" style="height:240px"></div>');
+  let r; try { r=await api('GET','/api/alerts'); } catch(e){ $('.sheet-b').innerHTML=`<div class="err">${esc(e.message)}</div>`; return; }
+  S.alerts=r; drawAlerts();
+}
+function drawAlerts(){
+  const r=S.alerts, el=$('.sheet-b'); if(!r||!el) return; const pr=r.prefs||{};
+  el.innerHTML=`${r.connected?`<div class="okbar">${I.checkc}<span>Connected to @${esc(r.bot_username||'joinvoo_alerts_bot')}</span></div>`:`<div class="alert-con"><span class="pm lg tg">${PM.tg}</span><div><b>Connect your Telegram</b><span>Open the link, press Start, and alerts arrive in that chat.</span></div><a class="btn primary" href="${esc(r.link||'#')}" target="_blank" rel="noopener" data-act="alerts-open">Connect ${I.ext}</a></div>`}
+    <div class="box">${ALERTS.map(([k,l,d])=>`<div class="kv al-row"><span><b>${tt('alert.'+k,l)}</b><small>${tt('alert.'+k+'.d',d)}</small></span><button class="switch" data-act="alert-t" data-k="${k}" role="switch" aria-checked="${!!pr[k]}" aria-label="${l}"></button></div>`).join('')}</div>
+    <p class="hint">You can change these any time. Alerts never include your customers’ personal details.</p>`;
+}
+async function toggleAlert(btn){
+  const k=btn.dataset.k, v=btn.getAttribute('aria-checked')!=='true'; btn.setAttribute('aria-checked',v);
+  try { await api('POST','/api/alerts',{prefs:{[k]:v}}); S.alerts.prefs[k]=v; } catch(e){ btn.setAttribute('aria-checked',!v); toast(e.message,false); }
+}
+
+/* ---------- action handlers for this module ---------- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'cv-tab': S.cvTab=a.dataset.v; store.set('cvTab',S.cvTab); viewConversions(); break;
+    case 'int-cat': S.icat=a.dataset.v; drawIntegrations(); break;
+    case 'int-open': openIntegration(a.dataset.id); break;
+    case 'int-connect': connectIntegration(a); break;
+    case 'jr-toggle': jrToggle(a); break;
+    case 'jr-edit': openJr(a.dataset.id); break;
+    case 'jr-skip': W.jrSeen=true; drawStep(); break;
+    case 'jr-ins': { const u=$('#jru'); if(u){ const sep=/[?&]$/.test(u.value)||!u.value?'':u.value.includes('?')?'&sub1=':'?sub1='; u.value+=(sep&&!/=$/.test(u.value)?sep:'')+a.dataset.v; u.dispatchEvent(new Event('input')); u.focus(); } break; }
+    case 'cmp-mode': S.cPreset=null; S.ccKeys=null; S.cmpMode=a.dataset.v; store.set('cmpMode',S.cmpMode); viewCompare(); break;
+    case 'pmet': S.pmet=a.dataset.v; $$('[data-act="pmet"]').forEach(b=>b.setAttribute('aria-pressed',b===a)); drawPeriods(false); break;
+    case 'cmp-ab': { const v=id=>$('#'+id).value; if(!v('caf')||!v('cat')||!v('cbf')||!v('cbt')) break; S.cA=[v('caf'),v('cat')].sort(); S.cB=[v('cbf'),v('cbt')].sort(); S.cPreset=null; S.ccKeys=null; viewCompare(); break; }
+    case 'fmode': S.fmode=a.dataset.v; $$('[data-act="fmode"]').forEach(b=>b.setAttribute('aria-pressed',b===a)); loadFunnel(); break;
+    case 'spend': openSpend(); break;
+    case 'sp-tab': S.spTab=a.dataset.v; openSpend(); break;
+    case 'sp-del': api('DELETE','/api/spend/'+a.dataset.id).then(()=>{ drawSpendList(); spendChanged(); }).catch(err=>toast(err.message,false)); break;
+    case 'buy-tier': S.dep=null; openDeposit(); S.dep.amt=+a.dataset.v; if(a.dataset.promo){ S.dep.promo=a.dataset.promo; S.dep.promoPct=(S.bill&&S.bill.promo&&S.bill.promo.bonus_pct)||0; } drawDeposit(); break;
+    case 'promo-apply': applyPromo(a); break;
+    case 'sales': openSales(); break;
+    case 'alerts': closePop(); openAlerts(); break;
+    case 'alert-t': toggleAlert(a); break;
+    case 'alerts-open': if (DEMO){ e.preventDefault(); api('POST','/api/alerts',{connect:true}).then(openAlerts); toast('Demo: connected'); } break;
+  }
+});
+document.addEventListener('change', e=>{
+  if (e.target.id==='fdim'){ S.fdim=e.target.value; S.fa=S.fb=null; loadFunnel(); }
+  if (e.target.id==='fa'){ S.fa=e.target.value; loadFunnel(); }
+  if (e.target.id==='fb'){ S.fb=e.target.value; loadFunnel(); }
+});

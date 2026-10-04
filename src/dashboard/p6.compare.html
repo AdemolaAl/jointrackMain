@@ -1,0 +1,123 @@
+
+/* ---------- compare: month vs month ---------- */
+const MET = {
+  joins:{l:'Joins',noun:'joins',get:m=>m.joins,f:fmt,c:compact,proj:1,up:1},
+  join_rate:{l:'Join rate',noun:'join rate',get:m=>m.join_rate*100,f:v=>v.toFixed(1)+'%',c:v=>v.toFixed(1)+'%',proj:0,up:1,rate:1},
+  ftd:{l:'FTDs',noun:'first deposits',get:m=>m.ftd,f:fmt,c:compact,proj:1,up:1},
+  revenue:{l:'Revenue',noun:'revenue',get:m=>m.revenue_cents,f:money0,c:moneyC,proj:1,up:1},
+  clicks:{l:'Clicks',noun:'clicks',get:m=>m.clicks,f:fmt,c:compact,proj:1,up:1},
+  leaves:{l:'Leaves',noun:'leaves',get:m=>m.leaves,f:fmt,c:compact,proj:1,up:0},
+};
+const mDate = k => { const [y,m]=k.split('-').map(Number); return new Date(y,m-1,1); };
+const mName = (k,o={month:'long'}) => mDate(k).toLocaleDateString('en-US',o);
+const dim = k => { const d=mDate(k); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); };
+const elapsed = m => { const n=new Date(); return Math.max(.25,(m.days_in-1)+(n.getHours()*60+n.getMinutes())/1440); };
+const projOf = (m,M) => M.proj && m.partial && m.days_in ? M.get(m)/elapsed(m)*dim(m.month) : M.get(m);
+async function viewCompareMonths(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view">
+    <div class="ph"><div><div class="eyebrow">${I.compare.replace('<svg','<svg style="width:15px;height:15px"')} Month vs month</div><h1>Compare</h1><p>See how each month stacks up. The current month is shown as it stands, with a projection at today’s pace.</p></div>
+      <div class="ph-act"><div class="seg" role="group" aria-label="Months">${[6,12].map(n=>`<button data-act="cmp-n" data-v="${n}" aria-pressed="${S.cmpN===n}">${n} months</button>`).join('')}</div></div></div>
+    <section class="card cmp-hero" id="cmphero"><div class="cmp-hl"><span class="sk" style="display:block;height:14px;width:30%"></span><span class="sk" style="display:block;height:38px;width:80%;margin-top:14px"></span><span class="sk" style="display:block;height:14px;width:60%;margin-top:14px"></span></div><div class="cmp-nums">${'<div class="cmp-n"><span class="sk" style="height:12px;width:50%"></span><span class="sk" style="height:24px;width:70%"></span></div>'.repeat(4)}</div></section>
+    <section class="card"><div class="cmp-ctl"><div class="seg" role="group" aria-label="Metric" id="cmpmet">${Object.entries(MET).map(([k,m])=>`<button data-act="cmp-m" data-v="${k}" aria-pressed="${S.cmpM===k}">${m.l}</button>`).join('')}</div>
+      <div class="legend" id="cmpleg"></div></div>
+      <div class="cchart" id="cchart"><div class="sk" style="height:280px;margin:10px"></div></div></section>
+    <div class="cmp-sum" id="cmpsum"></div>
+    <section class="card"><div class="card-h"><h2>Month by month</h2><span class="sub" id="cmptsub"></span></div><div id="cmptbl"></div></section>
+  </div>`;
+  let r; try { r=await api('GET',`/api/compare?months=${S.cmpN===12?24:S.cmpN}&${tzq()}${chq()}`); } catch(e){ $('#cchart').innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`; return; }
+  if (S.page!=='compare') return;
+  S.cmp=r.months; drawCompareAll(true);
+}
+function drawCompareAll(anim){
+  const all=S.cmp||[], N=S.cmpN, M=MET[S.cmpM]||MET.joins, ms=all.slice(-N), prevYear=N===12&&all.length>=24?all.slice(-24,-12):null;
+  const hasYoY=!!(prevYear&&prevYear.some(m=>M.get(m)>0));
+  if (!hasYoY) S.cmpYoY=false;
+  const cur=ms[ms.length-1], prev=ms[ms.length-2]||null;
+  const curV=M.get(cur), proj=projOf(cur,M), prevV=prev?M.get(prev):0;
+  const cmpV=M.proj?proj:curV, d=prevV?deltaPct(cmpV,prevV):NaN, up=d>0, good=up===!!M.up;
+  const complete=ms.filter(m=>!m.partial), best=complete.reduce((a,b)=>M.get(b)>M.get(a)?b:a, complete[0]||cur);
+  const ce=mName(cur.month), pe=prev?mName(prev.month):'';
+  // headline
+  let h2, p;
+  const any=ms.some(m=>M.get(m)>0);
+  if (!any){ h2=`No ${M.noun} yet`; p=`When ${M.noun} start coming in, each month appears here so you can compare them side by side.`; }
+  else if (!prevV){ h2=`${M.f(curV)} <span class="serif">${M.noun}</span> so far`; p=`${ce} is your first month with ${M.noun}. Next month you’ll see how it compares.`; }
+  else if (Math.abs(d)<0.5){ h2=`${M.l} <span class="serif">level</span> with ${pe}`; p=M.proj?`On pace for ${M.f(proj)} in ${ce}, the same as ${pe}.`:`${M.f(curV)} in ${ce} so far, the same as ${pe}.`; }
+  else { h2=`${M.l} <span class="serif ${good?'':'dn'}">${up?'up':'down'} ${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0)}%</span> vs ${pe}`;
+    p=M.proj?`On pace for ${M.f(proj)} in ${ce}: ${M.f(curV)} so far, day ${cur.days_in} of ${dim(cur.month)}. ${pe} finished at ${M.f(prevV)}.`:`${M.f(curV)} in ${ce} so far, against ${M.f(prevV)} for all of ${pe}.`; }
+  const pace=elapsed(cur)/dim(cur.month)*100;
+  $('#cmphero').innerHTML=`<div class="cmp-hl"><span class="eb">${esc(ce)} vs ${esc(pe||'last month')}</span><h2>${h2}</h2><p>${p}</p>
+    <div class="pace"><span>Month progress</span><span class="pt"><i style="width:${anim?0:pace}%" data-w="${pace}"></i></span><span class="num">${Math.round(pace)}%</span></div></div>
+    <div class="cmp-nums"><div class="cmp-n"><small>${esc(ce)} so far</small><b>${M.f(curV)}</b><span>${cur.days_in} day${cur.days_in===1?'':'s'} in</span></div>
+      <div class="cmp-n"><small>${M.proj?'Projected '+esc(ce):'Change'}</small><b>${M.proj?'≈ '+M.f(proj):(prevV?(curV-prevV>=0?'+':'')+(curV-prevV).toFixed(1)+' pts':'—')}</b><span>${M.proj?'At today’s pace':'vs '+esc(pe)}</span></div>
+      <div class="cmp-n"><small>${esc(pe||'Last month')}</small><b>${prev?M.f(prevV):'—'}</b><span>${prev?'Full month':'No data'}</span></div>
+      <div class="cmp-n"><small>Best month</small><b>${best&&M.get(best)?M.f(M.get(best)):'—'}</b><span>${best&&M.get(best)?esc(mName(best.month,{month:'long',year:'numeric'})):'Not yet'}</span></div></div>`;
+  if (anim) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const i=$('#cmphero .pt i'); if(i) i.style.width=i.dataset.w+'%'; }));
+  // legend
+  $('#cmpleg').innerHTML=`${hasYoY?`<label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer"><button class="switch" data-act="cmp-yoy" role="switch" aria-checked="${S.cmpYoY}" aria-label="Show the year before"></button>Year before</label>`:''}<span><i style="background:linear-gradient(180deg,var(--brand-2),var(--brand))"></i>${M.l}</span><span><i style="background:repeating-linear-gradient(-45deg,var(--brand) 0 2px,var(--brand-soft) 2px 4px);box-shadow:0 0 0 1px var(--brand) inset"></i>This month so far</span>${M.proj?'<span><i style="border:1.5px dashed var(--brand);background:none"></i>Projected</span>':''}${S.cmpYoY?'<span><i style="background:var(--c-click)"></i>Year before</span>':''}`;
+  const draw=a=>drawCompare($('#cchart'), ms, M, S.cmpYoY?prevYear:null, a);
+  draw(anim); S.redraw=[()=>draw(false)];
+  // summary
+  const tot=ms.reduce((a,m)=>a+M.get(m),0), avg=complete.length?complete.reduce((a,m)=>a+M.get(m),0)/complete.length:0;
+  const firstNZ=complete.find(m=>M.get(m)>0), lastC=complete[complete.length-1];
+  const growth=firstNZ&&lastC&&firstNZ!==lastC?deltaPct(M.get(lastC),M.get(firstNZ)):NaN;
+  const overall=M.rate?pct(ms.reduce((a,m)=>a+m.joins,0),ms.reduce((a,m)=>a+m.clicks,0)):0;
+  $('#cmpsum').innerHTML=[[M.rate?'Overall join rate':'Total, '+N+' months',M.rate?overall.toFixed(1)+'%':M.f(tot),'Including this month'],['Monthly average',M.f(avg),'Full months only'],['Best month',best&&M.get(best)?M.f(M.get(best)):'—',best&&M.get(best)?mName(best.month,{month:'short',year:'numeric'}):'—'],
+    ['Growth',isFinite(growth)?`<em style="font-style:normal;color:${(growth>=0)===!!M.up?'var(--mint-ink)':'var(--coral-ink)'}">${growth>=0?'+':''}${Math.round(growth)}%</em>`:'—',firstNZ&&lastC&&firstNZ!==lastC?`${mName(firstNZ.month,{month:'short'})} → ${mName(lastC.month,{month:'short'})}`:'Needs two full months']]
+    .map(([a,b,c])=>`<section class="card"><small>${a}</small><b>${b}</b><span>${esc(c)}</span></section>`).join('');
+  // table
+  $('#cmptsub').textContent=`Change in ${M.l.toLowerCase()} vs the month before`;
+  const cols=[['clicks','Clicks',m=>fmt(m.clicks)],['joins','Joins',m=>fmt(m.joins)],['join_rate','Join rate',m=>(m.join_rate*100).toFixed(1)+'%'],['ftd','FTDs',m=>fmt(m.ftd)],['revenue','Revenue',m=>money0(m.revenue_cents)],['leaves','Leaves',m=>fmt(m.leaves)]];
+  const maxV=Math.max(1,...ms.map(m=>projOf(m,M)));
+  const rows=ms.map((m,i)=>({m,p:ms[i-1]})).reverse();
+  $('#cmptbl').innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Month</th>${cols.map(([k,l])=>`<th style="${k===S.cmpM?'color:var(--brand-text)':''}">${l}</th>`).join('')}<th>vs previous</th></tr></thead><tbody>
+    ${rows.map(({m,p})=>{ const v=M.proj?projOf(m,M):M.get(m), pv=p?M.get(p):0, dd=pv?deltaPct(v,pv):NaN, u=dd>0, g=u===!!M.up;
+      return `<tr><td class="k"><span style="display:inline-flex;flex-direction:column;gap:5px;min-width:0"><span>${esc(mName(m.month,{month:'long',year:'numeric'}))} ${m.partial?'<span class="chip v" style="margin-left:4px">So far</span>':''}</span><span class="mbar ${m.partial?'part':''}" style="width:${Math.max(4,M.get(m)/maxV*120)}px"></span></span></td>
+        ${cols.map(([k,l,f])=>`<td data-l="${l}" style="${k===S.cmpM?'font-weight:650':''}">${f(m)}</td>`).join('')}
+        <td data-l="vs previous">${isFinite(dd)?`<span class="dlt ${Math.abs(dd)<0.5?'flat':g?'up':'dn'}">${Math.abs(dd)<0.5?'':u?I.up:I.dn}${Math.abs(dd)>=100?Math.round(Math.abs(dd)):Math.abs(dd).toFixed(1)}%${m.partial&&M.proj?' <small class="faint" style="font-weight:500">pace</small>':''}</span>`:'<span class="faint">—</span>'}</td></tr>`; }).join('')}
+  </tbody></table></div>`;
+}
+function drawCompare(el, ms, M, py, anim){
+  if(!el) return;
+  const n=ms.length, W=Math.max(280,el.clientWidth-14), mob=W<560, L=mob?36:46, R=10, T=30, H1=mob?200:260, B=36, H=T+H1+B, iw=W-L-R, slot=iw/n;
+  const vals=ms.map(m=>M.get(m)), cur=ms[n-1], proj=projOf(cur,M), pv=py?py.map(m=>M.get(m)):[];
+  const max=niceMax(Math.max(M.rate?1:4, ...vals, proj, ...pv)*1.04), y=v=>T+H1-v/max*H1;
+  const bw=py?Math.min(30,slot*.32):Math.min(58,slot*.58), gap=py?3:0;
+  const cj=css('--brand'), c2=css('--brand-2'), cc=css('--c-click');
+  let g=`<defs><linearGradient id="cbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${cj}"/></linearGradient>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${cj}" fill-opacity=".16"/><rect width="3" height="7" fill="${cj}" fill-opacity=".85"/></pattern></defs>`;
+  for(let i=0;i<=4;i++){ const v=max*i/4; g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" ${i?'':'style="stroke:var(--line-2);stroke-dasharray:none"'}/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${M.rate?v.toFixed(0)+'%':M===MET.revenue?moneyC(v):compact(v)}</text>`; }
+  const complete=ms.filter(m=>!m.partial), avg=complete.length?complete.reduce((a,m)=>a+M.get(m),0)/complete.length:0;
+  const showAll=slot>=(mob?40:50);
+  ms.forEach((m,i)=>{ const cx=L+slot*i+slot/2, v=vals[i], h=Math.max(v?3:0,T+H1-y(v)), x0=py?cx+gap/2:cx-bw/2, delay=anim&&!reduced?`style="animation-delay:${i*55}ms"`:'style="animation:none"';
+    g+=`<rect class="slot" data-i="${i}" x="${L+slot*i}" y="${T-20}" width="${slot}" height="${H1+20}"/><g data-g="${i}">`;
+    if (py){ const ph=Math.max(pv[i]?3:0,T+H1-y(pv[i])); g+=`<rect class="bar" ${delay} x="${cx-gap/2-bw}" y="${T+H1-ph}" width="${bw}" height="${ph}" rx="${Math.min(5,bw/3)}" fill="${cc}"/>`; }
+    if (m.partial){
+      if (M.proj && proj>v){ const gy=y(proj); g+=`<rect class="ghost" x="${x0+.75}" y="${gy}" width="${bw-1.5}" height="${Math.max(0,y(v)-gy+4)}" rx="${Math.min(6,bw/3)}" ${anim&&!reduced?`style="animation:fade .6s ${n*55+300}ms both"`:''}/>`;
+        g+=`<text class="vl dim" x="${x0+bw/2}" y="${gy-7}" text-anchor="middle" ${anim&&!reduced?`style="animation:fade .6s ${n*55+400}ms both"`:''}>≈${M.c(proj)}</text>`; }
+      g+=`<rect class="bar" ${delay} x="${x0}" y="${T+H1-h}" width="${bw}" height="${h}" rx="${Math.min(6,bw/3)}" fill="url(#hatch)" stroke="${cj}" stroke-width="1.25"/>`;
+      if (!M.proj || proj<=v || (y(v)-y(proj))>18) g+=`<text class="vl" x="${x0+bw/2}" y="${T+H1-h-7}" text-anchor="middle">${M.c(v)}</text>`;
+    } else {
+      g+=`<rect class="bar" ${delay} x="${x0}" y="${T+H1-h}" width="${bw}" height="${h}" rx="${Math.min(6,bw/3)}" fill="url(#cbg)"/>`;
+      if (v && (showAll || v===Math.max(...vals) || i===n-2)) g+=`<text class="vl" x="${x0+bw/2}" y="${T+H1-h-7}" text-anchor="middle" ${anim&&!reduced?`style="animation:fade .5s ${i*55+500}ms both"`:''}>${M.c(v)}</text>`;
+    }
+    g+='</g>';
+    const d=mDate(m.month); g+=`<text class="ml ${m.partial?'cur':''}" x="${cx}" y="${T+H1+17}" text-anchor="middle">${d.toLocaleDateString('en-US',{month:'short'})}</text>`;
+    if (d.getMonth()===0 || i===0) g+=`<text class="ax" x="${cx}" y="${T+H1+31}" text-anchor="middle" style="font-size:10px">${d.getFullYear()}</text>`;
+  });
+  if (avg){ g+=`<line class="avg" x1="${L}" x2="${W-R}" y1="${y(avg)}" y2="${y(avg)}"/><text class="avgl" x="${W-R}" y="${y(avg)-5}" text-anchor="end">avg ${M.c(avg)}</text>`; }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${M.l} by month">${g}</svg>`;
+  let tip=null; const svg=el.querySelector('svg');
+  const show=i=>{ const m=ms[i], p=ms[i-1], v=vals[i], pvv=p?M.get(p):0, dd=pvv?deltaPct(M.proj&&m.partial?proj:v,pvv):NaN;
+    svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=x.dataset.g==i?1:.45);
+    if(!tip){ tip=document.createElement('div'); tip.className='tip'; el.appendChild(tip); }
+    tip.innerHTML=`<div class="th">${esc(mName(m.month,{month:'long',year:'numeric'}))}${m.partial?' · so far':''}</div><div class="tr"><span><i style="background:${cj}"></i>${M.l}</span><b>${M.f(v)}</b></div>
+      ${m.partial&&M.proj?`<div class="tr"><span><i style="border:1.5px dashed ${cj};background:none"></i>Projected</span><b>≈ ${M.f(proj)}</b></div>`:''}
+      ${py?`<div class="tr"><span><i style="background:${cc}"></i>${esc(mName(py[i].month,{month:'short',year:'numeric'}))}</span><b>${M.f(pv[i])}</b></div>`:''}
+      <div class="tf">${isFinite(dd)?`${dd>=0?'▲':'▼'} ${Math.abs(dd).toFixed(1)}% vs ${esc(mName(p.month,{month:'short'}))}${m.partial&&M.proj?' (at pace)':''}`:'No earlier month to compare'}${m.partial?` · day ${m.days_in} of ${dim(m.month)}`:''}</div>`;
+    const cx=L+slot*i+slot/2, tw=tip.offsetWidth; let lx=cx-tw/2; lx=Math.max(4,Math.min(el.clientWidth-tw-4,lx)); tip.style.left=lx+'px'; tip.style.top=Math.max(0,y(Math.max(v,m.partial&&M.proj?proj:0,py?pv[i]:0))-tip.offsetHeight-10+14)+'px'; };
+  const hide=()=>{ tip&&tip.remove(); tip=null; svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=1); };
+  svg.querySelectorAll('.slot').forEach(s=>{ s.addEventListener('pointerenter',()=>show(+s.dataset.i)); s.addEventListener('pointerdown',()=>show(+s.dataset.i)); });
+  svg.addEventListener('pointerleave',hide);
+}

@@ -1,0 +1,485 @@
+
+/* ---------- channels ---------- */
+const CH_GRAD=['linear-gradient(145deg,#7C61FF,#5A3BF0)','linear-gradient(145deg,#22C79A,#0E9E73)','linear-gradient(145deg,#FFB547,#F08A24)','linear-gradient(145deg,#3BC9FF,#1E8FE0)','linear-gradient(145deg,#F06AB5,#C14BFF)'];
+const chInit = t => esc((String(t||'?').replace(/^@/,'').match(/[A-Za-z0-9]/g)||['?']).slice(0,1).join('').toUpperCase() + ((String(t).split(/\s+/)[1]||'')[0]||'').toUpperCase());
+async function viewChannels(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view"><div class="ph"><div><div class="eyebrow">Setup</div><h1>Channels</h1><p>Your tracked channels, groups and bots. Each one has its own link for your ads and sends joins to Meta, TikTok and Snapchat.</p></div><div class="ph-act"><button class="btn primary sm" data-act="add-channel">${I.plus} Add channel</button></div></div><div id="cl"><div class="chans">${'<div class="card" style="height:420px"><div class="sk" style="height:100%"></div></div>'.repeat(2)}</div></div></div>`;
+  await refreshChans(); drawChannels();
+  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
+}
+function drawChannels(){
+  const d=S.chans, el=$('#cl'); if(!el) return;
+  el.innerHTML = `<div class="chans">${d.channels.map((c,i)=>{ const isB=c.type==='bot';
+    const st=c.status==='active'?'<span class="chip g"><i class="d"></i>Tracking</span>':c.status==='no_rights'?'<span class="chip y"><i class="d"></i>Needs permission</span>':'<span class="chip r"><i class="d"></i>Bot removed</span>';
+    const prow=p=>{ const on=platOn(c,p); const test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
+      return `<div class="prow2">${pm(p)}<b>${PLAT[p].name}</b>${on?`<span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto">${test?'<span class="chip y" title="Test mode is on">Test</span>':''}<button class="chip g" style="cursor:pointer" data-act="plat-open" data-id="${c.id}" data-p="${p}">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${esc(platEvent(c,p))}</button></span>`:`<button class="btn sm" data-act="plat-open" data-id="${c.id}" data-p="${p}">Connect</button>`}</div>`; };
+    const pool=c.pool_target?Math.min(100,c.pool/c.pool_target*100):0;
+    return `<article class="card chan"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}</div>
+      <div class="chan-sec"><span class="lbl">Your link for ads</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} Copy</button></div></div>
+      <div class="chan-sec" style="gap:4px"><span class="lbl" style="margin-bottom:4px">Ad platforms</span>${PLATS().map(prow).join('')}<div class="prow2" style="opacity:.6">${pm('google')}<b>Google Ads</b><span class="chip o">Coming soon</span></div></div>
+      ${isB&&c.external?`<div class="chan-sec"><div class="prow2"><span class="chip v">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} Tracked via your bot (no token)</span></div>
+        <div class="hookrow"><span class="lbl">Start hook</span><div class="codebox"><code>${esc(c.hook_start||'')}</code><button class="btn sm" data-act="copy" data-v="${esc(c.hook_start||'')}">${I.copy} Copy</button></div></div>
+        <div class="hookrow"><span class="lbl">Blocked hook · optional</span><div class="codebox"><code>${esc(c.hook_blocked||'')}</code><button class="btn sm" data-act="copy" data-v="${esc(c.hook_blocked||'')}">${I.copy} Copy</button></div></div></div>`:''}
+      <div class="chan-sec">${isB?(c.external?'':`<div class="prow2"><b class="muted" style="font-weight:500">Welcome message</b><span class="chip ${c.welcome?'g':''}">${c.welcome?'On':'Off'}</span></div>`)+(c.forward_url?`<div class="prow2"><b class="muted" style="font-weight:500;min-width:0;overflow-wrap:anywhere">Passing messages to <span style="color:var(--ink);font-weight:700">${esc((()=>{ try{ return new URL(c.forward_url).host; }catch{ return c.forward_url; } })())}</span></b><span class="chip ${c.has_forward_secret?'g':'o'}">${c.has_forward_secret?'Secret set':'No secret'}</span></div>`:''):`<div class="pool"><span style="white-space:nowrap">Invite links ready</span><span class="pt"><i style="width:${pool}%"></i></span><b class="num" style="color:var(--ink)">${fmt(c.pool)}</b></div>`}
+        <div class="prow2"><b class="muted" style="font-weight:500">When someone taps your ad</b><span class="seg" style="padding:2px"><button data-act="landing" data-id="${c.id}" data-v="auto" aria-pressed="${c.landing!=='button'}" style="height:26px;font-size:12.5px">Open Telegram</button><button data-act="landing" data-id="${c.id}" data-v="button" aria-pressed="${c.landing==='button'}" style="height:26px;font-size:12.5px">Join page</button></span></div>
+        ${c.status==='no_rights'?'<div class="note warn">In Telegram open the channel → Administrators → your bot, and turn on <b>Invite users via link</b>.</div>':''}
+        ${c.status==='removed'?'<div class="note warn">The bot was removed from this channel. Add it back as an admin to start tracking again. Visitors still get in through the backup link.</div>':''}</div>
+      ${jrCardSection(c)}
+      ${backupSection(c)}
+      <div class="chan-foot">${isB?(c.external?`<button class="btn sm" data-act="show-code" data-id="${c.id}">${I.bolt} Show code</button>`:`<button class="btn sm" data-act="bot-settings" data-id="${c.id}">${I.bot} Bot settings</button>`):''}${PLATS().filter(p=>platOn(c,p)).map(p=>`<button class="btn sm" data-act="test" data-id="${c.id}" data-p="${p}">Test ${PLAT[p].name}</button>`).join('')}<a class="btn sm ghost" href="${esc(c.tracking_url)}" target="_blank" rel="noopener">${I.ext} Open link</a></div></article>`; }).join('')}
+    <button class="add-card" data-act="add-channel"><span class="ei">${I.plus}</span>${d.channels.length?'Add another channel or bot':'Connect your first channel'}<small class="faint" style="font-weight:500">About 3 minutes</small></button></div>`;
+}
+function openPlatform(id, p){
+  const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const on=platOn(c,p);
+  sheet(`${pm(p,1)}<h2>${PLAT[p].name}<small>${esc(c.title)}</small></h2>`, `<p class="muted" style="font-size:14px">Every join from this link is sent to your ${PLAT[p].name} ${p==='meta'?'pixel':p==='tiktok'?'pixel':'Pixel'} through ${p==='meta'?'the Conversions API':p==='tiktok'?'the Events API':'the Conversions API'}, server-side. First deposits from your postback are sent too.</p>
+    <form id="mf" style="display:flex;flex-direction:column;gap:16px">${platFields(p,c,true)}
+      <div id="merr"></div><div class="row-in"><button class="btn primary lg" type="submit" style="flex:1">Save</button>${on?`<button class="btn lg" type="button" data-act="test" data-id="${c.id}" data-p="${p}">Send test</button>`:''}</div></form>
+    <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Where do I find these? Open the guide ${I.ext}</a>`);
+  $('#mf').addEventListener('submit', async e=>{ e.preventDefault(); const b=e.submitter; b.disabled=true;
+    try { await api('PATCH','/api/channels/'+c.id,platBody(p)); toast(`${PLAT[p].name} saved`); closeSheet(); await refreshChans(); drawChannels(); }
+    catch(err){ $('#merr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+}
+function openBotSettings(id){
+  const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot=S.chans.bots.find(b=>('@'+b.username)===c.title)||S.chans.bots[0];
+  sheet(`<h2>Bot settings<small>${esc(c.title)}</small></h2>`, `<form id="bsf" style="display:flex;flex-direction:column;gap:16px">
+    <div class="field"><label for="sw1">Welcome message</label><textarea class="inp" id="sw1" rows="3" placeholder="Hi {name} 👋 Welcome!">${esc(c.welcome)}</textarea><span class="hint">Sent when someone presses Start. {name} becomes their first name. Leave empty to send nothing.</span></div>
+    <div class="field"><label for="sw2">Button text</label><input class="inp" id="sw2" value="${esc(c.btn_text)}" placeholder="Join the group"></div>
+    <div class="field"><label for="sw3">Button link</label><input class="inp" id="sw3" value="${esc(c.btn_url)}" placeholder="https://t.me/+…"></div>
+    <div class="field"><label for="sw4">Forward updates to <span class="faint" style="font-weight:400">(optional)</span></label><input class="inp" id="sw4" value="${esc(c.forward_url)}" placeholder="https://your-server.com/telegram-webhook"><span class="hint">Use this if your bot already runs on its own server, so it keeps working. Bots that fetch their own messages (“polling”) can’t use this.</span></div>
+    <div class="field"><label for="sw5">Secret token <span class="faint" style="font-weight:400">(if your server checks one)</span></label><input class="inp" id="sw5" type="password" autocomplete="off" placeholder="${c.has_forward_secret?'Saved. Paste a new one to replace it':'Leave empty if you don’t use one'}"><span class="hint">Sent as the <span class="mono">X-Telegram-Bot-Api-Secret-Token</span> header when we pass messages on.</span></div>
+    <div id="bserr"></div><button class="btn primary lg wide" type="submit">Save</button></form>`);
+  $('#bsf').addEventListener('submit', async e=>{ e.preventDefault();
+    const body={bot_id:bot.id,welcome:$('#sw1').value,btn_text:$('#sw2').value,btn_url:$('#sw3').value,forward_url:$('#sw4').value.trim()}; if($('#sw5').value.trim()) body.forward_secret=$('#sw5').value.trim();
+    try { await api('POST','/api/bot-targets',body); toast('Saved'); closeSheet(); await refreshChans(); drawChannels(); }
+    catch(err){ $('#bserr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+async function setLanding(id,v){
+  try { await api('PATCH','/api/channels/'+id,{landing:v}); await refreshChans(); drawChannels(); toast(v==='button'?'Visitors now see a Join page with a button':'Visitors now go straight to Telegram'); } catch(err){ toast(err.message,false); }
+}
+function openChangePass(){
+  sheet('<h2>Change password</h2>', `<form id="cpf" style="display:flex;flex-direction:column;gap:14px">${pwField('cp1','Current password','current-password')}${pwField('cp2','New password','new-password')}<div id="cperr"></div><button class="btn primary lg wide" type="submit">Save</button></form>`);
+  $('#cpf').addEventListener('submit', async e=>{ e.preventDefault(); try { await api('POST','/api/password',{current:$('#cp1').value,password:$('#cp2').value}); closeSheet(); toast('Password changed'); } catch(err){ $('#cperr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+function manualAdd(){
+  const bots=(S.chans&&S.chans.bots.filter(b=>b.status==='active'))||[];
+  sheet('<h2>Add by username</h2>', `<p class="muted">For when your bot was made admin before you connected it here.</p>
+    <form id="mmf" style="display:flex;flex-direction:column;gap:16px"><div class="field"><label for="mb">Bot</label><select class="sel" id="mb">${bots.map(b=>`<option value="${b.id}">@${esc(b.username)}</option>`).join('')}</select></div>
+    <div class="field"><label for="mch">Channel @username or ID</label><input class="inp" id="mch" placeholder="@mychannel"><span class="hint">Private channel? Forward a post from it to @userinfobot to get the ID.</span></div><div id="mmerr"></div><button class="btn primary lg wide" type="submit">Add channel</button></form>`);
+  $('#mmf').addEventListener('submit', async e=>{ e.preventDefault();
+    try { await api('POST','/api/channels',{bot_id:$('#mb').value,chat:$('#mch').value}); closeSheet(); await refreshChans(); W.channel=S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); }
+    catch(err){ $('#mmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+
+/* ---------- wallet ---------- */
+/* Payment methods come from billing.pay_methods (admin-managed); old billing.methods is the fallback. */
+function payMethods(b){
+  b=b||{};
+  if (Array.isArray(b.pay_methods)) return b.pay_methods.filter(m=>m&&m.enabled!==false&&m.id);
+  const m=b.methods||{}, out=[];
+  if (m.paystack) out.push({id:'paystack',type:'paystack',label:'Paystack',note:'Card, bank transfer or USSD'});
+  if (m.flutterwave) out.push({id:'flutterwave',type:'flutterwave',label:'Flutterwave',note:'Card, mobile money (M-Pesa, MoMo) or bank'});
+  if (m.crypto) out.push({id:'crypto',type:'crypto',label:'USDT (TRC20)',note:'Tether on the TRC20 network',currency:'USDT',address:b.usdt_address||''});
+  return out;
+}
+const BANK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><path d="M3 9.5L12 4l9 5.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3.5 20h17"/></svg>';
+function mIcon(m){
+  const t=(m.type||m.provider||'').toLowerCase(), l=String(m.label||m.method_label||'').toLowerCase();
+  if (t==='paystack'||/paystack/.test(l)) return ['PS','#E9F7F2','#0B8DBF'];
+  if (t==='flutterwave'||/flutterwave/.test(l)) return ['FW','#FFF4E5','#D9751A'];
+  if (t==='crypto'||/usdt|tether/.test(l)) return ['₮','#E3F8F0','#0A8A63'];
+  if (/btc|bitcoin/.test(l)) return ['₿','#FFF1DE','#C96F00'];
+  if (/eth|ether/.test(l)) return ['Ξ','#EEF0FF','#4A5BD6'];
+  if (/bank|transfer|wire|iban/.test(l)) return [BANK_SVG,'#ECF0FC','#3D5AD6'];
+  return [esc((String(m.label||'?').match(/[A-Za-z0-9]/g)||['?']).slice(0,2).join('').toUpperCase()),'var(--brand-soft)','var(--brand-text)'];
+}
+const mBadge = m => { const [t,bg,fg]=mIcon(m); return `<span class="ml" style="background:${bg};color:${fg}">${t}</span>`; };
+function depLabel(d){ if (d.method_label||d.label) return d.method_label||d.label; const m=payMethods(S.bill).find(x=>x.id===d.method_id); if(m) return m.label; return ({paystack:'Paystack',flutterwave:'Flutterwave',crypto:'USDT',manual:'manual transfer'})[d.provider]||d.provider||'top-up'; }
+async function viewWalletV1(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view"><div id="bv"><div class="sk" style="height:220px;border-radius:24px"></div></div></div>`;
+  let b; try { b=await api('GET','/api/billing'); } catch { return; } S.bill=b;
+  if (S.page!=='wallet') return;
+  const M=b.month, over=Math.max(0,M.joins-M.included), avail=payMethods(b);
+  const hIcon=k=>({deposit:[I.plus,'var(--mint-soft)','var(--mint-ink)'],welcome:[I.sparkles,'var(--brand-soft)','var(--brand-text)'],refcredit:[I.earn,'var(--brand-soft)','var(--brand-text)'],plan:[I.cal,'var(--sunk)','var(--muted)'],joins:[I.join,'var(--sunk)','var(--muted)'],adjust:[I.bolt,'var(--amber-soft)','var(--amber-ink)']})[k]||[I.coin,'var(--sunk)','var(--muted)'];
+  $('#bv').outerHTML = `<div class="ph" style="padding-top:0"><div><div class="eyebrow">Wallet</div><h1>Top up once. Track all month.</h1><p>${pricingLine(b)}</p></div></div>
+    <section class="acct"><span class="al">Account balance</span><span class="big">${money(b.balance_cents)}</span>
+      <div class="row2"><span>${money(b.deposited_cents)} topped up</span>${b.credit_cents?`<span>${money(b.credit_cents)} credit</span>`:''}<span>${money(b.used_cents)} used</span></div>
+      ${b.billing_on&&b.tracking===false?`<div class="note"><b style="color:#fff">Tracking is paused.</b> ${b.state==='need_plan'?`Add at least ${money(M.base_cents)} to start this month.`:'Top up to start again.'} Your ads keep working meanwhile.</div>`:b.balance_cents<500&&b.billing_on?'<div class="note">Your balance is low. Top up so your joins keep being sent to your ad platforms.</div>':''}
+      ${b.free_joins_left>0?`<div class="note"><b style="color:#fff">🎁 ${fmt(b.free_joins_left)} of ${fmt(b.free_joins_gift||PRICE().free_joins)} free joins left.</b> No top-up needed yet. Your $${(M.base_cents/100).toFixed(0)} plan starts once you’ve used them.</div>`:''}
+      <div class="acts"><button class="btn primary lg" data-act="deposit">${I.plus} Add funds</button><button class="btn lg" data-act="chat">${I.chat} Billing question</button></div></section>
+    <div class="usage">
+      <section class="card"><small>Joins this month</small><b>${fmt(M.joins)}</b><div class="meter"><i style="width:${Math.min(100,pct(M.joins,M.included))}%"></i></div><span>${fmt(Math.min(M.joins,M.included))} of ${fmt(M.included)} included${over?` · ${fmt(over)} extra`:''}</span></section>
+      <section class="card"><small>This month so far</small><b>${money(M.cents)}</b><span>${M.plan_paid?`$${(M.base_cents/100).toFixed(0)} plan + ${fmt(over)} extra joins`:b.free_joins_left>0?'Free joins in use: no plan fee yet':'Your plan starts with your first ad click'}</span></section>
+      <section class="card"><small>Per extra join</small><b>${M.per_join_cents}¢</b><span>Same price in every country</span></section></div>
+    <div class="grid2" style="align-items:start">
+      <section class="card"><div class="card-h"><h2>Wallet activity</h2></div><div style="padding-bottom:6px">${b.history&&b.history.length?b.history.map(h=>{ const [ic,bg,fg]=hIcon(h.kind); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg}">${ic}</span><span><b>${esc(h.note||h.kind)}</b><small>${when(h.created_at)}</small></span><span class="amt" style="color:${h.amount_cents<0?'var(--muted)':'var(--mint-ink)'}">${h.amount_cents<0?'':'+'}${money(h.amount_cents)}</span></div>`; }).join(''):`<div class="empty"><p>Nothing yet.</p></div>`}</div></section>
+      <div class="stack">
+        <section class="card"><div class="card-h"><h2>Pay with</h2></div><div class="card-b methods">${avail.length?avail.map(m=>`<div class="method" style="cursor:default">${mBadge(m)}<span><b>${esc(m.label)}</b><small>${esc(m.note||'')}</small></span></div>`).join(''):'<div class="note">Payments aren’t switched on yet. Message support to top up.</div>'}</div></section>
+        <section class="card"><div class="card-h"><h2>Top-ups</h2></div><div style="padding-bottom:6px">${(b.deposits||[]).length?b.deposits.map(d=>{ const [t,bg,fg]=mIcon({type:d.provider,label:depLabel(d)}); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg};font-weight:800;font-size:12px">${t}</span><span><b>${money(d.amount_cents)} via ${esc(depLabel(d))}</b><small>${when(d.created_at)}</small></span><span class="chip ${d.status==='paid'?'g':d.status==='rejected'?'r':'y'}">${d.status==='paid'?'Added':d.status==='rejected'?'Not received':d.status==='awaiting'?'Not sent yet':'Confirming'}</span></div>`; }).join(''):`<div class="empty" style="padding:28px 18px"><span class="ei">${I.wallet}</span><p>Your top-ups will show up here.</p></div>`}</div></section></div></div>`;
+  const ref=new URLSearchParams(location.search).get('ref');
+  if (ref && !DEMO) { try { const v=await api('GET','/api/billing/verify?ref='+encodeURIComponent(ref)); if(v.status==='paid'){ toast('Payment received'); confetti(); history.replaceState(null,'',location.pathname+'#wallet'); viewWallet(); refreshBal(); } } catch{} }
+}
+async function openDeposit(){
+  const b=S.bill||{min_deposit_cents:1000}; const list=await loadMethods();
+  S.dep={amt:S.dep&&S.dep.amt||100, mid:(S.dep&&list.some(m=>m.id===S.dep.mid)&&S.dep.mid)||(list[0]&&list[0].id)||'', step:1, res:null, list, promo:S.dep&&S.dep.promo||'', promoPct:S.dep&&S.dep.promoPct||0};
+  drawDeposit();
+}
+const depHint = a => { const P=PRICE(), base=P.base_cents/100, pj=P.per_join_cents/100; if(!(a>0)) return 'Enter an amount.'; if(!pj) return `$${a} added to your wallet.`; return `$${a} ≈ ${fmt(Math.max(0,(a-base)/pj)+Math.min(P.included,base?a/base*P.included:P.included))} tracked joins on a fresh month, or about ${fmt(a/pj)} extra joins on top of your plan.`; };
+function pricingLine(b){ const P=PRICE(), M=(b&&b.month)||{}, base=M.base_cents??P.base_cents, inc=M.included??P.included, pj=M.per_join_cents??P.per_join_cents, fj=(b&&b.free_joins_gift)||P.free_joins;
+  return `${fj?`Your first ${fmt(fj)} tracked joins are free. Then `:''}${centsTxt(base)} a month includes ${fmt(inc)} tracked joins, and ${pj}¢ per extra join. Organic joins and deposit events are always free.`; }
+const isRedirect = m => m && (m.type==='paystack'||m.type==='stripe'||m.type==='flutterwave');
+function drawDeposit(){
+  const D=S.dep, b=S.bill||{}; if(!D) return;
+  const m=D.list.find(x=>x.id===D.mid);
+  if (D.step===2 && D.res){ const r=D.res, crypto=!!r.address, cur=r.currency||'USD', fields=r.fields||[];
+    let host=''; try{ if(r.explorer) host=new URL(r.explorer.replace('{tx}','x')).host; }catch{}
+    sheet(`<h2>${crypto?tt('dep.send','Send {name}',{name:esc(r.label)}):tt('dep.payby','Pay by {name}',{name:esc(r.label)})}<small>${tt('dep.step2','Step 2 of 2')}</small></h2>`, `<div class="stepper"><span><i>✓</i>${tt('dep.amount','Amount')}</span><span class="ln"></span><span class="on"><i>2</i>${tt('dep.sendconfirm','Send & confirm')}</span></div>
+      <div class="usdt-pay"><span class="send">${crypto?tt('dep.sendexact','Send exactly'):tt('dep.transferexact','Transfer exactly')}</span><span class="amt">${esc(r.pay_amount)}<small>${esc(cur)}</small></span><button class="btn sm" data-act="copy" data-v="${esc(r.pay_amount)}">${I.copy} ${tt('dep.copyamt','Copy amount')}</button>
+        ${crypto?`<span class="chip v">${I.globe} ${esc(r.network||r.label)}</span><span class="send" style="margin-top:4px">${tt('dep.toaddr','to this address')}</span>
+          <div class="qrbox">${qrSvg(r.address,tt('dep.qr','QR code of the wallet address'))}</div>
+          <div class="codebox"><code>${esc(r.address)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.address)}">${I.copy} ${tt('common.copy','Copy')}</button></div>`:''}
+        ${!crypto&&r.reference?`<span class="send" style="margin-top:4px">${tt('dep.withref','with this payment reference')}</span><div class="codebox"><code>${esc(r.reference)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.reference)}">${I.copy} ${tt('common.copy','Copy')}</button></div>`:''}</div>
+      ${fields.length?`<div class="pfields">${fields.map(f=>`<div class="pf"><small>${esc(f.label)}</small><b class="mono">${esc(f.value)}</b><button class="btn sm ghost" data-act="copy" data-v="${esc(f.value)}" aria-label="${tt('common.copy','Copy')} ${esc(f.label)}">${I.copy}</button></div>`).join('')}</div>`:''}
+      ${r.instructions?`<div class="instr"><div class="instr-h"><b>${crypto?tt('dep.before','Before you send'):tt('dep.details','Payment details')}</b><button class="btn sm" data-act="copy" data-v="${esc(r.instructions)}">${I.copy} ${tt('common.copy','Copy')}</button></div><div class="instr-b">${esc(r.instructions)}</div></div>`:''}
+      <div class="note">${crypto?`<b>${tt('dep.exact.c','Send the exact amount, cents included.')}</b> ${tt('dep.exact.c2','That’s how we find your transfer. Use only the network shown, or the funds are lost. Your wallet’s fee is on top.')}${host?` We check it on ${esc(host)}.`:''}`:`<b>${tt('dep.exact.b','Transfer the exact amount and add the reference.')}</b> ${tt('dep.exact.b2','That’s how we match your payment. Bank transfers can take a few hours to arrive.')}`}</div>
+      <div class="field"><label for="dtx">${crypto?tt('dep.txid','Transaction hash (TXID)'):tt('dep.bankref','Bank reference or transaction ID')}</label><input class="inp mono" id="dtx" autocomplete="off" spellcheck="false" placeholder="${esc(tt('dep.paste','Paste it after you send'))}"><span class="hint">${crypto?tt('dep.txid.h','Your wallet shows it after sending.'):tt('dep.bankref.h','It’s on your bank receipt or in your banking app.')}</span></div>
+      <div id="derr"></div><button class="btn primary lg wide" data-act="usdt-submit">${tt('dep.sent','I’ve sent it')}</button><button class="btn ghost wide" data-act="usdt-back">${I.chevl} ${tt('dep.change','Change amount or method')}</button>`);
+    return; }
+  const amt=D.amt, two=m&&!isRedirect(m);
+  sheet(`<h2>${tt('credits.buy','Buy credits')}${two?`<small>${tt('dep.step1','Step 1 of 2')}</small>`:''}</h2>`, `<div class="field"><span class="lbl">${tt('dep.amtusd','Amount (USD)')}</span><div class="amts">${[100,500,1000,5000].map(v=>{ const bo=bonusFor(v*100,b); return `<button type="button" data-act="amt" data-v="${v}" aria-pressed="${amt===v}">$${fmt(v)}${bo.pct?`<small class="amt-b">+${bo.pct}%</small>`:''}</button>`; }).join('')}</div>
+      <input class="inp num" id="damt" type="number" min="${m&&m.min_usd||(b.min_deposit_cents||1000)/100}" ${m&&m.max_usd?`max="${m.max_usd}"`:''} step="1" value="${amt}" aria-label="${esc(tt('dep.custom','Custom amount'))}"><div id="dsum">${buySummary(amt)}</div><span class="hint" id="dhint">${depHint(amt)}</span></div>
+    ${FEAT('credits_bonus')?`<div class="field"><label for="dpromo">Promo code <span class="faint" style="font-weight:500">(optional)</span></label><div class="row-in"><input class="inp" id="dpromo" value="${esc(D.promo||'')}" placeholder="LAUNCH10" autocapitalize="characters" style="text-transform:uppercase"><button type="button" class="btn" data-act="promo-apply">${D.promo?'Update':'Apply'}</button></div>${D.promoMsg?`<span class="hint" style="color:${D.promo?'var(--mint-ink)':'var(--coral-ink)'}">${esc(D.promoMsg)}</span>`:''}</div>`:''}
+    <div class="field"><span class="lbl">${tt('dep.paywith','Pay with')}</span><div class="pms">${!D.list.length?`<div class="note">${tt('dep.none','No payment methods are switched on for your country yet. Message support and we’ll help you top up.')}</div>`:''}
+      ${D.list.map(x=>pmCard(x,{pick:true,on:D.mid===x.id})).join('')}</div>${countryLine()}</div>
+    <div id="dconv">${m?convBox(m,amt):''}</div>
+    <div id="derr"></div>${m?`<button class="btn primary lg wide" data-act="pay" id="dpay">${payLabel(m,amt)}</button>`:''}`);
+  const a=$('#damt'); a && a.addEventListener('input',()=>{ const v=+a.value||0; D.amt=v||D.amt; const h=$('#dhint'); if(h) h.textContent=depHint(v); const sm=$('#dsum'); if(sm) sm.innerHTML=buySummary(v); const cv=$('#dconv'); if(cv&&m) cv.innerHTML=convBox(m,v); const p=$('#dpay'); if(p&&m) p.innerHTML=payLabel(m,v); $$('[data-act="amt"]').forEach(x=>x.setAttribute('aria-pressed',+x.dataset.v===v)); });
+}
+async function depPay(btn){
+  const D=S.dep, m=D.list.find(x=>x.id===D.mid); if(!m) return; D.amt=+($('#damt').value||D.amt);
+  const lim=limitErr(m,D.amt); if(lim){ $('#derr').innerHTML=`<div class="err">${esc(lim)}</div>`; return; }
+  btn.disabled=true; btn.innerHTML=`<span class="spin"></span> ${tt('dep.wait','One moment')}`;
+  try {
+    if (isRedirect(m) && m.type!=='flutterwave'){
+      const r=await api('POST','/api/billing/topup',{method_id:m.id,usd:D.amt,...(D.promo?{promo:D.promo}:{})});
+      if (r.redirect_url){ btn.innerHTML=`<span class="spin"></span> ${tt('dep.opening','Opening {name}…',{name:esc(m.label)})}`; if(DEMO) toast(tt('dep.demo','Demo: skipping the checkout page')); setTimeout(()=>{ location.href=r.redirect_url; }, DEMO?700:0); return; }
+      throw new Error(r.message||tt('dep.nourl','We couldn’t open the payment page. Try again.'));
+    }
+    const body = isRedirect(m) ? {provider:m.type,amount:D.amt} : m.type==='crypto' ? {provider:'crypto',amount:D.amt} : {provider:'manual',method_id:m.id,amount:D.amt};
+    if (D.promo) body.promo=D.promo;
+    const r=await api('POST','/api/billing/deposit',body);
+    if (r.url){ location.href=r.url; return; }
+    if (r.manual||r.crypto){ D.res={...r, legacy:!!r.crypto&&!r.manual, label:r.label||m.label, currency:r.currency||m.currency||(r.crypto?'USDT':'USD'), address:r.address??m.address??'', instructions:r.instructions??m.instructions??'', fields:r.fields||m.fields||[], explorer:m.explorer||'', network:r.network||m.network||''}; D.step=2; drawDeposit(); return; }
+    closeSheet(); toast(r.message||'Funds added'); if(!r.pending) confetti(); if(S.page==='wallet') viewWallet(); refreshBal(); }
+  catch(err){ $('#derr').innerHTML=`<div class="err">${esc(err.message)}</div>`; btn.disabled=false; btn.innerHTML=tt('dep.retry','Try again'); }
+}
+async function usdtSubmit(btn){
+  const D=S.dep, tx=$('#dtx').value.trim(); if(!tx){ $('#derr').innerHTML=`<div class="err">Paste the ${D.res.address?'transaction hash':'bank reference'} first.</div>`; return; }
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Submitting';
+  try { const r=await api('POST','/api/billing/deposit',{provider:D.res.legacy?'crypto':'manual',reference:D.res.reference,tx});
+    closeSheet(); S.dep=null; toast(r.message||'Got it. We’ll confirm your transfer shortly.'); if(S.page==='wallet') viewWallet(); refreshBal(); }
+  catch(err){ $('#derr').innerHTML=`<div class="err">${esc(err.message)}</div>`; btn.disabled=false; btn.textContent='I’ve sent it'; }
+}
+
+/* ---------- earn ---------- */
+let moneyAnim=null;
+function moneyRain(cv){
+  cancelAnimationFrame(moneyAnim); if (!cv || reduced) return;
+  const ctx=cv.getContext('2d'), dpr=Math.min(2,devicePixelRatio||1);
+  const size=()=>{ const r=cv.getBoundingClientRect(); cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); return r; };
+  let R=size(); const items=[];
+  const spawn=(y)=>items.push({ x:Math.random()*R.width, y:y??R.height+30, vy:.35+Math.random()*.6, sway:Math.random()*6.28, rot:Math.random()*6.28, vr:(Math.random()-.5)*.03, coin:Math.random()<.55, s:.7+Math.random()*.6, a:.3+Math.random()*.45 });
+  for(let i=0;i<18;i++) spawn(Math.random()*R.height);
+  const bill=(it)=>{ ctx.fillStyle='#8CEBC4'; ctx.strokeStyle='rgba(255,255,255,.65)'; ctx.lineWidth=1.2; const w=34*it.s,h=18*it.s; ctx.beginPath(); ctx.roundRect?ctx.roundRect(-w/2,-h/2,w,h,3):ctx.rect(-w/2,-h/2,w,h); ctx.fill(); ctx.stroke(); ctx.fillStyle='#0A6E50'; ctx.font=`800 ${11*it.s}px Geist,sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('$',0,.5); };
+  const coin=(it)=>{ const r=9*it.s; const g=ctx.createLinearGradient(-r,-r,r,r); g.addColorStop(0,'#FFE9A0'); g.addColorStop(1,'#E2A420'); ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(0,0,r*Math.abs(Math.cos(it.rot*2))+r*.25,r,0,0,6.283); ctx.fill(); };
+  let last=0;
+  (function f(t){ if(!cv.isConnected) return; if(t-last>16){ last=t; ctx.clearRect(0,0,R.width,R.height);
+    for(let i=items.length-1;i>=0;i--){ const it=items[i]; it.y-=it.vy; it.sway+=.02; it.rot+=it.vr; const x=it.x+Math.sin(it.sway)*14;
+      ctx.save(); ctx.globalAlpha=it.a*Math.min(1,(it.y+20)/60); ctx.translate(x,it.y); ctx.rotate(it.coin?0:it.rot); it.coin?coin(it):bill(it); ctx.restore();
+      if(it.y<-30){ items.splice(i,1); spawn(); } } }
+    moneyAnim=requestAnimationFrame(f); })(0);
+  addEventListener('resize',()=>{ if(cv.isConnected) R=size(); },{once:true});
+}
+function countMoney(el,to){ const f2=v=>(v/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); if(reduced){ el.textContent=f2(to); return; } const t0=performance.now(); const f=n=>{ const p=Math.min(1,(n-t0)/1400), e=1-Math.pow(1-p,4); el.textContent=f2(to*e); if(p<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+async function viewEarn(){
+  S.redraw=[];
+  $('#view').innerHTML = `<div class="view"><div id="iv"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
+  let r; try { r=await api('GET','/api/referrals'); } catch { return; }
+  if (S.page!=='earn') return; S.ref=r;
+  if (vooRefs()) return viewEarnVoo(r);
+  const wd=r.withdrawable_cents??r.balance_cents, settling=Math.max(0,r.balance_cents-wd), can=wd>=r.withdraw_min_cents, prog=Math.min(100,wd/r.withdraw_min_cents*100);
+  const ti=Math.max(0,r.tiers.findIndex(t=>t.name===r.tier));
+  const share='Track who joins your Telegram from your ads, and who deposits. Try Joinvoo: '+r.link;
+  $('#iv').outerHTML = `<div class="ph" style="padding-top:0"><div><div class="eyebrow">Refer &amp; earn</div><h1>Get paid when your friends grow.</h1><p>Earn ${Math.round(r.tiers[0].rate*100)}–${Math.round(r.tiers[r.tiers.length-1].rate*100)}% of what the people you invite spend on Joinvoo, for as long as they use it.</p></div></div>
+    <section class="wallet"><canvas id="money"></canvas>
+      <div class="w-top"><span>Your referral balance</span><span class="tierpill">${I.bolt.replace('<svg','<svg style="width:13px;height:13px"')} ${esc(r.tier)} · ${Math.round(r.rate*100)}%</span></div>
+      <div class="w-bal"><small>$</small><span id="bal">0.00</span></div>
+      <div class="w-split"><div class="wbx ready"><span class="wh"><span class="wi">${I.check}</span><small>${FEAT('withdrawals')?tt('earn.ready','Ready to withdraw'):tt('earn.ready.use','Ready to use')}</small></span><b>${money(wd)}</b></div><div class="wbx settle"><span class="wh"><span class="wi">${I.clock}</span><small>${tt('earn.settling','Settling · {n} days',{n:r.hold_days||30})}</small></span><b>${money(settling)}</b></div><div class="wbx earned"><span class="wh"><span class="wi">${I.sparkles}</span><small>${tt('earn.alltime','Earned all time')}</small></span><b>${money(r.earned_cents)}</b></div></div>
+      <div class="w-prog"><i id="wprog" style="width:0%"></i></div>
+      <div class="w-lbl"><span>${can?'Ready to withdraw':`${money(r.withdraw_min_cents-wd)} more to unlock withdrawals`}</span><span>${money(r.withdraw_min_cents)}</span></div>
+      <div class="w-act">${!FEAT('withdrawals')?'':can?`<button class="btn light lg" data-act="withdraw">Withdraw ${money(wd)}</button>`:`<div class="lockbox"><span class="lk">${I.lock}</span><span><b>Withdrawals unlock at ${money(r.withdraw_min_cents)}</b><small>Earnings settle after ${r.hold_days||30} days · USDT or BTC</small></span></div>`}
+        ${r.balance_cents>0?'<button class="btn glass lg" data-act="use-credit">Use it on my bill</button>':''}</div>
+      <small class="cr-note">${I.lock} Only referral earnings can be withdrawn. Credits you buy (and bonus credits) can’t.</small>
+    </section>
+    <section class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px;font-weight:650">Your referral link</b><span class="chip v">They sign up, you earn on every top-up</span></div>
+      <div class="codebox"><code>${esc(r.link)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.link)}">${I.copy} Copy</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">WhatsApp</a><a class="btn sm" href="https://t.me/share/url?url=${encodeURIComponent(r.link)}&text=${encodeURIComponent('Track who joins your Telegram from your ads')}" target="_blank" rel="noopener">${pm('tg')} Telegram</a><a class="btn sm" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">X</a></div></section>
+    <div class="kpis">${[['Signed up',fmt(r.invited),'With your link'],['Paying referrals',fmt(r.active),'Active = they’ve paid'],['They spent',money(r.month_spend_cents),'This month'],['You earned',money(r.month_earned_cents),'This month']].slice(0,3).map(([l,v,s])=>`<section class="card kpi"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('')}</div>
+    <div class="tiers">${r.tiers.map((t,i)=>`<section class="card tier ${i===ti?'on':i<ti?'done':''}"><b>${Math.round(t.rate*100)}%</b><span>${t.name}</span><small>${t.min?`${t.min}+ paying referrals`:'From your first referral'}</small></section>`).join('')}</div>
+    ${r.next_tier?`<section class="card nudge"><span class="coin">${I.bolt.replace('<svg','<svg style="width:16px;height:16px"')}</span><span><b>${r.next_tier.need} more paying referral${r.next_tier.need===1?'':'s'} to reach ${Math.round(r.next_tier.rate*100)}%</b><br>A referral counts once they’ve topped up their wallet.</span></section>`:''}
+    <div class="how4"><section class="card"><span class="n">1</span><b>Share your link</b><small>Media buyers, channel owners, friends.</small></section><section class="card"><span class="n">2</span><b>They top up</b><small>They run ads and pay for Joinvoo from their wallet.</small></section><section class="card"><span class="n">3</span><b>You earn 10–30%</b><small>Of what they spend, for as long as they use Joinvoo.</small></section><section class="card"><span class="n">4</span><b>Cash out or spend</b><small>Withdraw in USDT or BTC from ${money0(r.withdraw_min_cents)}, or use it on your bill.</small></section></div>
+    <section class="card"><div class="card-h"><h2>Earnings by person</h2></div><div style="padding-bottom:6px">${r.people.length ? r.people.map(x=>`<div class="lrow"><span class="coin">$</span><span><b>${esc(x.email)}</b><small>${x.active||x.spend_cents?`Spent ${money(x.spend_cents)} · joined ${ago(x.joined_at)}`:`Not paying yet · joined ${ago(x.joined_at)}`}</small></span><span class="amt" style="color:${x.earned_cents?'var(--mint-ink)':'var(--faint)'}">${x.earned_cents?'+'+money(x.earned_cents):'—'}</span></div>`).join('') : `<div class="empty"><span class="ei">${I.earn}</span><h3>Your first payout starts here</h3><p>Share your link. When the people you invite start paying for Joinvoo, your earnings show up here.</p></div>`}</div></section>
+    ${r.payouts&&r.payouts.length?`<section class="card"><div class="card-h"><h2>Withdrawals</h2></div><div style="padding-bottom:6px">${r.payouts.map(x=>`<div class="lrow"><span class="li" style="background:var(--brand-soft);color:var(--brand-text)">${I.download}</span><span><b>${money(x.amount_cents)} in ${x.method==='btc'?'BTC':'USDT'}</b><small>${ago(x.created_at)}</small></span><span class="chip ${x.status==='paid'?'g':x.status==='rejected'?'r':'y'}">${x.status==='paid'?'Paid':x.status==='rejected'?'Returned':'Processing'}</span></div>`).join('')}</div></section>`:''}`;
+  countMoney($('#bal'), r.balance_cents);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ const w=$('#wprog'); if(w) w.style.width=prog+'%'; }));
+  moneyRain($('#money'));
+}
+function openWithdraw(){
+  const r=S.ref; if(!r) return; const amt=r.withdrawable_cents??r.balance_cents; S.wm=S.wm||'usdt'; const m=S.wm;
+  sheet(`<h2>Withdraw ${money(amt)}</h2>`, `<p class="muted">We send what’s ready to withdraw, in crypto. Payouts usually land within 24 hours.</p>
+    <div class="plats" style="grid-template-columns:1fr 1fr"><button data-act="wm" data-m="usdt" aria-pressed="${m==='usdt'}"><span class="method" style="padding:0;border:0;box-shadow:none;background:none"><span class="ml" style="background:#E3F8F0;color:#0A8A63">₮</span></span>USDT<small>TRC20 network</small></button><button data-act="wm" data-m="btc" aria-pressed="${m==='btc'}"><span class="method" style="padding:0;border:0;box-shadow:none;background:none"><span class="ml" style="background:#FFF4E0;color:#B66A00">₿</span></span>Bitcoin<small>BTC network</small></button></div>
+    <form id="wf" style="display:flex;flex-direction:column;gap:14px"><div class="field"><label for="wd">${m==='usdt'?'Your USDT (TRC20) wallet address':'Your Bitcoin (BTC) wallet address'}</label><input class="inp mono" id="wd" autocomplete="off" spellcheck="false" placeholder="${m==='usdt'?'T…':'bc1…'}"><span class="hint">${m==='usdt'?'Only TRC20. Sending to another network loses the funds.':'Only the Bitcoin network.'} We pay to exactly what you enter.</span></div>
+    <div id="werr"></div><button class="btn primary lg wide" type="submit">Request ${money(amt)}</button></form>`);
+  $('#wf').addEventListener('submit', async e=>{ e.preventDefault(); try { await api('POST','/api/referrals/withdraw',{method:S.wm,details:$('#wd').value.trim()}); closeSheet(); toast('Withdrawal requested'); confetti(); viewEarn(); } catch(err){ $('#werr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+
+/* ---------- help ---------- */
+function guideVideo(){
+  const card=$('#vidcard'), fb=$('#vidfb'), v=$('#gvid'); if(!card||!v) return;
+  let done=false; const fail=()=>{ if(done) return; done=true; card.hidden=true; if(fb) fb.hidden=false; };
+  v.addEventListener('error',fail); const src=v.querySelector('source'); src&&src.addEventListener('error',fail);
+  // preload is "none", so check the file is really there before showing the player
+  fetch(src.getAttribute('src'),{method:'HEAD'}).then(r=>{ if(!r.ok) fail(); }).catch(fail);
+}
+function viewHelp(){
+  S.redraw=[]; setTimeout(guideVideo,0);
+  $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow">Help &amp; Support</div><h1>How can we help?</h1><p>Real people, inside your dashboard. Most setups are done in about 10 minutes.</p></div></div>
+  <section class="card vidcard" id="vidcard"><div class="phone"><video id="gvid" controls playsinline preload="none" poster="${DEMO?'media/joinvoo-guide.jpg':'/media/joinvoo-guide.jpg'}" aria-label="Joinvoo setup guide video"><source src="${DEMO?'media/joinvoo-guide.mp4':'/media/joinvoo-guide.mp4'}" type="video/mp4"></video></div>
+    <div class="vid-copy"><span class="vtag">${I.sparkles} Video · about 3 minutes</span><h2>Watch the setup guide</h2><p>See the whole setup on a phone, start to finish. Pause any time and follow along.</p>
+      <ol class="vlist"><li><span class="n">1</span>Make your bot in @BotFather</li><li><span class="n">2</span>Add it to your channel, or connect your bot</li><li><span class="n">3</span>Connect Meta, TikTok or Snapchat</li><li><span class="n">4</span>Put the link in your ad and test it on your phone</li></ol>
+      <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Prefer reading? Open the text guide ${I.ext}</a></div></section>
+  <a class="card hcard vidfb" id="vidfb" href="${GUIDE}" target="_blank" rel="noopener" hidden><span class="hi" style="color:var(--brand-text)">${I.book}</span><span><b>Read the setup guide</b><small>The video isn’t available right now. The step-by-step guide covers the same setup.</small></span><span class="go">${I.ext}</span></a>
+  ${enterpriseCard()}
+  <div class="help-top">
+    <button class="card hcard" data-act="chat">${faceStack(3,'hfaces')}<span><b>Chat with support</b><small id="help-online">${(CH.online?'<span style="color:var(--mint-ink);font-weight:700">● Online now.</span> ':'')+esc(replyTime())+'.'}</small></span><span class="go">${I.arrow}</span></button>
+    <a class="card hcard" href="${GUIDE}" target="_blank" rel="noopener"><span class="hi" style="background:var(--mint-soft);color:var(--mint-ink)">${I.book}</span><span><b>Step-by-step setup guide</b><small>BotFather, adding the bot, Meta, TikTok and Snapchat, putting the link in your ads, testing with your phone.</small></span><span class="go">${I.ext}</span></a>
+  </div>
+  <section class="card faq"><div class="card-h" style="padding-bottom:6px"><h2>Frequently asked</h2></div>
+    <details open><summary>How does Joinvoo know who came from my ad?</summary><p>Your link opens a quick page that saves the ad click, then hands the visitor their own single-use Telegram invite. When someone joins with that invite, Joinvoo knows exactly which click it was and sends the join to Meta, TikTok or Snapchat.</p></details>
+    <details><summary>Which ad platforms work?</summary><p>Meta (Facebook and Instagram), TikTok and Snapchat. Connect one or all of them on the Channels page; each join is sent to every platform you connected, server-side. Google Ads is coming soon.</p></details>
+    <details><summary>How do I track deposits (FTDs)?</summary><p>Open Conversions and copy your postback URL. Give it to your affiliate network, tracker (Keitaro, Binom), CRM or your own bot, with the person’s Telegram ID in <span class="mono">sub1</span>. Each registration and first deposit is matched to the person who joined and sent to your ads as a registration or purchase with its value. You can also mark someone as deposited from their profile in People.</p><div class="codeblock">${hlUrl('https://joinvoo.com/pb/your-key?sub1={telegram_id}&status=ftd&payout={amount}&currency=USD&txid={id}')}</div></details>
+    <details><summary>How do I see which ad brought each person?</summary><p>Add your platform’s macros to the end of your link. Each person’s page then shows the campaign and ad, and the Campaigns page groups them.</p><div class="codeblock">${hlUrl('?utm_source=meta&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}')}<br>${hlUrl('?utm_source=tiktok&utm_campaign=__CAMPAIGN_NAME__&utm_content=__CID_NAME__')}</div></details>
+    <details><summary>How does Compare work?</summary><p>Compare puts your last 6 or 12 months side by side for joins, join rate, FTDs, revenue, clicks or leaves. The current month is shown as it stands, with a projection at today’s pace, so you can tell early if you’re ahead of last month.</p></details>
+    <details><summary>What does “Organic” mean?</summary><p>They joined without your link, for example from a shared link or search. They count in your totals, but nothing is sent to your ad platforms because there’s no ad click to match. Organic joins are free.</p></details>
+    <details><summary>Can I track my bot’s subscribers?</summary><p>Yes. In setup, choose “Bot subscribers”. Your ad link opens your bot, and when someone presses Start, Joinvoo matches them to the ad. If they block the bot later, they show as “Left”. It works with any bot: a new one, one built by a developer, or one made in a bot builder.</p></details>
+    <details><summary>Which bot setup should I pick?</summary><p><b>New bot, or only used for this</b> (easiest): paste the token and Joinvoo runs the bot for you, with a welcome message and a button.</p><p><b>Let Joinvoo pass messages on</b>: your bot already runs on its own server. Joinvoo receives its messages, notes who pressed Start, and passes every message on to your server unchanged. Needs the token and your server’s address. Not for bots that fetch their own messages (“polling”).</p><p><b>Keep my token private (no token)</b>: your bot, or your bot builder, makes one small web request to Joinvoo when someone presses Start. Works with any server or builder, and your token never leaves you.</p></details>
+    <details><summary>Can it handle a lot of traffic?</summary><p>Yes. Invite links are made ahead of time, so nobody waits. If they ever run out, people still get into your channel through a backup link; only those joins aren’t matched. For very big campaigns, add a second bot to the same channel.</p></details>
+    <details><summary>Why does my ad platform show fewer events than Joinvoo?</summary><p>Ad platforms only count people they can match, and they remove duplicates. That’s normal. Check the match quality in Meta Events Manager, TikTok Events or Snap Events Manager.</p></details>
+    <details><summary>How much does it cost?</summary><p>${creditsPricing(S.bill)} 1 credit = $0.01. Buy credits once and they cover the month.</p></details>
+    <details><summary>What are credits, bonus credits and ranks?</summary><p>Credits pay for tracking: 1 credit = $0.01. Bigger top-ups add bonus credits, and promo codes can add more. Bonus credits are spent like normal credits. Your rank (Bronze, Silver, Gold, Platinum, Diamond) grows with your lifetime top-ups and unlocks perks like a discount on extra joins. <b>Credits can’t be withdrawn. Only referral earnings can.</b></p></details>
+    <details><summary>What is request-to-join mode?</summary><p>For channels, turn on “Request-to-join + welcome message”. People tap Request to join, the bot lets them in instantly and sends your welcome message with your offer link. The link carries their Telegram ID (<span class="mono">{tg_id}</span>), so your affiliate program reports each deposit for that exact person and ad.</p></details>
+    <details><summary>How do integrations work?</summary><p>Open Conversions → Integrations, pick your program or tracker and copy the ready postback URL. Some programs show “Check macros with your manager”: the link works, but confirm the macro names with them. Not listed? Use Custom postback.</p></details>
+    <details><summary>How do I see cost per FTD and ROAS?</summary><p>On Campaigns, tap <b>Add spend</b> and enter what you spent per day and campaign, or paste a CSV from your ads manager. Joinvoo then shows spend, cost per join, cost per first deposit and ROAS next to each campaign.</p></details>
+    <details><summary>What are “fake clicks filtered”?</summary><p>Clicks from bots, data centers, headless browsers or rapid repeats are flagged and left out of your join rate. Real people who join are never removed.</p></details>
+    <details><summary>What happens when my wallet runs out?</summary><p>Your ads keep working and people still get into your channel. Joinvoo just stops tracking and sending events until you top up. A banner at the top tells you when this happens.</p></details>
+    <details><summary>An ad review doesn’t like my link</summary><p>On the Channels page, switch “When someone taps your ad” to <b>Join page</b>. Visitors then see a simple page with a Join button instead of being sent straight to Telegram.</p></details>
+    <details><summary>The bot says it needs permission</summary><p>In Telegram, open your channel → Administrators → your bot, and turn on “Invite users via link”.</p></details>
+  </section>
+  <section class="card" style="padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span class="ava">${esc(((S.me.name||S.me.email||'?')[0]||'?').toUpperCase())}</span><div style="min-width:0"><div class="faint" style="font-size:12.5px">Signed in as</div><b style="font-weight:600;overflow-wrap:anywhere">${esc(S.me.email)}</b></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="add-channel">Run setup again</button>${DEMO?'':'<button class="btn sm" data-act="change-pass">Change password</button><button class="btn sm ghost" data-act="logout">Log out</button>'}${S.me.admin?`<a class="btn sm dark" href="${DEMO?'admin.html':'/admin'}">Admin panel</a>`:''}</div></section>
+  <p style="text-align:center;color:var(--faint);font-size:12.5px;margin:4px 0 0"><a href="${HOME_LINK}terms" style="color:inherit">Terms</a> · <a href="${HOME_LINK}privacy" style="color:inherit">Privacy</a> · By Zedapex company</p></div>`;
+}
+
+/* ---------- support chat ---------- */
+const CH = { open:false, msgs:[], last:0, online:false, t:null, seen:store.get('seen_admin',0), pending:[], typing:false, err:'', team:null };
+/* Team faces: real photo when the admin set one, else a simple illustrated face (never a stock photo). */
+const hashN = s => { let h=7; for (const c of String(s||'')) h=(h*31+c.charCodeAt(0))>>>0; return h; };
+function faceSvg(name){
+  const h=hashN(name), SK=['#F2C9A6','#E2AC80','#C68A63','#A56A47','#7B4B31'], HR=['#2A1B12','#5B3A21','#17161D','#8C5B2C','#B98A4E'], SH=['#5b3df5','#2e9d6a','#e08a2b','#3d5ad6','#c2463f','#8a3fd1'], BG=['#E9E4FF','#DDF3E8','#FDEBD8','#E3ECFF','#FBE3EC'];
+  const sk=SK[h%5], hr=HR[(h>>3)%5], st=(h>>6)%3, sh=SH[(h>>9)%6], bg=BG[(h>>12)%5];
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${bg}"/>${st===1?`<path d="M11.3 20c0-7.6 3.9-12 8.7-12s8.7 4.4 8.7 12v7.5H11.3z" fill="${hr}"/>`:''}<path d="M7 40c1.2-7.5 6.4-10.5 13-10.5S31.8 32.5 33 40z" fill="${sh}"/><rect x="17" y="24" width="6" height="7" rx="2.5" fill="${sk}"/><circle cx="20" cy="18.5" r="8" fill="${sk}"/><path d="M11.8 18.5c-.4-6.4 3.6-10 8.2-10s8.6 3.6 8.2 10c-1.6-3.2-4.6-4.6-8.2-4.6s-6.6 1.4-8.2 4.6z" fill="${hr}"/>${st===2?`<circle cx="20" cy="8.6" r="3.6" fill="${hr}"/>`:''}<circle cx="17" cy="19.4" r="1" fill="#2b1810"/><circle cx="23" cy="19.4" r="1" fill="#2b1810"/><path d="M17.4 22.6q2.6 2 5.2 0" stroke="#7a3b22" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;
+}
+const face = (p,cls='') => { p=p||{}; return `<span class="face ${cls}" title="${esc(p.name||'')}">${faceSvg(p.name||'Joinvoo')}${p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`; };
+const team = () => { const t=(CH.team&&CH.team.length?CH.team:(S.cfg&&S.cfg.support&&S.cfg.support.team)||[]).filter(x=>x&&x.name); return t.length?t:[{name:'Joinvoo',role:'Support team',photo:''}]; };
+const supCfg = k => CH[k] || (S.cfg&&S.cfg.support&&S.cfg.support[k]) || '';
+const replyTime = () => supCfg('reply_time') || (CH.online?'Usually replies in a few minutes':'Usually replies within a few hours');
+const faceStack = (n=3,cls='') => `<span class="fstack ${cls}">${team().slice(0,n).map(p=>face(p)).join('')}</span>`;
+function drawLauncher(){ const f=$('#fab .lf'); if(f) f.innerHTML=faceStack(3); }
+async function supportPoll(){
+  const r=await api('GET','/api/support?after='+CH.last); CH.online=!!r.online; CH.ticket=r.ticket;
+  if (Array.isArray(r.team)&&r.team.length){ const was=JSON.stringify(CH.team); CH.team=r.team; if(was!==JSON.stringify(r.team)){ drawLauncher(); const hf=$('#chat .ch-faces'); if(hf) hf.innerHTML=chatFaces(); } }
+  if (r.reply_time) CH.reply_time=r.reply_time; if (r.hours) CH.hours=r.hours;
+  const add=(r.messages||[]).filter(m=>!CH.msgs.some(x=>x.id===m.id));
+  if (add.length){ CH.msgs.push(...add); CH.last=Math.max(CH.last,...add.map(m=>m.id)); if (add.some(m=>m.from_admin)) CH.typing=false; }
+  if (CH.open){ const ma=Math.max(0,...CH.msgs.filter(m=>m.from_admin).map(m=>m.id)); if (ma>CH.seen){ CH.seen=ma; store.set('seen_admin',ma); } }
+  if (add.length && CH.open) drawMsgs();
+  drawUnread(); const ho=$('#help-online'); if (ho) ho.innerHTML=(CH.online?'<span style="color:var(--mint-ink);font-weight:700">● Online now.</span> ':'')+esc(replyTime())+'.';
+  const st=$('#chat-st'); if (st) st.innerHTML=chatStatus();
+}
+function supportLoop(reset){
+  clearTimeout(CH.t); if (!FEAT('support_chat')) return; if (reset){ CH.msgs=[]; CH.last=0; }
+  const run=async()=>{ try{ await supportPoll(); }catch{} CH.t=setTimeout(run, CH.open?4000:30000); }; run();
+}
+function drawUnread(){
+  const n=CH.open?0:CH.msgs.filter(m=>m.from_admin&&m.id>CH.seen).length;
+  $$('[data-unread]').forEach(b=>{ b.hidden=!n; b.textContent=n>9?'9+':n; });
+}
+const chatStatus = () => `<i class="${CH.online?'':'off'}"></i>${CH.online?'Online now':'Away right now'} · ${esc(replyTime())}`;
+const chatFaces = () => team().slice(0,4).map(p=>`<span class="cf">${face(p,'lg')}${CH.online?'<i class="on"></i>':''}</span>`).join('');
+function openChat(){
+  if (!FEAT('support_chat')) return;
+  if ($('#chat')){ $('#chat textarea').focus(); return; }
+  CH.open=true; closePop();
+  const hrs=supCfg('hours');
+  document.body.insertAdjacentHTML('beforeend', `<section class="chat" id="chat" role="dialog" aria-label="Support chat" aria-modal="false">
+    <div class="chat-h"><div class="ch-top"><span class="ch-brand"><span class="mark">${I.mark}</span>Joinvoo support</span><button class="x" data-act="chat-close" aria-label="Close chat">${I.x}</button></div>
+      <div class="ch-faces">${chatFaces()}</div>
+      <h3>We’re here to help</h3>
+      <small id="chat-st">${chatStatus()}</small>
+      ${hrs?`<small class="ch-hours">${I.clock}${esc(hrs)}</small>`:''}</div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <form class="composer" id="chatf"><textarea id="chatin" rows="1" placeholder="Write a message…" aria-label="Message" maxlength="4000"></textarea><button class="send" type="submit" aria-label="Send" disabled>${I.send}</button></form>
+    <div class="chat-foot">We reply here${S.me&&S.me.email?' and by email':''} · Enter to send</div></section>`);
+  const fab=$('#fab'); if (fab) fab.classList.add('hide');
+  drawMsgs(); drawUnread();
+  const ta=$('#chatin'), sb=$('#chatf .send');
+  const fit=()=>{ ta.style.height='auto'; ta.style.height=Math.min(140,ta.scrollHeight)+'px'; sb.disabled=!ta.value.trim(); };
+  ta.addEventListener('input',fit);
+  ta.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); if(ta.value.trim()) sendChat(); } });
+  $('#chatf').addEventListener('submit',e=>{ e.preventDefault(); if(ta.value.trim()) sendChat(); });
+  if (matchMedia('(min-width:701px)').matches) ta.focus();
+  supportLoop(false);
+}
+function closeChat(silent){ const c=$('#chat'); if(!c) return; c.remove(); CH.open=false; const fab=$('#fab'); if(fab) fab.classList.remove('hide'); if(!silent) supportLoop(false); }
+const TOPICS = () => [
+  ['msg', I.channels, 'My channel isn’t showing', 'My channel isn’t showing up in Joinvoo. Can you help?'],
+  ['guide', I.target, `Connect ${platNames()}`, ''],
+  ['msg', I.wallet, 'Billing & top-ups', 'I have a question about billing and top-ups.'],
+  FEAT('ftd') ? ['page', I.conversions, 'Track deposits (FTD)', 'conversions'] : null,
+  ['msg', I.user, 'Talk to a person', 'Hi! I’d like to talk to a person, please.']].filter(Boolean);
+function drawMsgs(){
+  const el=$('#msgs'); if(!el) return; const nm=(S.me&&S.me.name)||'', T=team(), lead=T[0];
+  const role = n => (T.find(t=>t.name===n)||{}).role || '';
+  const fresh = !CH.msgs.some(m=>!m.from_admin) && !CH.pending.length;
+  let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b>${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
+    <p>Hi${nm?' '+esc(nm):''} 👋 Ask us anything about setup, tracking, deposits or billing. We’re real people and we read every message.</p>
+    ${fresh?`<div class="topics">${TOPICS().map(([k,ic,l,v])=>k==='guide'?`<a class="topic" href="${GUIDE}" target="_blank" rel="noopener">${ic}<span>${esc(l)}</span>${I.ext}</a>`:`<button type="button" class="topic" data-act="${k==='page'?'topic-page':'quick'}" data-v="${esc(v)}">${ic}<span>${esc(l)}</span>${I.chevr}</button>`).join('')}</div>`:''}</div>`;
+  let lastDay='', prevKey='';
+  CH.msgs.forEach((m,i)=>{ const d=new Date(m.created_at).toDateString();
+    if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
+    const me=!m.from_admin, ag=me?null:(m.agent&&m.agent.name?m.agent:lead), key=me?'me':'a:'+ag.name, nx=CH.msgs[i+1], nk=nx?(!nx.from_admin?'me':'a:'+((nx.agent&&nx.agent.name)||lead.name)):'', first=key!==prevKey, last=key!==nk||!!CH.pending.length&&me;
+    prevKey=key;
+    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me">${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
+    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
+  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending">${esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
+  if (CH.typing) h+=`<div class="mrow them">${face(lead,'sm')}<div class="typing" aria-label="${esc(lead.name)} is typing"><i></i><i></i><i></i></div></div>`;
+  if (CH.err) h+=`<div class="err" style="align-self:stretch">${esc(CH.err)}</div>`;
+  el.innerHTML=h; el.scrollTop=el.scrollHeight;
+}
+async function sendChat(text){
+  const ta=$('#chatin'); const body=(text||ta.value).trim(); if(!body) return;
+  if (!text){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; }
+  CH.pending.push(body); CH.err=''; drawMsgs();
+  try { await api('POST','/api/support',{body}); CH.pending=CH.pending.filter(x=>x!==body); if(!CH.online||DEMO) CH.typing=DEMO; await supportPoll(); drawMsgs(); }
+  catch(e){ CH.pending=CH.pending.filter(x=>x!==body); CH.err=e.message; if(ta && !ta.value) ta.value=body; drawMsgs(); }
+}
+
+/* ---------- sheets ---------- */
+function sheet(head,body){
+  const ex=$('.sheet');
+  if (ex){ ex.querySelector('.sheet-h').innerHTML=`${head}<button class="x" data-act="close" aria-label="Close">${I.x}</button>`; ex.querySelector('.sheet-b').innerHTML=body; return; }
+  closePop();
+  document.body.insertAdjacentHTML('beforeend',`<div class="scrim" data-act="close"></div><aside class="sheet" role="dialog" aria-modal="true"><div class="sheet-h">${head}<button class="x" data-act="close" aria-label="Close">${I.x}</button></div><div class="sheet-b">${body}</div></aside>`);
+  document.body.style.overflow='hidden';
+  const f=$('.sheet .x'); f && f.focus({preventScroll:true});
+}
+function closeSheet(){ $$('.scrim,.sheet').forEach(e=>e.remove()); document.body.style.overflow=''; S.cvEv='ftd'; }
+
+/* ---------- events ---------- */
+document.addEventListener('click', e=>{
+  if ($('.pop') && !e.target.closest('.pop') && !e.target.closest('[data-act="range"],[data-act="account"],[data-act="lang-pop"],[data-act="inbox"]')) closePop();
+  const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act;
+  if (a.tagName==='A' && !['addlink'].includes(act) && !/^https?:/.test(a.getAttribute('href')||'')) e.preventDefault();
+  switch(act){
+    case 'nav': closeSheet(); closePop(); go(a.dataset.p); break;
+    case 'drawer': $('#shell').classList.add('open'); break;
+    case 'drawer-close': $('#shell').classList.remove('open'); break;
+    case 'collapse': S.collapsed=!S.collapsed; store.set('col',S.collapsed); $('#shell').classList.toggle('col',S.collapsed); setTimeout(()=>(S.redraw||[]).forEach(f=>f()),320); break;
+    case 'range': $('.pop')?closePop():rangePop(a); break;
+    case 'account': $('.pop')?closePop():accountPop(a); break;
+    case 'preset': S.preset=a.dataset.p; store.set('preset',S.preset); closePop(); drawFilters(); refreshView(); break;
+    case 'custom-apply': { const f=$('#df').value, t=$('#dt').value; if(!f||!t) break; S.preset='custom'; S.from=f; S.to=t; store.set('preset','custom'); store.set('from',f); store.set('to',t); closePop(); drawFilters(); refreshView(); break; }
+    case 'theme': store.set('theme',a.dataset.v); applyTheme(a.dataset.v); $$('.pop .theme button').forEach(b=>b.setAttribute('aria-pressed',b===a)); setTimeout(()=>(S.redraw||[]).forEach(f=>f()),50); break;
+    case 'type': S.type=a.dataset.t; $$('[data-act="type"]').forEach(b=>b.setAttribute('aria-pressed',b===a)); loadPeople(true); break;
+    case 'more': a.disabled=true; loadPeople(false); break;
+    case 'person': { const k=a.dataset.k; S.cvEv='ftd'; openPerson(k[0]==='f'?S.feed[+k.slice(1)]:S.rows[+k.slice(1)]); break; }
+    case 'cv-ev': S.cvEv=a.dataset.v; openPerson(S.person); break;
+    case 'copy': e.preventDefault(); copy(a.dataset.v); break;
+    case 'close': closeSheet(); break;
+    case 'switch': a.setAttribute('aria-checked', a.getAttribute('aria-checked')!=='true'); break;
+    case 'pw-eye': { const i=a.parentElement.querySelector('input'); i.type=i.type==='password'?'text':'password'; break; }
+    case 'dim': S.dim=a.dataset.v; $$('[data-act="dim"]').forEach(b=>b.setAttribute('aria-selected',b===a)); $('#btbl').innerHTML='<div class="sk" style="height:260px;margin:12px 18px 18px"></div>'; loadBreakdown(); break;
+    case 'bsort': { const k=a.dataset.k; S.bsort = S.bsort.k===k ? {k,d:-S.bsort.d} : {k,d:k==='key'?1:-1}; drawBreakdown(); break; }
+    case 'cmp-n': S.cmpN=+a.dataset.v; store.set('cmpN',S.cmpN); viewCompare(); break;
+    case 'cmp-m': S.cmpM=a.dataset.v; store.set('cmpM',S.cmpM); $$('[data-act="cmp-m"]').forEach(b=>b.setAttribute('aria-pressed',b===a)); drawCompareAll(true); break;
+    case 'cmp-yoy': S.cmpYoY=!S.cmpYoY; drawCompareAll(true); break;
+    case 'cv-more': S.cvShow=(S.cvShow||20)+30; drawConvLog(); break;
+    case 'pb-tab': S.pbTab=a.dataset.v; drawPostback(); break;
+    case 'pb-rotate': openRotate(); break;
+    case 'pb-rotate-go': a.disabled=true; api('POST','/api/conversions/rotate').then(r=>{ S.pb=r.postback_url; closeSheet(); drawPostback(); toast('New postback URL ready. Update it in your tools.'); }).catch(err=>{ $('#rterr').innerHTML=`<div class="err">${esc(err.message)}</div>`; a.disabled=false; }); break;
+    case 'plat-open': openPlatform(a.dataset.id, a.dataset.p); break;
+    case 'plat': W.plat=a.dataset.p; drawStep(); break;
+    case 'mode': W.mode=a.dataset.m; drawStep(); break;
+    case 'bkind': W.bkind=a.dataset.k; if(W.bkind==='runs'&&!W.bsub) W.bsub=W.bot?'forward':'external'; drawStep(); break;
+    case 'bkind-back': W.bkind=null; W.bsub=null; drawStep(); break;
+    case 'bsub': W.bsub=a.dataset.k; drawStep(); break;
+    case 'no-token': W.mode='bot'; W.bkind='runs'; W.bsub='external'; W.ext=null; W.step=2; drawStep(); break;
+    case 'goto-step1': W.step=1; drawStep(); break;
+    case 'ext-continue': W.channel=W.ext; W.step=3; drawStep(); break;
+    case 'snip': { const box=a.closest('.snips'); box.querySelectorAll('[data-act=snip]').forEach(b=>b.setAttribute('aria-selected',b===a)); box.querySelectorAll('.snip-pane').forEach(p=>p.hidden=p.dataset.pane!==a.dataset.k); break; }
+    case 'hook-test': hookTest(a); break;
+    case 'show-code': openSnippets(a.dataset.id); break;
+    case 'bot-settings': openBotSettings(a.dataset.id); break;
+    case 'start-setup': renderSetup(null, true); break;
+    case 'test': { a.disabled=true; const p=a.dataset.p||'meta'; api('POST','/api/channels/'+a.dataset.id+'/test'+testQ(p)).then(r=>toast(r.message||'Test sent')).catch(err=>toast(err.message,false)).finally(()=>a.disabled=false); break; }
+    case 'add-channel': closeSheet(); renderSetup(S.chans.bots.some(b=>b.status==='active')?2:1, true); break;
+    case 'leave-setup': renderApp(); break;
+    case 'addlink': if (DEMO){ e.preventDefault(); toast('In the real app this opens Telegram'); setTimeout(()=>Demo.addChannel(),1600); } break;
+    case 'demo-detect': Demo.addChannel(); break;
+    case 'manual': manualAdd(); break;
+    case 'skip-meta': W.step=4; drawStep(); break;
+    case 'finish': S.page='overview'; renderApp(); break;
+    case 'csv': if (DEMO) toast('Downloads work on your live account',false); else location.href='/api/joins.csv?'+rq()+`&type=${S.type}&q=${encodeURIComponent(S.q)}`; break;
+    case 'logout': clearTimeout(CH.t); stopTimers(); closePop(); api('POST','/api/logout').then((r)=>{ if(r&&r.logout_url){ location.href=r.logout_url; return true; } }).catch(()=>{}).then((gone)=>{ if(!gone) renderAuth('login'); }); break;
+    case 'auth': renderAuth(a.dataset.m); break;
+    case 'forgot': renderForgot(); break;
+    case 'change-pass': closePop(); openChangePass(); break;
+    case 'landing': if (a.getAttribute('aria-pressed')!=='true') setLanding(a.dataset.id, a.dataset.v); break;
+    case 'demo-sample': Demo.useSample(); break;
+    case 'demo-reset': Demo.reset(); break;
+    case 'withdraw': openWithdraw(); break;
+    case 'wm': S.wm=a.dataset.m; openWithdraw(); break;
+    case 'deposit': closePop(); openDeposit(); break;
+    case 'amt': S.dep.amt=+a.dataset.v; drawDeposit(); break;
+    case 'prov': S.dep.amt=+($('#damt').value||S.dep.amt); S.dep.mid=a.dataset.p; drawDeposit(); break;
+    case 'pay': depPay(a); break;
+    case 'usdt-submit': usdtSubmit(a); break;
+    case 'usdt-back': S.dep.step=1; drawDeposit(); break;
+    case 'use-credit': api('POST','/api/referrals/credit').then(x=>{ toast(money(x.moved_cents)+' added to your wallet'); refreshBal(); viewEarn(); }).catch(err=>toast(err.message,false)); break;
+    case 'chat': closePop(); openChat(); break;
+    case 'chat-close': closeChat(); break;
+    case 'quick': sendChat(a.dataset.v); break;
+    case 'topic-page': closeChat(); go(a.dataset.v); break;
+    case 'resend': a.disabled=true; api('POST','/api/verify/resend').then(r=>toast(r.message||'Sent. Check your inbox.')).catch(err=>toast(err.message,false)).finally(()=>setTimeout(()=>a.disabled=false,4000)); break;
+    case 'hide-mail': S.mailHidden=true; drawBanners(); break;
+  }
+});
+document.addEventListener('change', e=>{
+  if (e.target.id==='fc'){ S.channel=e.target.value; S.ovPrev=null; refreshView(); }
+});
+let qt; document.addEventListener('input', e=>{
+  if(e.target.id==='q'){ clearTimeout(qt); qt=setTimeout(()=>{ S.q=e.target.value.trim(); loadPeople(true); },300); }
+  if(e.target.id==='bq'){ S.bq=e.target.value; drawBreakdown(); }
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if($('.pop')) closePop(); else if($('.sheet')) closeSheet(); else if($('#chat')) closeChat(); else if($('#shell.open')) $('#shell').classList.remove('open'); } });

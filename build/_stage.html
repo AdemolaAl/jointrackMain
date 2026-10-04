@@ -1,0 +1,190 @@
+<style>
+/* stage (illustration) */
+.stage{position:relative;width:100%;max-width:600px;aspect-ratio:1/1;margin-inline:auto;container-type:inline-size}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%}
+.stage .back{z-index:0}.stage .person{z-index:2}
+.orb{position:absolute;left:0;top:0;width:clamp(36px,8.4cqw,50px);height:clamp(36px,8.4cqw,50px);margin:calc(clamp(36px,8.4cqw,50px)/-2) 0 0 calc(clamp(36px,8.4cqw,50px)/-2);border-radius:50%;display:grid;place-items:center;box-shadow:0 10px 24px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.35);will-change:transform;z-index:3}
+.orb svg{width:56%;height:56%}
+.orb i{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);font:600 10.5px/1 var(--f);font-style:normal;color:#CFCBEA;white-space:nowrap;letter-spacing:.01em}
+.o-meta{background:linear-gradient(160deg,#2E86FF,#0559E3)}
+.o-tt{background:#0B0B12;border:1px solid rgba(255,255,255,.14)}
+.o-snap{background:#FFFC00}
+.o-tg{background:linear-gradient(160deg,#3CC0FF,#1E96D8)}
+.hcards{position:absolute;inset:0;z-index:4;pointer-events:none}
+.hc{--w:clamp(200px,54cqw,300px);position:absolute;left:clamp(6px,var(--x),calc(100% - var(--w) - 6px));top:var(--y);width:var(--w);display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:16px;background:rgba(22,20,40,.66);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 18px 40px -16px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;
+  animation:hcIn 5.6s cubic-bezier(.2,.8,.2,1) forwards;opacity:0}
+.hc .a{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff}
+.hc b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.hc small{display:block;font-size:11.5px;color:#AFACCB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.hc small em{font-style:normal;font-weight:600}
+.hc .s{font:600 11px/1 var(--f);padding:6px 8px;border-radius:999px;white-space:nowrap;display:inline-flex;gap:5px;align-items:center}
+.hc .s i{width:6px;height:6px;border-radius:50%;background:currentColor}
+@keyframes hcIn{
+  0%{opacity:0;transform:translate(var(--fx),var(--fy)) scale(.35)}
+  14%{opacity:1;transform:translate(0,0) scale(1.02)}
+  20%{transform:translate(0,0) scale(1)}
+  82%{opacity:1;transform:translate(0,-6px)}
+  100%{opacity:0;transform:translate(0,-26px) scale(.97)}}
+/* svg character animation */
+.breathe{transform-origin:260px 384px;animation:breathe 5.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateY(-2px) scale(1.012,1.016)}}
+.headg{transform-origin:260px 216px;animation:nod 8s ease-in-out infinite}
+@keyframes nod{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(2deg) translateY(1px)}}
+.arm-l{animation:tap .32s ease-in-out infinite alternate}
+.arm-r{animation:tap .32s ease-in-out infinite alternate-reverse}
+@keyframes tap{to{transform:translateY(-2.2px)}}
+.leaf{transform-box:fill-box;transform-origin:50% 100%;animation:sway 6s ease-in-out infinite}
+.leaf:nth-child(2){animation-delay:-2s}.leaf:nth-child(3){animation-delay:-4s}
+@keyframes sway{50%{transform:rotate(4deg)}}
+.steam path{stroke-dasharray:6 40;animation:steam 3.2s linear infinite}
+.steam path:nth-child(2){animation-delay:-1.6s}
+@keyframes steam{from{stroke-dashoffset:46;opacity:0}30%{opacity:.8}to{stroke-dashoffset:0;opacity:0}}
+.lidglow{transform-origin:260px 341px;animation:lid 1.8s ease-in-out infinite}
+@keyframes lid{50%{opacity:.45;transform:scale(.9)}}
+.spark{animation:twinkle 4s ease-in-out infinite}
+.spark:nth-of-type(2n){animation-delay:-1.3s}.spark:nth-of-type(3n){animation-delay:-2.6s}
+@keyframes twinkle{50%{opacity:.15}}
+.ringdash{stroke-dasharray:3 9;animation:ring 40s linear infinite}
+@keyframes ring{to{stroke-dashoffset:-480}}
+
+@container (max-width:440px){.hc{--w:min(66cqw,260px);padding:7px 9px;gap:8px}.hc b{font-size:12.5px}.hc small{font-size:11px}}
+</style>
+      <svg class="back" viewBox="0 0 520 520" aria-hidden="true">
+        <defs>
+          <radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#8E77FF" stop-opacity=".5"/><stop offset=".55" stop-color="#C14BFF" stop-opacity=".12"/><stop offset="1" stop-color="#C14BFF" stop-opacity="0"/></radialGradient>
+          <linearGradient id="ringg" x1="0" x2="1"><stop offset="0" stop-color="#7FE3FF" stop-opacity=".15"/><stop offset=".5" stop-color="#B6A4FF" stop-opacity=".55"/><stop offset="1" stop-color="#E08BFF" stop-opacity=".15"/></linearGradient>
+        </defs>
+        <circle cx="260" cy="250" r="230" fill="url(#halo)"/>
+        <circle cx="260" cy="250" r="150" fill="none" stroke="rgba(255,255,255,.06)"/>
+        <circle cx="260" cy="250" r="205" fill="none" stroke="rgba(255,255,255,.04)"/>
+        <ellipse class="ringdash" cx="260" cy="322" rx="236" ry="64" fill="none" stroke="url(#ringg)" stroke-width="1.5"/>
+        <g fill="#fff"><circle class="spark" cx="92" cy="120" r="1.6"/><circle class="spark" cx="430" cy="96" r="1.3"/><circle class="spark" cx="458" cy="210" r="1.8"/><circle class="spark" cx="60" cy="236" r="1.2"/><circle class="spark" cx="380" cy="48" r="1.1"/><circle class="spark" cx="150" cy="56" r="1.4"/></g>
+      </svg>
+      <svg class="person" viewBox="0 0 520 520" aria-hidden="true">
+        <defs>
+          <linearGradient id="hood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7F66FF"/><stop offset="1" stop-color="#4527D6"/></linearGradient>
+          <linearGradient id="sleeve" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6247F5"/><stop offset="1" stop-color="#3B21C2"/></linearGradient>
+          <linearGradient id="pants" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A4399"/><stop offset="1" stop-color="#2F2A6B"/></linearGradient>
+          <linearGradient id="lidg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F1EFFA"/><stop offset="1" stop-color="#BDB8D8"/></linearGradient>
+          <radialGradient id="floor" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#6A4BFF" stop-opacity=".55"/><stop offset="1" stop-color="#6A4BFF" stop-opacity="0"/></radialGradient>
+          <radialGradient id="facel" cx="50%" cy="100%" r="75%"><stop offset="0" stop-color="#C7B8FF" stop-opacity=".6"/><stop offset="1" stop-color="#C7B8FF" stop-opacity="0"/></radialGradient>
+          <filter id="blur8" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+          <filter id="blur3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+          <clipPath id="headclip"><circle cx="260" cy="184" r="31"/></clipPath>
+        </defs>
+        <!-- floor + cushion -->
+        <ellipse cx="260" cy="456" rx="210" ry="34" fill="url(#floor)"/>
+        <ellipse cx="260" cy="446" rx="168" ry="24" fill="#0E0C22"/>
+        <ellipse cx="260" cy="440" rx="162" ry="20" fill="#1A1638"/>
+        <ellipse cx="260" cy="436" rx="150" ry="13" fill="none" stroke="#8E77FF" stroke-opacity=".25"/>
+        <!-- plant -->
+        <g transform="translate(-6 0)">
+          <g><path class="leaf" d="M104 384C92 352 70 336 52 330c18 0 44 14 52 54z" fill="#12B886"/><path class="leaf" d="M106 384c-2-34 10-60 26-74-4 22-14 46-26 74z" fill="#0E9C72"/><path class="leaf" d="M102 384C96 360 82 344 70 336c16 4 30 22 32 48z" fill="#3AD9A6" opacity=".85"/></g>
+          <path d="M80 382h50l-7 48H87z" fill="#2B2552"/><path d="M78 380h54v8H78z" fill="#3A3370" rx="3"/>
+        </g>
+        <!-- mug -->
+        <g transform="translate(414 396)">
+          <g class="steam" fill="none" stroke="#CFCBEA" stroke-width="2.2" stroke-linecap="round"><path d="M10-6c-5-8 5-12 0-22"/><path d="M20-6c-5-8 5-12 0-22"/></g>
+          <path d="M28 8h4a7 7 0 0 1 0 14h-4" fill="none" stroke="#E9E7F5" stroke-width="4"/>
+          <rect x="0" y="0" width="30" height="32" rx="7" fill="#F2F1FA"/><rect x="0" y="0" width="30" height="6" rx="3" fill="#D6D3EA"/>
+          <circle cx="15" cy="18" r="5" fill="none" stroke="#6A4BFF" stroke-width="2"/>
+        </g>
+        <!-- upper body (behind legs) -->
+        <g class="breathe">
+          <path d="M212 384C204 338 194 302 197 274c3-24 19-38 41-42h44c22 4 38 18 41 42 3 28-7 64-15 110z" fill="url(#hood)"/>
+          <path d="M226 236c8 18 60 18 68 0-8-10-60-10-68 0z" fill="#5232EC"/>
+          <path d="M252 244l-2 26M268 244l2 26" stroke="#E9E7F5" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="250" cy="272" r="2.6" fill="#E9E7F5"/><circle cx="270" cy="272" r="2.6" fill="#E9E7F5"/>
+          <rect x="250" y="204" width="20" height="30" rx="8" fill="#A86C49"/>
+          <g class="headg">
+            <circle cx="260" cy="184" r="31" fill="#C68A63"/>
+            <circle cx="260" cy="184" r="31" fill="url(#facel)" clip-path="url(#headclip)"/>
+            <path d="M229 184c-4-29 16-43 34-42 22 1 34 17 30 40-3-11-11-18-22-20-8 8-26 12-42 22z" fill="#17122E"/>
+            <path d="M245 189q5 4 10 0M266 189q5 4 10 0" fill="none" stroke="#2B1810" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M253 203q7 5 14 0" fill="none" stroke="#6E3B22" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M225 188c-4-46 74-46 70 0" fill="none" stroke="#0C0B1D" stroke-width="6" stroke-linecap="round"/>
+            <rect x="219" y="176" width="13" height="24" rx="6.5" fill="#0C0B1D"/><rect x="288" y="176" width="13" height="24" rx="6.5" fill="#0C0B1D"/>
+            <rect x="221" y="182" width="3" height="12" rx="1.5" fill="#8E77FF"/><rect x="296" y="182" width="3" height="12" rx="1.5" fill="#8E77FF"/>
+          </g>
+        </g>
+        <!-- legs, crossed -->
+        <path d="M232 384L146 412M288 384L374 412" stroke="url(#pants)" stroke-width="52" stroke-linecap="round"/>
+        <path d="M232 378L150 404M288 378L370 404" stroke="#fff" stroke-opacity=".08" stroke-width="20" stroke-linecap="round"/>
+        <path d="M374 418L208 430" stroke="#2C2766" stroke-width="40" stroke-linecap="round"/>
+        <ellipse cx="190" cy="432" rx="22" ry="12" fill="#DCD8EE"/>
+        <path d="M146 418L312 430" stroke="#4A4399" stroke-width="40" stroke-linecap="round"/>
+        <path d="M156 410L304 421" stroke="#fff" stroke-opacity=".05" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="330" cy="432" rx="23" ry="13" fill="#F2F1FA"/><path d="M309 440h42" stroke="#BDB8D8" stroke-width="3" stroke-linecap="round"/>
+        <!-- arms -->
+        <g class="breathe">
+          <g class="arm-l"><path d="M208 254C182 276 170 312 178 342c6 20 24 32 48 38" fill="none" stroke="url(#sleeve)" stroke-width="30" stroke-linecap="round"/></g>
+          <g class="arm-r"><path d="M312 254c26 22 38 58 30 88-6 20-24 32-48 38" fill="none" stroke="url(#sleeve)" stroke-width="30" stroke-linecap="round"/></g>
+        </g>
+        <!-- screen light on chest -->
+        <ellipse cx="260" cy="290" rx="86" ry="22" fill="#B6A4FF" opacity=".5" filter="url(#blur8)"/>
+        <!-- laptop -->
+        <rect x="180" y="290" width="160" height="104" rx="12" fill="url(#lidg)"/>
+        <rect x="180.5" y="290.5" width="159" height="103" rx="11.5" fill="none" stroke="#fff" stroke-opacity=".7"/>
+        <circle class="lidglow" cx="260" cy="341" r="24" fill="#8E77FF" opacity=".55" filter="url(#blur8)"/>
+        <g fill="none" stroke-width="4"><circle cx="252" cy="341" r="11" stroke="#6A4BFF"/><circle cx="268" cy="341" r="11" stroke="#9C7CFF"/></g>
+        <rect x="166" y="392" width="188" height="10" rx="5" fill="#D9D6EC"/><rect x="236" y="392" width="48" height="4" rx="2" fill="#BDB8D8"/>
+        <ellipse cx="260" cy="405" rx="94" ry="3" fill="#000" opacity=".25" filter="url(#blur3)"/>
+      </svg>
+      <span class="orb o-meta" data-o="0"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg><i>Meta</i></span>
+      <span class="orb o-tt" data-o="1"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><g stroke="#25F4EE" transform="translate(-1 -.6)"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g><g stroke="#FE2C55" transform="translate(1 .6)"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g><g stroke="#fff"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g></svg><i>TikTok</i></span>
+      <span class="orb o-snap" data-o="2"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><i>Snapchat</i></span>
+      <span class="orb o-tg" data-o="3"><svg viewBox="0 0 24 24"><path d="M20.5 4.5 3.6 11.1c-.8.3-.8 1.4 0 1.7l4.1 1.4 1.6 5c.2.7 1.1.9 1.6.4l2.3-2.2 4.3 3.2c.6.4 1.4.1 1.6-.6l2.8-13.4c.2-.8-.6-1.4-1.4-1.1z" fill="#fff"/><path d="m8 14 9-6.5" stroke="#1E96D8" stroke-width="1.4" stroke-linecap="round"/></svg><i>Telegram</i></span>
+      <div class="hcards"></div>
+      <script>
+      (function(){
+        /* Illustration: orbiting platform badges + join/deposit cards that float out of the laptop. Pauses when off screen. */
+        const stage=document.currentScript.closest('.stage'); if(!stage) return;
+        const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const orbs=[...stage.querySelectorAll('.orb')], hc=stage.querySelector('.hcards');
+        const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        let on=true, ang=.35, last=performance.now();
+        function place(){
+          const w=stage.clientWidth, h=stage.clientHeight, cx=w*.5, cy=h*(322/520), rx=w*(236/520), ry=h*(64/520);
+          orbs.forEach((o,i)=>{ const a=ang+i*Math.PI/2, s=Math.sin(a), sc=.78+.22*(s+1)/2;
+            o.style.transform=`translate(${(cx+Math.cos(a)*rx).toFixed(1)}px,${(cy+s*ry).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+            o.style.zIndex=s>0?3:1; o.style.opacity=s>0?1:(.55+.45*(s+1)).toFixed(2); });
+        }
+        function loop(t){ if(!on) return; const dt=Math.min(50,t-last); last=t; ang+=dt*.00022; place(); requestAnimationFrame(loop); }
+        new IntersectionObserver(([e])=>{ on=e.isIntersecting; if(on&&!RM){ last=performance.now(); requestAnimationFrame(loop); } }).observe(stage);
+        place(); addEventListener('resize',place);
+        const PL={meta:['Meta','#0866FF','rgba(8,102,255,.22)','#9DBEFF'],tiktok:['TikTok','#FE2C55','rgba(254,44,85,.2)','#FF9AAE'],snap:['Snapchat','#FFFC00','rgba(255,252,0,.15)','#FFFA8A']};
+        const AV=['#6A4BFF','#E0609A','#12B886','#2AABEE','#F2A93B','#C14BFF','#0866FF','#FE2C55'];
+        const FEED=[
+          {n:'Omar',t:'join',c:'Daily Deals Club',src:'TikTok ad',p:'tiktok',s:'9s'},
+          {n:'Lucas',t:'ftd',amt:'$120',p:'meta',ev:'Purchase'},
+          {n:'Sofia',t:'join',c:'Fit in 30',src:'Snapchat ad',p:'snap',s:'14s'},
+          {n:'Noah',t:'join',c:'Creator Studio',src:'Instagram ad',p:'meta',s:'6s'},
+          {n:'Aisha',t:'reg',c:'Travel Hacks',p:'tiktok'},
+          {n:'Mateo',t:'bot',c:'Recipe Box bot',src:'Facebook ad',p:'meta',s:'11s'},
+          {n:'Yuki',t:'ftd',amt:'$80',p:'snap',ev:'PURCHASE'},
+          {n:'Hannah',t:'join',c:'Startup Notes',src:'TikTok ad',p:'tiktok',s:'8s'},
+          {n:'Ravi',t:'join',c:'Study Squad',src:'Snapchat ad',p:'snap',s:'12s'},
+          {n:'Chloe',t:'ftd',amt:'$250',p:'tiktok',ev:'CompletePayment'}];
+        const SLOTS=[{x:0,y:3},{x:47,y:16},{x:1,y:47},{x:46,y:60}];
+        let fi=0, si=0;
+        function card(force){
+          if(!force&&(!on||document.hidden)) return;
+          const NAR=stage.clientWidth<440, SL=NAR?[{x:0,y:1},{x:100,y:76}]:SLOTS;
+          const d=FEED[fi%FEED.length], slot=SL[si++%SL.length], p=PL[d.p]; fi++;
+          let title, sub;
+          if(d.t==='ftd'){ title=`${d.n} · ${_t('First deposit')} ${d.amt}`; sub=`<em style="color:#5BE0B0">${d.ev} ${_t('sent to')} ${p[0]} ✓</em>`; }
+          else { title=(d.t==='reg'?_t('[name] registered · [channel]'):d.t==='bot'?_t('[name] started [channel]'):_t('[name] joined [channel]')).replace('[name]',d.n).replace('[channel]',d.c);
+            sub=`${_t('[platform] ad').replace('[platform]',d.t==='reg'?p[0]:d.src.replace(/ ad$/,''))} · <em style="color:${p[3]}">${_t('Sent to')} ${p[0]} ✓</em>`; }
+          const el=document.createElement('div'); el.className='hc';
+          const w=stage.clientWidth, h=stage.clientHeight, cw=Math.min(300,Math.max(200,w*.54));
+          el.style.setProperty('--x',slot.x+'%'); el.style.setProperty('--y',slot.y+'%');
+          el.style.setProperty('--fx',(w*.5-slot.x/100*w-cw/2).toFixed(0)+'px'); el.style.setProperty('--fy',(h*(341/520)-slot.y/100*h-26).toFixed(0)+'px');
+          el.innerHTML=`<span class="a" style="background:${AV[fi%AV.length]}">${d.n[0]}</span><div><b>${esc(title)}</b><small>${sub}</small></div>`;
+          hc.appendChild(el); if(!RM) setTimeout(()=>el.remove(),5800);
+          while(hc.children.length>(NAR?2:4)) hc.firstChild.remove();
+          return el;
+        }
+        if(RM){ for(let i=0;i<3;i++){ const el=card(true); el.style.animation='none'; el.style.opacity=1; } }
+        else { setTimeout(()=>card(true),450); setTimeout(()=>card(true),1400); setInterval(card,1900); }
+      })();
+      </script>

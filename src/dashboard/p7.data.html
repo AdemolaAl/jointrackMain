@@ -1,0 +1,203 @@
+
+/* ---------- campaigns (breakdown) ---------- */
+const DIMS=[['campaign','Campaign'],['adset','Ad set'],['ad','Ad'],['lang','Language'],['source','Source'],['country','Country'],['platform','Platform'],['channel','Channel']];
+async function viewCampaigns(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view">
+    <div class="ph"><div><div class="eyebrow">${esc(rangeLabel())}</div><h1>Campaigns</h1><p>Which campaigns, ads, sources and countries bring real joiners and depositors.</p></div></div>${rangePills()}
+    <section class="card"><div class="utabs" role="tablist">${DIMS.map(([k,l])=>`<button role="tab" data-act="dim" data-v="${k}" aria-selected="${S.dim===k}">${l}</button>`).join('')}</div>
+      <div class="toolbar" style="padding:12px 18px 4px"><div class="search">${I.search}<input class="inp" id="bq" type="search" placeholder="Filter rows" value="${esc(S.bq||'')}" aria-label="Filter rows"></div><span class="hint" id="bcount"></span><button class="btn sm" id="spbtn" data-act="spend" ${FEAT('spend')?'':'hidden'}>${I.coin} Add spend</button></div>
+      <div id="btbl"><div class="sk" style="height:260px;margin:12px 18px 18px"></div></div></section>
+  </div>`;
+  loadBreakdown();
+}
+async function loadBreakdown(){
+  let r; try { r=await api('GET',`/api/breakdown?dim=${S.dim}&${rq()}`); } catch(e){ $('#btbl').innerHTML=`<div class="empty"><p>${esc(e.message)}</p></div>`; return; }
+  if (S.page!=='campaigns') return; S.brows=r.rows; drawBreakdown();
+}
+function dimKey(k){
+  if (S.dim==='lang'){ const n={en:'English',pt:'Portuguese',es:'Spanish',ru:'Russian',fr:'French',de:'German',it:'Italian',tr:'Turkish',ar:'Arabic',hi:'Hindi',id:'Indonesian'}[k]; return `<span class="langk">${esc(String(k).toUpperCase())}</span>${esc(tt('langname.'+k,n||k))}`; }
+  if (S.dim==='country') return `<span style="margin-right:6px">${flag(k)}</span>${esc(COUNTRY[k]||k)}`;
+  if (S.dim==='platform'){ const p={Meta:'meta',TikTok:'tiktok',Snapchat:'snap'}[k]; return `<span style="display:inline-flex;align-items:center;gap:8px">${p?pm(p):''}${esc(k)}</span>`; }
+  return esc(k);
+}
+function drawBreakdown(){
+  const el=$('#btbl'); if(!el) return;
+  const q=(S.bq||'').toLowerCase(), all=S.brows||[], sp=spendCols(), anySpend=sp&&all.some(r=>r.spend_cents), fk=FEAT('fake_filter');
+  let rows=all.filter(r=>!q||String(r.key).toLowerCase().includes(q)).map(r=>({...r,ftd_rate:r.joins?r.ftd/r.joins:0}));
+  const {k,d}=S.bsort; rows.sort((a,b)=>k==='key'?String(a.key).localeCompare(String(b.key))*d:((a[k]??-1)-(b[k]??-1))*d);
+  $('#bcount').textContent = all.length ? `${rows.length} of ${all.length} rows` : '';
+  const sb=$('#spbtn'); if (sb) sb.hidden=!FEAT('spend');
+  const untagged=all.length && all.every(r=>/^\(no .* tag\)$/.test(r.key)) && ['campaign','ad','source'].includes(S.dim);
+  if (!all.length){ el.innerHTML=`<div class="empty"><span class="ei">${I.click}</span><h3>No clicks in this range</h3><p>Pick a longer date range, or put your Joinvoo link in an ad to start collecting clicks.</p></div>`; return; }
+  const T=all.reduce((a,r)=>{ for(const x of ['clicks','joins','ftd','reg','revenue_cents','leaves','spend_cents','suspect_clicks']) a[x]=(a[x]||0)+(r[x]||0); return a; },{});
+  const mr=Math.max(...all.map(r=>r.join_rate),0.0001);
+  const th=(key,l,cls='')=>`<th class="${cls}" ${S.bsort.k===key?`aria-sort="${S.bsort.d>0?'ascending':'descending'}"`:''}><button data-act="bsort" data-k="${key}">${l}${S.bsort.k===key?(S.bsort.d>0?I.up:I.dn):''}</button></th>`;
+  const LK=`<span class="lockc" title="${esc(tt('pro.only','Pro'))}">${I.lock}</span>`, anyLock=all.some(r=>r.locked);
+  const cpx=v=>v==null?'<span class="faint">—</span>':money(v), roas=v=>v==null?'<span class="faint">—</span>':`<b class="roas ${v>=1?'g':'r'}">${v.toFixed(2)}×</b>`;
+  const spCells=r=>anySpend?`<td data-l="Spend">${r.spend_cents?money0(r.spend_cents):'<span class="faint">—</span>'}</td><td data-l="Cost/join">${cpx(r.cost_per_join_cents)}</td><td data-l="Cost/FTD">${r.locked?LK:cpx(r.cost_per_ftd_cents)}</td><td data-l="ROAS">${r.locked?LK:roas(r.roas)}</td>`:'';
+  el.innerHTML=`${anyLock?lockBanner((S.lockN||0)||T.ftd||0):''}${sp&&!anySpend?`<div class="spend-cta"><span>${I.coin}</span><div><b>See cost per join, cost per FTD and ROAS</b><small>Add what you spend per campaign, by hand or by pasting a CSV from your ads manager.</small></div><button class="btn sm primary" data-act="spend">${I.plus} Add spend</button></div>`:''}
+    <div class="tbl-wrap"><table class="t rt${anySpend?' sp':''}"><thead><tr>${th('key',DIMS.find(x=>x[0]===S.dim)[1])}${th('clicks','Clicks')}${th('joins','Joins')}${th('join_rate','Join rate')}${th('ftd','FTDs')}${th('ftd_rate','FTD rate','hm')}${th('revenue_cents','Revenue')}${anySpend?th('spend_cents','Spend')+th('cost_per_join_cents','Cost/join')+th('cost_per_ftd_cents','Cost/FTD')+th('roas','ROAS'):''}${th('leaves','Leaves','hm')}</tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr><td class="k" title="${esc(r.key)}"><span class="rank">${i+1}</span>${dimKey(r.key)}${fk&&r.suspect_clicks?`<span class="chip y sus" title="Clicks from bots, data centers or rapid repeats, left out of the join rate">${fmt(r.suspect_clicks)} fake</span>`:''}</td><td data-l="Clicks">${fmt(r.clicks)}</td><td data-l="Joins">${fmt(r.joins)}</td><td data-l="Join rate"><span class="rate">${(r.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${r.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${r.locked?LK:r.ftd?`<b style="font-weight:650;color:var(--mint-ink)">${fmt(r.ftd)}</b>`:'0'}</td><td class="hm" data-l="FTD rate">${r.locked?LK:pctS(r.ftd,r.joins)}</td><td data-l="Revenue">${r.locked?LK:money0(r.revenue_cents)}</td>${spCells(r)}<td class="hm" data-l="Leaves">${fmt(r.leaves)}</td></tr>`).join('')||`<tr><td colspan="12" style="text-align:center;color:var(--faint);padding:30px">Nothing matches “${esc(q)}”</td></tr>`}</tbody>
+    <tfoot><tr><td>Total${fk&&T.suspect_clicks?` <span class="chip y sus">${fmt(T.suspect_clicks)} fake filtered</span>`:''}</td><td data-l="Clicks">${fmt(T.clicks)}</td><td data-l="Joins">${fmt(T.joins)}</td><td data-l="Join rate">${pctS(T.joins,T.clicks)}</td><td data-l="FTDs">${anyLock?LK:fmt(T.ftd)}</td><td class="hm">${anyLock?LK:pctS(T.ftd,T.joins)}</td><td data-l="Revenue">${anyLock?LK:money0(T.revenue_cents)}</td>${anySpend?`<td data-l="Spend">${money0(T.spend_cents)}</td><td data-l="Cost/join">${T.joins?money(T.spend_cents/T.joins):'—'}</td><td data-l="Cost/FTD">${T.ftd?money(T.spend_cents/T.ftd):'—'}</td><td data-l="ROAS">${T.spend_cents?roas(T.revenue_cents/T.spend_cents):'—'}</td>`:''}<td class="hm">${fmt(T.leaves)}</td></tr></tfoot></table></div>
+    ${untagged?utmEmpty():''}`;
+}
+
+/* ---------- conversions (FTD) ---------- */
+const EVL = {ftd:['First deposit','--c-ftd'],dep:['Deposit','--mint'],reg:['Registration','--brand-2'],lead:['Lead','--amber']};
+function pbTemplates(pb){
+  return {
+    bot:{l:'Your own bot',q:'?sub1={telegram_id}&status=ftd&payout={amount}&currency=USD&txid={id}',n:'Send <b>status=reg</b> when someone registers and <b>status=ftd</b> when they deposit. Your bot already knows their Telegram ID.'},
+    network:{l:'Affiliate network',q:'?sub1={sub1}&status={status}&payout={payout}&currency=USD&txid={transaction_id}',n:'When you send someone to the offer, put their Telegram ID in <b>sub1</b>. The network sends it back here with each registration or deposit.'},
+    keitaro:{l:'Keitaro',q:'?subid={sub_id_1}&status={status}&payout={revenue}&currency={currency}&txid={tid}',n:'Store the Telegram ID in <b>sub_id_1</b> when the visit comes in, then add this as an S2S postback.'},
+    binom:{l:'Binom',q:'?subid={t1}&status={cnv_status}&payout={payout}&currency=USD&txid={cnv_id}',n:'Pass the Telegram ID in a click token (here <b>t1</b>), then add this URL as the postback to your traffic source.'},
+  };
+}
+function hlUrl(u){ const [b,q]=u.split('?'); return `<span class="h">${esc(b)}</span>`+(q?'?'+q.split('&').map(p=>{ const [k,v]=p.split('='); return `<span class="k">${esc(k)}</span>=<span class="${/^\{/.test(v)?'m':''}">${esc(v)}</span>`; }).join('&amp;'):''); }
+async function viewConversions(){
+  S.redraw=[]; S.pbTab=S.pbTab||'bot'; S.cvShow=20; S.cvTab=FEAT('integrations')?(S.cvTab||store.get('cvTab','postback')):'postback';
+  const tabs=FEAT('integrations')?`<div class="utabs cvtabs" role="tablist"><button role="tab" data-act="cv-tab" data-v="postback" aria-selected="${S.cvTab==='postback'}">${I.link} Postback &amp; log</button><button role="tab" data-act="cv-tab" data-v="integrations" aria-selected="${S.cvTab==='integrations'}">${I.sparkles} Integrations</button></div>`:'';
+  $('#view').innerHTML=`<div class="view">
+    <div class="ph"><div><div class="eyebrow">Sign-ups, deposits &amp; sales</div><h1>Conversions</h1><p>Track who signs up, deposits and buys, not just who joins. Each event is matched to the person who joined and sent to ${platNames()}, so your ads optimise for buyers.</p></div></div>${rangePills()}
+    <div class="kpis" id="cvk">${['First deposits','Sign-ups','Revenue'].map((l,i)=>`<section class="kpi ${['t-mint','t-lilac','t-lime'][i]}"><span class="kl">${l}</span><div class="kv-row"><span class="sk" style="height:38px;width:60%"></span></div></section>`).join('')}</div>
+    ${tabs}<div id="cvbody"></div></div>`;
+  if (S.cvTab==='integrations'){ api('GET','/api/conversions?limit=1').then(cv=>{ S.pb=cv.postback_url; }).catch(()=>{}); fillCvKpis(); drawIntegrations(); return; }
+  $('#cvbody').innerHTML=`<div class="stack">
+    <section class="card pb-hero" id="pbcard"><div class="sk" style="height:180px"></div></section>
+    <div class="grid2">
+      <section class="card"><div class="card-h"><h2>What each platform receives</h2></div><div class="tbl-wrap" style="padding-bottom:8px"><table class="evmap"><thead><tr><th>You send</th><th>${pm('meta')} Meta</th><th>${pm('tiktok')} TikTok</th><th>${pm('snap')} Snapchat</th></tr></thead><tbody>
+        <tr><td><b>status=reg</b><br><small class="faint">Sign-up</small></td><td><code>CompleteRegistration</code></td><td><code>CompleteRegistration</code></td><td><code>SIGN_UP</code></td></tr>
+        <tr><td><b>status=ftd</b><br><small class="faint">First deposit</small></td><td><code>Purchase</code> + value</td><td><code>CompletePayment</code> + value</td><td><code>PURCHASE</code> + value</td></tr>
+        <tr><td><b>status=sale</b><br><small class="faint">Course, VIP, subscription</small></td><td><code>Purchase</code> + value</td><td><code>CompletePayment</code> + value</td><td><code>PURCHASE</code> + value</td></tr>
+        <tr><td><b>status=qualified</b><br><small class="faint">CPA qualified</small></td><td><code>Qualified</code> (custom)</td><td class="na">Not sent</td><td class="na">Not sent</td></tr>
+        <tr><td><b>status=dep</b><br><small class="faint">Repeat deposit</small></td><td><code>Deposit</code></td><td class="na">Not sent</td><td class="na">Not sent</td></tr>
+        <tr><td><b>status=lead</b><br><small class="faint">Lead</small></td><td><code>Lead</code></td><td><code>SubmitForm</code></td><td><code>SIGN_UP</code></td></tr>
+        <tr><td><b>status=rejected</b><br><small class="faint">Chargeback, refund, fraud</small></td><td class="na" colspan="3">Nothing sent. The matched deposit or sale is marked rejected and its revenue removed.</td></tr></tbody></table></div></section>
+      <section class="card"><div class="card-h"><h2>How matching works</h2></div><div class="card-b" style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:var(--muted)">
+        <p><b style="color:var(--ink)">One person, one first deposit.</b> The first deposit we hear about is the FTD. Any later one is recorded as a repeat deposit, whatever your sender calls it.</p>
+        <p><b style="color:var(--ink)">Matched by Telegram ID.</b> We look for the most recent ad join for that ID. If nobody matches, the event is kept as unmatched so you can see it.</p>
+        <p><b style="color:var(--ink)">Works with your tools.</b> We read <span class="mono">sub1</span>, <span class="mono">subid</span>, <span class="mono">aff_sub</span> or <span class="mono">tg_id</span> for the person; <span class="mono">status</span>, <span class="mono">event</span>, <span class="mono">goal</span> or <span class="mono">type</span> (sale, purchase, order, qualified, cpa, chargeback, refund…); <span class="mono">payout</span>, <span class="mono">value</span> or <span class="mono">amount</span>; and <span class="mono">txid</span> to drop duplicates.</p>
+        <p><b style="color:var(--ink)">No extra cost.</b> Sign-up, deposit and sale events are included.</p></div></section>
+    </div>
+    <section class="card"><div class="card-h"><h2>Latest conversions</h2><span class="sub" id="cvsub"></span></div><div id="cvlog"><div class="sk" style="height:200px;margin:12px 18px 18px"></div></div></section></div>`;
+  let cv; try { [cv]=await Promise.all([api('GET','/api/conversions?limit=100'), fillCvKpis(), FEAT('integrations')?loadIntegrations():null]); } catch(e){ toast(e.message,false); return; }
+  if (S.page!=='conversions'||S.cvTab!=='postback') return;
+  S.pb=cv.postback_url; S.cv=cv.rows||[]; S.lockN=cv.locked?cv.locked_count:0;
+  drawPostback();
+  if (cv.locked){ const lg=$('#cvlog'); if(lg) lg.innerHTML=lockedLog(cv.locked_count); const sb=$('#cvsub'); if(sb) sb.textContent=''; } else drawConvLog();
+  const tc=trialCard(S.bill); const k=$('#cvk'); if (tc&&k&&!$('#cvk + .trialc')) k.insertAdjacentHTML('afterend',tc);
+}
+async function fillCvKpis(){
+  const st=await api('GET','/api/stats?'+rq()); if (S.page!=='conversions'||!$('#cvk')) return; const T=st.totals;
+  $('#cvk').innerHTML=[['First deposits',fmt(T.ftd),`${pctS(T.ftd,T.joins)} of ad joins`,'t-mint'],['Sign-ups',fmt(T.reg),`${pctS(T.reg,T.joins)} of ad joins${T.qualified?` · ${fmt(T.qualified)} qualified`:''}`,'t-lilac'],['Revenue',money0(T.revenue_cents),`${T.sales?fmt(T.sales)+' sales · ':''}${T.rejected?fmt(T.rejected)+' rejected · ':''}${T.ftd?money0(T.revenue_cents/T.ftd)+' per depositor':'net of chargebacks'}`,'t-lime']]
+    .map(([l,v,s,c])=>`<section class="kpi ${c}"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('');
+}
+function drawPostback(){
+  const el=$('#pbcard'); if(!el) return; const pb=S.pb||'', T=pbTemplates(pb), t=T[S.pbTab]||T.bot, full=pb+t.q, live=(S.cv||[]).length>0;
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div><h2>Your postback URL</h2><p style="margin-top:4px">Give this to your affiliate network, tracker, CRM or bot. Keep it private: anyone with it can report deposits for you.</p></div>${live?'<span class="chip g"><i class="d"></i>Receiving events</span>':'<span class="chip y"><i class="d"></i>Waiting for first event</span>'}</div>
+    <div class="codebox"><code>${esc(pb)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(pb)}">${I.copy} Copy</button><button class="btn sm ghost" data-act="pb-rotate" title="Make a new secret URL">${I.refresh}<span class="sr">Rotate URL</span></button></div>
+    ${live?'':`<div class="steps3"><div><span class="n">1</span><span><b>Copy a ready-made link</b>Pick where your deposits come from below.</span></div><div><span class="n">2</span><span><b>Paste it as a postback</b>In your network, tracker or bot.</span></div><div><span class="n">3</span><span><b>Watch deposits arrive</b>They show up below and go to your ads.</span></div></div>`}
+    <div><div class="utabs" role="tablist" style="padding:0;margin-bottom:12px">${Object.entries(T).map(([k,v])=>`<button role="tab" data-act="pb-tab" data-v="${k}" aria-selected="${S.pbTab===k}">${v.l}</button>`).join('')}</div>
+      <div class="codeblock">${hlUrl(full)}</div>
+      <div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-top:10px"><p class="hint" style="font-size:13px;max-width:70ch;color:var(--muted)">${t.n} ${S.pbTab==='keitaro'||S.pbTab==='binom'?'Macro names can differ by version, so check your tracker’s postback docs.':''}</p><button class="btn sm" data-act="copy" data-v="${esc(full)}">${I.copy} Copy this link</button></div></div>`;
+}
+const netName = id => { const it=((S.integ&&S.integ.items)||[]).find(x=>x.id===id); return it?it.name:id; };
+function pst(k,s){ if (!s||s==='none') return ''; const c=s==='sent'?'ok':s==='failed'?'bad':s==='pending'?'wait':''; const t=s==='sent'?'Sent':s==='failed'?'Failed':s==='pending'?'Queued':s==='no_pixel'?'No pixel':s==='filtered'?tt('fraud.filtered','Filtered'):s; return `<span class="pst ${c}" title="${PLAT[k].name}: ${t}">${pm(k)}${t}</span>`; }
+function drawConvLog(){
+  const el=$('#cvlog'); if(!el) return; const all=S.cv||[], rows=all.slice(0,S.cvShow||20);
+  $('#cvsub').textContent = all.length ? `Showing ${rows.length} of ${all.length} most recent` : '';
+  if (!rows.length){ el.innerHTML=`<div class="empty"><span class="ei">${I.conversions}</span><h3>No conversions yet</h3><p>Once your postback is live, every registration and deposit appears here with what was sent to each ad platform. You can also mark someone as deposited from their profile in People.</p><button class="btn sm" data-act="nav" data-p="people">${I.people} Open People</button></div>`; return; }
+  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Person</th><th>Event</th><th>Value</th><th>Matched</th><th style="text-align:left">Sent to</th><th>Source</th><th>When</th></tr></thead><tbody>
+    ${rows.map(r=>{ const e=EVL[r.event]||[r.event,'--faint']; const who=r.first_name||r.username?nameOf(r):r.tg_user_id?'ID '+r.tg_user_id:'Unknown';
+      return `<tr><td class="k"><span style="display:inline-flex;align-items:center;gap:10px;min-width:0"><span class="av" style="width:28px;height:28px;font-size:12px;${avStyle(r.tg_user_id||r.id)}">${esc((who[0]||'?').toUpperCase())}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(who)}${r.channel_title?`<small class="faint" style="display:block;font-weight:500;font-size:12px">${esc(r.channel_title)}</small>`:''}</span></span></td>
+      <td data-l="Event"><span class="evc ev-${esc(r.event)}${r.rejected&&r.event!=='rejected'?' rej':''}">${e[0]}${r.rejected&&r.event!=='rejected'?' · rejected':''}</span></td><td data-l="Value">${r.value_cents?`<b style="font-weight:650${r.rejected?';text-decoration:line-through;color:var(--faint)':''}">${money(r.value_cents)}</b>${r.currency&&r.currency!=='USD'?' <small class="faint">'+esc(r.currency)+'</small>':''}`:'<span class="faint">—</span>'}</td>
+      <td data-l="Matched">${r.matched?'<span class="chip g">Matched</span>':'<span class="chip r" title="No ad join found for this Telegram ID">Unmatched</span>'}</td>
+      <td data-l="Sent to" style="text-align:left"><span style="display:inline-flex;gap:4px;flex-wrap:wrap">${[pst('meta',r.meta_status),pst('tiktok',r.tt_status),pst('snap',r.sc_status)].join('')||'<span class="faint">Not sent</span>'}</span>${r.error?`<small style="display:block;color:var(--coral-ink);white-space:normal;font-size:12px">${esc(r.error)}</small>`:''}</td>
+      <td data-l="Source"><span class="chip ${r.source==='manual'?'v':'o'}">${r.source==='manual'?'Manual':r.network?esc(netName(r.network)):'Postback'}</span></td><td data-l="When" title="${esc(when(r.created_at))}">${ago(r.created_at)}</td></tr>`; }).join('')}</tbody></table></div>${all.length>rows.length?`<div class="more"><button class="btn sm" data-act="cv-more">Show more</button></div>`:''}`;
+}
+function openRotate(){
+  sheet('<h2>Rotate postback URL</h2>', `<div class="note warn"><b>Your current URL stops working right away.</b> Anything still using it (your network, tracker or bot) will fail until you paste the new one.</div><p class="muted">Rotate if the URL leaked or someone you don’t trust has it.</p><div id="rterr"></div><button class="btn primary lg wide" data-act="pb-rotate-go">${I.refresh} Make a new URL</button><button class="btn ghost wide" data-act="close">Cancel</button>`);
+}
+
+/* ---------- people ---------- */
+const PTYPES=[['','Everyone'],['tracked','From ads'],['organic','Organic'],['ftd','Depositors'],['left','Left'],['filtered','Filtered (fake)']];
+async function viewPeople(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view">
+    <div class="ph"><div><div class="eyebrow">${esc(rangeLabel())}</div><h1>People</h1><p>Everyone who joined, with the ad they came from, what was sent to your ad platforms, and who deposited.</p></div><div class="ph-act"><button class="btn sm" data-act="csv">${I.download} Download CSV</button></div></div>${rangePills()}
+    <section class="card"><div class="toolbar" style="padding:14px 18px"><div class="search">${I.search}<input class="inp" id="q" type="search" placeholder="Name, @username or Telegram ID" value="${esc(S.q)}" aria-label="Search people"></div>
+      <div class="seg" role="group" aria-label="Filter">${PTYPES.map(([k,l])=>`<button data-act="type" data-t="${k}" aria-pressed="${S.type===k}">${k==='ftd'?'<span style="color:var(--mint-ink)">●</span> ':''}${l}</button>`).join('')}</div></div>
+      <div class="plist" id="pl" style="border-top:1px solid var(--line)">${Array.from({length:8},()=>`<div class="prow" style="cursor:default"><span class="sk" style="width:36px;height:36px;border-radius:50%"></span><span><span class="sk" style="display:block;height:12px;width:40%"></span><span class="sk" style="display:block;height:10px;width:60%;margin-top:6px"></span></span></div>`).join('')}</div><div id="pm"></div></section>
+  </div>`;
+  loadPeople(true);
+}
+async function loadPeople(reset){
+  if (reset) S.rows=[];
+  let r; try { r=await api('GET',`/api/joins?${rq()}&type=${S.type}&q=${encodeURIComponent(S.q)}&limit=40&offset=${S.rows.length}`); } catch { return; }
+  if (S.page!=='people') return;
+  S.rows=S.rows.concat(r.rows); S.total=r.total;
+  const f=S.q||S.type;
+  $('#pl').innerHTML = S.rows.length ? S.rows.map((x,i)=>personRow(x,'p'+i)).join('') : `<div class="empty"><span class="ei">${S.type==='ftd'?I.conversions:f?I.search:I.people}</span><h3>${S.type==='ftd'&&!S.q?'No depositors in this range':f?'Nobody matches':'No one yet'}</h3><p>${S.type==='ftd'&&!S.q?'Connect a postback on the Conversions page, or open someone and mark them as deposited.':f?'Try another search, filter or date range.':'When people join through your link they show up here with their Telegram details.'}</p>${S.type==='ftd'?`<button class="btn sm" data-act="nav" data-p="conversions">Set up deposit tracking</button>`:''}</div>`;
+  $('#pm').innerHTML = S.rows.length ? `<div class="more"><span class="num">${fmt(S.rows.length)} of ${fmt(S.total)}</span>${S.rows.length<S.total?'<button class="btn sm" data-act="more">Show more</button>':''}</div>` : '';
+}
+const ftdOf = r => (r.convs||[]).find(c=>c.event==='ftd');
+function tagsFor(r, full){
+  const t=[];
+  if (r.suspect) t.push(`<span class="chip r" title="${esc(tt('fraud.notsent','Recorded, not sent to your ad platforms'))}">${I.shield.replace('<svg','<svg style="width:12px;height:12px"')} ${tt('fraud.filtered','Filtered')} · ${esc(susLabel(r.suspect_reason))}</span>`);
+  if (r.left_at) t.push('<span class="chip">Left</span>');
+  t.push(r.click_id?`<span class="chip v">Ad · ${dur(r.joined_at-(r.click_ts||r.joined_at))}</span>`:'<span class="chip y">Organic</span>');
+  const st=[['meta',r.capi_status],['tiktok',r.tt_status],['snap',r.sc_status]];
+  if (full){ for (const [k,s] of st) if (s==='sent'||s==='failed') t.push(pst(k,s)); return t.join(''); }
+  const m=st.filter(([,s])=>s==='sent'||s==='failed').map(([k,s])=>`<span class="${s==='failed'?'bad':''}" title="${s==='failed'?'Failed to send to':'Sent to'} ${PLAT[k].name}">${pm(k)}</span>`).join('');
+  if (m) t.push(`<span class="sent">${m}</span>`);
+  return t.join('');
+}
+function personRow(r,key,isNew){
+  const p=r.params||{}, f=ftdOf(r), pl=platOf(r);
+  const sub=[r.channel_title,p.utm_campaign||'',r.country?flag(r.country)+' '+r.country:'',ago(r.joined_at)].filter(Boolean).join(' · ');
+  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span></button>`;
+}
+function openPerson(r){
+  if (!r) return; S.person=r;
+  const p=r.params||{}, ua=r.ua||'', convs=[...(r.convs||[])].sort((a,b)=>a.at-b.at), pl=platOf(r);
+  const dev=/iPhone|iPad/.test(ua)?'iPhone':/Android/.test(ua)?'Android':ua?'Computer':'—';
+  const app=/Instagram/.test(ua)?' · Instagram':/FBAN|FBAV/.test(ua)?' · Facebook':/musical_ly|TikTok|BytedanceWebview/i.test(ua)?' · TikTok':/Snapchat/i.test(ua)?' · Snapchat':'';
+  const ev=S.cvEv||'ftd', hasFtd=convs.some(c=>c.event==='ftd'), hasReg=convs.some(c=>c.event==='reg');
+  const tl=[]; if (r.click_ts) tl.push([I.click,'Clicked the ad',when(r.click_ts)+(p.utm_campaign?' · '+esc(p.utm_campaign):''),'','var(--faint)']);
+  tl.push([I.join,'Joined '+esc(r.channel_title||''),when(r.joined_at)+(r.click_ts?' · '+dur(r.joined_at-r.click_ts)+' after the click':''),'','var(--brand)']);
+  for (const c of convs){ const e=EVL[c.event]||[c.event,'--faint']; tl.push([c.event==='reg'?I.reg:I.coin,e[0],when(c.at)+' · '+(c.source==='manual'?'marked by hand':'from postback'),c.value_cents?money(c.value_cents)+(c.currency&&c.currency!=='USD'?' '+esc(c.currency):''):'',`var(${e[1]})`]); }
+  if (r.left_at) tl.push([I.leave,'Left',when(r.left_at),'','var(--coral)']);
+  sheet(`<span class="av" style="width:40px;height:40px;${avStyle(r.tg_user_id)}">${initial(r)}</span><h2>${esc(nameOf(r))}<small>${r.username?'@'+esc(r.username)+' · ':''}${esc(r.channel_title||'')}</small></h2>`, `
+    <div class="tags" style="justify-content:flex-start">${tagsFor(r,true)}${r.is_premium?'<span class="chip v">Telegram Premium</span>':''}${hasFtd?'<span class="ftdb">Depositor</span>':''}</div>
+    ${r.suspect?`<div class="note warn"><b>${tt('fraud.why','Filtered as {r}.',{r:esc(susLabel(r.suspect_reason))})}</b> ${tt('fraud.why.p','This join is recorded but was not sent to Meta, TikTok or Snapchat, so it can’t confuse your ads.')}</div>`:''}
+    <form class="conv-form" id="cvf"><h4>${I.coin}${hasFtd?'Record another conversion':'Mark as deposited or registered'}</h4>
+      <div class="seg" role="group" aria-label="Event" style="width:100%">${[['ftd',hasFtd?'Deposit':'First deposit'],['reg','Registered']].map(([k,l])=>`<button type="button" data-act="cv-ev" data-v="${k}" aria-pressed="${ev===k}" style="flex:1" ${k==='reg'&&hasReg?'disabled title="Already registered"':''}>${l}</button>`).join('')}</div>
+      ${ev!=='reg'?`<div class="row-in"><div class="field" style="flex:1"><label for="cva">Amount</label><input class="inp num" id="cva" inputmode="decimal" placeholder="45.00" autocomplete="off"></div><div class="field" style="width:110px"><label for="cvc">Currency</label><select class="sel" id="cvc">${['USD','EUR','GBP','BRL','INR','AED','ZAR','KES','NGN'].map(c=>`<option>${c}</option>`).join('')}</select></div></div>`:''}
+      <span class="hint">${r.click_id&&ev!=='reg'&&hasFtd?(r.capi_status&&!['none','no_pixel'].includes(r.capi_status)?'Recorded as a repeat deposit and sent to Meta as Deposit. TikTok and Snapchat only get the first deposit, so their optimisation stays clean.':'Recorded as a repeat deposit. Only the first deposit is sent to TikTok and Snapchat.'):r.click_id?`Sent to ${[r.capi_status!=='none'&&r.capi_status!=='no_pixel'?'Meta':'',r.tt_status&&r.tt_status!=='none'?'TikTok':'',r.sc_status&&r.sc_status!=='none'?'Snapchat':''].filter(Boolean).join(', ')||'your connected ad platforms'} as ${ev==='reg'?'a registration':hasFtd?'a repeat deposit':'a purchase with this value'}.`:'This person joined without an ad click, so it’s recorded but not sent to your ad platforms.'}</span>
+      <div id="cverr"></div><button class="btn primary wide" type="submit" id="cvb">${ev==='reg'?'Mark as registered':hasFtd?'Add deposit':'Mark as deposited'}</button></form>
+    <div class="box"><h4>Timeline</h4><ul class="tl">${tl.map(([ic,t,s,amt,col])=>`<li><span class="td" style="border-color:${col};color:${col}">${ic}</span><span><b>${t}</b><small>${s}</small></span>${amt?`<span class="amt">${amt}</span>`:''}</li>`).join('')}</ul></div>
+    <div class="box"><h4>Telegram</h4>
+      <div class="kv"><span>Telegram ID</span><span class="mono">${r.tg_user_id} <button type="button" class="kbd" data-act="copy" data-v="${r.tg_user_id}">Copy</button></span></div>
+      <div class="kv"><span>Username</span><span>${r.username?`<a href="https://t.me/${esc(r.username)}" target="_blank" rel="noopener">@${esc(r.username)}</a>`:'—'}</span></div>
+      <div class="kv"><span>Language</span><span>${esc(r.lang||'—')}</span></div></div>
+    ${r.click_id?`<div class="box"><h4>Where they came from</h4>
+      <div class="kv"><span>Ad platform</span><span style="display:inline-flex;align-items:center;gap:6px">${pl?pm(pl)+PLAT[pl].name+' ad':'Unknown'}</span></div>
+      <div class="kv"><span>Country</span><span>${r.country?flag(r.country)+' '+esc(COUNTRY[r.country]||r.country):'—'}</span></div>
+      <div class="kv"><span>Device</span><span>${dev}${app}</span></div>
+      ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span>${esc(p.utm_campaign)}</span></div>`:''}
+      ${p.utm_content?`<div class="kv"><span>Ad</span><span>${esc(p.utm_content)}</span></div>`:''}
+      ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}
+      <div class="kv"><span>IP address</span><span class="mono">${esc(r.ip||'—')}</span></div></div>
+      <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>`).join('')}</div>`
+    :`<div class="note">This person joined another way, like a shared link or search. There’s no ad click to match, so nothing was sent to your ad platforms.</div>`}`);
+  $('#cvf').addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#cvb'); const ev=S.cvEv||'ftd';
+    const val=$('#cva')?$('#cva').value.trim().replace(',','.'):'';
+    if (ev!=='reg' && !(+val>0)){ $('#cverr').innerHTML='<div class="err">Enter the deposit amount, like 45.00</div>'; return; }
+    b.disabled=true; b.innerHTML='<span class="spin"></span> Saving';
+    try { const x=await api('POST',`/api/joins/${r.id}/convert`,{event:ev==='ftd'&&hasFtd?'dep':ev,value:ev==='reg'?'0':val,currency:$('#cvc')?$('#cvc').value:'USD'});
+      r.convs=(r.convs||[]).concat([{event:x.event||ev,value_cents:ev==='reg'?0:Math.round(+val*100),currency:$('#cvc')?$('#cvc').value:'USD',at:Date.now(),source:'manual'}]);
+      toast(x.attributed?(x.event==='reg'?'Registration sent to your ad platforms':'Deposit sent to your ad platforms'):'Saved. Not sent: they didn’t come from an ad'); if(!reduced && (x.event||ev)==='ftd') confetti();
+      S.cvEv='ftd'; openPerson(r);
+      if (S.page==='people') { const i=S.rows.indexOf(r); const el=$(`[data-k="p${i}"]`); if(el) el.outerHTML=personRow(r,'p'+i); }
+    } catch(err){ $('#cverr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; b.textContent='Try again'; } });
+}

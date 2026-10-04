@@ -1,0 +1,26 @@
+const B='http://localhost:3999'; let ck='';
+const f=async(p,o={})=>{const r=await fetch(B+p,{...o,headers:{'content-type':'application/json',cookie:ck,...(o.headers||{})},redirect:'manual'});const sc=r.headers.get('set-cookie');if(sc&&sc.startsWith('jp_session'))ck=sc.split(';')[0];const t=await r.text();try{return {s:r.status,j:JSON.parse(t)}}catch{return {s:r.status,t}}};
+const ms=()=>fetch('http://localhost:4000/__state').then(r=>r.json()); const sleep=t=>new Promise(r=>setTimeout(r,t));
+(async()=>{
+ await f('/api/signup',{method:'POST',body:JSON.stringify({country:'GB',email:'bot@x.com',password:'password1'})});
+ let r=await f('/api/bots',{method:'POST',body:JSON.stringify({token:'7712045533:AAHk3vZq_testtokenxxxxxxxxxxxxxxxxx'})}); const botId=r.j.bot.id;
+ const st=await ms(); const H={'x-telegram-bot-api-secret-token':st.webhook.secret_token}, hook=new URL(st.webhook.url).pathname; console.log('allowed',st.webhook.allowed_updates);
+ r=await f('/api/bot-targets',{method:'POST',body:JSON.stringify({bot_id:botId,welcome:'Hi {name}!',btn_text:'Join VIP',btn_url:'https://t.me/+vip'})}); console.log('target',r.s,r.j);
+ r=await f('/api/channels'); const ch=r.j.channels[0]; console.log('channel',ch.title,ch.status,ch.bots,ch.welcome);
+ await f('/api/channels/'+ch.id,{method:'PATCH',body:JSON.stringify({pixel_id:'884210395527140',capi_token:'EAAtest'})});
+ const slug=new URL(ch.tracking_url).pathname;
+ const go=await fetch(B+slug+'/go',{method:'POST',headers:{'content-type':'application/json','x-forwarded-for':'102.89.1.9'},body:JSON.stringify({url:'https://x.com'+slug+'?fbclid=IwBOT&utm_campaign=BotCamp'})}).then(r=>r.json());
+ console.log('go ->',go.url);
+ const code=new URL(go.url).searchParams.get('start');
+ const start=(id,text)=>f(hook,{method:'POST',headers:H,body:JSON.stringify({update_id:id,message:{message_id:1,date:Math.floor(Date.now()/1000),chat:{id:777,type:'private'},from:{id:777,first_name:'Omar',username:'omar'},text}})});
+ await start(10,'/start '+code); await start(11,'/start '+code); await start(12,'/start');
+ await f(hook,{method:'POST',headers:H,body:JSON.stringify({update_id:13,message:{message_id:2,date:1,chat:{id:888,type:'private'},from:{id:888,first_name:'Organic'},text:'/start'}})});
+ await f(hook,{method:'POST',headers:H,body:JSON.stringify({update_id:14,message:{message_id:3,date:1,chat:{id:999,type:'private'},from:{id:999,first_name:'Faker'},text:'/start 1_abcdef'}})});
+ await f(hook,{method:'POST',headers:H,body:JSON.stringify({update_id:15,my_chat_member:{chat:{id:888,type:'private'},from:{id:888},date:1,old_chat_member:{status:'member',user:{id:7712045533}},new_chat_member:{status:'kicked',user:{id:7712045533}}}})});
+ await sleep(2600);
+ const s2=await ms(); console.log('meta events',s2.events.length, s2.events.map(e=>e.user_data.fbc?'fbc':'nofbc'));
+ console.log('messages sent',JSON.stringify(s2.msgs||[]).slice(0,300));
+ const d=new Date().toISOString().slice(0,10);
+ r=await f(`/api/joins?from=${d}&to=${d}&tz=0`); console.log('joins',r.j.total,r.j.rows.map(x=>[x.first_name,x.click_id?'ad':'org',x.capi_status,x.params.utm_campaign,x.left_at?'left':'']));
+ r=await f(`/api/stats?from=${d}&to=${d}&tz=0`); console.log('stats',JSON.stringify(r.j.totals));
+})();

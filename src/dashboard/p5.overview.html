@@ -1,0 +1,191 @@
+
+/* ---------- chart helpers ---------- */
+function niceMax(v){ if(v<=4) return 4; const p=Math.pow(10,Math.floor(Math.log10(v))); for(const m of [1,1.2,1.5,2,2.5,3,4,5,6,8,10]) if(m*p>=v) return m*p; return 10*p; }
+function smooth(pts){ // monotone cubic (Fritsch–Carlson) → SVG path
+  const n=pts.length; if(!n) return ''; if(n===1) return `M${pts[0][0]},${pts[0][1]}`;
+  const dx=[],dy=[],m=[],t=[]; for(let i=0;i<n-1;i++){ dx[i]=pts[i+1][0]-pts[i][0]; dy[i]=pts[i+1][1]-pts[i][1]; m[i]=dy[i]/dx[i]; }
+  t[0]=m[0]; t[n-1]=m[n-2]; for(let i=1;i<n-1;i++) t[i]=m[i-1]*m[i]<=0?0:(m[i-1]+m[i])/2;
+  for(let i=0;i<n-1;i++){ if(m[i]===0){ t[i]=t[i+1]=0; continue; } const a=t[i]/m[i], b=t[i+1]/m[i], s=a*a+b*b; if(s>9){ const k=3/Math.sqrt(s); t[i]=k*a*m[i]; t[i+1]=k*b*m[i]; } }
+  let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for(let i=0;i<n-1;i++){ const h=dx[i]/3; d+=`C${(pts[i][0]+h).toFixed(1)},${(pts[i][1]+t[i]*h).toFixed(1)} ${(pts[i+1][0]-h).toFixed(1)},${(pts[i+1][1]-t[i+1]*h).toFixed(1)} ${pts[i+1][0].toFixed(1)},${pts[i+1][1].toFixed(1)}`; }
+  return d;
+}
+function spark(vals, color){
+  if (!vals || vals.length<2 || !vals.some(v=>v)) return '';
+  const W=96,H=34, mx=Math.max(...vals), mn=Math.min(...vals), r=mx-mn||1, id='sg'+Math.random().toString(36).slice(2,8);
+  const pts=vals.map((v,i)=>[i/(vals.length-1)*W, H-3-(v-mn)/r*(H-8)]);
+  const d=smooth(pts);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${d}L${W},${H}L0,${H}Z" fill="url(#${id})"/><path class="l" d="${d}" stroke="${color}"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="2.5" fill="${color}"/></svg>`;
+}
+function buckets(series){
+  const [f,t]=range(); const m=new Map(series.map(s=>[s.day,s])); const days=[];
+  for (let d=parseYmd(f); ymd(d)<=t; d=addDays(d,1)){ const s=m.get(ymd(d))||{}; days.push({d:new Date(d),clicks:s.clicks||0,joins:s.joins||0,ftd:s.ftd||0}); }
+  const mode=days.length<=62?'day':days.length<=200?'week':'month';
+  if (mode==='day') return {mode,list:days.map(x=>({...x,label:x.d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}))};
+  const out=[]; let cur=null;
+  for (const x of days){ const key=mode==='week'?Math.floor((x.d-parseYmd(f))/(7*864e5)):x.d.getFullYear()*12+x.d.getMonth(); if(!cur||cur.key!==key){cur={key,d:x.d,clicks:0,joins:0,ftd:0};out.push(cur);} cur.clicks+=x.clicks; cur.joins+=x.joins; cur.ftd+=x.ftd; }
+  out.forEach(b=>b.label=mode==='week'?'Week of '+b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):b.d.toLocaleDateString('en-US',{month:'long',year:'numeric'}));
+  return {mode,list:out};
+}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let resizeT; addEventListener('resize',()=>{ clearTimeout(resizeT); resizeT=setTimeout(()=>{ (S.redraw||[]).forEach(f=>f()); },150); });
+
+/* Day-by-day chart (the former's look): a soft clicks bar per day with the violet joins bar in front; first deposits get their own green strip below. */
+function drawPerf(el, series, anim){
+  if (!el) return;
+  const {mode,list}=buckets(series), n=list.length;
+  const W=Math.max(280,el.clientWidth-22), mob=W<560, L=mob?32:42, R=6, T=12, H1=mob?170:230, G=24, H2=mob?40:52, B=24;
+  const H=T+H1+G+H2+B, iw=W-L-R, slot=iw/n, x=i=>L+slot*i+slot/2;
+  const max=niceMax(Math.max(1,...list.map(b=>b.clicks))), y=v=>T+H1-v/max*H1;
+  const fmax=Math.max(1,...list.map(b=>b.ftd)), fy0=T+H1+G+H2, fh=v=>v/niceMax(fmax)*H2;
+  const cj=css('--c-join'), cc=css('--c-click'), cf=css('--c-ftd');
+  const bw=Math.max(3,Math.min(mob?18:30,slot*.62)), rx=Math.min(bw/2,mob?5:8);
+  let g='';
+  for(let i=0;i<=3;i++){ const v=max*i/3; g+=`<line class="${i?'gl':'gl0'}" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${compact(v)}</text>`; }
+  g+=`<line class="gl0" x1="${L}" x2="${W-R}" y1="${fy0}" y2="${fy0}"/><text class="axl" x="${L-8}" y="${fy0-H2+10}" text-anchor="end">FTD</text>`;
+  const step=Math.max(1,Math.ceil(n/(mob?5:9))), li=[]; for(let i=0;i<n;i+=step) li.push(i); if(li[li.length-1]!==n-1 && n>1){ if(n-1-li[li.length-1]<step/2) li.pop(); li.push(n-1); }
+  const sl=b=>mode==='month'?b.d.toLocaleDateString('en-US',{month:'short'}):b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  for(const i of li) g+=`<text class="ax" x="${x(i)}" y="${H-6}" text-anchor="${n>1&&i===0&&slot<40?'start':n>1&&i===n-1&&slot<40?'end':'middle'}">${sl(list[i])}</text>`;
+  const st=(i,k)=>anim&&!reduced?`style="animation:grow .8s ${Math.min(i*(n>40?8:22),500)+k}ms both var(--ease)"`:'';
+  list.forEach((b,i)=>{ const hc=b.clicks?Math.max(3,T+H1-y(b.clicks)):0, hj=b.joins?Math.max(3,T+H1-y(b.joins)):0, hf=b.ftd?Math.max(2,fh(b.ftd)):0;
+    g+=`<g data-g="${i}">`;
+    if(hc) g+=`<rect class="bar-c" x="${x(i)-bw/2}" y="${T+H1-hc}" width="${bw}" height="${hc}" rx="${rx}" fill="${cc}" ${st(i,0)}/>`;
+    if(hj) g+=`<rect class="bar-j" x="${x(i)-bw/2}" y="${T+H1-hj}" width="${bw}" height="${hj}" rx="${rx}" fill="${cj}" ${st(i,120)}/>`;
+    if(hf) g+=`<rect class="bar-f" x="${x(i)-bw/2}" y="${fy0-hf}" width="${bw}" height="${hf}" rx="${Math.min(rx,4)}" fill="${cf}" ${st(i,240)}/>`;
+    g+='</g>'; });
+  g+=`<rect class="ov" x="${L}" y="${T}" width="${iw}" height="${H1+G+H2}" fill="transparent" style="cursor:pointer"/>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Clicks, joins and first deposits per ${mode}">${g}</svg>`;
+  const svg=el.querySelector('svg'); let tip=null;
+  const show=i=>{ const b=list[i];
+    svg.querySelectorAll('g[data-g]').forEach(r=>r.style.opacity=r.dataset.g==i?1:.4);
+    if(!tip){ tip=document.createElement('div'); tip.className='tip'; el.appendChild(tip); }
+    tip.innerHTML=`<div class="th">${esc(b.label)}</div><div class="tr"><span><i style="background:${cc}"></i>Clicks</span><b>${fmt(b.clicks)}</b></div><div class="tr"><span><i style="background:${cj}"></i>Joins</span><b>${fmt(b.joins)}</b></div><div class="tr"><span><i style="background:${cf}"></i>First deposits</span><b>${fmt(b.ftd)}</b></div><div class="tf">Join rate ${pctS(b.joins,b.clicks)}${b.ftd?` · ${pctS(b.ftd,b.joins)} deposit`:''}</div>`;
+    const sc=el.clientWidth/W, tw=tip.offsetWidth, cx=x(i)*sc+8; let lx=cx+16; if (lx+tw>el.clientWidth-4) lx=cx-tw-16; tip.style.left=Math.max(4,lx)+'px'; tip.style.top=Math.max(0,y(b.clicks)*sc-10)+'px'; };
+  const hide=()=>{ tip&&tip.remove(); tip=null; svg.querySelectorAll('g[data-g]').forEach(r=>r.style.opacity=1); };
+  const ov=svg.querySelector('.ov');
+  const at=e=>{ const r=svg.getBoundingClientRect(); const px=(e.clientX-r.left)*(W/r.width); return Math.max(0,Math.min(n-1,Math.floor((px-L)/slot))); };
+  ov.addEventListener('pointermove',e=>show(at(e))); ov.addEventListener('pointerdown',e=>show(at(e))); ov.addEventListener('pointerleave',hide);
+}
+
+/* ---------- overview ---------- */
+function startCard(){
+  const st=setupState(); if (st.done && st.ads) return '';
+  if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button></section>`;
+  const li=(ok,n,t)=>`<li class="${ok?'done':''}"><span class="n">${ok?'✓':n}</span><span>${t}</span></li>`;
+  return `<section class="card start"><div><h2>Let’s get you tracking.</h2><p>Three quick steps, about 10 minutes. Your numbers appear here as soon as people start joining.</p>
+    <ol>${li(st.bot,1,'Make your tracking bot')}${li(st.ch,2,'Add it to your channel or bot')}${li(st.ads,3,'Connect Meta, TikTok or Snapchat')}</ol></div>
+    <div><button class="btn primary lg" data-act="start-setup">${st.bot?'Continue setup':'Start setup'} ${I.arrow}</button></div></section>`;
+}
+/* [key, label, pastel tone] — the former's soft stat cards */
+const KPI_DEF = [
+  ['joins','Joined from ads','lilac'],['rate','Join rate','sky'],['clicks','Clicks','cream'],
+  ['ftd','First deposits','mint'],['rev','Revenue','lime'],['leaves','Left','blush']];
+function kpiSkel(){ return KPI_DEF.map(([k,l,t])=>`<section class="kpi t-${t}" data-k="${k}"><span class="kl">${l}</span><div class="kv-row"><span class="sk" style="height:38px;width:60%"></span></div><div class="kd"><span class="sk" style="height:14px;width:45%"></span></div></section>`).join(''); }
+async function viewOverview(){
+  S.redraw=[];
+  const me=S.me||{}, hr=new Date().getHours(), greet=hr<5?tt('greet.evening','Good evening'):hr<12?tt('greet.morning','Good morning'):hr<17?tt('greet.afternoon','Good afternoon'):tt('greet.evening','Good evening'), nm=dispName();
+  if (!setupState().done){
+    $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow greet">${meFace(34,true)}<span>${greet}${nm?', '+esc(nm):''} 👋</span></div><h1>Welcome to Joinvoo</h1><p>Track every join and deposit from Meta, TikTok and Snapchat ads, matched to the exact click.</p></div></div>${startCard()}
+      <div class="kpis zero">${KPI_DEF.map(([k,l,t])=>`<section class="kpi t-${t}"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${k==='rate'?'—':k==='rev'?'$0':'0'}</span></div><div class="kd"><span class="ks">Waiting for your first ${k==='ftd'||k==='rev'?'deposit':'join'}</span></div></section>`).join('')}</div>
+      <section class="card"><div class="empty"><span class="ei" style="font-size:30px;background:var(--cream)">👋</span><h3>Nobody here yet</h3><p>Once your bot is in your channel and your link is in an ad, people show up here the moment they join.</p></div></section></div>`;
+    return;
+  }
+  $('#view').innerHTML = `<div class="view">
+    <div class="ph"><div><div class="eyebrow greet">${meFace(34,true)}<span>${greet}${nm?', '+esc(nm):''} 👋</span></div><h1 id="insight">Overview</h1><p id="insub">${esc(rangeLabel())} ${vsLabel()}.</p></div><div class="ph-act"><span class="chip y fakec" id="fakechip" hidden title="Clicks from bots, data centers, headless browsers or rapid repeats. Left out of your join rate."></span><span class="live"><i></i>Live</span><button class="btn sm" data-act="nav" data-p="compare">${I.compare} Compare months</button></div></div>
+    ${rangePills()}
+    ${startCard()}
+    <div id="ctryban" hidden></div>
+    <div class="kpis" id="kpis">${kpiSkel()}</div>
+    <div class="grid-main">
+      <section class="card"><div class="card-h"><h2>Day by day</h2><div class="legend"><span><i style="background:var(--c-click)"></i>Clicks</span><span><i style="background:var(--c-join)"></i>Joins</span><span><i style="background:var(--c-ftd)"></i>First deposits</span></div></div><div class="chart" id="chart"><div class="sk" style="height:300px;margin:10px"></div></div></section>
+      <section class="card"><div class="card-h"><h2>Just joined</h2><button class="link" data-act="nav" data-p="people">See everyone ${I.arrow}</button></div><div class="plist" id="feed">${Array.from({length:5},()=>`<div class="prow" style="cursor:default"><span class="sk" style="width:36px;height:36px;border-radius:50%"></span><span><span class="sk" style="display:block;height:12px;width:60%"></span><span class="sk" style="display:block;height:10px;width:40%;margin-top:6px"></span></span></div>`).join('')}</div></section>
+    </div>
+    <div class="grid2">
+      <section class="card"><div class="card-h"><h2>Funnel</h2><span class="sub" id="fsub">Click → Join → Registration → FTD</span></div><div class="funnel" id="funnel"><div class="sk" style="height:140px;grid-column:1/-1"></div></div></section>
+      <section class="card"><div class="card-h"><h2>Sent to ad platforms</h2><span class="sub">Server-side events</span></div><div class="ph-list" id="health"><div class="sk" style="height:140px;margin:0 18px"></div></div></section>
+    </div>
+    <div id="sistercard" hidden></div>
+    <div id="blognew" hidden></div>
+    <section class="card"><div class="card-h"><h2>Top campaigns</h2><button class="link" data-act="nav" data-p="campaigns">All campaigns ${I.arrow}</button></div><div id="topc"><div class="sk" style="height:160px;margin:12px 18px 18px"></div></div></section>
+  </div>`;
+  drawBlogNew(); drawCountryBanner(); drawSisterCard();
+  await loadOverview(true);
+  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')) loadOverview(false); });
+}
+let seen=new Set();
+async function loadOverview(first){
+  const t=new Date(), [pf,pt,span]=prevRange(), [f0,t0]=range();
+  let st, prev, feed, topc;
+  try { [st,prev,feed,topc]=await Promise.all([api('GET','/api/stats?'+rq()), first||!S.ovPrev?api('GET',`/api/stats?from=${pf}&to=${pt}&${tzq()}${chq()}`):Promise.resolve(S.ovPrev),
+      api('GET',`/api/joins?from=${ymd(addDays(t,-6))}&to=${ymd(t)}&${tzq()}${chq()}&limit=6`), first?api('GET','/api/breakdown?dim=campaign&'+rq()).catch(()=>({rows:[]})):Promise.resolve(null)]); } catch { return; }
+  if (S.page!=='overview' || !$('#kpis')) return;
+  S.ovPrev=prev;
+  const T=st.totals, P0=prev.totals;
+  // compare at the same pace: if today is still running, scale the previous period to the same share of time
+  let k=1; if (t0===ymd(new Date())){ const frac=(t.getHours()*60+t.getMinutes())/1440; k=((span-1)+frac)/span; }
+  const P={}; for (const key in P0) P[key]=(P0[key]||0)*k;
+  const rate=pct(T.joins,T.clicks), prate=pct(P.joins,P.clicks);
+  const {list}=buckets(st.series), sv=key=>list.map(b=>b[key]), rs=list.map(b=>b.clicks?b.joins/b.clicks:0);
+  const hasConv=st.counts&&(st.counts.has_conversions||T.ftd||T.reg);
+  const vl=vsLabel();
+  const cards={
+    clicks:{v:fmt(T.clicks),raw:T.clicks,d:deltaChip(T.clicks,P.clicks,true,vl),s:'People who opened your link',sp:spark(sv('clicks'),css('--cream-ink'))},
+    joins:{v:fmt(T.joins),raw:T.joins,d:deltaChip(T.joins,P.joins,true,vl),s:`+ ${fmt(T.organic)} organic joins`,sp:spark(sv('joins'),css('--lilac-ink'))},
+    rate:{v:pctS(T.joins,T.clicks),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
+    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins)} of joins · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
+    rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
+    leaves:{v:fmt(T.leaves),raw:T.leaves,d:deltaChip(T.leaves,P.leaves,false,vl),s:`${pctS(T.leaves,T.joins+T.organic)} of all joins`,sp:''},
+  };
+  const kp=$('#kpis'), hasSp=FEAT('spend')&&T.spend_cents>0;
+  if (kp){ kp.classList.toggle('k8',hasSp); if (hasSp && !$('.kpi[data-k="spend"]')) kp.insertAdjacentHTML('beforeend',`<section class="kpi t-peach" data-k="spend"></section><section class="kpi t-teal" data-k="cpf"></section>`); if(!hasSp) $$('.kpi[data-k="spend"],.kpi[data-k="cpf"]').forEach(x=>x.remove()); }
+  if (hasSp){ const roas=T.revenue_cents/T.spend_cents, pr=P.spend_cents||0, cpf=T.ftd?T.spend_cents/T.ftd:0, pcpf=P.ftd&&pr?pr/P.ftd:0;
+    cards.spend={v:money0(T.spend_cents),raw:T.spend_cents,m:1,d:pr?deltaChip(T.spend_cents,pr,false,vl):'',s:`ROAS ${roas.toFixed(2)}× · ${T.joins?money(T.spend_cents/T.joins):'—'} per join`,sp:''};
+    cards.cpf={v:cpf?money(cpf):'—',raw:cpf,mc:1,d:pcpf&&cpf?deltaChip(cpf,pcpf,false,vl):'',s:'Spend ÷ first deposits',sp:''};
+    for (const [k2,l2] of [['spend','Ad spend'],['cpf','Cost per FTD']]){ const el=$(`.kpi[data-k="${k2}"]`), c=cards[k2]; if(el) el.innerHTML=`<span class="kl">${l2}</span><div class="kv-row"><div style="min-width:0"><span class="kn">${c.v}</span></div></div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`; } }
+  const fc=$('#fakechip'); if (fc){ const n=T.suspect_clicks||0, fj=T.filtered_joins||0; fc.hidden=!(FEAT('fake_filter')&&(n||fj)); fc.innerHTML=`${I.shield}${fj?tt('fraud.chip2','{c} fake clicks · {j} fake joins filtered',{c:fmt(n),j:fmt(fj)}):tt('fraud.chip','{c} fake clicks filtered',{c:fmt(n)})}`; fc.title=tt('fraud.tip','Bots, data-center clicks, join bursts, deleted accounts and repeat users. Recorded, but never sent to your ad platforms.'); }
+  for (const [key] of KPI_DEF){ const c=cards[key], el=$(`.kpi[data-k="${key}"]`); if(!el) continue;
+    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`;
+    if (first && !reduced) count(el.querySelector('.kn'), c.raw, c.p?'p':c.m?'m':''); }
+  if (T.ftd_locked){ const r=$('.kpi[data-k="rev"]'); if(r){ r.classList.add('locked'); r.innerHTML=`<span class="kl">${tt('kpi.revenue','Revenue')}</span><div class="kv-row"><span class="kn">${I.lock}</span></div><div class="kd"><button class="ks link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></div>`; }
+    if (!$('#lockb')){ const k=$('#kpis'); k&&k.insertAdjacentHTML('afterend',`<div id="lockb">${lockBanner(T.ftd)}</div>`); } }
+  const ins=$('#insight'), all=T.joins;
+  if (ins){ const d=deltaPct(T.joins,P.joins); ins.innerHTML = !all ? 'Overview' : `<em class="num">${fmt(all)}</em> ${all===1?'person':'people'} joined.`; }
+  const isub=$('#insub'); if(isub){ const d=deltaPct(T.joins,P.joins), dt=!P.joins||!isFinite(d)?'':Math.abs(d)<0.5?'Level with the period before':`Joins ${d>0?'up':'down'} ${Math.abs(d).toFixed(Math.abs(d)<10?1:0)}% ${vl}`;
+    isub.innerHTML = `${dt?`<b style="color:${d>=0?'var(--mint-ink)':'var(--coral-ink)'};font-weight:700">${dt}.</b> `:''}${T.ftd?`<b style="color:var(--ink);font-weight:700">${fmt(T.ftd)}</b> first deposits worth <b style="color:var(--ink);font-weight:700">${money0(T.revenue_cents)}</b>.`:'Updated live.'}`; }
+  const draw=()=>drawPerf($('#chart'), st.series, false);
+  drawPerf($('#chart'), st.series, first); S.redraw=[draw];
+  drawFunnel(T, hasConv, first);
+  drawHealth(T, st.counts||{});
+  const fe=$('#feed'); if (fe){ fe.innerHTML = feed.rows.length ? feed.rows.map((r,i)=>personRow(r,'f'+i,seen.size&&!seen.has(r.id))).join('') : `<div class="empty"><span class="ei">${I.people}</span><h3>Quiet for now</h3><p>New people show up here the moment they join.</p></div>`;
+    S.feed=feed.rows; seen=new Set(feed.rows.map(r=>r.id)); }
+  if (topc) drawTopCampaigns(topc.rows);
+}
+function count(el,to,kind){ const t0=performance.now(); const f=n=>{ const p=Math.min(1,(n-t0)/900), e=1-Math.pow(1-p,3), v=to*e; el.textContent=kind==='p'?v.toFixed(1)+'%':kind==='m'?money0(v):fmt(v); if(p<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
+function drawFunnel(T, hasConv, anim){
+  const el=$('#funnel'); if(!el) return;
+  const st=[['Clicks',T.clicks,'--c-click'],['Joins',T.joins,'--c-join'],['Registrations',T.reg,'--brand-2'],['First deposits',T.ftd,'--c-ftd']];
+  const top=Math.max(1,T.clicks);
+  const conv=[pctS(T.joins,T.clicks),T.reg?pctS(T.reg,T.joins):'—',T.reg?pctS(T.ftd,T.reg):'—'];
+  el.innerHTML=st.map(([l,v,c],i)=>`<div class="fs"><span class="fl">${l}</span><div class="fv">${fmt(v)}</div><div class="fp">${i?pctS(v,T.clicks,v/top<.1?2:1)+' of clicks':'100%'}</div><div class="fb"><i style="height:${Math.max(v?3:0,v/top*100)}%;background:${i===3?'linear-gradient(180deg,#2BD49C,var(--c-ftd))':`var(${c})`};${anim?'':'animation:none'};animation-delay:${i*90}ms"></i></div>${i<3?`<span class="fr">${conv[i]}<small>${['join','register','deposit'][i]}</small></span>`:''}</div>`).join('');
+  const fs=$('#fsub'); if(fs) fs.innerHTML = hasConv ? `${pctS(T.ftd,T.clicks,2)} click → deposit` : `<button class="link" data-act="nav" data-p="conversions">Track registrations &amp; deposits ${I.arrow}</button>`;
+}
+function drawHealth(T, C){
+  const el=$('#health'); if(!el) return;
+  const rows=[['meta',T.capi_ok,T.capi_fail,C.pixels],['tiktok',T.tt_ok,T.tt_fail,C.tiktoks],['snap',T.sc_ok,T.sc_fail,C.snaps]].filter(r=>PLATS().includes(r[0]));
+  el.innerHTML=rows.map(([k,ok,bad,n])=>{ ok=ok||0; bad=bad||0;
+    if (!n) return `<div class="plat-row">${pm(k,1)}<div><b>${PLAT[k].name}</b><small>Not connected</small></div><button class="btn sm" data-act="nav" data-p="channels">Connect</button></div>`;
+    const tot=ok+bad, r=tot?ok/tot:1, chip=!bad?'<span class="chip g"><i class="d"></i>Healthy</span>':r>.98?'<span class="chip y"><i class="d"></i>Mostly OK</span>':'<span class="chip r"><i class="d"></i>Failing</span>';
+    return `<div class="plat-row">${pm(k,1)}<div><b>${PLAT[k].name}</b><small><span class="num">${fmt(ok)}</span> sent${bad?` · <span style="color:var(--coral-ink)">${fmt(bad)} failed</span>`:''} · ${n} pixel${n>1?'s':''}</small><div class="pb"><i style="width:${tot?r*100:0}%"></i></div></div>${chip}</div>`; }).join('');
+}
+function drawTopCampaigns(rows){
+  const el=$('#topc'); if(!el) return;
+  if (!rows.length || (rows.length===1 && /^\(no /.test(rows[0].key))) { el.innerHTML=utmEmpty(true); return; }
+  const r=rows.slice(0,6), mr=Math.max(...r.map(x=>x.join_rate),0.0001);
+  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Campaign</th><th>Clicks</th><th>Joins</th><th>Join rate</th><th>FTDs</th><th>Revenue</th></tr></thead><tbody>${r.map((x,i)=>`<tr><td class="k"><span class="rank">${i+1}</span>${esc(x.key)}</td><td data-l="Clicks">${fmt(x.clicks)}</td><td data-l="Joins">${fmt(x.joins)}</td><td data-l="Join rate"><span class="rate">${(x.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${x.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${fmt(x.ftd)}</td><td data-l="Revenue">${money0(x.revenue_cents)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function utmEmpty(compact){
+  const L=(p,code)=>`<div><span class="uh">${pm(p)}${PLAT[p].name}</span><code>${code}</code><button class="btn sm" data-act="copy" data-v="${esc(code.replace(/<\/?b>/g,'').replace(/&amp;/g,'&'))}">${I.copy} Copy</button></div>`;
+  return `<div class="empty" style="${compact?'padding:24px 18px 22px':''}"><span class="ei">${I.campaigns}</span><h3>Tag your links to see campaigns</h3><p>Add your ad platform’s campaign and ad macros to the end of your Joinvoo link. Each join is then grouped by campaign, ad and source.</p>
+    <div class="utm">${L('meta','?utm_source=meta&amp;utm_campaign=<b>{{campaign.name}}</b>&amp;utm_term=<b>{{adset.name}}</b>&amp;utm_content=<b>{{ad.name}}</b>')}${FEAT('tiktok')?L('tiktok','?utm_source=tiktok&amp;utm_campaign=<b>__CAMPAIGN_NAME__</b>&amp;utm_content=<b>__CID_NAME__</b>'):''}${FEAT('snapchat')?L('snap','?utm_source=snapchat&amp;utm_campaign=<b>{{campaign.name}}</b>&amp;utm_term=<b>{{adset.name}}</b>&amp;utm_content=<b>{{ad.name}}</b>'):''}</div>
+    <p class="hint" style="margin-top:8px">Snapchat macros can differ by account. If these don’t fill in, use your platform’s campaign macro.</p></div>`;
+}

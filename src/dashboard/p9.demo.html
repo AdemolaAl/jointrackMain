@@ -1,0 +1,586 @@
+
+/* ================= DEMO BACKEND (sample data, in the browser) ================= */
+const Demo = (() => {
+  function rng(seed){ let a=seed>>>0; return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  const h=(...p)=>{ let x=2166136261; for(const c of p.join('|')){ x^=c.charCodeAt(0); x=Math.imul(x,16777619); } return x>>>0; };
+  const FIRST=['Lucas','Sofia','Noah','Mia','Daniel','Aisha','Mateo','Chloe','Ethan','Yuki','Hannah','Omar','Lena','Ravi','Olivia','Liam','Ava','Leo','Isla','Jonas','Camila','Arjun','Zara','Felix','Nora','Hugo','Elena','Kai','Maya','Theo','Priya','Lucia','Alex','Freya','Diego','Sara','Marco','Ines','Ali'];
+  const LAST=['Smith','Martin','Silva','Müller','Kim','Tanaka','Patel','Haddad','Rossi','Novak','García','Schmidt','Dubois','Andersen','Costa','Weber','Khan','Johansson','Moreau','Lopez','Fischer','Sato','','',''];
+  const CAMPS={meta:['Spring_Sale_Broad','Lookalike_1pct','Retarget_7d','Advantage_Plus'],tiktok:['TT_Spark_Creators','TT_Video_Hook_A','TT_Broad_18-34'],snap:['Snap_Story_Promo','Snap_Lens_Test']};
+  const ADS=['Hook_A_Video','Static_Offer','UGC_Phone','Carousel_Top5','Story_Countdown'];
+  const UAS={meta:['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5) [FBAN/FBIOS;FBAV/468.0]','Mozilla/5.0 (Linux; Android 14) Instagram 330.0','Mozilla/5.0 (Linux; Android 13) [FBAN/EMA;FBAV/412.0]'],tiktok:['Mozilla/5.0 (iPhone; CPU iPhone OS 17_4) musical_ly_34.1 BytedanceWebview','Mozilla/5.0 (Linux; Android 14) TikTok 34.2'],snap:['Mozilla/5.0 (iPhone; CPU iPhone OS 17_5) Snapchat/13.1','Mozilla/5.0 (Linux; Android 14) Snapchat/13.0']};
+  const SRC={meta:'meta',tiktok:'tiktok',snap:'snapchat'}, PNAME={meta:'Meta',tiktok:'TikTok',snap:'Snapchat'};
+  const today0=()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
+  const dayIdx=d=>Math.round((parseYmd(ymd(d))-today0())/864e5);
+  const blank={pixel_id:'',has_token:false,test_code:'',event_name:'Subscribe',tt_pixel:'',tt_has_token:false,tt_test_code:'',tt_event:'Subscribe',sc_pixel:'',sc_has_token:false,sc_test:false,sc_event:'SUBSCRIBE',has_fallback:true,landing:'auto',welcome:'',btn_text:'',btn_url:'',forward_url:'',join_mode:'link',offer_text:'',offer_btn:'',offer_url:''};
+  const sampleDb=()=>({
+    bots:[{id:1,tg_id:7712045533,username:'dailydeals_track_bot',status:'active'},{id:2,tg_id:7790112274,username:'fit30_track_bot',status:'active'},{id:3,tg_id:7731880412,username:'studysquad_bot',status:'active'}],
+    channels:[
+      {...blank,id:11,title:'Daily Deals Club',type:'channel',join_mode:'request',offer_text:'Welcome to Daily Deals Club 👋 Today’s best offer is waiting for you. Tap below to claim it.',offer_btn:'Claim today’s offer',offer_url:'https://partner.example/offer?sub1={tg_id}',status:'active',pool:184,pool_target:200,bots:['dailydeals_track_bot','fit30_track_bot'],tracking_url:'https://joinvoo.com/c/deals7Q',pixel_id:'884210395527140',has_token:true,tt_pixel:'CQ7B9E3C77U5JHG0T1A0',tt_has_token:true,sc_pixel:'5f1c2a9e-8b7d-4e3a-9c21-7d0e6b4a3f12',sc_has_token:true,sc_event:'SUBSCRIBE',
+        age:420,base:1150,rate:.41,cc:['US','US','GB','DE','BR','IN','AE','US'],mix:{meta:.6,tiktok:.28,snap:.12},fr:.085,avg:52},
+      {...blank,id:12,title:'Fit in 30',type:'channel',status:'active',pool:197,pool_target:200,bots:['fit30_track_bot'],tracking_url:'https://joinvoo.com/c/fit30Ka',pixel_id:'884210395527140',has_token:true,event_name:'Lead',sc_pixel:'9a7b3c2d-1e4f-4a5b-8c6d-0e1f2a3b4c5d',sc_has_token:true,sc_event:'SIGN_UP',sc_test:true,landing:'button',
+        age:300,base:640,rate:.35,cc:['US','GB','CA','AU','DE','ZA'],mix:{meta:.7,snap:.3},fr:.06,avg:39},
+      {...blank,id:13,title:'Creator Studio',type:'supergroup',status:'active',pool:142,pool_target:200,bots:['fit30_track_bot'],tracking_url:'https://joinvoo.com/c/creat2r',tt_pixel:'CQ7B9E3C77U5JHG0T1A0',tt_has_token:true,
+        age:110,base:330,rate:.28,cc:['BR','MX','ES','IN','PH','BR'],mix:{tiktok:1},fr:.04,avg:28},
+      {...blank,id:14,title:'@studysquad_bot',type:'bot',status:'active',pool:0,pool_target:200,bots:['studysquad_bot'],tracking_url:'https://joinvoo.com/c/study5s',pixel_id:'884210395527140',has_token:true,welcome:'Hi {name} 👋 Welcome to Study Squad. Tap below to join today’s session.',btn_text:'Join the study group',btn_url:'https://t.me/+demoStudySquad',forward_url:'https://api.studysquad.example/tg-webhook',has_forward_secret:true,
+        age:75,base:220,rate:.52,cc:['IN','KE','ZA','GB','AE'],mix:{meta:.8,tiktok:.2},fr:.03,avg:24},
+      {...blank,id:15,title:'@recipebox_bot',type:'bot',external:true,status:'active',pool:0,pool_target:200,bots:[],tracking_url:'https://joinvoo.com/c/recip3b',hook_start:'https://joinvoo.com/hook/demoKey123/start',hook_blocked:'https://joinvoo.com/hook/demoKey123/blocked',pixel_id:'884210395527140',has_token:true,
+        age:40,base:90,rate:.47,cc:['US','GB','CA','AU'],mix:{meta:1},fr:.02,avg:18},
+    ]});
+  const PAYM=[
+    {id:'paystack',type:'paystack',label:'Paystack',note:'Card, bank transfer, USSD',enabled:true},
+    {id:'flutterwave',type:'flutterwave',label:'Flutterwave',note:'Card, mobile money, bank',enabled:true},
+    {id:'m_usdt',type:'manual',label:'USDT (TRC20)',note:'Send USDT on the TRC20 network',currency:'USDT',network:'TRC20 network only',address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',instructions:'Only send USDT on the TRC20 (Tron) network.\nSend the exact amount shown, cents included.',explorer:'https://tronscan.org/#/transaction/{tx}',enabled:true},
+    {id:'m_btc',type:'manual',label:'Bitcoin (BTC)',note:'Send BTC on the Bitcoin network',currency:'BTC',network:'Bitcoin network only',address:'bc1qdemo7joinvoo8example0address4btc2xq9',instructions:'Only send BTC on the Bitcoin network (not Lightning, not BEP20).\nOne confirmation is enough.',explorer:'https://mempool.space/tx/{tx}',enabled:true},
+    {id:'m_bank',type:'manual',label:'Bank transfer',note:'Transfer in USD from your bank',currency:'USD',address:'',instructions:'Bank: Demo Bank International\nAccount name: Zedapex Ltd\nAccount number: 0000 1234 5678\nSWIFT: DEMOXX22\nAdd the payment reference in the transfer note.',enabled:true}];
+  let sample=false, db={bots:[],channels:[]}, live=[], liveClicks=[], timer=null, nid=1000, credit=0, payouts=[], deposits=[], extra=new Map(), extraConvs=[], seenRows=new Map(), support=[], sid=1, verified=false;
+  const on=(ch,p)=>p==='meta'?!!(ch.pixel_id&&ch.has_token):p==='tiktok'?!!(ch.tt_pixel&&ch.tt_has_token):!!(ch.sc_pixel&&ch.sc_has_token);
+  function dayRow(ch,di){
+    if (ch.live || -di>ch.age) return null;
+    const r=rng(h(ch.id,di)), age=-di, trend=.42+.58*(1-age/(ch.age+20)), dow=[.86,1,1.04,1.07,1.1,1.02,.9][((today0().getDay()+di)%7+7)%7];
+    let clicks=ch.base*trend*dow*(.82+r()*.36); if(di===0){ const n=new Date(); clicks*=Math.max(.02,(n.getHours()*60+n.getMinutes())/1440); } clicks=Math.round(clicks);
+    const joins=Math.round(clicks*ch.rate*(.88+r()*.24)), organic=Math.round(joins*(.12+r()*.1)), leaves=Math.round((joins+organic)*(.04+r()*.05));
+    const fail=Math.round(joins*r()*.012);
+    const ftd=Math.round(joins*(ch.fr||0)*(.75+r()*.5)), reg=Math.round(ftd*(2.1+r()*.7)), rev=Math.round(ftd*(ch.avg||40)*100*(.75+r()*.5)*1.18);
+    return {clicks,joins,organic,leaves,capi_ok:on(ch,'meta')?joins-fail:0,capi_fail:on(ch,'meta')?fail:0,tt_ok:on(ch,'tiktok')?joins:0,tt_fail:0,sc_ok:on(ch,'snap')?Math.max(0,joins-Math.round(fail/2)):0,sc_fail:on(ch,'snap')?Math.round(fail/2):0,ftd,reg,revenue_cents:rev};
+  }
+  const days=qs=>{ const f=parseYmd(qs.get('from')), t=parseYmd(qs.get('to')), o=[]; for(let d=t; d>=f; d=addDays(d,-1)) o.push(d); return o; };
+  const chansFor=qs=>{ const c=qs.get('channel'); return db.channels.filter(x=>!c||String(x.id)===c); };
+  const inRange=(qs,ts)=>ts>=parseYmd(qs.get('from')).getTime() && ts<addDays(parseYmd(qs.get('to')),1).getTime();
+  const KEYS=['clicks','joins','organic','leaves','capi_ok','capi_fail','tt_ok','tt_fail','sc_ok','sc_fail','ftd','reg','revenue_cents'];
+  function stats0(qs){
+    const T={}; KEYS.forEach(k=>T[k]=0); const ser=new Map(), ids=new Set(chansFor(qs).map(c=>c.id));
+    const add=(key,c,j,f)=>{ const s=ser.get(key)||{day:key,clicks:0,joins:0,ftd:0}; s.clicks+=c; s.joins+=j; s.ftd+=f; ser.set(key,s); };
+    for (const d of days(qs)) for (const ch of chansFor(qs)) { const r=dayRow(ch,dayIdx(d)); if(!r) continue; for(const k of KEYS) T[k]+=r[k]; add(ymd(d),r.clicks,r.joins,r.ftd); }
+    for (const c of liveClicks) if (ids.has(c.ch)&&inRange(qs,c.ts)) { T.clicks++; add(ymd(new Date(c.ts)),1,0,0); }
+    for (const j of live) if (ids.has(j.channel_id)&&inRange(qs,j.joined_at)) { if(j.click_id){T.joins++; add(ymd(new Date(j.joined_at)),0,1,0);} else T.organic++; if(j.capi_status==='sent') T.capi_ok++; if(j.tt_status==='sent') T.tt_ok++; if(j.sc_status==='sent') T.sc_ok++; }
+    for (const c of extraConvs) if ((!c.ch||ids.has(c.ch))&&inRange(qs,c.at)) { if(c.event==='ftd'){ T.ftd++; add(ymd(new Date(c.at)),0,0,1); } if(c.event==='reg') T.reg++; if(c.event==='ftd'||c.event==='dep') T.revenue_cents+=c.value_cents; }
+    return {totals:T, series:[...ser.values()].sort((a,b)=>a.day<b.day?-1:1), channels:[], counts:{channels:db.channels.length,channels_all:db.channels.length,bots:db.bots.length,pixels:db.channels.filter(c=>on(c,'meta')).length,tiktoks:db.channels.filter(c=>on(c,'tiktok')).length,snaps:db.channels.filter(c=>on(c,'snap')).length,has_clicks:true,has_conversions:sample||extraConvs.length>0}};
+  }
+  function pickPlat(ch,x){ let acc=0; for (const [p,w] of Object.entries(ch.mix||{meta:1})){ acc+=w; if(x<acc) return p; } return Object.keys(ch.mix||{meta:1})[0]; }
+  function person(ch,di,k,tracked,total,pos=k,row){
+    const r=rng(h('p',ch.id,di,k)), first=FIRST[Math.floor(r()*FIRST.length)], last=LAST[Math.floor(r()*LAST.length)];
+    const ds=addDays(today0(),di).getTime(), span=di===0?Math.max(60000,Date.now()-ds):864e5;
+    const ja=Math.round(ds+span-(pos+.5)*span/(total+.5)-r()*span/(total+1)*.4), ttj=Math.round((3+Math.pow(r(),2.2)*240)*1000);
+    const pl=pickPlat(ch,r()), camp=CAMPS[pl][Math.floor(r()*CAMPS[pl].length)], id=h(ch.id,di,k);
+    const convs=[];
+    if (tracked && row){ const regAt=ja+Math.round((5+r()*240)*60000), ftdAt=regAt+Math.round((10+r()*600)*60000), val=Math.round((ch.avg||40)*(.4+r()*1.4))*100;
+      if (k<row.reg) convs.push({event:'reg',value_cents:0,currency:'USD',at:regAt,source:'postback'});
+      if (k<row.ftd){ convs.push({event:'ftd',value_cents:val,currency:'USD',at:ftdAt,source:'postback'}); if (r()<.25) convs.push({event:'dep',value_cents:Math.round(val*(.5+r())/100)*100,currency:'USD',at:ftdAt+Math.round((1+r()*5)*864e5),source:'postback'}); } }
+    const p={id,channel_id:ch.id,channel_title:ch.title,click_id:tracked?1:null,tg_user_id:5000000000+Math.floor(r()*2400000000),first_name:first,last_name:last,
+      username:r()<.68?(first+(last?'_'+last:'')).toLowerCase().normalize('NFD').replace(/[^a-z_]/g,''):'',lang:['en','en','en','de','pt','es','fr'][Math.floor(r()*7)],is_premium:r()<.07?1:0,joined_at:ja,left_at:r()<.07?ja+Math.round((1+r()*90)*3600000):null,
+      click_ts:tracked?ja-ttj:null,country:tracked?ch.cc[Math.floor(r()*ch.cc.length)]:null,fbclid:tracked&&pl==='meta'?'IwZXh0bgNhZW0':null,ttclid:tracked&&pl==='tiktok'?'E.C.P.v3demo':null,sccid:tracked&&pl==='snap'?'b7c1e2d3-demo':null,
+      ip:tracked?`${[81,185,92,151,177][Math.floor(r()*5)]}.${Math.floor(r()*255)}.${Math.floor(r()*255)}.${Math.floor(r()*255)}`:null,
+      ua:tracked?UAS[pl][Math.floor(r()*UAS[pl].length)]:null,params:tracked?{utm_source:SRC[pl],utm_campaign:camp,utm_content:ADS[Math.floor(r()*ADS.length)]}:{},
+      capi_status:tracked?(on(ch,'meta')?(r()<.01?'failed':'sent'):'no_pixel'):'none',capi_error:null,tt_status:tracked&&on(ch,'tiktok')?'sent':'none',tt_error:null,sc_status:tracked&&on(ch,'snap')?'sent':'none',sc_error:null,convs};
+    if (p.capi_status==='failed') p.capi_error='Invalid parameter: event_time is too far in the past (demo)';
+    if (di>-30 && convs.some(c=>c.at>Date.now())) p.convs=convs.filter(c=>c.at<=Date.now());
+    if (extra.has(id)) p.convs=p.convs.concat(extra.get(id));
+    return p;
+  }
+  function joins(qs){
+    const type=qs.get('type')||'', q=(qs.get('q')||'').toLowerCase().replace(/^@/,''), limit=+qs.get('limit')||40, offset=+qs.get('offset')||0;
+    const isF=r=>(r.convs||[]).some(c=>c.event==='ftd');
+    const ok=r=>(!q||(r.username||'').includes(q)||(r.first_name+' '+r.last_name).toLowerCase().includes(q)||String(r.tg_user_id)===q)&&(type!=='left'||r.left_at)&&(type!=='tracked'||r.click_id)&&(type!=='organic'||!r.click_id)&&(type!=='ftd'||isF(r));
+    const ids=new Set(chansFor(qs).map(c=>c.id));
+    const liveRows=live.filter(j=>ids.has(j.channel_id)&&inRange(qs,j.joined_at)&&ok(j)).sort((a,b)=>b.joined_at-a.joined_at);
+    const out=[]; let total=0, scanned=0; const scan=q||type==='left';
+    for (const r of liveRows){ if(total>=offset&&out.length<limit) out.push(r); total++; }
+    const cnt=r=>type==='tracked'?r.joins:type==='organic'?r.organic:type==='ftd'?r.ftd:r.joins+r.organic;
+    for (const d of days(qs)){
+      const di=dayIdx(d), items=[]; for(const ch of chansFor(qs)){ const r=dayRow(ch,di); if(r) items.push({ch,r}); }
+      const dt=items.reduce((s,x)=>s+cnt(x.r),0);
+      if (!scan && (total+dt<=offset || out.length>=limit)){ total+=dt; continue; }
+      const rows=[]; for(const {ch,r} of items){ const N=r.joins+r.organic; for(let k=0;k<N;k++){ const tr=k<r.joins; if((type==='tracked'&&!tr)||(type==='organic'&&tr)||(type==='ftd'&&!(tr&&k<r.ftd))) continue; rows.push(person(ch,di,k,tr,N,(k*7919)%N,r)); } }
+      rows.sort((a,b)=>b.joined_at-a.joined_at);
+      for(const row of rows){ if(scan&&!ok(row)) continue; if(total>=offset&&out.length<limit) out.push(row); total++; }
+      scanned+=rows.length; if(scan&&scanned>25000) break;
+    }
+    for (const r of out){ seenRows.set(r.id,r); } if (seenRows.size>3000) seenRows=new Map([...seenRows].slice(-1500));
+    return {total,rows:out};
+  }
+  function compare(qs){
+    const n=Math.max(2,Math.min(24,+qs.get('months')||6)), now=new Date(), months=[];
+    for (let i=n-1;i>=0;i--){
+      const s=new Date(now.getFullYear(),now.getMonth()-i,1), e=new Date(now.getFullYear(),now.getMonth()-i+1,0), partial=i===0, end=partial?today0():e;
+      const q=new URLSearchParams(`from=${ymd(s)}&to=${ymd(end)}${qs.get('channel')?'&channel='+qs.get('channel'):''}`);
+      const T=stats(q).totals;
+      months.push({month:ymd(s).slice(0,7),partial,days_in:partial?now.getDate():e.getDate(),clicks:T.clicks,joins:T.joins,organic:T.organic,leaves:T.leaves,sent:T.capi_ok+T.tt_ok+T.sc_ok,ftd:T.ftd,reg:T.reg,revenue_cents:T.revenue_cents,join_rate:T.clicks?T.joins/T.clicks:0,ftd_rate:T.joins?T.ftd/T.joins:0});
+    }
+    return {months};
+  }
+  function breakdown0(qs){
+    const dim=qs.get('dim')||'campaign', acc=new Map();
+    const put=(key,T,w,jm=1,fm=1,W)=>{ const a=acc.get(key)||{key,clicks:0,joins:0,ftd:0,reg:0,revenue_cents:0,leaves:0}; a.clicks+=T.clicks*w/W.c; a.joins+=T.joins*w*jm/W.j; a.ftd+=T.ftd*w*jm*fm/W.f; a.reg+=T.reg*w*jm*fm/W.f; a.revenue_cents+=T.revenue_cents*w*jm*fm/W.f; a.leaves+=T.leaves*w*jm/W.j; acc.set(key,a); };
+    const split=(T,parts)=>{ const W={c:0,j:0,f:0}; for(const [,w,jm=1,fm=1] of parts){ W.c+=w; W.j+=w*jm; W.f+=w*jm*fm; } if(W.c) for(const [k,w,jm,fm] of parts) put(k,T,w,jm,fm,W); };
+    for (const ch of chansFor(qs)){
+      const q=new URLSearchParams(qs); q.set('channel',ch.id); const T=stats(q).totals; if(!T.clicks) continue;
+      const mix=Object.entries(ch.mix||{meta:1});
+      if (dim==='channel') split(T,[[ch.title,1]]);
+      else if (dim==='platform') split(T,[...mix.map(([p,w])=>[PNAME[p],w*.98,p==='tiktok'?.92:p==='snap'?.88:1.04,p==='meta'?1.1:.85]),['Other / direct',.02,.6,.5]]);
+      else if (dim==='source') split(T,mix.map(([p,w])=>[SRC[p],w,p==='tiktok'?.92:1,p==='meta'?1.1:.85]));
+      else if (dim==='country'){ const cc={}; ch.cc.forEach(c=>cc[c]=(cc[c]||0)+1); split(T,Object.entries(cc).map(([c,w],i)=>[c,w,[1.08,.94,1.02,.9,1.12,.86][i%6],[1.2,.8,1.05,.7,1.3,.9][i%6]])); }
+      else if (dim==='ad') split(T,ADS.map((a,i)=>[a,[.3,.24,.2,.15,.11][i],[1.12,.9,1.05,.96,.85][i],[1.1,.95,1.25,.8,.9][i]]));
+      else { const parts=[]; for (const [p,w] of mix) CAMPS[p].forEach((c,i)=>parts.push([c,w*[.4,.3,.2,.1][i],[1.1,.95,1.2,.8][i],[1.3,.9,1.1,.7][i]])); split(T,parts); }
+    }
+    const rows=[...acc.values()].map(a=>{ for(const k of ['clicks','joins','ftd','reg','revenue_cents','leaves']) a[k]=Math.round(a[k]); a.join_rate=a.clicks?a.joins/a.clicks:0; return a; }).sort((a,b)=>b.joins-a.joins||b.clicks-a.clicks);
+    return {dim,rows};
+  }
+  function conversions0(limit){
+    const rows=[]; let id=90000;
+    for (let di=0; di>-12 && rows.length<limit+20; di--){ for (const ch of db.channels){ const r=dayRow(ch,di); if(!r) continue; const N=r.joins+r.organic;
+      for (let k=0;k<Math.max(r.reg,r.ftd);k++){ const p=person(ch,di,k,true,N,(k*7919)%N,r);
+        for (const c of p.convs) if (c.at<=Date.now()) rows.push({id:id++,event:c.event,value_cents:c.value_cents,currency:c.currency,txid:'tx_'+h(p.id,c.event).toString(36),source:c.source,matched:1,created_at:c.at,
+          meta_status:on(ch,'meta')?'sent':'none',tt_status:on(ch,'tiktok')&&c.event!=='dep'?'sent':'none',sc_status:on(ch,'snap')&&c.event!=='dep'?'sent':'none',error:null,tg_user_id:p.tg_user_id,first_name:p.first_name,last_name:p.last_name,username:p.username,click_id:1,channel_title:ch.title}); } } }
+    for (const c of extraConvs) rows.push(c.row);
+    if (sample){ rows.push({id:id++,event:'ftd',value_cents:5000,currency:'USD',txid:'tx_unk1',source:'postback',matched:0,created_at:Date.now()-5*3600e3,meta_status:'none',tt_status:'none',sc_status:'none',error:null,tg_user_id:6123448812,first_name:null,last_name:null,username:null,click_id:null,channel_title:null});
+      const f=rows.find(x=>x.event==='ftd'&&x.sc_status==='sent'); if (f){ f.sc_status='failed'; f.error='Snapchat: invalid pixel ID for this token (demo)'; } }
+    return rows.sort((a,b)=>b.created_at-a.created_at).slice(0,limit);
+  }
+  function tick(){
+    const chs=db.channels.filter(c=>c.live); if(!chs.length) return; const ch=chs[Math.floor(Math.random()*chs.length)], ts=Date.now();
+    liveClicks.push({ch:ch.id,ts});
+    if (Math.random()<.42){ const p=person({...ch,cc:['US','GB','DE','BR','IN','AE']},0,nid++,true,1); p.id=nid++; p.joined_at=ts; p.click_ts=ts-Math.round(4000+Math.random()*50000); p.capi_status=on(ch,'meta')?'sent':'no_pixel'; p.tt_status=on(ch,'tiktok')?'sent':'none'; p.sc_status=on(ch,'snap')?'sent':'none'; p.convs=[]; live.push(p); }
+    else if (Math.random()<.08){ const p=person(ch,0,nid++,false,1); p.id=nid++; p.joined_at=ts; live.push(p); }
+  }
+
+  /* ---------- Phase A demo: conversions+, integrations, join requests, periods/funnel/cohorts, spend, credits, sales, alerts ---------- */
+  let spendRows=[], bonusRows=[], connected=new Set(['keitaro']), spendId=1, alerts={connected:false,prefs:{daily_report:true,token_errors:true,links_low:true,cpa_spike:false,paused:true,ftd_live:false,no_joins_2h:true,no_ftd_campaign:false}};
+  const CPC=[72,88,61,95,78,83];
+  function spendTotal(qs){
+    let t=0; const ids=new Set(chansFor(qs).map(c=>c.id));
+    if (sample) for (const d of days(qs)) for (const ch of chansFor(qs)){ const r=dayRow(ch,dayIdx(d)); if(r) t+=Math.round(r.clicks*CPC[ch.id%CPC.length]); }
+    for (const x of spendRows) if (inRange(qs,parseYmd(x.date).getTime())) t+=x.amount_cents;
+    return t;
+  }
+  function stats(qs){
+    const r=stats1(qs), T=r.totals; T.filtered_joins=sample?Math.round(T.joins*.021):0; if(locked()){ T.ftd_locked=true; T.revenue_cents=null; } return r;
+  }
+  function stats1(qs){
+    const r=stats0(qs), T=r.totals;
+    T.sales=Math.round(T.ftd*.16); T.qualified=Math.round(T.ftd*.55); T.rejected=Math.round(T.ftd*.03);
+    T.suspect_clicks=sample?Math.round(T.clicks*.034):0; T.spend_cents=spendTotal(qs);
+    return r;
+  }
+  function breakdown(qs){
+    const dim=qs.get('dim')||'campaign';
+    if (dim==='adset'||dim==='lang'){ const q=new URLSearchParams(qs); q.set('dim',dim==='adset'?'campaign':'channel'); const base=breakdown1(q); const out=new Map();
+      const SETS=['Broad_18-44','LAL_1pct_Depositors','Interest_Shopping'], LANGS=[['en',.46,1],['pt',.14,1.1],['es',.13,.95],['ru',.1,1.2],['fr',.09,.9],['de',.08,1.05]];
+      for (const r of base.rows){ const parts=dim==='adset'?SETS.map((n,i)=>[r.key+' › '+n,[.5,.3,.2][i],[1,1.12,.85][i]]):LANGS;
+        for (const [k,w,f] of parts){ const o=out.get(k)||{key:k,clicks:0,joins:0,ftd:0,reg:0,revenue_cents:0,leaves:0,spend_cents:0,suspect_clicks:0}; for (const x of ['clicks','joins','ftd','reg','revenue_cents','leaves','spend_cents','suspect_clicks']) o[x]+=Math.round((r[x]||0)*w*(['ftd','reg','revenue_cents'].includes(x)?f:1)); out.set(k,o); } }
+      const rows=[...out.values()].map(o=>({...o,join_rate:o.clicks?o.joins/o.clicks:0,cost_per_join_cents:o.spend_cents&&o.joins?Math.round(o.spend_cents/o.joins):null,cost_per_ftd_cents:o.spend_cents&&o.ftd?Math.round(o.spend_cents/o.ftd):null,roas:o.spend_cents?+(o.revenue_cents/o.spend_cents).toFixed(2):null})).sort((a,b)=>b.joins-a.joins);
+      return lockRows({dim,rows}); }
+    return lockRows(breakdown1(qs));
+  }
+  function lockRows(r){ if(locked()) r.rows.forEach(x=>{ x.ftd=null; x.revenue_cents=null; x.roas=null; x.cost_per_ftd_cents=null; x.reg=null; x.locked=true; }); return r; }
+  function breakdown1(qs){
+    const r=breakdown0(qs), tot=stats1(qs).totals, sp=tot.spend_cents, dim=r.dim, C=r.rows.reduce((a,x)=>a+x.clicks,0)||1;
+    const wsum=r.rows.reduce((a,x)=>a+x.clicks*(.8+(h(x.key)%40)/100),0)||1;
+    r.rows.forEach(x=>{ x.suspect_clicks=Math.round(tot.suspect_clicks*x.clicks/C*(.6+(h('s',x.key)%80)/100));
+      if (dim==='campaign'||dim==='platform'){ let s=sample?Math.round(sp*x.clicks*(.8+(h(x.key)%40)/100)/wsum):0;
+        for (const y of spendRows) if (inRange(qs,parseYmd(y.date).getTime()) && (dim==='campaign'?y.campaign===x.key:PNAME[y.platform]===x.key)) s+=y.amount_cents;
+        x.spend_cents=s; x.cost_per_join_cents=s&&x.joins?Math.round(s/x.joins):null; x.cost_per_ftd_cents=s&&x.ftd?Math.round(s/x.ftd):null; x.roas=s?+(x.revenue_cents/s).toFixed(2):null; } });
+    return r;
+  }
+  const NETS=['1win','affstore','keitaro','pocket','exness'];
+  function conversions(limit){
+    const rows=conversions0(limit);
+    rows.forEach((x,i)=>{ const k=h('c',x.id); if (x.event==='ftd'||x.event==='reg') x.network=x.matched?NETS[k%NETS.length]:null; else x.network=null; x.rejected=0;
+      if (x.event==='reg' && k%9===0){ x.event='sale'; x.value_cents=[4900,9900,19900][k%3]; }
+      else if (x.event==='reg' && k%7===0){ x.event='qualified'; x.value_cents=[2500,4000][k%2]; } });
+    if (sample && rows.length>3){ const f=rows.find(x=>x.event==='ftd'&&x.matched); if(f) rows.splice(3,0,{...f,id:f.id+50000,event:'rejected',rejected:1,source:'postback',created_at:f.created_at+3600e3,meta_status:'none',tt_status:'none',sc_status:'none',error:null,txid:'tx_cb_'+f.id}); }
+    return rows.slice(0,limit);
+  }
+  const INTEG=[
+    ['1win','1win Partners','iGaming',['reg','ftd','dep']],['kingfin','Kingfin','Trading',['reg','ftd']],['affstore','Affstore (IQ Option)','Trading',['reg','ftd','dep']],
+    ['pocket','Pocket Partners (Pocket Option)','Trading',['reg','ftd','dep']],['olymp','Olymp Trade Affiliates','Trading',['reg','ftd']],['binomo','Binomo Partners','Trading',['reg','ftd']],
+    ['quotex','Quotex Affiliate','Trading',['reg','ftd']],['exness','Exness Partners','Trading',['reg','ftd','qualified']],['1xbet','1xBet Partners','iGaming',['reg','ftd','dep']],
+    ['melbet','Melbet Affiliates','iGaming',['reg','ftd','dep']],['mostbet','Mostbet Partners','iGaming',['reg','ftd','dep']],['affiliatetop','Affiliate Top','Affiliate network',['reg','ftd','dep']],['keitaro','Keitaro','Tracker',['lead','reg','ftd','dep','sale','rejected']],['binom','Binom','Tracker',['lead','reg','ftd','dep','sale','rejected']],
+    ['custom','Custom postback','Other',['lead','reg','ftd','dep','sale','qualified','rejected']]];
+  const LOGOS={'1win':'1win','kingfin':'kingfin','affstore':'affstore','pocket':'pocketoption','melbet':'melbet','mostbet':'mostbet','affiliatetop':'affiliatetop','keitaro':'keitaro'};
+  function integrations(){ const r=integrations0(); r.items.forEach(it=>{ if(LOGOS[it.id]) it.logo='media/logos/'+LOGOS[it.id]+'.png'; }); return r; }
+  function integrations0(){
+    const key=Demo.pbk||'k7d2Qm9xVt', base='https://joinvoo.com/pb/'+key;
+    return {postback_base:base, items:INTEG.map(([id,name,cat,ev])=>{ const tr=cat==='Tracker', q=id==='keitaro'?'?subid={sub_id_1}&status={status}&payout={revenue}&currency={currency}&txid={tid}':id==='binom'?'?subid={t1}&status={cnv_status}&payout={payout}&txid={cnv_id}':id==='custom'?'?sub1={telegram_id}&status=ftd&payout={amount}&currency=USD&txid={id}':'?sub1={sub1}&status={status}&payout={amount}&txid={transaction_id}';
+      const c=connected.has(id), n=c?20+h('e',id)%180:0;
+      return {id,name,logo:'',category:cat,postback_template:base+q+'&net='+id,macros_note:tr?'Store the Telegram ID in the first click parameter when the visit comes in.':'Put the person’s Telegram ID in sub1 on your offer link. Macro names can differ per program.',verified:tr,docs_url:tr?'https://docs.example/'+id:'',events:ev,
+        setup_steps:id==='custom'?['Copy your postback URL.','Replace the {…} parts with your system’s variables.','Send status=reg, ftd, dep, sale, qualified or rejected.']:tr?[`Open ${name} → Traffic sources (or Campaign) → Postback.`,'Paste the URL below as the S2S postback.','Pass the Telegram ID from your offer link into the first click parameter.']:[`Log in to ${name} and open Postbacks (or Tracking → S2S).`,'Paste the URL below and pick the events to send (registration, first deposit, deposit).','On your offer link, put the person’s Telegram ID into sub1. Joinvoo’s welcome message does this for you with {tg_id}.','Ask your manager to confirm the macro names, then send a test.'],
+        connected:c,events_30d:n,last_event_at:c?Date.now()-(1+h('l',id)%300)*60e3:null}; })};
+  }
+  function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
+  function rangeData(f,t,group,ch){
+    const map=new Map(), tot={clicks:0,joins:0,reg:0,ftd:0,sales:0,revenue_cents:0,spend_cents:0};
+    const fin=o=>{ o.cost_per_join_cents=o.spend_cents&&o.joins?Math.round(o.spend_cents/o.joins):null; o.cost_per_ftd_cents=o.spend_cents&&o.ftd?Math.round(o.spend_cents/o.ftd):null; o.roas=o.spend_cents?+(o.revenue_cents/o.spend_cents).toFixed(2):null; o.ftd_rate=o.joins?+(o.ftd/o.joins*100).toFixed(2):0; return o; };
+    for (let d=parseYmd(f); ymd(d)<=t; d=addDays(d,1)){ const q=new URLSearchParams(`from=${ymd(d)}&to=${ymd(d)}${ch?'&channel='+ch:''}`), T=stats(q).totals;
+      const key=group==='month'?ymd(d).slice(0,7):group==='week'?ymd(weekStart(d)):ymd(d); const s=map.get(key)||{key,clicks:0,joins:0,reg:0,ftd:0,sales:0,revenue_cents:0,spend_cents:0};
+      for (const k of ['clicks','joins','reg','ftd','sales','revenue_cents','spend_cents']){ s[k]+=T[k]||0; tot[k]+=T[k]||0; } map.set(key,s); }
+    return {totals:fin(tot), series:[...map.values()].map(fin)};
+  }
+  function periods(qs){
+    const g=qs.get('group')||'day', ch=qs.get('channel'), a=rangeData(qs.get('a_from'),qs.get('a_to'),g,ch), b=rangeData(qs.get('b_from'),qs.get('b_to'),g,ch), delta={};
+    for (const k of Object.keys(a.totals)) if (typeof a.totals[k]==='number') delta[k]=b.totals[k]?(a.totals[k]-b.totals[k])/b.totals[k]*100:null;
+    return {a,b,delta};
+  }
+  function funnel(qs){
+    const dim=qs.get('dim')||'none', cnt=o=>({clicks:o.clicks||0,joins:o.joins||0,reg:o.reg||0,ftd:o.ftd||0,dep:Math.round((o.ftd||0)*.27)});
+    if (dim==='none'){ const T=stats(qs).totals; return {steps:['clicks','joins','reg','ftd','dep'],a:{label:'All traffic',counts:cnt(T)}}; }
+    const q=new URLSearchParams(qs); q.set('dim',dim); const rows=breakdown(q).rows, pick=v=>rows.find(r=>String(r.key)===String(v));
+    const A=pick(qs.get('a'))||rows[0]||{}, B=qs.get('b')?pick(qs.get('b')):null;
+    return {steps:['clicks','joins','reg','ftd','dep'],a:{label:A.key||'—',counts:cnt(A)},...(B?{b:{label:B.key,counts:cnt(B)}}:{})};
+  }
+  function cohorts(qs){
+    const n=Math.min(12,+qs.get('weeks')||8), rows=[], now=today0();
+    for (let i=n-1;i>=0;i--){ const s=addDays(weekStart(now),-7*i), e=addDays(s,6), q=new URLSearchParams(`from=${ymd(s)}&to=${ymd(e<now?e:now)}${qs.get('channel')?'&channel='+qs.get('channel'):''}`), T=stats0(q).totals, age=(now-s)/864e5;
+      const base=T.joins?T.ftd/T.joins:0, j=T.joins, d1=Math.round(j*base*.42), d7=age>=7?Math.round(j*base*.84):null, d30=age>=30?Math.round(j*base*(1.05+(h('k',i)%10)/100)):null;
+      const wk=(()=>{ const t=new Date(s); t.setDate(t.getDate()+3); const y=t.getFullYear(), w=Math.ceil(((t-new Date(y,0,1))/864e5+1)/7); return y+'-W'+String(w).padStart(2,'0'); })();
+      rows.push({cohort:wk,start:ymd(s),joins:j,ftd_d1:d1,ftd_d7:d7,ftd_d30:d30,rate_d7:d7!=null&&j?d7/j:null,rate_d30:d30!=null&&j?d30/j:null}); }
+    return {rows:rows.reverse()};
+  }
+  const TIERS=[{min_cents:10000,bonus_pct:5},{min_cents:50000,bonus_pct:10},{min_cents:100000,bonus_pct:15},{min_cents:500000,bonus_pct:20}];
+  const RANKS=[{name:'Bronze',min_cents:0,join_discount_pct:0,perks:['Live chat support','All ad platforms']},{name:'Silver',min_cents:25000,join_discount_pct:0,perks:['Priority replies','Monthly report by email']},{name:'Gold',min_cents:100000,join_discount_pct:5,perks:['5% off every extra join','Setup call with our team']},{name:'Platinum',min_cents:500000,join_discount_pct:10,perks:['10% off every extra join','Dedicated manager','Early access to new features']},{name:'Diamond',min_cents:2000000,join_discount_pct:15,perks:['15% off every extra join','Custom pricing on request','Private Telegram line']}];
+  const PROMOS={LAUNCH10:{bonus_pct:10,message:'+10% bonus credits on this top-up.'},BIGVOLUME:{bonus_pct:15,message:'+15% bonus credits (min $500).',min:50000}};
+  const bonusPct=(c,promo)=>{ let p=0; for (const t of TIERS) if (c>=t.min_cents) p=t.bonus_pct; const pr=PROMOS[String(promo||'').toUpperCase()]; if (pr&&(!pr.min||c>=pr.min)) p+=pr.bonus_pct; return p; };
+  async function handleA(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
+    if (p==='/api/integrations'){ await wait(220); return integrations(); }
+    if ((m=/^\/api\/integrations\/([\w-]+)\/connect$/.exec(p))){ await wait(300); connected.add(m[1]); return {ok:true}; }
+    if (p==='/api/compare/periods'){ await wait(260); return periods(qs); }
+    if (p==='/api/funnel'){ await wait(200); return funnel(qs); }
+    if (p==='/api/cohorts'){ await wait(240); return cohorts(qs); }
+    if (p==='/api/spend'&&method==='GET'){ await wait(150); const gen=[]; if(sample) for(let i=0;i<10;i++){ const d=addDays(today0(),-i); for (const pl of ['meta','tiktok','snap']){ let t=0; for (const ch of db.channels){ const r=dayRow(ch,-i); if(r) t+=Math.round(r.clicks*CPC[ch.id%CPC.length]*((ch.mix||{meta:1})[pl]||0)); } if(t) gen.push({id:'s'+i+pl,date:ymd(d),platform:pl,campaign:'(all campaigns)',amount_cents:t,currency:'USD',source:'sample'}); } }
+      return {rows:[...spendRows.slice().reverse(),...gen]}; }
+    if (p==='/api/spend'&&method==='POST'){ await wait(300); const a=Math.round(parseFloat(String(body.amount||'').replace(/[^0-9.]/g,''))*100); if(!/^\d{4}-\d{2}-\d{2}$/.test(body.date||'')) throw err('Pick a date.'); if(!(a>0)) throw err('Enter the amount you spent, like 120.50.'); const row={id:spendId++,date:body.date,platform:body.platform||'other',campaign:String(body.campaign||'').trim()||'(all campaigns)',amount_cents:a,currency:'USD'}; spendRows.push(row); return {ok:true,row}; }
+    if (p==='/api/spend/import'){ await wait(400); const lines=String(typeof body==='string'?body:body.csv||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean); let n=0; const bad=[];
+      lines.forEach((l,i)=>{ const c=l.split(/[,;\t]/).map(x=>x.trim()); if(i===0&&/date/i.test(c[0])) return; const a=Math.round(parseFloat(c[3])*100); if(/^\d{4}-\d{2}-\d{2}$/.test(c[0])&&a>0){ spendRows.push({id:spendId++,date:c[0],platform:['meta','tiktok','snap'].includes((c[1]||'').toLowerCase())?c[1].toLowerCase():'other',campaign:c[2]||'(all campaigns)',amount_cents:a,currency:'USD'}); n++; } else bad.push(i+1); });
+      if(!n) throw err('No rows found. Use: date,platform,campaign,amount (one per line).'); return {ok:true,imported:n,skipped:bad.length}; }
+    if ((m=/^\/api\/spend\/(\d+)$/.exec(p))&&method==='DELETE'){ spendRows=spendRows.filter(x=>x.id!==+m[1]); return {ok:true}; }
+    if (p==='/api/billing/promo'){ await wait(300); const pr=PROMOS[String(qs.get('code')||'').toUpperCase()]; return pr?{valid:true,bonus_pct:pr.bonus_pct,message:pr.message}:{valid:false,bonus_pct:0,message:'That code isn’t valid or has ended.'}; }
+    if (p==='/api/sales'){ await wait(500); if(!/\S+@\S+\.\S+/.test(body.email||'')) throw err('Add your email so we can reply.'); return {ok:true}; }
+    if (p==='/api/alerts'&&method==='GET'){ await wait(200); return {connected:alerts.connected,bot_username:'joinvoo_alerts_bot',link:'https://t.me/joinvoo_alerts_bot?start=demo7k2',prefs:{...alerts.prefs}}; }
+    if (p==='/api/alerts'&&method==='POST'){ await wait(200); if(body.prefs) Object.assign(alerts.prefs,body.prefs); if(body.connect) alerts.connected=true; return {ok:true}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&(body.join_mode!==undefined||body.offer_text!==undefined)){ await wait(250); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
+      if (body.offer_url && !/^https?:\/\//.test(body.offer_url)) throw err('The offer link must start with https://');
+      for (const k of ['join_mode','offer_text','offer_btn','offer_url']) if (body[k]!==undefined) c[k]=body[k]; return {ok:true}; }
+    if (p==='/api/billing'&&method==='GET'){ const b=await handle0(method,path,body); const bonus=bonusRows.reduce((a,x)=>a+x.amount_cents,0);
+      b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $300 top-up',amount_cents:1500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
+      const sb=sample?1500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
+      b.credits={balance:b.balance_cents,bought:b.deposited_cents,bonus:bonus+sb,used:b.used_cents};
+      b.rank={name:R.name,next:N?{name:N.name,need_cents:N.min_cents-life}:null,lifetime_cents:life,join_discount_pct:R.join_discount_pct,perks:R.perks};
+      b.bonus_tiers=TIERS; b.ranks=RANKS; b.custom_pricing=null; b.promo={code:'LAUNCH10',bonus_pct:10,ends_at:Date.now()+4*864e5+5*3600e3}; return b; }
+    if (p==='/api/billing/deposit'&&method==='POST'&&!body.reference){ const r=await handle0(method,path,body);
+      if (!r.manual&&!r.crypto&&!r.url&&!r.pending){ const c=Math.round(+body.amount*100), pct=bonusPct(c,body.promo); if(pct){ const bc=Math.round(c*pct/100); bonusRows.push({kind:'bonus',note:`Bonus +${pct}% for a $${body.amount} top-up`,amount_cents:bc,created_at:Date.now()+1}); r.message=`Demo: ${fmt(c)} credits + ${fmt(bc)} bonus credits added.`; } else r.message=`Demo: ${fmt(c)} credits added.`; }
+      return r; }
+    return handle0(method,path,body);
+  }
+
+  /* ---------- Round 6 demo: profile, plans/trial, locks, fraud joins, smart links, compare insights, Joe ---------- */
+  const qp6=new URLSearchParams(location.search);
+  let profile={nickname:'',gender:'male',avatar:null,lang:'en',tz:null};
+  /* Round 6 A: levels (leads = joins + bot starts, rolling 30 days) */
+  const LEVELS6=[{id:'rookie',name:'Rookie',from:0},{id:'hustler',name:'Hustler',from:1000},{id:'operator',name:'Operator',from:5000},{id:'shark',name:'Shark',from:25000},{id:'whale',name:'Whale',from:100000},{id:'kraken',name:'Kraken',from:300000},{id:'legend',name:'Legend',from:1000000}];
+  let showLevel=true;
+  /* Round 8: country + country-aware payment methods (?country=RU shows the Russia view, ?country=none the first-time prompt) */
+  const qc8=String(new URLSearchParams(location.search).get('country')||'NG').toUpperCase();
+  let country8={code:qc8==='NONE'?null:(/^[A-Z]{2}$/.test(qc8)?qc8:'NG'), changed_at:null};
+  const PM8=[
+    {id:'pm_paystack',name:'Paystack',type:'paystack',description:'Card, bank transfer or USSD, charged in Naira.',currency:'NGN',fx_rate:1500,fx_example:true,min_usd:10,max_usd:5000,fee_pct:0,countries:{mode:'only',list:['NG','GH','KE','ZA']}},
+    {id:'pm_stripe',name:'Bank card (Stripe)',type:'stripe',description:'Visa, Mastercard, Apple Pay and Google Pay.',currency:'USD',fx_rate:1,min_usd:10,max_usd:10000,fee_pct:3,countries:{mode:'global'}},
+    {id:'pm_usdt',name:'USDT (TRC20)',type:'crypto_manual',description:'Tether on the TRON network. Our team confirms it.',currency:'USDT',fx_rate:1,min_usd:20,max_usd:50000,fee_pct:0,network:'TRON (TRC20)',address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',instructions:'Send USDT on the TRC20 network only. Sending another coin or network loses the funds.',countries:{mode:'global'}},
+    {id:'pm_bank',name:'Bank transfer',type:'manual',description:'Pay from your bank account. Confirmed within a few hours.',currency:'USD',fx_rate:1,min_usd:50,max_usd:20000,fee_pct:0,instructions:'Use the reference below so we can match your transfer.',fields:[{label:'Bank',value:'Demo Bank'},{label:'Account name',value:'Joinvoo (demo)'},{label:'IBAN',value:'DE00 0000 0000 0000 0000 00'},{label:'SWIFT / BIC',value:'DEMODEXX'}],countries:{mode:'global'}}];
+  const pmFor=c=>PM8.filter(m=>{ const k=m.countries||{mode:'global'}; return k.mode==='global'||(c&&(k.mode==='only'?k.list.includes(c):!k.list.includes(c))); }).map(({countries,...m})=>({...m}));
+  const topups8=new Map();
+  let ctryIdx=null;
+  async function countries8(){ if(ctryIdx) return ctryIdx; try{ const r=await fetch('countries.json'); if(!r.ok) throw 0; ctryIdx=await r.json(); if(!Array.isArray(ctryIdx)||!ctryIdx.length) throw 0; }catch{ ctryIdx=[{code:'NG',name:'Nigeria',flag:'🇳🇬'},{code:'GH',name:'Ghana',flag:'🇬🇭'},{code:'KE',name:'Kenya',flag:'🇰🇪'},{code:'ZA',name:'South Africa',flag:'🇿🇦'},{code:'RU',name:'Russia',flag:'🇷🇺'},{code:'BR',name:'Brazil',flag:'🇧🇷'},{code:'US',name:'United States',flag:'🇺🇸'},{code:'GB',name:'United Kingdom',flag:'🇬🇧'}]; } return ctryIdx; }
+  /* Round 7: inbox + learn */
+  const H=3600e3, DY=864e5;
+  let notify6={update:{email:true},account:{email:true},alert:{email:true},joe:{email:false}};
+  let inbox6=null, ibId=100;
+  function seedInbox(){ const n=Date.now(); return [
+    {id:1,kind:'update',important:true,title:'Meet Joe, your media-buying assistant',body:'Joe reads your numbers every morning and tells you **what to scale, what to fix and what to watch**. Ask him anything about your ads, in plain words.',image:'/media/email/meet_joe.png',cta_label:'Say hi to Joe',cta_url:'#tab:joe',created_at:n-40*60e3,read:false},
+    {id:2,kind:'account',title:'Deposit approved',body:'Your **$200.00** USDT top-up was approved and **20,000 credits** are in your wallet.',image:'/media/email/payment.png',cta_label:'See credits',cta_url:'#tab:wallet',created_at:n-2*H,read:false},
+    {id:3,kind:'account',title:'Level up: you reached Operator 🎯',body:'**8,940 leads** in the last 30 days. Next up: Shark at 25,000.',image:'/media/email/level_up.png',cta_label:'See my level',cta_url:'#tab:levels',created_at:n-5*H,read:false},
+    {id:4,kind:'alert',title:'No joins for 2 hours on Fit in 30',body:'This channel usually gets joins at this hour. Check that your ads are running and your link still works.',cta_label:'Open channels',cta_url:'#tab:channels',created_at:n-7*H,read:false},
+    {id:5,kind:'joe',title:'Tip: raise budgets in small steps',body:'When an ad set wins, add 20–30% a day instead of doubling it. The algorithm keeps learning and your cost per FTD stays steady.',cta_label:'Ask Joe',cta_url:'#tab:joe',created_at:n-20*H,read:false},
+    {id:6,kind:'update',title:'New on the blog: Why your cost per subscriber lies to you',body:'A cheap cost per subscriber can be the most expensive number in your account. Here’s how to read it honestly.',image:'/media/blog/why-your-cost-per-subscriber-lies.webp',cta_label:'Read it',cta_url:'/blog/why-your-cost-per-subscriber-lies',created_at:n-DY-3*H,read:false},
+    {id:7,kind:'alert',title:'Fake joins filtered this week',body:'Join bursts, deleted accounts and repeat users were kept away from your ad platforms, so your pixels learn from real people.',cta_label:'See who',cta_url:'#tab:people',created_at:n-2*DY,read:true},
+    {id:8,kind:'account',title:'Maya from support replied',body:'She answered your question about the Snapchat test pixel.',cta_label:'Open chat',cta_url:'#tab:chat',created_at:n-2*DY-4*H,read:true},
+    {id:9,kind:'account',title:'Your Pro trial has started',body:'For 7 days or 20 deposits, see exactly which ads drive your first deposits.',image:'/media/email/trial_started.png',cta_label:'See plans',cta_url:'#tab:wallet',created_at:n-3*DY,read:true},
+    {id:10,kind:'update',title:'Compare got smarter',body:'Pick “this week vs last week” in one tap, and get a short summary of what changed.',cta_label:'Try Compare',cta_url:'#tab:compare',created_at:n-5*DY,read:true},
+    {id:11,kind:'joe',title:'Tip: name your ad sets the same way every time',body:'Use utm_term={{adset.name}} so Joinvoo can break results down by ad set.',cta_url:'/blog/utm-naming-conventions-that-survive-scale',cta_label:'Read the guide',created_at:n-6*DY,read:true},
+    {id:12,kind:'update',title:'Welcome to Joinvoo 👋',body:'Your first 500 joins are on us. Connect a bot and a channel to start tracking.',image:'/media/email/welcome.png',created_at:n-9*DY,read:true}]; }
+  const ibUnread=()=>{ const u={total:0,update:0,account:0,alert:0,joe:0}; (inbox6||[]).forEach(x=>{ if(!x.read){ u.total++; u[x.kind]++; } }); return u; };
+  const BLOG_FB=[{slug:'why-your-cost-per-subscriber-lies',title:'Why your cost per subscriber lies to you',description:'A cheap cost per subscriber can be the most expensive number in your account. How fake and junk joins get in, why they poison optimisation, and how to read subscriber cost honestly.',author:'Dchessking',date:'2026-09-29',tags:['Fake joins','Analytics'],cover:'/media/blog/why-your-cost-per-subscriber-lies.webp',reading_time:6,url:'/blog/why-your-cost-per-subscriber-lies'},
+    {slug:'how-to-track-telegram-channel-joins-from-meta-ads',title:'How to track Telegram channel joins from Meta ads',description:'Step by step: connect a bot, put your tracking link in the ad and send every real join back to Meta as a conversion.',author:'Joinvoo Team',date:'2026-09-23',tags:['Tracking','Meta'],cover:'/media/blog/how-to-track-telegram-channel-joins-from-meta-ads.webp',reading_time:7,url:'/blog/how-to-track-telegram-channel-joins-from-meta-ads'},
+    {slug:'scale-a-winning-ad-set-without-killing-it',title:'Scale a winning ad set without killing it',description:'How to add budget to a winner without resetting learning, and the signals that tell you when to stop.',author:'Dchessking',date:'2026-09-02',tags:['Scaling','Meta','Fake joins'],cover:'/media/blog/scale-a-winning-ad-set-without-killing-it.webp',reading_time:6,url:'/blog/scale-a-winning-ad-set-without-killing-it'}];
+  let blogIdx=null;
+  async function blogList(){ if(blogIdx) return blogIdx; try{ const r=await fetch('blog/posts.json',{cache:'no-cache'}); if(!r.ok) throw 0; const j=await r.json(); blogIdx=Array.isArray(j)?j:(j.posts||[]); if(!blogIdx.length) throw 0; }catch{ blogIdx=BLOG_FB; } return blogIdx; }
+  function level6(){ const qn=+new URLSearchParams(location.search).get('leads'); const leads=Number.isFinite(qn)&&qn>0?qn:sample?8940:0; let i=0; LEVELS6.forEach((l,k)=>{ if(leads>=l.from) i=k; }); const L=LEVELS6[i], N=LEVELS6[i+1];
+    return {id:L.id,name:L.name,index:i+1,leads_30d:leads,from:L.from,next:N?{id:N.id,name:N.name,from:N.from,need:N.from-leads}:null,show_badge:showLevel,since:Date.now()-6*864e5}; }
+  let plan6={id:'basic',change_pending:null}, trial6={status:'active',ftd_used:12,ftd_limit:20,days:7,starts:'first_ftd',started_at:Date.now()-3*864e5,ends_at:Date.now()+4*864e5};
+  if (qp6.get('plan')==='locked') trial6={...trial6,status:'ended',ftd_used:20,ends_at:Date.now()-864e5};
+  if (qp6.get('plan')==='pro'){ plan6.id='pro'; trial6.status='pro'; }
+  const locked=()=>sample&&plan6.id!=='pro'&&trial6.status==='ended';
+  const PLANS={basic:{name:'Basic',base_cents:3000,included:2000,per_join_cents:2,per_ftd_cents:0},pro:{name:'Pro',base_cents:9900,included:5000,per_join_cents:2,per_ftd_cents:0}};
+  let joeMsgs=[], joeLeft=30, jid=1, jbState=null;
+  function jb13(){ if (jbState) return jbState; const q=qp6.get('joe'), pro=plan6.id==='pro'||q==='deep';
+    jbState={free_left:q==='out'||q==='cap'||q==='broke'?0:2,free_daily:pro?30:10,autopay:q==='cap'||q==='broke',monthly_cap:1000,spent_month_credits:q==='cap'?996:184,est_range:[3,8],deep_allowed:pro,deep_est:[10,40],show_cost:true}; return jbState; }
+  const jbOutText=()=>`You’ve used today’s ${jb13().free_daily} free chats, ${profile.nickname||'Alex'} 😄 Want me to keep going? Paid answers come from your credits — most cost 3–8 credits (≈ $0.03–0.08).`;
+  async function jbBalance(){ try{ const b=await handle('GET','/api/billing'); return b.balance_cents; }catch{ return 0; } }
+  const REASONS=['burst','deleted_account','repeat_user','fake_click'];
+  function markSuspect(r){ if (!r||!r.click_id) return r; const k=h('sus',r.id); if (k%41===0){ r.suspect=1; r.suspect_reason=REASONS[k%4]; if(r.suspect_reason==='deleted_account'){ r.first_name='Deleted Account'; r.last_name=''; r.username=''; } r.capi_status=r.capi_status==='none'?'none':'filtered'; r.tt_status=r.tt_status==='none'?'none':'filtered'; r.sc_status=r.sc_status==='none'?'none':'filtered'; r.convs=[]; } else r.suspect=0; return r; }
+  const nextMonth=()=>{ const d=new Date(); return ymd(new Date(d.getFullYear(),d.getMonth()+1,1)); };
+  function rangeQ(days,off=0){ const t=addDays(today0(),-off); return new URLSearchParams(`from=${ymd(addDays(t,-(days-1)))}&to=${ymd(t)}`); }
+  function joeData(){
+    const T7=stats1(rangeQ(7)).totals, P7=stats1(rangeQ(7,7)).totals, Td=stats1(rangeQ(1)).totals, Ty=stats1(rangeQ(1,1)).totals;
+    const rows=breakdown1(new URLSearchParams(rangeQ(7).toString()+'&dim=campaign')).rows.filter(r=>r.joins>20);
+    const roasOf=r=>r.roas??0, best=[...rows].sort((a,b)=>roasOf(b)-roasOf(a))[0], worst=[...rows].sort((a,b)=>roasOf(a)-roasOf(b))[0];
+    const cpf=T7.spend_cents&&T7.ftd?T7.spend_cents/T7.ftd:0, pcpf=P7.spend_cents&&P7.ftd?P7.spend_cents/P7.ftd:0;
+    return {T7,P7,Td,Ty,best,worst,cpf,pcpf,rows};
+  }
+  const pctd=(a,b)=>b?(a-b)/b*100:0, usd6=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:c>=10000?0:2,maximumFractionDigits:c>=10000?0:2});
+  function joeInsights(){
+    if (!sample) return {greeting:`Hi ${profile.nickname||'Alex'} 👋`,mood:'calm',items:[{id:'setup',level:'info',title:'Let’s get your first join',body:'Finish setup and put your Joinvoo link in an ad. I’ll start watching your numbers the moment people join.',action:{label:'Finish setup',tab:'channels'}}]};
+    const d=joeData(), items=[], jd=pctd(d.T7.joins,d.P7.joins), hr=new Date().getHours(), nm=profile.nickname||'Alex';
+    items.push({id:'track',level:'good',title:'Your leads are tracking',body:`${fmt(d.Td.joins)} joins so far today, each matched to its ad and sent to Meta, TikTok and Snapchat.`,metric:{name:'Joins today',value:d.Td.joins,delta_pct:Math.round(pctd(d.Td.joins,d.Ty.joins*(((hr*60+new Date().getMinutes())/1440)||1)))}});
+    if (d.cpf && d.pcpf){ const c=pctd(d.cpf,d.pcpf); items.push({id:'cpf',level:c>8?'warn':'good',title:c>0?`Cost per FTD is up ${Math.abs(c).toFixed(0)}%`:`Cost per FTD is down ${Math.abs(c).toFixed(0)}%`,body:`${usd6(d.cpf)} this week vs ${usd6(d.pcpf)} the week before.${c>8&&d.worst?` ${d.worst.key} is the most expensive right now.`:''}`,metric:{name:'Cost per FTD',value:Math.round(d.cpf),delta_pct:Math.round(c)},action:{label:'Compare weeks',tab:'compare'}}); }
+    if (d.best) items.push({id:'best',level:'good',title:`${d.best.key} is your best campaign`,body:`ROAS ${(d.best.roas||0).toFixed(2)}× with ${fmt(d.best.ftd||0)} first deposits this week. It can take more budget.`,action:{label:'See campaigns',tab:'campaigns'}});
+    if (d.worst && d.worst!==d.best) items.push({id:'worst',level:(d.worst.roas||0)<1.2?'warn':'info',title:`${d.worst.key} is your weakest campaign`,body:`ROAS ${(d.worst.roas||0).toFixed(2)}×. Refresh the creative, or move part of its budget to ${d.best?d.best.key:'your best campaign'}.`,action:{label:'Open campaigns',tab:'campaigns'}});
+    const filt=Math.round(d.T7.joins*.021); if (filt) items.push({id:'fraud',level:'info',title:`${fmt(filt)} fake joins filtered`,body:'Join bursts, deleted accounts and repeat users were kept away from your ad platforms, so your pixels learn from real people.',action:{label:'See who',tab:'people'}});
+    if (trial6.status==='active') items.push({id:'trial',level:'info',title:`Pro trial: ${trial6.ftd_used} of ${trial6.ftd_limit} deposits`,body:`${Math.max(0,Math.ceil((trial6.ends_at-Date.now())/864e5))} days left to see which ads drive your deposits.`,action:{label:'See plans',tab:'credits'}});
+    const low=db.channels.find(c=>c.type!=='bot'&&c.pool_target&&c.pool<c.pool_target*.75); if (low) items.push({id:'links',level:'warn',title:`Invite links running low on ${low.title}`,body:`${low.pool} of ${low.pool_target} ready. New ones are being made; nobody is blocked.`,action:{label:'Open channels',tab:'channels'}});
+    const mood=items.some(i=>i.level==='bad')?'bad':items.filter(i=>i.level==='warn').length>1?'warn':jd>=0?'good':'calm';
+    return {greeting:`${hr<12?'Good morning':hr<17?'Good afternoon':'Good evening'}, ${nm} 👋`,mood,items};
+  }
+  function joeReply(msg){
+    const q=String(msg||'').toLowerCase(), d=sample?joeData():null;
+    if (!d) return {reply:'I don’t have any traffic to look at yet. Once your link is in an ad and people start joining, ask me again and I’ll break it down.',suggestions:['How do I set up tracking?','What is request-to-join mode?']};
+    const jd=pctd(d.T7.joins,d.P7.joins), fd=pctd(d.T7.ftd,d.P7.ftd), roas=d.T7.spend_cents?d.T7.revenue_cents/d.T7.spend_cents:0;
+    if (/scale|best|budget|grow|escal|meilleur|melhor|mejor|масштаб|лучш/.test(q)) return {reply:`Scale **${d.best.key}**. This week it has ROAS ${(d.best.roas||0).toFixed(2)}× and ${fmt(d.best.ftd||0)} first deposits at ${d.best.cost_per_ftd_cents?usd6(d.best.cost_per_ftd_cents):'—'} each.\n\nRaise its budget 20–30% a day, not all at once, so the algorithm keeps learning. Watch cost per FTD for 2–3 days.${d.worst&&d.worst!==d.best?`\n\nYou can fund it by trimming **${d.worst.key}** (ROAS ${(d.worst.roas||0).toFixed(2)}×).`:''}`,suggestions:['Why is my cost per FTD up?','What should I fix today?']};
+    if (/cost|cpa|expensive|why|coût|custo|costo|стоим|почему/.test(q)) return {reply:`Cost per first deposit is ${usd6(d.cpf)} this week vs ${usd6(d.pcpf)} last week (${d.pcpf?(pctd(d.cpf,d.pcpf)>=0?'+':'')+pctd(d.cpf,d.pcpf).toFixed(0)+'%':'no data before'}).\n\nThe biggest driver is **${d.worst.key}**: it spends ${d.worst.spend_cents?usd6(d.worst.spend_cents):'—'} but brings only ${fmt(d.worst.ftd||0)} deposits. Its join rate is ${(d.worst.join_rate*100).toFixed(1)}%, so people click, but fewer join and deposit.\n\nTry a new hook in the first 3 seconds, turn on request-to-join with a welcome offer, or pause it and move the budget to **${d.best.key}**.`,suggestions:['Which campaign should I scale?','How are my ads doing?']};
+    if (/fix|today|problem|wrong|issue|corrig|hoje|hoy|исправ|сегодня/.test(q)) { const tips=[]; const low=db.channels.find(c=>c.type!=='bot'&&c.pool<c.pool_target*.75); if(low) tips.push(`Invite links on **${low.title}** are at ${low.pool}/${low.pool_target}. They refill on their own, but add a second bot if you plan to scale.`); tips.push(`**${d.worst.key}** has the weakest ROAS (${(d.worst.roas||0).toFixed(2)}×). Refresh the creative or cut its budget.`); const sn=db.channels.find(c=>c.sc_test); if(sn) tips.push(`Snapchat test mode is still on for **${sn.title}**. Turn it off so events count in your reports.`); tips.push('Add yesterday’s spend so I can keep cost per FTD and ROAS accurate.');
+      return {reply:`Here’s what I’d fix today:\n\n${tips.map((t,i)=>`${i+1}. ${t}`).join('\n')}`,suggestions:['Which campaign should I scale?','Why is my cost per FTD up?']}; }
+    if (/fake|fraud|filter|bot|faux|falso|фейк/.test(q)) return {reply:`This week I filtered ${fmt(Math.round(d.T7.joins*.021))} suspicious joins (bursts, deleted accounts, repeat users) and ${fmt(d.T7.suspect_clicks||0)} fake clicks. None of them were sent to your ad platforms, so your pixels only learn from real people. You’ll find them in People → Filtered.`,suggestions:['How are my ads doing?']};
+    return {reply:`Here’s your last 7 days:\n\n| Metric | Last 7 days | vs week before |\n|---|---|---|\n| Joins | **${fmt(d.T7.joins)}** | ${jd>=0?'+':''}${jd.toFixed(0)}% |\n| First deposits | **${fmt(d.T7.ftd)}** | ${fd>=0?'+':''}${fd.toFixed(0)}% |\n| ROAS | **${roas.toFixed(2)}×** | on ${usd6(d.T7.spend_cents)} spend |\n| Cost per FTD | **${usd6(d.cpf)}** | |\n\n${jd>=0?'Things look healthy.':'Joins are a little down.'} Your best campaign is **${d.best.key}**${d.worst&&d.worst!==d.best?`, and **${d.worst.key}** is the one to watch`:''}.`,suggestions:['Which campaign should I scale?','Why is my cost per FTD up?','What should I fix today?']};
+  }
+  function compareInsights(qs){
+    const P=periods(new URLSearchParams(qs.toString()+'&group=day')), A=P.a.totals, B=P.b.totals, hl=[], s=[];
+    const add=(metric,a,b,goodUp=true)=>{ const d=b?pctd(a,b):null; hl.push({metric,a,b,delta_pct:d==null?null:Math.round(d*10)/10,good:d==null?true:(d>=0)===goodUp}); return d; };
+    const fd=add('ftd',A.ftd,B.ftd), jd=add('joins',A.joins,B.joins); add('revenue_cents',A.revenue_cents||0,B.revenue_cents||0); const cd=add('cost_per_ftd_cents',A.cost_per_ftd_cents||0,B.cost_per_ftd_cents||0,false); add('roas',A.roas||0,B.roas||0);
+    if (fd!=null) s.push(`First deposits ${fd>=0?'up':'down'} ${Math.abs(fd).toFixed(0)}% (${fmt(A.ftd)} vs ${fmt(B.ftd)}).`);
+    if (jd!=null) s.push(`Joins ${jd>=0?'up':'down'} ${Math.abs(jd).toFixed(0)}%.`);
+    const rows=breakdown1(new URLSearchParams(`from=${qs.get('a_from')}&to=${qs.get('a_to')}&dim=campaign`)).rows; if(rows[0]) s.push(`${[...rows].sort((a,b)=>(b.ftd||0)-(a.ftd||0))[0].key} drove the most deposits.`);
+    if (cd!=null && A.cost_per_ftd_cents && B.cost_per_ftd_cents) s.push(`Cost per FTD ${cd<=0?'down':'up'} from ${usd6(B.cost_per_ftd_cents)} to ${usd6(A.cost_per_ftd_cents)}.`);
+    return {sentences:s,highlights:hl};
+  }
+  function compareCampaigns(qs){
+    const names=String(qs.get('names')||'').split(',').filter(Boolean).slice(0,3), g=qs.get('group')||'day', out={}; names.forEach(n=>out[n]=new Map());
+    for (let d=parseYmd(qs.get('from')); ymd(d)<=qs.get('to'); d=addDays(d,1)){ const key=g==='week'?ymd(weekStart(d)):ymd(d), rows=breakdown1(new URLSearchParams(`from=${ymd(d)}&to=${ymd(d)}&dim=campaign`)).rows;
+      for (const n of names){ const r=rows.find(x=>x.key===n)||{}; const o=out[n].get(key)||{key,joins:0,ftd:0,spend_cents:0}; o.joins+=r.joins||0; o.ftd+=r.ftd||0; o.spend_cents+=r.spend_cents||0; out[n].set(key,o); } }
+    const series={}; for (const n of names) series[n]=[...out[n].values()]; return {series};
+  }
+  async function handle(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
+    if (p==='/api/sister/click'){ return {ok:true}; }
+    if (p==='/api/apps/click'){ return {ok:true}; }
+    if (p==='/api/countries'){ return (await countries8()).map(x=>({...x})); }
+    if (p==='/api/geo'){ return {country:'NG'}; }
+    if (p==='/api/billing/methods'){ await wait(180); return {methods:pmFor(country8.code)}; }
+    if (p==='/api/billing/topup'){ await wait(500); const pm=pmFor(country8.code).find(x=>x.id===body.method_id); if(!pm) throw err('That payment method isn’t available in your country.'); const usd=+body.usd;
+      if(!(usd>=pm.min_usd)) throw err(`The smallest top-up with ${pm.name} is $${pm.min_usd}.`); if(pm.max_usd&&usd>pm.max_usd) throw err(`The largest top-up with ${pm.name} is $${fmt(pm.max_usd)}.`);
+      const ref=(pm.type==='paystack'?'ps_':'cs_')+Math.random().toString(36).slice(2,10); topups8.set(ref,{usd,pm,promo:body.promo||'',checks:0}); return {redirect_url:'#credits?paid='+ref}; }
+    if (p==='/api/billing/verify'){ await wait(250); const t=topups8.get(qs.get('ref')); if(!t) return {status:'failed'}; if(t.done) return {status:'paid',credits:t.credits};
+      if (++t.checks<2) return {status:'pending'};
+      const r=await handle('POST','/api/billing/deposit',{provider:t.pm.type,amount:t.usd,promo:t.promo}); if(deposits[0]&&deposits[0].provider===t.pm.type) deposits[0].method_label=t.pm.name;
+      const c=Math.round(t.usd*100), pct=bonusPct(c,t.promo); t.done=true; t.credits=c+(pct?Math.round(c*pct/100):0); return {status:'paid',credits:t.credits}; }
+    if (p==='/api/billing/deposit'&&method==='POST'&&String(body.method_id||'').startsWith('pm_')&&!body.reference){ await wait(500); const pm=pmFor(country8.code).find(x=>x.id===body.method_id); if(!pm) throw err('That payment method isn’t available in your country.');
+      const c0=Math.round(+body.amount*100); if(!(c0>=pm.min_usd*100)) throw err(`The smallest top-up with ${pm.name} is $${pm.min_usd}.`); const crypto=pm.type==='crypto_manual';
+      const amt=crypto?c0+1+Math.floor(Math.random()*98):c0, ref=(crypto?'dep_':'JV-')+Math.random().toString(36).slice(2,8).toUpperCase();
+      deposits.unshift({provider:'manual',method_id:pm.id,method_label:pm.name,amount_cents:amt,status:'awaiting',created_at:Date.now(),reference:ref,crypto});
+      return {ok:true,manual:true,reference:ref,pay_amount:(amt/100).toFixed(2),currency:pm.currency,address:pm.address||'',network:pm.network||'',instructions:pm.instructions||'',fields:pm.fields||[],label:pm.name}; }
+    if (p==='/api/billing/deposit'&&body&&body.reference&&deposits.some(d=>d.reference===body.reference&&String(d.method_id||'').startsWith('pm_'))){ await wait(500); const d=deposits.find(x=>x.reference===body.reference), tx=String(body.tx||'').trim();
+      if (d.crypto && !/^(0x)?[0-9a-fA-F]{64}$/.test(tx)) throw err('Paste the transaction hash (TXID) from your wallet. It’s 64 letters and numbers.'); if (!d.crypto && tx.length<4) throw err('Paste the reference from your bank receipt.');
+      d.status='pending'; d.tx=tx; return {ok:true,pending:true,message:d.crypto?'Got it. Your balance updates once we confirm the transfer, usually within 30 minutes.':'Got it. We’ll add the credits once the transfer reaches us, usually within a few hours.'}; }
+    if (p==='/api/inbox'&&method==='GET'){ await wait(220); inbox6=inbox6||(sample?seedInbox():[]); const k=qs.get('kind'), bf=+qs.get('before')||Infinity;
+      const all=inbox6.filter(x=>(!k||x.kind===k)&&x.created_at<bf).sort((a,b)=>b.created_at-a.created_at); return {unread:ibUnread(),items:all.slice(0,30).map(x=>({image:null,cta_label:null,cta_url:null,important:false,...x})),more:all.length>30}; }
+    if (p==='/api/inbox/read'){ inbox6=inbox6||[]; const ids=(body&&body.ids)||[]; inbox6.forEach(x=>{ if((body&&body.all&&(!body.kind||x.kind===body.kind))||ids.includes(x.id)) x.read=true; }); return {ok:true,unread:ibUnread()}; }
+    if ((m=/^\/api\/inbox\/(\w+)$/.exec(p))&&method==='DELETE'){ inbox6=(inbox6||[]).filter(x=>String(x.id)!==m[1]); return {ok:true}; }
+    if (p==='/api/inbox/popup'){ await wait(150); inbox6=inbox6||(sample?seedInbox():[]); return inbox6.find(x=>x.important&&!x.read)||null; }
+    if (p==='/api/blog'){ return {posts:(await blogList()).map(x=>({...x}))}; }
+    if ((m=/^\/api\/blog\/([\w-]+)$/.exec(p))){ const meta=(await blogList()).find(x=>x.slug===m[1]); if(!meta) throw err('That article isn’t here.'); let html=null; try{ const r=await fetch('blog/_body/'+m[1]+'.html'); if(r.ok) html=(await r.text()).replace(/<!--[\s\S]*?-->/,''); }catch{} return {...meta,html}; }
+    if (p==='/api/me'&&method==='PATCH'){ await wait(300); const b=body||{};
+      if (b.nickname!==undefined){ const n=String(b.nickname).trim(); if(n&&!/^[\p{L}\p{N} _.\-]{2,24}$/u.test(n)) throw err('Nicknames are 2–24 letters, numbers, spaces, _ - or .'); profile.nickname=n; }
+      if (b.avatar!==undefined){ if(JSON.stringify(b.avatar).length>400) throw err('That avatar is too big.'); profile.avatar=b.avatar; }
+      for (const k of ['gender','lang','tz','ad_account_id']) if (b[k]!==undefined) profile[k]=b[k];
+      if (b.show_level!==undefined) showLevel=!!b.show_level;
+      if (b.notify_prefs) notify6=JSON.parse(JSON.stringify(b.notify_prefs));
+      if (b.joe_autopay!==undefined) jb13().autopay=!!b.joe_autopay;
+      if (b.joe_monthly_cap!==undefined) jb13().monthly_cap=Math.max(0,+b.joe_monthly_cap||0);
+      if (b.country!==undefined){ const c=String(b.country||'').toUpperCase(); if(!(await countries8()).some(x=>x.code===c)) throw err('Pick a country from the list.');
+        if (country8.code && country8.changed_at && Date.now()-country8.changed_at<30*864e5){ const until=country8.changed_at+30*864e5; throw err('country_locked',{error:'country_locked',until}); }
+        if (country8.code!==c){ if(country8.code) country8.changed_at=Date.now(); country8.code=c; } }
+      return {ok:true}; }
+    if (p==='/api/me'){ const me=await handleA(method,path,body); return {...me,nickname:profile.nickname,gender:profile.gender,avatar:profile.avatar,lang:profile.lang,display_name:profile.nickname||me.name,level:level6(),levels:LEVELS6.map(l=>({...l})),inbox_unread:(inbox6=inbox6||(sample?seedInbox():[]),ibUnread().total),notify_prefs:JSON.parse(JSON.stringify(notify6)),country:country8.code,country_name:country8.code?((ctryIdx||[]).find(x=>x.code===country8.code)||{}).name||country8.code:null}; }
+    if (p==='/api/billing'&&method==='GET'){ const b=await handleA(method,path,body); const pl=PLANS[plan6.id];
+      b.plan={id:plan6.id,...pl,renews:nextMonth(),change_pending:plan6.change_pending}; b.plans=PLANS; b.trial={...trial6};
+      if (plan6.id==='pro'&&b.month){ b.month.base_cents=pl.base_cents; b.month.included=pl.included; } return b; }
+    if (p==='/api/billing/plan'){ await wait(500); const want=body.plan;
+      if (want==='pro'&&plan6.id!=='pro'){ const now=new Date(), dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(), left=dim-now.getDate()+1, cost=Math.round((PLANS.pro.base_cents-PLANS.basic.base_cents)*left/dim);
+        const b=await handle('GET','/api/billing'); if (b.balance_cents<cost) { const e=err(`You need ${fmt(cost-b.balance_cents)} more credits to upgrade today.`); e.data={need_cents:cost-b.balance_cents}; throw e; }
+        bonusRows.push({kind:'plan',note:`Pro upgrade, ${left} of ${dim} days (prorated)`,amount_cents:-cost,created_at:Date.now()}); plan6={id:'pro',change_pending:null}; trial6.status='pro';
+        return {ok:true,plan:'pro',charged_cents:cost,message:`You’re on Pro. ${fmt(cost)} credits charged for the rest of this month.`}; }
+      if (want==='basic'&&plan6.id==='pro'){ plan6.change_pending='basic'; return {ok:true,plan:'pro',change_pending:'basic',message:`You’ll move to Basic on ${nextMonth()}. Pro stays on until then.`}; }
+      if (want==='pro'&&plan6.change_pending){ plan6.change_pending=null; return {ok:true,plan:'pro',message:'You’re staying on Pro.'}; }
+      return {ok:true,plan:plan6.id}; }
+    if (p==='/api/conversions'&&method==='GET'&&locked()){ const r=await handleA(method,path,body); return {postback_url:r.postback_url,locked:true,locked_count:trial6.ftd_used+43,rows:[]}; }
+    if (p==='/api/joins'&&method==='GET'){
+      if (qs.get('type')==='filtered'){ const q=new URLSearchParams(qs); q.set('type','tracked'); q.set('limit','900'); q.set('offset','0'); const all=(await handleA('GET','/api/joins?'+q)).rows.map(markSuspect).filter(r=>r.suspect); const off=+qs.get('offset')||0, lim=+qs.get('limit')||40; return {total:all.length,rows:all.slice(off,off+lim)}; }
+      const r=await handleA(method,path,body); r.rows.forEach(markSuspect); if(locked()) r.rows.forEach(x=>{ x.convs=(x.convs||[]).map(c=>({...c,value_cents:null,locked:true})); }); return r; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body.redirect_to!==undefined){ await wait(300); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
+      if (body.redirect_to===null){ c.redirect_to=null; c.redirect_title=null; return {ok:true}; } const t=db.channels.find(x=>x.id===+body.redirect_to&&x.id!==c.id); if(!t) throw err('Pick one of your other channels.'); c.redirect_to=t.id; c.redirect_title=t.title; return {ok:true}; }
+    if (p==='/api/compare/insights'){ await wait(260); return compareInsights(qs); }
+    if (p==='/api/compare/campaigns'){ await wait(320); return compareCampaigns(qs); }
+    if (p==='/api/joe/insights'){ await wait(220); return joeInsights(); }
+    if (p==='/api/joe/chat'&&method==='GET'){ await wait(150); jb13(); if(qp6.get('joe')==='out'&&!joeMsgs.length&&jbState.free_left===0){ joeMsgs=[{id:jid++,role:'user',text:'Which campaign should I scale?',at:Date.now()-60e3},{id:jid++,role:'joe',kind:'confirm',q:'Which campaign should I scale?',text:jbOutText(),at:Date.now()-59e3}]; }
+      const bal=await jbBalance(); return {enabled:true,ai:qp6.get('joe')!=='rules',remaining_today:joeLeft,messages:joeMsgs,billing:{...jbState,balance_credits:bal}}; }
+    if (p==='/api/joe/chat'&&method==='DELETE'){ joeMsgs=[]; return {ok:true}; }
+    if (p==='/api/joe/chat'&&method==='POST'){ const msg=String(body.message||'').trim(); if(!msg) throw err('Ask me something first.'); jb13(); const J=jbState;
+      if (body.deep && !J.deep_allowed) throw err('Deep answers are on Pro.');
+      if (!body.confirm_paid) joeMsgs.push({id:jid++,role:'user',text:msg,at:Date.now()});
+      const free=J.free_left>0 && !body.deep;
+      if (!free){
+        if (body.confirm_paid) J.autopay=true;
+        if (!J.autopay){ await wait(500); const t=jbOutText(); joeMsgs.push({id:jid++,role:'joe',kind:'confirm',q:msg,text:t,at:Date.now()}); return {reply:t,needs_confirm:true,cost_credits:0,free_left:0,balance_credits:await jbBalance()}; }
+        const max=body.deep?40:8, bal=await jbBalance();
+        if (J.monthly_cap===0 || J.spent_month_credits+max>J.monthly_cap){ await wait(500); const t=J.monthly_cap===0?'Paid answers are switched off in your chat settings, so I’ll wait for tomorrow’s free chats 🙂 You can switch them back on any time.':`You’ve reached your monthly limit of ${fmt(J.monthly_cap)} credits for Joe 🙂 Free chats come back tomorrow, or you can raise your limit in chat settings.`; joeMsgs.push({id:jid++,role:'joe',kind:'cap',text:t,at:Date.now()}); return {reply:t,reason:'cap',cost_credits:0,free_left:0,balance_credits:bal}; }
+        if (bal<max || qp6.get('joe')==='broke'){ await wait(500); const t=`You’ve used today’s free chats, ${profile.nickname||'Alex'} 😄 Top up credits to keep chatting — most answers cost 3–8 credits (≈ $0.03–0.08).`; joeMsgs.push({id:jid++,role:'joe',kind:'balance',text:t,at:Date.now()}); return {reply:t,reason:'balance',action:{label:'Top up',tab:'credits'},cost_credits:0,free_left:0,balance_credits:bal}; }
+      }
+      await wait((body.deep?2200:1100)+Math.random()*900); joeLeft--; const r=joeReply(msg);
+      let cost=0; if (free) J.free_left--; else { cost=body.deep?10+Math.floor(Math.random()*18):3+Math.floor(Math.random()*6); J.spent_month_credits+=cost; bonusRows.push({kind:'joe',note:body.deep?'Joe deep answer':'Joe answer',amount_cents:-cost,created_at:Date.now()}); }
+      joeMsgs.push({id:jid++,role:'joe',text:r.reply,cost_credits:cost,deep:!!body.deep,free:!cost,at:Date.now()}); return {...r,remaining_today:joeLeft,cost_credits:cost,free_left:J.free_left,needs_confirm:false,balance_credits:await jbBalance()}; }
+    if (p==='/api/alerts'&&method==='GET'){ const r=await handleA(method,path,body); r.prefs={no_joins_2h:true,no_ftd_campaign:false,...r.prefs}; return r; }
+    return handleA(method,path,body);
+  }
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const err=(m,extra)=>{ const e=new Error(m); e.data=extra||{}; return e; };
+  async function handle0(method,path,body){
+    await wait(120+Math.random()*160);
+    const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
+    if (p==='/api/me') return {email:'alex@example.com',name:'Alex',admin:false,verified:sample||verified,email_on:true,welcome_cents:0,free_joins_gift:500,tracking:true,state:'active',support:''};
+    if (p==='/api/verify/resend'){ await wait(500); return {ok:true,message:'Demo: a new confirmation link would be on its way.'}; }
+    if (p==='/api/support'){
+      if (method==='POST'){ const b=String(body.body||'').trim(); if(!b) throw err('Type a message first.'); const msg={id:sid++,from_admin:0,body:b,created_at:Date.now()}; support.push(msg);
+        setTimeout(()=>support.push({id:sid++,from_admin:1,demo:true,body:`Thanks for trying the chat! This is an automatic demo reply. On your live account a real person from our team answers right here, usually within a few hours.`,created_at:Date.now()}), 2400);
+        return {ok:true,id:msg.id,online:true}; }
+      const after=+qs.get('after')||0; return {ticket:support.length?{id:1,status:'open',email:'alex@example.com'}:null,online:true,support:'',team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',messages:support.filter(x=>x.id>after).map(m=>m.from_admin?{...m,agent:{name:'Maya',photo:''}}:m)}; }
+    if (p==='/api/referrals'){ const D=864e5, ppl=sample?[
+        {email:'lu•••@gmail.com',joined_at:Date.now()-71*D,active:true,spend_cents:62800,earned_cents:12560},
+        {email:'so•••@outlook.com',joined_at:Date.now()-58*D,active:true,spend_cents:48600,earned_cents:9720},
+        {email:'da•••@proton.me',joined_at:Date.now()-44*D,active:true,spend_cents:57400,earned_cents:11480},
+        {email:'mi•••@gmail.com',joined_at:Date.now()-26*D,active:true,spend_cents:37350,earned_cents:7470},
+        {email:'om•••@yahoo.com',joined_at:Date.now()-12*D,active:true,spend_cents:31000,earned_cents:6200},
+        {email:'ha•••@gmail.com',joined_at:Date.now()-26*3600e3,active:false,spend_cents:0,earned_cents:0}]:[];
+      const tiers=[{name:'Starter',min:0,rate:.1},{name:'Pro',min:3,rate:.2},{name:'Elite',min:10,rate:.3}]; const active=ppl.filter(x=>x.active).length;
+      const tier=[...tiers].reverse().find(t=>active>=t.min), next=tiers.find(t=>t.min>active);
+      const earned=ppl.reduce((a,b)=>a+b.earned_cents,0), paidOut=payouts.reduce((a,b)=>a+b.amount_cents,0), bal=Math.max(0,earned-paidOut-credit), month=sample?14280:0;
+      return {link:'https://joinvoo.com/r/em7k2q',code:'em7k2q',invited:ppl.length,active,tier:tier.name,rate:tier.rate,next_tier:next&&{name:next.name,rate:next.rate,need:next.min-active},tiers,
+        earned_cents:earned,credit_cents:credit,balance_cents:bal,withdrawable_cents:Math.max(0,Math.min(bal,earned-month-paidOut-credit)),hold_days:30,withdraw_min_cents:30000,month_spend_cents:sample?71400:0,month_earned_cents:month,people:ppl,payouts}; }
+    if (p==='/api/stats') return stats(qs);
+    if (p==='/api/joins') return joins(qs);
+    if (p==='/api/compare') return compare(qs);
+    if (p==='/api/breakdown') return breakdown(qs);
+    if (p==='/api/conversions'&&method==='GET') return {postback_url:'https://joinvoo.com/pb/'+(Demo.pbk||'k7d2Qm9xVt'),rows:sample||extraConvs.length?conversions(+qs.get('limit')||50):[]};
+    if (p==='/api/conversions/rotate'){ await wait(400); Demo.pbk=Math.random().toString(36).slice(2,12); return {ok:true,postback_url:'https://joinvoo.com/pb/'+Demo.pbk}; }
+    if ((m=/^\/api\/joins\/(\d+)\/convert$/.exec(p))){ await wait(350); const id=+m[1], row=seenRows.get(id)||live.find(x=>x.id===id); const ev=String(body.event||'ftd'); const v=Math.round((+String(body.value||0).replace(',','.')||0)*100);
+      if (ev!=='reg' && !(v>0)) throw err('Enter the deposit amount, like 45.00');
+      const had=row&&(row.convs||[]).some(c=>c.event==='ftd'||c.event==='dep'); const e2=ev==='dep'&&!had?'ftd':ev==='ftd'&&had?'dep':ev;
+      const c={event:e2,value_cents:e2==='reg'?0:v,currency:body.currency||'USD',at:Date.now(),source:'manual'};
+      extra.set(id,(extra.get(id)||[]).concat([c]));
+      const ch=row&&db.channels.find(x=>x.id===row.channel_id);
+      extraConvs.push({...c,ch:row&&row.channel_id,row:{id:80000+extraConvs.length,event:e2,value_cents:c.value_cents,currency:c.currency,txid:null,source:'manual',matched:1,created_at:c.at,meta_status:row&&row.click_id&&ch&&on(ch,'meta')?'sent':'none',tt_status:row&&row.click_id&&ch&&on(ch,'tiktok')&&e2!=='dep'?'sent':'none',sc_status:row&&row.click_id&&ch&&on(ch,'snap')&&e2!=='dep'?'sent':'none',error:null,tg_user_id:row&&row.tg_user_id,first_name:row&&row.first_name,last_name:row&&row.last_name,username:row&&row.username,click_id:row&&row.click_id,channel_title:row&&row.channel_title}});
+      return {ok:true,id:Date.now(),event:e2,attributed:!!(row&&row.click_id)}; }
+    if (p==='/api/billing'){ const st=stats(new URLSearchParams(`from=${ymd(new Date(new Date().getFullYear(),new Date().getMonth(),1))}&to=${ymd(new Date())}`)); const j=st.totals.joins; const mc=3000+Math.max(0,j-2000)*2;
+      const used=sample?mc+42000:(!sample&&j<500?0:(j||liveClicks.length?mc:0)); const dep=deposits.filter(d=>d.status==='paid').reduce((a,b)=>a+b.amount_cents,0)+(sample?60000:0);
+      const free=sample?0:Math.max(0,500-j), active=free===0&&!!(j||liveClicks.length||sample), D=864e5, now=Date.now(), welcome=0;
+      const history=[...(active?[{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime()+9*3600e3}]:[]),
+        ...(j>2000?[{kind:'joins',note:`${fmt(j-2000)} extra joins`,amount_cents:-(j-2000)*2,created_at:now-3600e3}]:[]),
+        ...deposits.filter(d=>d.status==='paid').map(d=>({kind:'deposit',note:'Top-up via '+(d.method_label||(d.provider==='crypto'?'USDT':d.provider[0].toUpperCase()+d.provider.slice(1))),amount_cents:d.amount_cents,created_at:d.created_at})),
+        ...(credit?[{kind:'refcredit',note:'From referral earnings',amount_cents:credit,created_at:now-60e3}]:[]),
+        ...(sample?[{kind:'deposit',note:'Top-up via Paystack',amount_cents:30000,created_at:now-20*D},{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:now-31*D},{kind:'deposit',note:'Top-up via USDT',amount_cents:30000,created_at:now-48*D}]:[]),
+        {kind:'welcome',note:'Welcome gift: first 500 tracked joins free',amount_cents:0,created_at:sample?now-60*D:now-5*60e3}].sort((x,y)=>y.created_at-x.created_at);
+      const bal=dep+credit+welcome-used;
+      return {free_joins_left:free,free_joins_gift:500,balance_cents:bal,deposited_cents:dep,credit_cents:credit+welcome,welcome_cents:welcome,used_cents:used,tracking:free>0||bal>0||!active,state:free>0?'trial':bal>0?'active':'empty',billing_on:true,history,month:{joins:j,cents:active?mc:0,plan_paid:active,extra_joins:Math.max(0,j-2000),included:2000,base_cents:3000,per_join_cents:2},methods:{paystack:true,flutterwave:true,crypto:true},pay_methods:PAYM,usdt_address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',min_deposit_cents:1000,ngn_per_usd:1600,deposits:sample&&!deposits.length?[{provider:'paystack',method_id:'paystack',method_label:'Paystack',amount_cents:30000,status:'paid',created_at:Date.now()-20*864e5},{provider:'manual',method_id:'m_usdt',method_label:'USDT (TRC20)',amount_cents:30037,status:'paid',created_at:Date.now()-48*864e5}]:deposits}; }
+    if (p==='/api/billing/deposit'){ await wait(600);
+      if (body.provider==='manual' && body.reference){ const d=deposits.find(x=>x.reference===body.reference); if(!d) throw err('Start a new top-up first.'); const tx=String(body.tx||'').trim(), pm=PAYM.find(x=>x.id===d.method_id)||{};
+        if (pm.address && !/^(0x)?[0-9a-fA-F]{64}$/.test(tx)) throw err('Paste the transaction hash (TXID) from your wallet. It’s 64 letters and numbers.');
+        if (!pm.address && tx.length<4) throw err('Paste the reference from your bank receipt.');
+        d.status='pending'; d.tx=tx; return {ok:true,pending:true,message:pm.address?'Got it. Your balance updates once we confirm the transfer, usually within 30 minutes.':'Got it. We’ll add the funds once the transfer reaches us, usually within a few hours.'}; }
+      if (body.provider==='manual'){ const pm=PAYM.find(x=>x.id===body.method_id&&x.type==='manual'); if(!pm) throw err('That payment method isn’t available right now.'); const c0=Math.round(+body.amount*100); if(!(c0>=1000)) throw err('The smallest top-up is $10.');
+        const amt=pm.address?c0+1+Math.floor(Math.random()*98):c0, ref=(pm.address?'dep_':'JV-')+Math.random().toString(36).slice(2,8).toUpperCase();
+        const pay=pm.currency==='BTC'?(amt/100/64250).toFixed(8):(amt/100).toFixed(2);
+        deposits.unshift({provider:'manual',method_id:pm.id,method_label:pm.label,amount_cents:amt,status:'awaiting',created_at:Date.now(),reference:ref});
+        return {ok:true,manual:true,reference:ref,pay_amount:pay,currency:pm.currency||'USD',address:pm.address||'',instructions:pm.instructions||'',label:pm.label}; }
+      if (body.provider==='crypto' && body.reference){ const d=deposits.find(x=>x.reference===body.reference); if(!d) throw err('Start a new USDT top-up first.'); if(!/^[0-9a-fA-F]{64}$/.test(body.tx||'')) throw err('Paste the transaction hash (TXID) from your wallet, 64 characters long.'); d.status='pending'; d.tx=body.tx; return {ok:true,pending:true,message:'Got it. Your balance updates once we confirm the transfer, usually within 30 minutes.'}; }
+      const c=Math.round(+body.amount*100); if(!(c>=1000)) throw err('The smallest top-up is $10.');
+      if (body.provider==='crypto'){ const amt=c+1+Math.floor(Math.random()*98), ref='dep_'+Math.random().toString(36).slice(2,10); deposits.unshift({provider:'crypto',amount_cents:amt,status:'awaiting',created_at:Date.now(),reference:ref}); return {ok:true,crypto:true,reference:ref,pay_amount:(amt/100).toFixed(2),address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M'}; }
+      deposits.unshift({provider:body.provider,amount_cents:c,status:'paid',created_at:Date.now()}); return {ok:true,message:`Demo: $${body.amount} added. Live, you’d pay on ${body.provider==='paystack'?'Paystack':'Flutterwave'} first.`}; }
+    if (p==='/api/referrals/credit'){ const r=await handle('GET','/api/referrals'); if(!r.balance_cents) throw err('You have no balance to move yet.'); credit+=r.balance_cents; return {ok:true,moved_cents:r.balance_cents}; }
+    if (p==='/api/referrals/withdraw'){ const r=await handle('GET','/api/referrals'); if(r.withdrawable_cents<30000) throw err('You can withdraw once $300 has settled.'); if(body.method==='usdt'&&!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(body.details)) throw err('That doesn’t look like a USDT TRC20 address. It starts with T and is 34 characters.'); if(body.method==='btc'&&!/^(bc1[02-9ac-hj-np-z]{11,71}|[13][1-9A-HJ-NP-Za-km-z]{25,34})$/.test(body.details)) throw err('That doesn’t look like a Bitcoin address. It starts with bc1, 1 or 3.'); payouts.unshift({amount_cents:r.withdrawable_cents,method:body.method,status:'pending',created_at:Date.now()}); return {ok:true}; }
+    if (p==='/api/channels'&&method==='GET') return JSON.parse(JSON.stringify({bots:db.bots,channels:db.channels.map(({age,base,rate,cc,live,mix,fr,avg,...c})=>c)}));
+    if (p==='/api/bots'&&method==='POST'){ await wait(700); const t=String(body.token||'').trim(); if(!/^\d{5,15}:[A-Za-z0-9_-]{30,}$/.test(t)) throw err('That doesn’t look like a bot token. Copy the whole thing BotFather sent, like 123456789:AAH…'); const bot={id:db.bots.length+1,tg_id:+t.split(':')[0],username:'mybrand_track_bot',status:'active'}; db.bots.push(bot); return {ok:true,bot}; }
+    if (p==='/api/bot-targets/external'){ await wait(500); const u=String(body.username||'').trim().replace(/^@/,'').replace(/^https?:\/\/t\.me\//,'');
+      if(!/^[A-Za-z][A-Za-z0-9_]{3,31}$/.test(u)||!/bot$/i.test(u)) throw err('That doesn’t look like a bot username. It ends in “bot”, like @mystore_bot.');
+      let c=db.channels.find(x=>x.external&&x.title.toLowerCase()==='@'+u.toLowerCase());
+      if(!c){ const k='demoKey'+(120+db.channels.length); c={...blank,id:90+db.channels.length,title:'@'+u,type:'bot',external:true,status:'active',pool:0,pool_target:200,bots:[],tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),hook_start:`https://joinvoo.com/hook/${k}/start`,hook_blocked:`https://joinvoo.com/hook/${k}/blocked`,age:0,base:0,rate:0,cc:['US'],mix:{meta:1},live:true}; db.channels.push(c); }
+      return {ok:true,channel:c.id,hook_start:c.hook_start,hook_blocked:c.hook_blocked}; }
+    if (p==='/api/bot-targets'){ const bot=db.bots.find(b=>b.id==body.bot_id)||db.bots[db.bots.length-1]; let c=db.channels.find(x=>x.type==='bot'&&!x.external&&x.bots[0]===bot.username);
+      if(body.forward_url&&!/^https:\/\//.test(body.forward_url)) throw err('The forwarding address must start with https://');
+      if(!c){ c={...blank,id:90+db.channels.length,title:'@'+bot.username,type:'bot',status:'active',pool:0,pool_target:200,bots:[bot.username],tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),age:0,base:0,rate:0,cc:['US'],mix:{meta:1},live:true}; db.channels.push(c); if(!timer) timer=setInterval(tick,1300); }
+      c.welcome=body.welcome||''; c.btn_text=body.btn_text||''; c.btn_url=body.btn_url||''; c.forward_url=body.forward_url||''; if(!c.forward_url) c.has_forward_secret=false; else if(body.forward_secret) c.has_forward_secret=true; return {ok:true,channel:c.id}; }
+    if (p==='/api/channels'&&method==='POST'){ addChannel(String(body.chat||'').replace(/^@/,'')||'My Channel'); return {ok:true}; }
+    if ((m=/^\/api\/channels\/(\d+)(\/test)?$/.exec(p))){ const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
+      if (m[2]){ await wait(600); const pl=qs.get('platform')||'meta';
+        if(pl==='tiktok'){ if(!on(c,'tiktok')) throw err('Add your TikTok pixel code and access token first.'); return {ok:true,message:'TikTok received a test event'}; }
+        if(pl==='snap'){ if(!on(c,'snap')) throw err('Add your Snap Pixel ID and Conversions API token first.'); return {ok:true,message:'Snapchat received a test event'+(c.sc_test?' (test mode)':'')}; }
+        if(!on(c,'meta')) throw err('Add your Pixel ID and access token first.'); return {ok:true,message:'Meta received a test event'}; }
+      if (method==='PATCH' && body.landing!==undefined && body.pixel_id===undefined && !body.platform){ c.landing=body.landing==='button'?'button':'auto'; return {ok:true}; }
+      if (method==='PATCH' && body.platform==='tiktok'){ const tp=String(body.tt_pixel??'').trim(); if(tp&&!/^[A-Z0-9]{8,30}$/i.test(tp)) throw err('TikTok pixel code is letters and numbers, like CABC123DEF456GHI.'); c.tt_pixel=tp; if(body.tt_token) c.tt_has_token=true; if(!tp) c.tt_has_token=false; c.tt_event=body.tt_event||c.tt_event; if(body.tt_test_code!==undefined) c.tt_test_code=body.tt_test_code; return {ok:true}; }
+      if (method==='PATCH' && body.platform==='snap'){ const sp=String(body.sc_pixel??'').trim(); if(sp&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sp)) throw err('Snap Pixel ID looks like a1b2c3d4-e5f6-7890-abcd-ef1234567890.'); if(sp&&!body.sc_token&&!c.sc_has_token) throw err('Paste your Conversions API token too.'); c.sc_pixel=sp; if(body.sc_token) c.sc_has_token=true; if(!sp) c.sc_has_token=false; c.sc_event=body.sc_event||c.sc_event; c.sc_test=!!body.sc_test; return {ok:true}; }
+      if (method==='PATCH'){ const px=String(body.pixel_id??'').trim(); if(px&&!/^\d{5,20}$/.test(px)) throw err('Pixel ID is numbers only, like 1234567890123456.'); c.pixel_id=px; if(body.capi_token) c.has_token=true; if(!px) c.has_token=false; c.event_name=body.event_name||c.event_name; if(body.test_code!==undefined) c.test_code=body.test_code; return {ok:true}; } }
+    throw err('Not found');
+  }
+  function addChannel(name){
+    const bot=db.bots[db.bots.length-1]; if(!bot) return; const id=50+db.channels.length;
+    const c={...blank,id,title:typeof name==='string'&&name?name:'Travel Hacks',type:'channel',status:'active',pool:0,pool_target:200,bots:[bot.username],tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),age:0,base:0,rate:0,cc:['US'],mix:{meta:1},live:true};
+    db.channels.push(c);
+    const f=setInterval(()=>{ c.pool=Math.min(200,c.pool+11); if(c.pool>=200) clearInterval(f); },600);
+    if (!timer) timer=setInterval(tick,1300);
+    if (W.step===2 && $('#stp')) checkArrived();
+  }
+  function clear(){ inbox6=null; spendRows=[]; bonusRows=[]; connected=new Set(['keitaro']); alerts={connected:false,prefs:{daily_report:true,token_errors:true,links_low:true,cpa_spike:false,paused:true,ftd_live:false,no_joins_2h:true,no_ftd_campaign:false}}; credit=0; payouts=[]; deposits=[]; extra=new Map(); extraConvs=[]; clearInterval(timer); timer=null; live=[]; liveClicks=[]; support=[]; sid=1; S.channel=''; S.page='overview'; closeSheet(); closeChat(true); CH.msgs=[]; CH.last=0; }
+  function useSample(){ clear(); sample=true; db=sampleDb();
+    support=[{id:sid++,from_admin:1,demo:true,body:'Hi Alex 👋 Your Snapchat pixel on Fit in 30 is still in test mode. Switch it off on the Channels page when you’re ready to go live, and shout if you want a hand with the deposit postback.',created_at:Date.now()-50*60e3}];
+    try{ localStorage.removeItem('jv_seen_admin'); }catch{} CH.seen=0;
+    boot(); }
+  function reset(){ clear(); sample=false; verified=false; db={bots:[],channels:[]}; S.forceSetup=true; boot(); }
+  const TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}];
+  function config(){
+    const features={signup:true,referrals:true,tiktok:true,snapchat:true,support_chat:true,ftd:true,bot_no_token:true,withdrawals:true,integrations:true,join_requests:true,spend:true,fake_filter:true,alerts:true,credits_bonus:true,ranks:true,enterprise:true,joe:true};
+    // testing only: ?features=referrals:0,snapchat:0
+    String(new URLSearchParams(location.search).get('features')||'').split(',').forEach(x=>{ const [k,v]=x.split(':'); if(k in features) features[k]=!(v==='0'||v==='false'); });
+    const qa=new URLSearchParams(location.search);
+    const apps=qa.get('apps')==='0'?undefined:[
+      {id:'replyvoo',name:'Replyvoo',tagline:'Sky-rocket your sales. On autopilot.',headline:'AI Closers answer every chat in seconds, qualify every lead and send the payment link while you sleep.',url:'https://replyvoo.com',color:'#FFC21A',color2:'#FFE48A',ink:'dark',logo:'replyvoo',badge:'New',offer:'30 free chats a month',status:'live',enabled:true},
+      {id:'castvoo',name:'Castvoo',tagline:'Turn your Telegram into a sales machine.',headline:'Welcomes every new subscriber, follows up on time and sends each group the message written for them. Broadcasts, drips and AI in one place.',url:'https://castvoo.com',color:'#3b6cf6',color2:'#2f55e4',ink:'light',logo:'castvoo',badge:'New',offer:'7 days free',status:'live',enabled:true},
+      {id:'advoo',name:'Advoo',tagline:'Make ads that print.',headline:'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.',url:'https://advoo.com',color:'#ef5a2c',color2:'#c8401a',ink:'light',logo:'advoo',badge:'',offer:'First ads free',status:'live',enabled:true},
+      {id:'affleego',name:'Affleego',tagline:'Top affiliate deals in one place.',headline:'Find and join high-paying offers.',url:'https://affleego.com',color:'#14b8a6',color2:'#0f766e',ink:'light',logo:'affleego',badge:'',offer:'',status:'live',enabled:true},
+      {id:'landvoo',name:'Landvoo',tagline:'Landing pages that convert.',headline:'Fast pages for your ads, built in minutes.',url:'',color:'#EEF0F6',color2:'#E2E6F0',ink:'dark',logo:'landvoo',badge:'Coming soon',offer:'',status:'soon',enabled:true},
+      {id:'voosquare',name:'VooSquare',tagline:'One login for all Zedapex tools',url:'https://voosquare.com',color:'#0fae6b',color2:'#c6f45a',ink:'dark',logo:'voosquare',status:'live',enabled:true}];
+    const voo={login:'off',home:'https://voosquare.com',referrals:qa.get('refs')==='voo'?'voosquare':'local'};
+    return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',contact:''},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
+  }
+  return {handle,addChannel,useSample,reset,config,get sample(){return sample;},pbk:null};
+})();
+
+boot();
+})();
+</script>
+<script>/* New-tab links: if the browser or preview blocks new tabs, open in this tab instead of doing nothing. */document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[target="_blank"]');if(!a||e.defaultPrevented||e.button||e.metaKey||e.ctrlKey)return;e.preventDefault();var w=null;try{w=window.open(a.href,'_blank');if(w)w.opener=null;}catch(_){}if(!w)location.href=a.href;});</script>

@@ -1,0 +1,266 @@
+<script>
+/* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
+(function(){
+  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
+  function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
+  var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
+  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
+  var D={};
+  if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
+  document.documentElement.lang=lang; window.JV_LANG=lang;
+  window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
+  function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
+    a=document.querySelectorAll('[data-i18n-t]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-t')]; el.setAttribute('data-i18n-ok',''); if(v==null) continue;
+      for(var n=el.firstChild;n;n=n.nextSibling){ if(n.nodeType===3&&/[A-Za-z]{2}/.test(n.nodeValue)){ var m=n.nodeValue.match(/^(\s*)[\s\S]*?(\s*)$/); n.nodeValue=m[1]+v+m[2]; break; } } }
+    a=document.querySelectorAll('[data-i18n-ph]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-ph')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.setAttribute('placeholder',v); }
+  }
+  function switcher(){ var boxes=document.querySelectorAll('[data-lsw]:not([data-lsw-ok])'); for(var i=0;i<boxes.length;i++){ (function(box){ box.setAttribute('data-lsw-ok','');
+      var cur=N[lang]; box.innerHTML='<button type="button" class="lsw-b" aria-haspopup="listbox" aria-expanded="false" aria-label="Language: '+cur[1]+'"><span class="lsw-f">'+cur[0]+'</span><span class="lsw-n">'+cur[1]+'</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><ul class="lsw-m" role="listbox" hidden>'+L.map(function(k){ return '<li role="option" aria-selected="'+(k===lang)+'"><button type="button" data-l="'+k+'"><span class="lsw-f">'+N[k][0]+'</span>'+N[k][1]+(k===lang?'<i>✓</i>':'')+'</button></li>'; }).join('')+'</ul>';
+      var b=box.querySelector('.lsw-b'), m=box.querySelector('.lsw-m');
+      function open(o){ m.hidden=!o; b.setAttribute('aria-expanded',o); }
+      b.onclick=function(e){ e.stopPropagation(); open(m.hidden); };
+      document.addEventListener('click',function(){ open(false); }); document.addEventListener('keydown',function(e){ if(e.key==='Escape') open(false); });
+      m.onclick=function(e){ var t=e.target.closest('button[data-l]'); if(!t) return; var l=t.getAttribute('data-l'); try{ localStorage.setItem('jv_lang',l); }catch(_){}
+        try{ var u=new URL(location.href); u.searchParams.delete('lang'); if(l!=='en'&&!saved&&nav===l){} location.replace(u.pathname+u.search+u.hash); }catch(_){ location.reload(); } };
+    })(boxes[i]); }
+    if(lang!=='en'){ var n=document.querySelectorAll('[data-lnote]'); for(var j=0;j<n.length;j++) n[j].hidden=false; }
+  }
+  window.JVI=function(){ apply(); switcher(); };
+  document.addEventListener('DOMContentLoaded',function(){ apply(); switcher(); });
+})();
+</script>
+<title data-i18n="u560ty">Privacy Policy · Joinvoo</title>
+<meta name="theme-color" content="#f7f6f2">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --sunk:#f1efe9; --ink:#141413; --muted:#67665f; --faint:#a19f98; --line:#e9e7e1;
+  --accent:#5b3df5; --accent-2:#8f7bff; --lilac:#efebff; --lime:#c8f169;
+  --green:#2e7d57; --mint:#e8f3ec; --blue:#3d5ad6; --sky:#ecf0fc; --gold:#87631a; --cream:#fbf2df; --rose:#c2463f; --blush:#fbeae8;
+  --ink-btn:#141413; --ink-btn-fg:#ffffff; --shadow:0 2px 4px rgba(20,20,18,.03),0 30px 70px -30px rgba(40,20,120,.28);
+  --f:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font:700 16px/1.2 var(--f);text-decoration:none;color:var(--ink);transition:transform .2s,box-shadow .2s;white-space:nowrap;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.btn.violet{background:#5b3df5;color:#fff;border-color:#5b3df5;box-shadow:0 14px 34px -12px #5b3df5}
+.btn.dark{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+.btn.lg{padding:18px 30px;font-size:17.5px}
+.btn svg{width:18px;height:18px;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:23px;letter-spacing:-.045em;text-decoration:none;color:inherit}
+.mark{width:38px;height:38px;border-radius:12px;background:#5b3df5;display:grid;place-items:center;box-shadow:0 8px 20px -8px #5b3df5;flex:none}
+.mark svg{width:22px;height:22px}
+.reveal{animation:lift both cubic-bezier(.2,.8,.2,1);animation-timeline:view();animation-range:entry 0% entry 45%}
+@keyframes lift{from{transform:translateY(40px) scale(.97)}}
+.feed{display:flex;flex-direction:column}
+.p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid var(--line)}
+.p:first-child{border-top:0}
+.p.new{animation:drop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px}
+.p div{min-width:0}
+.p b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p small{display:block;color:var(--faint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{padding:5px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.tags{display:flex;gap:6px}
+.price-big{font-size:clamp(64px,11vw,110px);font-weight:800;letter-spacing:-.06em;line-height:.9}
+footer.site{padding-block:40px 60px;font-size:15px;color:var(--faint)}
+footer.site .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer.site b{color:var(--ink)}
+@media (max-width:560px){.p{grid-template-columns:auto minmax(0,1fr);padding:11px 14px}.p .tags{grid-column:2}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ===== Round 2 additions: aliases + helpers shared by home, login, signup, guide, legal (former look stays the base) ===== */
+:root{
+  --brand:#5b3df5; --brand-2:#8f7bff; --brand-ink:#fff; --brand-soft:var(--lilac); --brand-text:#5b3df5;
+  --success:#2e9d6a; --mint-soft:var(--mint); --success-text:var(--green);
+  --amber:#e0a43a; --amber-soft:var(--cream); --amber-text:var(--gold);
+  --coral:#d9534c; --coral-soft:var(--blush); --coral-text:var(--rose);
+  --meta:#0866FF; --tiktok:#FE2C55; --tiktok-2:#25F4EE; --snap:#FFFC00; --telegram:#2AABEE;
+  --r1:12px; --r2:18px; --r3:24px; --r4:32px;
+  --shadow-sm:0 1px 2px rgba(20,20,18,.04),0 6px 16px -10px rgba(40,20,120,.18);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}
+img,svg{max-width:100%}
+p{text-wrap:pretty}
+.mono{font-family:var(--mono)}
+.disp{font-family:var(--display)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+::selection{background:color-mix(in srgb,#5b3df5 26%,transparent)}
+.btn.sm{padding:10px 18px;font-size:15px}
+.btn.ghost{background:transparent}
+.btn.full{width:100%}
+.btn[disabled]{opacity:.65;cursor:progress;transform:none}
+.kick,.eyebrow{color:var(--brand-text);font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:var(--lilac);color:var(--brand-text);white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:7px}
+.field>label,.field .lrow label{font-weight:700;font-size:14.5px}
+.inp{border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;font:500 16px var(--f);color:var(--ink);width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:var(--faint)}
+.inp:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.inp[aria-invalid="true"]{border-color:var(--rose)}
+
+/* language switcher (rendered by the i18n runtime into [data-lsw]) */
+.lsw{position:relative;flex:none}
+.lsw-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f);cursor:pointer}
+.lsw-b:hover{border-color:color-mix(in srgb,#5b3df5 35%,var(--line))}
+.lsw-b svg{width:14px;height:14px;opacity:.6}
+.lsw-f{font-size:17px;line-height:1}
+.lsw-m{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:190px;margin:0;padding:6px;list-style:none;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(20,12,60,.45)}
+.lsw-m button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;font:600 14.5px var(--f);color:var(--ink);cursor:pointer;text-align:left}
+.lsw-m button:hover{background:var(--sunk)}
+.lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
+.lsw-m i{margin-left:auto;font-style:normal}
+.lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
+@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+
+/* Layout: a plain reading page in the former look. Light warm title band with soft violet glow, then a narrow column with clear headings. */
+.hd{position:relative;overflow:hidden;isolation:isolate;padding-bottom:clamp(40px,6vw,64px);border-bottom:1px solid var(--line)}
+.hd::before{content:"";position:absolute;width:560px;height:560px;right:-120px;top:-260px;z-index:-1;border-radius:50%;background:var(--lilac);filter:blur(80px);opacity:.9}
+.hd::after{content:"";position:absolute;width:380px;height:380px;left:-120px;top:-120px;z-index:-1;border-radius:50%;background:var(--mint);filter:blur(80px);opacity:.6}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;height:72px}
+.top nav{display:flex;gap:6px}
+.top .login{background:transparent;border-color:transparent}
+.hd h1{font-size:clamp(40px,6.4vw,70px);letter-spacing:-.05em;line-height:1;margin-top:12px;max-width:720px}
+.hd .kick{display:block;margin-top:clamp(28px,5vw,48px)}
+article{max-width:720px;margin:0 auto;padding:clamp(30px,5vw,56px) 0 64px}
+article .upd{color:var(--muted);margin:0 0 30px;font-size:14px;font-family:var(--mono)}
+article h1{display:none}
+article h2{font-size:22px;letter-spacing:-.03em;margin:36px 0 10px}
+article p,article li{color:var(--muted);font-size:16.5px;line-height:1.7}
+article b{color:var(--ink);font-weight:700}
+article a{color:var(--brand-text)}
+article ul{padding-left:20px}
+article li{margin:4px 0}
+footer{padding:26px 0 40px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);max-width:720px;margin:0 auto}
+footer a{color:var(--muted);text-decoration:none}footer a:hover{color:var(--ink)}
+@media (max-width:480px){.top .blogl{display:none}}
+@media (max-width:420px){.top .btn{padding:9px 14px;font-size:14px}.top .logo{font-size:19px}.top .mark{width:34px;height:34px}}
+.hd .by{margin:12px 0 0;color:var(--muted);font-size:16px}.hd .by b{color:var(--ink)}
+.hub{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;max-width:820px}
+.hub a{padding:8px 14px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-size:14px;font-weight:700;color:var(--muted);text-decoration:none;transition:color .2s,border-color .2s}
+.hub a:hover{color:var(--ink);border-color:color-mix(in srgb,#5b3df5 35%,var(--line))}
+.hub a[aria-current="page"]{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+footer .fl{display:flex;flex-wrap:wrap;gap:6px 16px}
+article code{font:500 .85em var(--mono);background:var(--sunk);padding:2px 6px;border-radius:6px}
+@media (max-width:560px){.hub{flex-wrap:nowrap;overflow-x:auto;margin-inline:-20px;padding:2px 20px 6px;scrollbar-width:none}.hub::-webkit-scrollbar{display:none}.hub a{white-space:nowrap}}
+</style>
+<header class="hd"><div class="wrap">
+  <div class="top"><a class="logo" href="/"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a><nav><a data-i18n="1jdup01" class="btn sm login blogl" href="/blog">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="btn sm login" href="/login">Log in</a><a data-i18n="fr3k4j" class="btn sm violet" href="/signup">Start free</a></nav></div>
+  <p data-i18n="1pq2h0q" class="kick">Legal</p><h1 data-i18n="ab2tcv">Privacy Policy</h1>
+  <p data-i18n="jkjcww" class="by">Joinvoo is operated by <b>Zedapex</b>.</p>
+  <nav class="hub" aria-label="Legal documents"><a data-i18n="1b09hn6" href="/terms">Terms of Service</a><a data-i18n="ab2tcv" href="/privacy" aria-current="page">Privacy Policy</a><a data-i18n="14imwdj" href="/refunds">Refund Policy</a><a data-i18n="5sq84w" href="/acceptable-use">Acceptable Use Policy</a><a data-i18n="bg0a2v" href="/cookies">Cookie Policy</a><a data-i18n="1sg4jon" href="/referral-terms">Referral Program Terms</a></nav>
+</div></header>
+<div class="wrap">
+<p data-i18n="1jcc5bi" class="lnote" data-lnote hidden>Legal documents are provided in English.</p>
+<article data-noi18n><h1>Privacy Policy</h1><p class="upd">Last updated: October 2026</p>
+<p>This Privacy Policy explains how <b>Zedapex</b> (“we”, “us”), the company that operates Joinvoo, collects, uses and protects personal data. It covers two groups of people: <b>customers</b> (people and businesses who use the Joinvoo website and dashboard) and <b>visitors</b> (people who click a customer’s tracking link and join their Telegram channel, group or bot).</p>
+
+<h2>1. Our role</h2>
+<ul><li>For <b>customer</b> data (accounts, billing, support), Zedapex is the controller.</li>
+<li>For <b>visitor</b> data, the customer decides why and how it is used; Zedapex processes it on the customer’s behalf as a processor. Customers are responsible for having a lawful basis and for informing their audience where the law requires.</li></ul>
+
+<h2>2. Data we collect about customers</h2>
+<ul><li><b>Account:</b> name, email address, password (stored only as a one-way hash), and the answers you give at sign-up (for example, which platforms you advertise on).</li>
+<li><b>Connections:</b> Telegram bot tokens, the address of your own bot server if you use one, and the Meta, TikTok and Snapchat pixel IDs and access tokens you enter.</li>
+<li><b>Billing:</b> wallet top-ups, charges, payment references, and crypto or bank transaction references. Card details are entered on the payment provider’s page and never reach our servers.</li>
+<li><b>Referrals:</b> who referred you, who you referred, earnings, and the wallet addresses you give for withdrawals.</li>
+<li><b>Campaign data you add:</b> ad spend you enter or import (date, platform, campaign, amount), and the affiliate programs you connect.</li>
+<li><b>Alerts:</b> if you connect Telegram alerts, the Telegram chat ID our alert bot uses to message you, and your alert preferences.</li>
+<li><b>Support:</b> messages you send through the support chat, and the email address you give so we can reply.</li>
+<li><b>Technical:</b> log-in times, IP address, browser, and security logs used to keep the Service safe.</li></ul>
+
+<h2>3. Data we process about visitors</h2>
+<p><b>The click.</b> When someone opens a customer’s tracking link, the Service records the time, IP address, browser (user agent), approximate country, the page address including campaign tags (UTM parameters), and ad click identifiers and cookies set by Meta (fbclid, _fbc, _fbp), TikTok (ttclid, _ttp) or Snapchat (ScCid, _scid). The tracking or join page may load the customer’s own Meta, TikTok or Snapchat pixel.</p>
+<p><b>The join.</b> When that person joins the customer’s Telegram channel or group, or presses Start on their bot, Telegram tells the customer’s bot their <b>Telegram user ID, first and last name, username and language</b>. The Service links this to the click. If they later leave the channel or block the bot, that is recorded too.</p>
+<p><b>Conversions.</b> If the customer sets up a postback, their affiliate program, broker, casino, shop, CRM or bot may tell us that the person became a lead, signed up, deposited, bought something, qualified, or that a deposit was reversed, with the amount, currency and a transaction reference. We match this to the join.</p>
+<p><b>Join requests.</b> If the customer uses join-request mode, the customer’s bot approves the request and may send the person one welcome message with a personal link that includes their Telegram ID, so the customer’s partner can report deposits back.</p>
+<p><b>Click quality.</b> To filter fake traffic, the Service marks clicks that look automated (for example known bot browsers, data-centre IP ranges, or many clicks from one IP in a short time). These flags are used only for the customer’s reports.</p>
+<p><b>What goes to ad platforms.</b> For customers who connect Meta, TikTok or Snapchat, the Service sends conversion events (such as a join, registration or deposit with its value) together with the click identifiers, IP address, browser, and a <b>hashed</b> (scrambled, one-way) Telegram ID. The raw Telegram ID, name and username are never sent to ad platforms.</p>
+
+<h2>4. How we use data</h2>
+<ul><li>To provide the Service: tracking joins, showing reports, and sending the events customers ask us to send.</li>
+<li>To bill customers, pay referral earnings, and prevent fraud, abuse and security incidents.</li>
+<li>To provide support and send service emails (for example, email confirmation, password resets, payment receipts and important changes).</li>
+<li>To improve reliability and performance, using aggregated or technical data.</li></ul>
+<p>Our legal bases are performance of our contract with customers, our legitimate interests in running and securing the Service, compliance with legal obligations, and consent where it is required. We do <b>not</b> sell personal data, and we do not use visitor data for our own advertising.</p>
+
+<h2>5. Who we share data with</h2>
+<ul><li><b>Telegram</b>, to operate customers’ bots and invite links.</li>
+<li><b>Meta, TikTok and Snapchat</b>, only for customers who connect them, as described above.</li>
+<li><b>Payment providers</b>, to process top-ups.</li>
+<li><b>Service providers</b> who host our servers, store data, and deliver email, under contracts that protect it.</li>
+<li><b>Professional advisers and authorities</b>, where the law requires it or to protect our rights and users.</li>
+<li>A buyer or successor, if our business is reorganised or sold, under the same protections.</li></ul>
+
+<h2>6. How long we keep data</h2>
+<ul><li>Clicks that never lead to a join are deleted after 90 days.</li>
+<li>Join, deposit and statistics records are kept while the customer’s account is open so they can see their history. Customers can delete them or ask us to.</li>
+<li>Support conversations are kept for as long as needed to help you and then deleted or anonymised.</li>
+<li>Billing and payment records are kept for as long as accounting and tax law require.</li>
+<li>When an account is closed, its data is deleted or anonymised within a reasonable period, except where we must keep it by law.</li></ul>
+
+<h2>7. Security</h2>
+<p>All connections are encrypted (HTTPS). Passwords are hashed, access to production systems is restricted, and visitor IDs sent to ad platforms are hashed. No system is perfectly secure; if a breach affects your data, we will notify you and the authorities as the law requires.</p>
+
+<h2>8. International transfers</h2>
+<p>Our servers and service providers may be located in different countries. Where data moves across borders, we use providers and safeguards (such as standard contractual clauses) appropriate under applicable law.</p>
+
+<h2>9. Your rights</h2>
+<p>Under applicable data protection laws, including the GDPR where it applies, you may have the right to access, correct, export or delete your personal data, to restrict or object to its use, and to withdraw consent. To use these rights, contact us. Visitors should contact the channel owner first, as they control their data; if you contact us, we will pass your request on and help them respond. You may also complain to your local data protection authority.</p>
+
+<h2>10. Cookies</h2>
+<p>We use a small number of cookies and similar technologies. See our <a href="/cookies">Cookie Policy</a>.</p>
+
+<h2>11. Children</h2>
+<p>The Service is for adults. We do not knowingly collect data from children for our own purposes. Customers must not target children with tracked campaigns.</p>
+
+<h2>12. Changes</h2>
+<p>We may update this policy. If a change is significant, we will tell customers by email or in the dashboard before it takes effect.</p>
+
+<h2>13. Contact</h2>
+<p>Privacy questions and requests: {{CONTACT}}</p>
+</article>
+<footer><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="1l0un8z" class="fl"><a href="/">Home</a><a href="/guide">Guide</a><a href="/blog">Blog</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a><a href="/acceptable-use">Acceptable use</a><a href="/cookies">Cookies</a><a href="/referral-terms">Referral terms</a></span><div class="vfoot"><style>
+.vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
+.vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
+.vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
+.vfoot .vpart svg{width:18px;height:18px;flex:none}
+.vfoot .vmore{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px}.vfoot .vmore>span{margin-right:2px}
+.vfoot .vmore i{font-style:normal;opacity:.5}
+@media (max-width:560px){.vfoot{flex-direction:column;align-items:flex-start;gap:8px}.vfoot .vmore{gap:4px 9px}.vfoot .vmore>span{flex-basis:100%}}
+</style><a class="vpart" href="https://voosquare.com" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="t3vct1">Part of <b>VooSquare</b></span></a><span class="vmore"><span data-i18n="1qnawoj">More from Zedapex:</span><a data-i18n="ymx3wx" href="https://replyvoo.com" target="_blank" rel="noopener">Replyvoo</a><i>·</i><a data-i18n="ie6sla" href="https://castvoo.com" target="_blank" rel="noopener">Castvoo</a><i>·</i><a data-i18n="1r6o4vk" href="https://advoo.com" target="_blank" rel="noopener">Advoo</a><i>·</i><a data-i18n="1hbw4co" href="https://affleego.com" target="_blank" rel="noopener">Affleego</a></span></div>
+</footer>
+</div>
+
+<script>JVI();/* Opened inside the sign-up sheet: show only the policy text. */
+if(/[?&]embed=1/.test(location.search)){document.documentElement.classList.add('embed');}
+</script>
+<style>.embed header,.embed footer,.embed .jv-sup,.embed #jvSup,.embed .sup-launcher,.embed [class*="launcher"],.embed .legal-hub,.embed .hub,.embed .top,.embed nav{display:none!important}.embed article,.embed main{padding-top:8px}</style>

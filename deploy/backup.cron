@@ -1,0 +1,2 @@
+# Nightly database backup at 03:15, keeps the last 14. Install with: crontab -u joinvoo deploy/backup.cron
+15 3 * * * cd /opt/joinvoo && set -a && . ./.env && set +a && /usr/bin/node scripts/backup.js >> /opt/joinvoo/backup.log 2>&1

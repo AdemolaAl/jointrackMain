@@ -1,0 +1,554 @@
+<script>
+/* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
+(function(){
+  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
+  function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
+  var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
+  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
+  var D={};
+  if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
+  document.documentElement.lang=lang; window.JV_LANG=lang;
+  window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
+  function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
+    a=document.querySelectorAll('[data-i18n-t]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-t')]; el.setAttribute('data-i18n-ok',''); if(v==null) continue;
+      for(var n=el.firstChild;n;n=n.nextSibling){ if(n.nodeType===3&&/[A-Za-z]{2}/.test(n.nodeValue)){ var m=n.nodeValue.match(/^(\s*)[\s\S]*?(\s*)$/); n.nodeValue=m[1]+v+m[2]; break; } } }
+    a=document.querySelectorAll('[data-i18n-ph]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-ph')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.setAttribute('placeholder',v); }
+  }
+  function switcher(){ var boxes=document.querySelectorAll('[data-lsw]:not([data-lsw-ok])'); for(var i=0;i<boxes.length;i++){ (function(box){ box.setAttribute('data-lsw-ok','');
+      var cur=N[lang]; box.innerHTML='<button type="button" class="lsw-b" aria-haspopup="listbox" aria-expanded="false" aria-label="Language: '+cur[1]+'"><span class="lsw-f">'+cur[0]+'</span><span class="lsw-n">'+cur[1]+'</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><ul class="lsw-m" role="listbox" hidden>'+L.map(function(k){ return '<li role="option" aria-selected="'+(k===lang)+'"><button type="button" data-l="'+k+'"><span class="lsw-f">'+N[k][0]+'</span>'+N[k][1]+(k===lang?'<i>✓</i>':'')+'</button></li>'; }).join('')+'</ul>';
+      var b=box.querySelector('.lsw-b'), m=box.querySelector('.lsw-m');
+      function open(o){ m.hidden=!o; b.setAttribute('aria-expanded',o); }
+      b.onclick=function(e){ e.stopPropagation(); open(m.hidden); };
+      document.addEventListener('click',function(){ open(false); }); document.addEventListener('keydown',function(e){ if(e.key==='Escape') open(false); });
+      m.onclick=function(e){ var t=e.target.closest('button[data-l]'); if(!t) return; var l=t.getAttribute('data-l'); try{ localStorage.setItem('jv_lang',l); }catch(_){}
+        try{ var u=new URL(location.href); u.searchParams.delete('lang'); if(l!=='en'&&!saved&&nav===l){} location.replace(u.pathname+u.search+u.hash); }catch(_){ location.reload(); } };
+    })(boxes[i]); }
+    if(lang!=='en'){ var n=document.querySelectorAll('[data-lnote]'); for(var j=0;j<n.length;j++) n[j].hidden=false; }
+  }
+  window.JVI=function(){ apply(); switcher(); };
+  document.addEventListener('DOMContentLoaded',function(){ apply(); switcher(); });
+})();
+</script>
+<title data-i18n="iz3hq1">Log in · Joinvoo</title>
+<meta name="description" content="Log in to your Joinvoo dashboard.">
+<meta name="theme-color" content="#f7f6f2">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
+<script>JVI();
+/* Password reset links land here as /login?reset=TOKEN; the dashboard handles the reset form. */
+(function(){ try{ var t=new URLSearchParams(location.search).get('reset'); if(t) location.replace('/app?reset='+encodeURIComponent(t)); }catch(e){} })();
+</script>
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --sunk:#f1efe9; --ink:#141413; --muted:#67665f; --faint:#a19f98; --line:#e9e7e1;
+  --accent:#5b3df5; --accent-2:#8f7bff; --lilac:#efebff; --lime:#c8f169;
+  --green:#2e7d57; --mint:#e8f3ec; --blue:#3d5ad6; --sky:#ecf0fc; --gold:#87631a; --cream:#fbf2df; --rose:#c2463f; --blush:#fbeae8;
+  --ink-btn:#141413; --ink-btn-fg:#ffffff; --shadow:0 2px 4px rgba(20,20,18,.03),0 30px 70px -30px rgba(40,20,120,.28);
+  --f:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font:700 16px/1.2 var(--f);text-decoration:none;color:var(--ink);transition:transform .2s,box-shadow .2s;white-space:nowrap;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.btn.violet{background:#5b3df5;color:#fff;border-color:#5b3df5;box-shadow:0 14px 34px -12px #5b3df5}
+.btn.dark{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+.btn.lg{padding:18px 30px;font-size:17.5px}
+.btn svg{width:18px;height:18px;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:23px;letter-spacing:-.045em;text-decoration:none;color:inherit}
+.mark{width:38px;height:38px;border-radius:12px;background:#5b3df5;display:grid;place-items:center;box-shadow:0 8px 20px -8px #5b3df5;flex:none}
+.mark svg{width:22px;height:22px}
+.reveal{animation:lift both cubic-bezier(.2,.8,.2,1);animation-timeline:view();animation-range:entry 0% entry 45%}
+@keyframes lift{from{transform:translateY(40px) scale(.97)}}
+.feed{display:flex;flex-direction:column}
+.p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid var(--line)}
+.p:first-child{border-top:0}
+.p.new{animation:drop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px}
+.p div{min-width:0}
+.p b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p small{display:block;color:var(--faint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{padding:5px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.tags{display:flex;gap:6px}
+.price-big{font-size:clamp(64px,11vw,110px);font-weight:800;letter-spacing:-.06em;line-height:.9}
+footer.site{padding-block:40px 60px;font-size:15px;color:var(--faint)}
+footer.site .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer.site b{color:var(--ink)}
+@media (max-width:560px){.p{grid-template-columns:auto minmax(0,1fr);padding:11px 14px}.p .tags{grid-column:2}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ===== Round 2 additions: aliases + helpers shared by home, login, signup, guide, legal (former look stays the base) ===== */
+:root{
+  --brand:#5b3df5; --brand-2:#8f7bff; --brand-ink:#fff; --brand-soft:var(--lilac); --brand-text:#5b3df5;
+  --success:#2e9d6a; --mint-soft:var(--mint); --success-text:var(--green);
+  --amber:#e0a43a; --amber-soft:var(--cream); --amber-text:var(--gold);
+  --coral:#d9534c; --coral-soft:var(--blush); --coral-text:var(--rose);
+  --meta:#0866FF; --tiktok:#FE2C55; --tiktok-2:#25F4EE; --snap:#FFFC00; --telegram:#2AABEE;
+  --r1:12px; --r2:18px; --r3:24px; --r4:32px;
+  --shadow-sm:0 1px 2px rgba(20,20,18,.04),0 6px 16px -10px rgba(40,20,120,.18);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}
+img,svg{max-width:100%}
+p{text-wrap:pretty}
+.mono{font-family:var(--mono)}
+.disp{font-family:var(--display)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+::selection{background:color-mix(in srgb,#5b3df5 26%,transparent)}
+.btn.sm{padding:10px 18px;font-size:15px}
+.btn.ghost{background:transparent}
+.btn.full{width:100%}
+.btn[disabled]{opacity:.65;cursor:progress;transform:none}
+.kick,.eyebrow{color:var(--brand-text);font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:var(--lilac);color:var(--brand-text);white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:7px}
+.field>label,.field .lrow label{font-weight:700;font-size:14.5px}
+.inp{border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;font:500 16px var(--f);color:var(--ink);width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:var(--faint)}
+.inp:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.inp[aria-invalid="true"]{border-color:var(--rose)}
+
+/* language switcher (rendered by the i18n runtime into [data-lsw]) */
+.lsw{position:relative;flex:none}
+.lsw-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f);cursor:pointer}
+.lsw-b:hover{border-color:color-mix(in srgb,#5b3df5 35%,var(--line))}
+.lsw-b svg{width:14px;height:14px;opacity:.6}
+.lsw-f{font-size:17px;line-height:1}
+.lsw-m{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:190px;margin:0;padding:6px;list-style:none;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(20,12,60,.45)}
+.lsw-m button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;font:600 14.5px var(--f);color:var(--ink);cursor:pointer;text-align:left}
+.lsw-m button:hover{background:var(--sunk)}
+.lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
+.lsw-m i{margin-left:auto;font-style:normal}
+.lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
+@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+
+/* Layout: split screen in the former look. Left: the dark illustration panel he loved (person + laptop, floating join/deposit cards, orbiting badges).
+   Right: the light warm form. Phones: a short dark band with the illustration, then the form slides up over it as a rounded sheet. */
+html,body{min-height:100%}
+.shell{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.brand{position:relative;overflow:hidden;isolation:isolate;background:#0A0914;color:#F2F1FA;padding:32px clamp(24px,4vw,48px) 36px;display:flex;flex-direction:column}
+.brand::before{content:"";position:absolute;inset:-10%;z-index:-1;background:radial-gradient(45% 40% at 55% 48%,rgba(106,75,255,.55),transparent 70%),radial-gradient(30% 30% at 90% 88%,rgba(193,75,255,.25),transparent 70%),radial-gradient(30% 30% at 8% 12%,rgba(59,201,255,.12),transparent 70%)}
+.brand::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(60% 60% at 50% 50%,#000,transparent);mask-image:radial-gradient(60% 60% at 50% 50%,#000,transparent)}
+.brand .logo{color:#fff}
+.brand .stage{max-width:520px;margin:auto}
+.brand .quote{max-width:460px}
+.brand .quote h2{font:800 clamp(30px,3vw,42px)/1 var(--display);letter-spacing:-.045em;color:#fff}
+.brand .quote h2 span{background:linear-gradient(100deg,#c9bfff,#e6a8ff 50%,#9fe6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .quote p{color:#B9B5CC;margin:12px 0 0;font-size:16px}
+.side{display:flex;flex-direction:column;padding:28px clamp(20px,5vw,72px) 28px;min-width:0;background:var(--bg);position:relative;overflow:hidden;overflow:clip}
+.side::before{content:"";position:absolute;width:420px;height:420px;right:-160px;top:-160px;border-radius:50%;background:var(--lilac);filter:blur(70px);opacity:.7;pointer-events:none}
+.side>*{position:relative}
+.topline{display:flex;justify-content:flex-end;align-items:center;gap:12px;font-size:14.5px;color:var(--muted)}
+.topline a{color:var(--brand-text);font-weight:800;text-decoration:none}
+.topline a:hover{text-decoration:underline}
+.box{width:100%;max-width:440px;margin:auto;padding-block:40px}
+.box h1{font:800 clamp(38px,4.4vw,54px)/1 var(--display);letter-spacing:-.05em}
+.box h1 span{color:var(--brand-text)}
+.box .lede{color:var(--muted);margin:14px 0 28px;font-size:17px}
+form{display:flex;flex-direction:column;gap:16px}
+.lrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.link{border:0;background:none;padding:0;font:700 14.5px var(--f);color:var(--brand-text);cursor:pointer;text-decoration:none}
+.link:hover{text-decoration:underline}
+.pw{position:relative}
+.pw .inp{padding-right:56px}
+.pw button{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:42px;height:38px;border:0;border-radius:11px;background:var(--sunk);color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.pw button:hover{color:var(--ink)}
+.pw button svg{width:20px;height:20px}
+.pw .hide{display:none}.pw button[aria-pressed="true"] .show{display:none}.pw button[aria-pressed="true"] .hide{display:block}
+.btn.full{width:100%;padding-block:17px;font-size:17px}
+.msg{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:14.5px;font-weight:600;line-height:1.45}
+.msg svg{width:18px;height:18px;flex:none;margin-top:1px}
+.msg.err{background:var(--blush);color:var(--rose)}
+.msg.ok{background:var(--mint);color:var(--green)}
+.msg:empty{display:none}
+.or{display:flex;align-items:center;gap:14px;color:var(--faint);font-size:13px;font-weight:700;margin:28px 0 18px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.alt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px;border-radius:24px;border:1px solid var(--line);background:var(--surface);text-align:center;box-shadow:0 12px 30px -24px rgba(40,20,120,.35)}
+.alt b{font-size:16px}.alt span{font-size:14.5px;color:var(--muted)}
+.alt a{margin-top:10px}
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--faint)}
+.foot .fl{display:flex;flex-wrap:wrap;gap:4px 12px}.foot a{color:var(--faint);text-decoration:none}.foot a:hover{color:var(--ink)}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.view{animation:vin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes vin{from{opacity:0;transform:translateY(10px)}}
+.secure{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--faint);font-size:12.5px;margin:2px 0 0}
+.secure svg{width:14px;height:14px;flex:none}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .brand{padding:18px 18px 0;min-height:0}
+  .brand .quote{display:none}
+  .brand .stage{width:min(340px,86vw);margin:-4px auto 6px}
+  .brand .orb i{display:none}
+  .side{border-radius:30px 30px 0 0;margin-top:-30px;z-index:2;padding-top:20px;box-shadow:0 -20px 40px -20px rgba(0,0,0,.5)}
+  .topline{justify-content:center}
+  .box{padding-block:18px 30px;margin-top:0}
+  .brand .top{display:flex;justify-content:space-between;align-items:center}
+}
+@media (min-width:901px){.brand .top{display:block}.brand .tl-m{display:none}}
+</style>
+
+<div class="shell">
+  <aside class="brand" aria-label="Joinvoo">
+    <div class="top"><a class="logo" href="/"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a><a data-i18n="6jt5ti" class="tl-m" href="/" style="color:#B9B5CC;font-size:14px;font-weight:600;text-decoration:none">← Home</a></div>
+    <div class="stage" role="img" aria-label="Illustration: a person sits cross-legged with a laptop while join and deposit notifications float out of it.">
+      <style>
+/* stage (illustration) */
+.stage{position:relative;width:100%;max-width:600px;aspect-ratio:1/1;margin-inline:auto;container-type:inline-size}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%}
+.stage .back{z-index:0}.stage .person{z-index:2}
+.orb{position:absolute;left:0;top:0;width:clamp(36px,8.4cqw,50px);height:clamp(36px,8.4cqw,50px);margin:calc(clamp(36px,8.4cqw,50px)/-2) 0 0 calc(clamp(36px,8.4cqw,50px)/-2);border-radius:50%;display:grid;place-items:center;box-shadow:0 10px 24px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.35);will-change:transform;z-index:3}
+.orb svg{width:56%;height:56%}
+.orb i{position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);font:600 10.5px/1 var(--f);font-style:normal;color:#CFCBEA;white-space:nowrap;letter-spacing:.01em}
+.o-meta{background:linear-gradient(160deg,#2E86FF,#0559E3)}
+.o-tt{background:#0B0B12;border:1px solid rgba(255,255,255,.14)}
+.o-snap{background:#FFFC00}
+.o-tg{background:linear-gradient(160deg,#3CC0FF,#1E96D8)}
+.hcards{position:absolute;inset:0;z-index:4;pointer-events:none}
+.hc{--w:clamp(200px,54cqw,300px);position:absolute;left:clamp(6px,var(--x),calc(100% - var(--w) - 6px));top:var(--y);width:var(--w);display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center;padding:10px 12px;border-radius:16px;background:rgba(22,20,40,.66);border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 18px 40px -16px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;
+  animation:hcIn 5.6s cubic-bezier(.2,.8,.2,1) forwards;opacity:0}
+.hc .a{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff}
+.hc b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.hc small{display:block;font-size:11.5px;color:#AFACCB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.hc small em{font-style:normal;font-weight:600}
+.hc .s{font:600 11px/1 var(--f);padding:6px 8px;border-radius:999px;white-space:nowrap;display:inline-flex;gap:5px;align-items:center}
+.hc .s i{width:6px;height:6px;border-radius:50%;background:currentColor}
+@keyframes hcIn{
+  0%{opacity:0;transform:translate(var(--fx),var(--fy)) scale(.35)}
+  14%{opacity:1;transform:translate(0,0) scale(1.02)}
+  20%{transform:translate(0,0) scale(1)}
+  82%{opacity:1;transform:translate(0,-6px)}
+  100%{opacity:0;transform:translate(0,-26px) scale(.97)}}
+/* svg character animation */
+.breathe{transform-origin:260px 384px;animation:breathe 5.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateY(-2px) scale(1.012,1.016)}}
+.headg{transform-origin:260px 216px;animation:nod 8s ease-in-out infinite}
+@keyframes nod{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(2deg) translateY(1px)}}
+.arm-l{animation:tap .32s ease-in-out infinite alternate}
+.arm-r{animation:tap .32s ease-in-out infinite alternate-reverse}
+@keyframes tap{to{transform:translateY(-2.2px)}}
+.leaf{transform-box:fill-box;transform-origin:50% 100%;animation:sway 6s ease-in-out infinite}
+.leaf:nth-child(2){animation-delay:-2s}.leaf:nth-child(3){animation-delay:-4s}
+@keyframes sway{50%{transform:rotate(4deg)}}
+.steam path{stroke-dasharray:6 40;animation:steam 3.2s linear infinite}
+.steam path:nth-child(2){animation-delay:-1.6s}
+@keyframes steam{from{stroke-dashoffset:46;opacity:0}30%{opacity:.8}to{stroke-dashoffset:0;opacity:0}}
+.lidglow{transform-origin:260px 341px;animation:lid 1.8s ease-in-out infinite}
+@keyframes lid{50%{opacity:.45;transform:scale(.9)}}
+.spark{animation:twinkle 4s ease-in-out infinite}
+.spark:nth-of-type(2n){animation-delay:-1.3s}.spark:nth-of-type(3n){animation-delay:-2.6s}
+@keyframes twinkle{50%{opacity:.15}}
+.ringdash{stroke-dasharray:3 9;animation:ring 40s linear infinite}
+@keyframes ring{to{stroke-dashoffset:-480}}
+
+@container (max-width:440px){.hc{--w:min(66cqw,260px);padding:7px 9px;gap:8px}.hc b{font-size:12.5px}.hc small{font-size:11px}}
+</style>
+      <svg class="back" viewBox="0 0 520 520" aria-hidden="true">
+        <defs>
+          <radialGradient id="halo" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#8E77FF" stop-opacity=".5"/><stop offset=".55" stop-color="#C14BFF" stop-opacity=".12"/><stop offset="1" stop-color="#C14BFF" stop-opacity="0"/></radialGradient>
+          <linearGradient id="ringg" x1="0" x2="1"><stop offset="0" stop-color="#7FE3FF" stop-opacity=".15"/><stop offset=".5" stop-color="#B6A4FF" stop-opacity=".55"/><stop offset="1" stop-color="#E08BFF" stop-opacity=".15"/></linearGradient>
+        </defs>
+        <circle cx="260" cy="250" r="230" fill="url(#halo)"/>
+        <circle cx="260" cy="250" r="150" fill="none" stroke="rgba(255,255,255,.06)"/>
+        <circle cx="260" cy="250" r="205" fill="none" stroke="rgba(255,255,255,.04)"/>
+        <ellipse class="ringdash" cx="260" cy="322" rx="236" ry="64" fill="none" stroke="url(#ringg)" stroke-width="1.5"/>
+        <g fill="#fff"><circle class="spark" cx="92" cy="120" r="1.6"/><circle class="spark" cx="430" cy="96" r="1.3"/><circle class="spark" cx="458" cy="210" r="1.8"/><circle class="spark" cx="60" cy="236" r="1.2"/><circle class="spark" cx="380" cy="48" r="1.1"/><circle class="spark" cx="150" cy="56" r="1.4"/></g>
+      </svg>
+      <svg class="person" viewBox="0 0 520 520" aria-hidden="true">
+        <defs>
+          <linearGradient id="hood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7F66FF"/><stop offset="1" stop-color="#4527D6"/></linearGradient>
+          <linearGradient id="sleeve" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6247F5"/><stop offset="1" stop-color="#3B21C2"/></linearGradient>
+          <linearGradient id="pants" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A4399"/><stop offset="1" stop-color="#2F2A6B"/></linearGradient>
+          <linearGradient id="lidg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F1EFFA"/><stop offset="1" stop-color="#BDB8D8"/></linearGradient>
+          <radialGradient id="floor" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#6A4BFF" stop-opacity=".55"/><stop offset="1" stop-color="#6A4BFF" stop-opacity="0"/></radialGradient>
+          <radialGradient id="facel" cx="50%" cy="100%" r="75%"><stop offset="0" stop-color="#C7B8FF" stop-opacity=".6"/><stop offset="1" stop-color="#C7B8FF" stop-opacity="0"/></radialGradient>
+          <filter id="blur8" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+          <filter id="blur3" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+          <clipPath id="headclip"><circle cx="260" cy="184" r="31"/></clipPath>
+        </defs>
+        <!-- floor + cushion -->
+        <ellipse cx="260" cy="456" rx="210" ry="34" fill="url(#floor)"/>
+        <ellipse cx="260" cy="446" rx="168" ry="24" fill="#0E0C22"/>
+        <ellipse cx="260" cy="440" rx="162" ry="20" fill="#1A1638"/>
+        <ellipse cx="260" cy="436" rx="150" ry="13" fill="none" stroke="#8E77FF" stroke-opacity=".25"/>
+        <!-- plant -->
+        <g transform="translate(-6 0)">
+          <g><path class="leaf" d="M104 384C92 352 70 336 52 330c18 0 44 14 52 54z" fill="#12B886"/><path class="leaf" d="M106 384c-2-34 10-60 26-74-4 22-14 46-26 74z" fill="#0E9C72"/><path class="leaf" d="M102 384C96 360 82 344 70 336c16 4 30 22 32 48z" fill="#3AD9A6" opacity=".85"/></g>
+          <path d="M80 382h50l-7 48H87z" fill="#2B2552"/><path d="M78 380h54v8H78z" fill="#3A3370" rx="3"/>
+        </g>
+        <!-- mug -->
+        <g transform="translate(414 396)">
+          <g class="steam" fill="none" stroke="#CFCBEA" stroke-width="2.2" stroke-linecap="round"><path d="M10-6c-5-8 5-12 0-22"/><path d="M20-6c-5-8 5-12 0-22"/></g>
+          <path d="M28 8h4a7 7 0 0 1 0 14h-4" fill="none" stroke="#E9E7F5" stroke-width="4"/>
+          <rect x="0" y="0" width="30" height="32" rx="7" fill="#F2F1FA"/><rect x="0" y="0" width="30" height="6" rx="3" fill="#D6D3EA"/>
+          <circle cx="15" cy="18" r="5" fill="none" stroke="#6A4BFF" stroke-width="2"/>
+        </g>
+        <!-- upper body (behind legs) -->
+        <g class="breathe">
+          <path d="M212 384C204 338 194 302 197 274c3-24 19-38 41-42h44c22 4 38 18 41 42 3 28-7 64-15 110z" fill="url(#hood)"/>
+          <path d="M226 236c8 18 60 18 68 0-8-10-60-10-68 0z" fill="#5232EC"/>
+          <path d="M252 244l-2 26M268 244l2 26" stroke="#E9E7F5" stroke-width="2.2" stroke-linecap="round"/>
+          <circle cx="250" cy="272" r="2.6" fill="#E9E7F5"/><circle cx="270" cy="272" r="2.6" fill="#E9E7F5"/>
+          <rect x="250" y="204" width="20" height="30" rx="8" fill="#A86C49"/>
+          <g class="headg">
+            <circle cx="260" cy="184" r="31" fill="#C68A63"/>
+            <circle cx="260" cy="184" r="31" fill="url(#facel)" clip-path="url(#headclip)"/>
+            <path d="M229 184c-4-29 16-43 34-42 22 1 34 17 30 40-3-11-11-18-22-20-8 8-26 12-42 22z" fill="#17122E"/>
+            <path d="M245 189q5 4 10 0M266 189q5 4 10 0" fill="none" stroke="#2B1810" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M253 203q7 5 14 0" fill="none" stroke="#6E3B22" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M225 188c-4-46 74-46 70 0" fill="none" stroke="#0C0B1D" stroke-width="6" stroke-linecap="round"/>
+            <rect x="219" y="176" width="13" height="24" rx="6.5" fill="#0C0B1D"/><rect x="288" y="176" width="13" height="24" rx="6.5" fill="#0C0B1D"/>
+            <rect x="221" y="182" width="3" height="12" rx="1.5" fill="#8E77FF"/><rect x="296" y="182" width="3" height="12" rx="1.5" fill="#8E77FF"/>
+          </g>
+        </g>
+        <!-- legs, crossed -->
+        <path d="M232 384L146 412M288 384L374 412" stroke="url(#pants)" stroke-width="52" stroke-linecap="round"/>
+        <path d="M232 378L150 404M288 378L370 404" stroke="#fff" stroke-opacity=".08" stroke-width="20" stroke-linecap="round"/>
+        <path d="M374 418L208 430" stroke="#2C2766" stroke-width="40" stroke-linecap="round"/>
+        <ellipse cx="190" cy="432" rx="22" ry="12" fill="#DCD8EE"/>
+        <path d="M146 418L312 430" stroke="#4A4399" stroke-width="40" stroke-linecap="round"/>
+        <path d="M156 410L304 421" stroke="#fff" stroke-opacity=".05" stroke-width="10" stroke-linecap="round"/>
+        <ellipse cx="330" cy="432" rx="23" ry="13" fill="#F2F1FA"/><path d="M309 440h42" stroke="#BDB8D8" stroke-width="3" stroke-linecap="round"/>
+        <!-- arms -->
+        <g class="breathe">
+          <g class="arm-l"><path d="M208 254C182 276 170 312 178 342c6 20 24 32 48 38" fill="none" stroke="url(#sleeve)" stroke-width="30" stroke-linecap="round"/></g>
+          <g class="arm-r"><path d="M312 254c26 22 38 58 30 88-6 20-24 32-48 38" fill="none" stroke="url(#sleeve)" stroke-width="30" stroke-linecap="round"/></g>
+        </g>
+        <!-- screen light on chest -->
+        <ellipse cx="260" cy="290" rx="86" ry="22" fill="#B6A4FF" opacity=".5" filter="url(#blur8)"/>
+        <!-- laptop -->
+        <rect x="180" y="290" width="160" height="104" rx="12" fill="url(#lidg)"/>
+        <rect x="180.5" y="290.5" width="159" height="103" rx="11.5" fill="none" stroke="#fff" stroke-opacity=".7"/>
+        <circle class="lidglow" cx="260" cy="341" r="24" fill="#8E77FF" opacity=".55" filter="url(#blur8)"/>
+        <g fill="none" stroke-width="4"><circle cx="252" cy="341" r="11" stroke="#6A4BFF"/><circle cx="268" cy="341" r="11" stroke="#9C7CFF"/></g>
+        <rect x="166" y="392" width="188" height="10" rx="5" fill="#D9D6EC"/><rect x="236" y="392" width="48" height="4" rx="2" fill="#BDB8D8"/>
+        <ellipse cx="260" cy="405" rx="94" ry="3" fill="#000" opacity=".25" filter="url(#blur3)"/>
+      </svg>
+      <span class="orb o-meta" data-o="0"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg><i data-i18n="1sm1htk">Meta</i></span>
+      <span class="orb o-tt" data-o="1"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><g stroke="#25F4EE" transform="translate(-1 -.6)"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g><g stroke="#FE2C55" transform="translate(1 .6)"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g><g stroke="#fff"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></g></svg><i data-i18n="1jo11wz">TikTok</i></span>
+      <span class="orb o-snap" data-o="2"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg><i data-i18n="9g3u43">Snapchat</i></span>
+      <span class="orb o-tg" data-o="3"><svg viewBox="0 0 24 24"><path d="M20.5 4.5 3.6 11.1c-.8.3-.8 1.4 0 1.7l4.1 1.4 1.6 5c.2.7 1.1.9 1.6.4l2.3-2.2 4.3 3.2c.6.4 1.4.1 1.6-.6l2.8-13.4c.2-.8-.6-1.4-1.4-1.1z" fill="#fff"/><path d="m8 14 9-6.5" stroke="#1E96D8" stroke-width="1.4" stroke-linecap="round"/></svg><i data-i18n="11vuy5y">Telegram</i></span>
+      <div class="hcards"></div>
+      <script>JVI();
+      (function(){
+        /* Illustration: orbiting platform badges + join/deposit cards that float out of the laptop. Pauses when off screen. */
+        const stage=document.currentScript.closest('.stage'); if(!stage) return;
+        const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const orbs=[...stage.querySelectorAll('.orb')], hc=stage.querySelector('.hcards');
+        const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        let on=true, ang=.35, last=performance.now();
+        function place(){
+          const w=stage.clientWidth, h=stage.clientHeight, cx=w*.5, cy=h*(322/520), rx=w*(236/520), ry=h*(64/520);
+          orbs.forEach((o,i)=>{ const a=ang+i*Math.PI/2, s=Math.sin(a), sc=.78+.22*(s+1)/2;
+            o.style.transform=`translate(${(cx+Math.cos(a)*rx).toFixed(1)}px,${(cy+s*ry).toFixed(1)}px) scale(${sc.toFixed(3)})`;
+            o.style.zIndex=s>0?3:1; o.style.opacity=s>0?1:(.55+.45*(s+1)).toFixed(2); });
+        }
+        function loop(t){ if(!on) return; const dt=Math.min(50,t-last); last=t; ang+=dt*.00022; place(); requestAnimationFrame(loop); }
+        new IntersectionObserver(([e])=>{ on=e.isIntersecting; if(on&&!RM){ last=performance.now(); requestAnimationFrame(loop); } }).observe(stage);
+        place(); addEventListener('resize',place);
+        const PL={meta:['Meta','#0866FF','rgba(8,102,255,.22)','#9DBEFF'],tiktok:['TikTok','#FE2C55','rgba(254,44,85,.2)','#FF9AAE'],snap:['Snapchat','#FFFC00','rgba(255,252,0,.15)','#FFFA8A']};
+        const AV=['#6A4BFF','#E0609A','#12B886','#2AABEE','#F2A93B','#C14BFF','#0866FF','#FE2C55'];
+        const FEED=[
+          {n:'Omar',t:'join',c:'Daily Deals Club',src:'TikTok ad',p:'tiktok',s:'9s'},
+          {n:'Lucas',t:'ftd',amt:'$120',p:'meta',ev:'Purchase'},
+          {n:'Sofia',t:'join',c:'Fit in 30',src:'Snapchat ad',p:'snap',s:'14s'},
+          {n:'Noah',t:'join',c:'Creator Studio',src:'Instagram ad',p:'meta',s:'6s'},
+          {n:'Aisha',t:'reg',c:'Travel Hacks',p:'tiktok'},
+          {n:'Mateo',t:'bot',c:'Recipe Box bot',src:'Facebook ad',p:'meta',s:'11s'},
+          {n:'Yuki',t:'ftd',amt:'$80',p:'snap',ev:'PURCHASE'},
+          {n:'Hannah',t:'join',c:'Startup Notes',src:'TikTok ad',p:'tiktok',s:'8s'},
+          {n:'Ravi',t:'join',c:'Study Squad',src:'Snapchat ad',p:'snap',s:'12s'},
+          {n:'Chloe',t:'ftd',amt:'$250',p:'tiktok',ev:'CompletePayment'}];
+        const SLOTS=[{x:0,y:3},{x:47,y:16},{x:1,y:47},{x:46,y:60}];
+        let fi=0, si=0;
+        function card(force){
+          if(!force&&(!on||document.hidden)) return;
+          const NAR=stage.clientWidth<440, SL=NAR?[{x:0,y:1},{x:100,y:76}]:SLOTS;
+          const d=FEED[fi%FEED.length], slot=SL[si++%SL.length], p=PL[d.p]; fi++;
+          let title, sub;
+          if(d.t==='ftd'){ title=`${d.n} · ${_t('First deposit')} ${d.amt}`; sub=`<em style="color:#5BE0B0">${d.ev} ${_t('sent to')} ${p[0]} ✓</em>`; }
+          else { title=(d.t==='reg'?_t('[name] registered · [channel]'):d.t==='bot'?_t('[name] started [channel]'):_t('[name] joined [channel]')).replace('[name]',d.n).replace('[channel]',d.c);
+            sub=`${_t('[platform] ad').replace('[platform]',d.t==='reg'?p[0]:d.src.replace(/ ad$/,''))} · <em style="color:${p[3]}">${_t('Sent to')} ${p[0]} ✓</em>`; }
+          const el=document.createElement('div'); el.className='hc';
+          const w=stage.clientWidth, h=stage.clientHeight, cw=Math.min(300,Math.max(200,w*.54));
+          el.style.setProperty('--x',slot.x+'%'); el.style.setProperty('--y',slot.y+'%');
+          el.style.setProperty('--fx',(w*.5-slot.x/100*w-cw/2).toFixed(0)+'px'); el.style.setProperty('--fy',(h*(341/520)-slot.y/100*h-26).toFixed(0)+'px');
+          el.innerHTML=`<span class="a" style="background:${AV[fi%AV.length]}">${d.n[0]}</span><div><b>${esc(title)}</b><small>${sub}</small></div>`;
+          hc.appendChild(el); if(!RM) setTimeout(()=>el.remove(),5800);
+          while(hc.children.length>(NAR?2:4)) hc.firstChild.remove();
+          return el;
+        }
+        if(RM){ for(let i=0;i<3;i++){ const el=card(true); el.style.animation='none'; el.style.opacity=1; } }
+        else { setTimeout(()=>card(true),450); setTimeout(()=>card(true),1400); setInterval(card,1900); }
+      })();
+      </script>
+
+    </div>
+    <div class="quote"><h2 data-i18n="9059xy">Your ads keep learning <span>while you’re away.</span></h2><p data-i18n="ojbwat">Every join and deposit, sent back to Meta, TikTok and Snapchat. Log in to see who joined.</p></div>
+  </aside>
+
+  <main class="side">
+    <div class="topline"><a data-i18n="1jdup01" href="/blog" style="color:var(--muted);font-weight:700;margin-right:auto">Blog</a><span data-i18n="qvqkmw">New to Joinvoo? <a href="/signup">Start free</a></span><div class="lsw" data-lsw></div></div>
+    <div class="box" id="box"></div>
+    <div class="foot"><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="1bq4igq" class="fl"><a href="/guide">Guide</a><a href="/blog">Blog</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a><a href="/acceptable-use">Acceptable use</a><a href="/cookies">Cookies</a><a href="/referral-terms">Referral terms</a></span><div class="vfoot"><style>
+.vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
+.vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
+.vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
+.vfoot .vpart svg{width:18px;height:18px;flex:none}
+.vfoot .vmore{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px}.vfoot .vmore>span{margin-right:2px}
+.vfoot .vmore i{font-style:normal;opacity:.5}
+@media (max-width:560px){.vfoot{flex-direction:column;align-items:flex-start;gap:8px}.vfoot .vmore{gap:4px 9px}.vfoot .vmore>span{flex-basis:100%}}
+</style><a class="vpart" href="https://voosquare.com" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="t3vct1">Part of <b>VooSquare</b></span></a><span class="vmore"><span data-i18n="1qnawoj">More from Zedapex:</span><a data-i18n="ymx3wx" href="https://replyvoo.com" target="_blank" rel="noopener">Replyvoo</a><i>·</i><a data-i18n="ie6sla" href="https://castvoo.com" target="_blank" rel="noopener">Castvoo</a><i>·</i><a data-i18n="1r6o4vk" href="https://advoo.com" target="_blank" rel="noopener">Advoo</a><i>·</i><a data-i18n="1hbw4co" href="https://affleego.com" target="_blank" rel="noopener">Affleego</a></span></div>
+</div>
+  </main>
+</div>
+
+<style>
+/* VooSquare sign-in (login + signup). Hidden unless /api/config voo.login is 'both' or 'only' (preview: ?voo=both|only). */
+.vbox{display:flex;flex-direction:column;gap:10px;margin:0 0 4px}
+.vline{display:flex;align-items:center;gap:8px;margin:0;font-size:13.5px;font-weight:700;color:var(--muted)}
+.vline i{width:7px;height:7px;border-radius:50%;background:#0fae6b;box-shadow:0 0 0 4px color-mix(in srgb,#0fae6b 18%,transparent)}
+.vbtn{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;padding:12px 20px;border-radius:99px;background:#fff;color:#141413;border:1.5px solid #e4e2dc;font:800 16.5px var(--f);text-decoration:none;box-shadow:0 1px 2px rgba(20,20,18,.05),0 14px 30px -18px rgba(15,174,107,.55);transition:transform .2s,box-shadow .2s,border-color .2s}
+.vbtn:hover{transform:translateY(-2px);border-color:#0fae6b;box-shadow:0 0 0 4px color-mix(in srgb,#0fae6b 14%,transparent),0 18px 34px -18px rgba(15,174,107,.6)}
+.vbtn:focus-visible{outline:2px solid #0fae6b;outline-offset:3px}
+.vbtn .vm{width:26px;height:26px;flex:none}
+.vbtn .va{width:18px;height:18px;margin-left:2px;color:#0fae6b;transition:transform .2s}.vbtn:hover .va{transform:translateX(3px)}
+.vor{display:flex;align-items:center;gap:14px;margin:18px 0 14px;color:var(--faint);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.vor::before,.vor::after{content:"";flex:1;height:1px;background:var(--line)}
+.vstaff{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:700;color:var(--faint);text-decoration:none}.vstaff:hover{color:var(--ink);text-decoration:underline}
+.vonly-note{margin:6px 0 0;font-size:13.5px;color:var(--faint)}
+</style>
+<script>JVI();
+window.JVVoo=(function(){
+  var MARK='<svg class="vm" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg>';
+  var ARR='<svg class="va" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  var q={}; try{ q=Object.fromEntries(new URLSearchParams(location.search)); }catch(e){}
+  var preview=!!window.JP_DEMO||location.protocol==='file:';
+  var norm=function(m){ return m==='both'||m==='only'?m:'off'; };
+  return {
+    local: q.local==='1',
+    /* calls cb(mode) once: 'off' | 'both' | 'only'. Live: /api/config voo.login. Preview: ?voo=both|only, otherwise off. */
+    mode: function(cb){
+      if(preview){ cb(norm(q.voo)); return; }
+      fetch('/api/config',{credentials:'same-origin'}).then(function(r){ return (r.headers.get('content-type')||'').indexOf('json')>-1?r.json():null; })
+        .then(function(c){ cb(norm(c&&c.voo&&c.voo.login)); }).catch(function(){ cb('off'); });
+    },
+    block: function(withOr){
+      return '<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
+    }
+  };
+})();
+</script>
+
+<script>JVI();
+(function(){
+  const DEMO=!!window.JP_DEMO || location.protocol==='file:', APP='/app';
+  const $=s=>document.querySelector(s);
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const icErr='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>';
+  const icOk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  const arrow='<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  let email='';
+  try{ email=localStorage.getItem('jv_last_email')||''; }catch(e){}
+  const desk=matchMedia('(min-width:901px)').matches;
+  let VM='off'; const LOCAL=JVVoo.local;  // VooSquare sign-in: 'off' (default, unchanged) | 'both' | 'only'; ?local=1 always shows the password form
+
+  function login(){
+    $('#box').innerHTML=`<div class="view">
+      <h1>${_t('Welcome <span>back.</span>')}</h1>
+      <p class="lede">${_t('Log in to see who joined, what they deposited, and which ads brought them.')}</p>
+      ${VM==='only'&&!LOCAL?JVVoo.block(false)+`<a class="vstaff" href="/login?local=1">${_t('Staff login')}</a>`:`${VM!=='off'?JVVoo.block(true):''}
+      <form id="f" novalidate>
+        <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" value="${esc(email)}" placeholder="you@company.com" required></div>
+        <div class="field"><div class="lrow"><label for="pw">${_t('Password')}</label><button type="button" class="link" id="forgot">${_t('Forgot password?')}</button></div>
+          <div class="pw"><input class="inp" id="pw" type="password" autocomplete="current-password" placeholder="${_t('Your password')}" required>
+          <button type="button" id="eye" aria-label="${_t('Show password')}" aria-pressed="false"><svg class="show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.7 8.5 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.3M3 3l18 18M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
+        <div class="msg err" id="err" role="alert"></div>
+        <button class="btn violet full" type="submit" id="go">${_t('Log in')} ${arrow}</button>
+        <p class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>${_t('Encrypted connection. Your password is never stored in plain text.')}</p>
+      </form>`}
+      <div class="or">${_t('New here?')}</div>
+      <div class="alt"><b>${_t('Don’t have an account yet?')}</b><span>${_t('Your first 500 joins are free. Setup takes about 10 minutes.')}</span><a class="btn dark" href="/signup">${_t('Create a free account')} ${arrow}</a></div>
+    </div>`;
+    const f=$('#f'), em=$('#em'), pw=$('#pw'), go=$('#go'), eye=$('#eye');
+    if(!f) return;
+    if(desk) (email?pw:em).focus();
+    eye.onclick=()=>{ const s=pw.type==='password'; pw.type=s?'text':'password'; eye.setAttribute('aria-pressed',s); eye.setAttribute('aria-label',s?_t('Hide password'):_t('Show password')); pw.focus(); };
+    $('#forgot').onclick=()=>{ email=em.value.trim(); forgot(); };
+    [em,pw].forEach(i=>i.addEventListener('input',()=>{ i.removeAttribute('aria-invalid'); $('#err').innerHTML=''; }));
+    f.onsubmit=async e=>{ e.preventDefault(); const err=m=>{ $('#err').innerHTML=icErr+'<span>'+esc(m)+'</span>'; };
+      const ev=em.value.trim(), pv=pw.value;
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ev)){ em.setAttribute('aria-invalid','true'); em.focus(); return err(_t('Enter the email you signed up with.')); }
+      if(!pv){ pw.setAttribute('aria-invalid','true'); pw.focus(); return err(_t('Enter your password.')); }
+      go.disabled=true; go.innerHTML='<span class="spin"></span>'+_t('Logging in…');
+      try{ localStorage.setItem('jv_last_email',ev); }catch(x){}
+      if(DEMO){ setTimeout(()=>location.href=APP,700); return; }
+      try{
+        const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:ev,password:pv})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok){ throw new Error(j.error||(r.status===429?_t('Too many tries. Wait 15 minutes, or reset your password.'):_t('Couldn’t log in. Try again.'))); }
+        go.innerHTML=icOk.replace('<svg','<svg width="18" height="18"')+' '+_t('Welcome back'); location.href=APP;
+      }catch(x){ go.disabled=false; go.innerHTML=_t('Log in')+' '+arrow; err(x.message==='Failed to fetch'?_t('Can’t reach Joinvoo. Check your connection and try again.'):x.message); pw.select(); }
+    };
+  }
+
+  function forgot(){
+    $('#box').innerHTML=`<div class="view">
+      <button type="button" class="link" id="back" style="margin-bottom:22px">← ${_t('Back to log in')}</button>
+      <h1>${_t('Reset your <span>password.</span>')}</h1>
+      <p class="lede">${_t('Enter your account email. We’ll send a link that works for 1 hour.')}</p>
+      <form id="f" novalidate>
+        <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" value="${esc(email)}" placeholder="you@company.com" required></div>
+        <div class="msg" id="msg" role="status"></div>
+        <button class="btn violet full" type="submit" id="go">${_t('Send reset link')} ${arrow}</button>
+      </form>
+      <p style="color:var(--muted);font-size:14px;margin-top:22px">${_t('Remembered it?')} <button type="button" class="link" id="back2">${_t('Log in')}</button></p>
+    </div>`;
+    const em=$('#em'), go=$('#go'), msg=$('#msg');
+    em.focus();
+    $('#back').onclick=$('#back2').onclick=()=>{ email=em.value.trim(); login(); };
+    $('#f').onsubmit=async e=>{ e.preventDefault(); const v=em.value.trim();
+      const show=(cls,ic,m)=>{ msg.className='msg '+cls; msg.innerHTML=ic+'<span>'+esc(m)+'</span>'; };
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ em.setAttribute('aria-invalid','true'); return show('err',icErr,_t('Enter a valid email.')); }
+      em.removeAttribute('aria-invalid'); go.disabled=true; go.innerHTML='<span class="spin"></span>'+_t('Sending…');
+      try{
+        let m=_t('If that email has an account, a reset link is on its way. Check spam too.');
+        if(!DEMO){ const r=await fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:v})});
+          const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Couldn’t send the email. Try again.')); m=j.message||m; }
+        else { await new Promise(r=>setTimeout(r,700)); m+=' '+_t('(Demo: no email was sent.)'); }
+        show('ok',icOk,m); go.innerHTML=_t('Sent')+' ✓';
+        setTimeout(()=>{ go.disabled=false; go.innerHTML=_t('Send again')+' '+arrow; },20000);
+      }catch(x){ go.disabled=false; go.innerHTML=_t('Send reset link')+' '+arrow; show('err',icErr,x.message==='Failed to fetch'?_t('Can’t reach Joinvoo. Check your connection.'):x.message); }
+    };
+  }
+
+  login();
+  JVVoo.mode(m=>{ if(m!==VM){ VM=m; if($('#f')||m==='only') login(); } });
+  /* Already logged in? Go straight to the dashboard. */
+  if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP); }).catch(()=>{});
+})();
+</script>

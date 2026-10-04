@@ -1,0 +1,7 @@
+data
+dist
+build
+node_modules
+joinvoo.zip
+.env
+tests/.run

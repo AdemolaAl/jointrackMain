@@ -1,0 +1,818 @@
+<script>
+/* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
+(function(){
+  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
+  function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
+  var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
+  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
+  var D={};
+  if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
+  document.documentElement.lang=lang; window.JV_LANG=lang;
+  window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
+  function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
+    a=document.querySelectorAll('[data-i18n-t]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-t')]; el.setAttribute('data-i18n-ok',''); if(v==null) continue;
+      for(var n=el.firstChild;n;n=n.nextSibling){ if(n.nodeType===3&&/[A-Za-z]{2}/.test(n.nodeValue)){ var m=n.nodeValue.match(/^(\s*)[\s\S]*?(\s*)$/); n.nodeValue=m[1]+v+m[2]; break; } } }
+    a=document.querySelectorAll('[data-i18n-ph]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-ph')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.setAttribute('placeholder',v); }
+  }
+  function switcher(){ var boxes=document.querySelectorAll('[data-lsw]:not([data-lsw-ok])'); for(var i=0;i<boxes.length;i++){ (function(box){ box.setAttribute('data-lsw-ok','');
+      var cur=N[lang]; box.innerHTML='<button type="button" class="lsw-b" aria-haspopup="listbox" aria-expanded="false" aria-label="Language: '+cur[1]+'"><span class="lsw-f">'+cur[0]+'</span><span class="lsw-n">'+cur[1]+'</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><ul class="lsw-m" role="listbox" hidden>'+L.map(function(k){ return '<li role="option" aria-selected="'+(k===lang)+'"><button type="button" data-l="'+k+'"><span class="lsw-f">'+N[k][0]+'</span>'+N[k][1]+(k===lang?'<i>✓</i>':'')+'</button></li>'; }).join('')+'</ul>';
+      var b=box.querySelector('.lsw-b'), m=box.querySelector('.lsw-m');
+      function open(o){ m.hidden=!o; b.setAttribute('aria-expanded',o); }
+      b.onclick=function(e){ e.stopPropagation(); open(m.hidden); };
+      document.addEventListener('click',function(){ open(false); }); document.addEventListener('keydown',function(e){ if(e.key==='Escape') open(false); });
+      m.onclick=function(e){ var t=e.target.closest('button[data-l]'); if(!t) return; var l=t.getAttribute('data-l'); try{ localStorage.setItem('jv_lang',l); }catch(_){}
+        try{ var u=new URL(location.href); u.searchParams.delete('lang'); if(l!=='en'&&!saved&&nav===l){} location.replace(u.pathname+u.search+u.hash); }catch(_){ location.reload(); } };
+    })(boxes[i]); }
+    if(lang!=='en'){ var n=document.querySelectorAll('[data-lnote]'); for(var j=0;j<n.length;j++) n[j].hidden=false; }
+  }
+  window.JVI=function(){ apply(); switcher(); };
+  document.addEventListener('DOMContentLoaded',function(){ apply(); switcher(); });
+})();
+</script>
+<title data-i18n="1j56nbx">How to use Joinvoo</title>
+<meta name="description" content="Set up Joinvoo in about 10 minutes: create a bot, add it to your channel, connect Meta, TikTok or Snapchat, put your tracking link in your ads, and send deposits back too.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --sunk:#f1efe9; --ink:#141413; --muted:#67665f; --faint:#a19f98; --line:#e9e7e1;
+  --accent:#5b3df5; --accent-2:#8f7bff; --lilac:#efebff; --lime:#c8f169;
+  --green:#2e7d57; --mint:#e8f3ec; --blue:#3d5ad6; --sky:#ecf0fc; --gold:#87631a; --cream:#fbf2df; --rose:#c2463f; --blush:#fbeae8;
+  --ink-btn:#141413; --ink-btn-fg:#ffffff; --shadow:0 2px 4px rgba(20,20,18,.03),0 30px 70px -30px rgba(40,20,120,.28);
+  --f:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font:700 16px/1.2 var(--f);text-decoration:none;color:var(--ink);transition:transform .2s,box-shadow .2s;white-space:nowrap;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.btn.violet{background:#5b3df5;color:#fff;border-color:#5b3df5;box-shadow:0 14px 34px -12px #5b3df5}
+.btn.dark{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+.btn.lg{padding:18px 30px;font-size:17.5px}
+.btn svg{width:18px;height:18px;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:23px;letter-spacing:-.045em;text-decoration:none;color:inherit}
+.mark{width:38px;height:38px;border-radius:12px;background:#5b3df5;display:grid;place-items:center;box-shadow:0 8px 20px -8px #5b3df5;flex:none}
+.mark svg{width:22px;height:22px}
+.reveal{animation:lift both cubic-bezier(.2,.8,.2,1);animation-timeline:view();animation-range:entry 0% entry 45%}
+@keyframes lift{from{transform:translateY(40px) scale(.97)}}
+.feed{display:flex;flex-direction:column}
+.p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid var(--line)}
+.p:first-child{border-top:0}
+.p.new{animation:drop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px}
+.p div{min-width:0}
+.p b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p small{display:block;color:var(--faint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{padding:5px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.tags{display:flex;gap:6px}
+.price-big{font-size:clamp(64px,11vw,110px);font-weight:800;letter-spacing:-.06em;line-height:.9}
+footer.site{padding-block:40px 60px;font-size:15px;color:var(--faint)}
+footer.site .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer.site b{color:var(--ink)}
+@media (max-width:560px){.p{grid-template-columns:auto minmax(0,1fr);padding:11px 14px}.p .tags{grid-column:2}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ===== Round 2 additions: aliases + helpers shared by home, login, signup, guide, legal (former look stays the base) ===== */
+:root{
+  --brand:#5b3df5; --brand-2:#8f7bff; --brand-ink:#fff; --brand-soft:var(--lilac); --brand-text:#5b3df5;
+  --success:#2e9d6a; --mint-soft:var(--mint); --success-text:var(--green);
+  --amber:#e0a43a; --amber-soft:var(--cream); --amber-text:var(--gold);
+  --coral:#d9534c; --coral-soft:var(--blush); --coral-text:var(--rose);
+  --meta:#0866FF; --tiktok:#FE2C55; --tiktok-2:#25F4EE; --snap:#FFFC00; --telegram:#2AABEE;
+  --r1:12px; --r2:18px; --r3:24px; --r4:32px;
+  --shadow-sm:0 1px 2px rgba(20,20,18,.04),0 6px 16px -10px rgba(40,20,120,.18);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}
+img,svg{max-width:100%}
+p{text-wrap:pretty}
+.mono{font-family:var(--mono)}
+.disp{font-family:var(--display)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+::selection{background:color-mix(in srgb,#5b3df5 26%,transparent)}
+.btn.sm{padding:10px 18px;font-size:15px}
+.btn.ghost{background:transparent}
+.btn.full{width:100%}
+.btn[disabled]{opacity:.65;cursor:progress;transform:none}
+.kick,.eyebrow{color:var(--brand-text);font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:var(--lilac);color:var(--brand-text);white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:7px}
+.field>label,.field .lrow label{font-weight:700;font-size:14.5px}
+.inp{border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;font:500 16px var(--f);color:var(--ink);width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:var(--faint)}
+.inp:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.inp[aria-invalid="true"]{border-color:var(--rose)}
+
+/* language switcher (rendered by the i18n runtime into [data-lsw]) */
+.lsw{position:relative;flex:none}
+.lsw-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f);cursor:pointer}
+.lsw-b:hover{border-color:color-mix(in srgb,#5b3df5 35%,var(--line))}
+.lsw-b svg{width:14px;height:14px;opacity:.6}
+.lsw-f{font-size:17px;line-height:1}
+.lsw-m{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:190px;margin:0;padding:6px;list-style:none;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(20,12,60,.45)}
+.lsw-m button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;font:600 14.5px var(--f);color:var(--ink);cursor:pointer;text-align:left}
+.lsw-m button:hover{background:var(--sunk)}
+.lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
+.lsw-m i{margin-left:auto;font-style:normal}
+.lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
+@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+
+/* Layout: a manual. Dark glowing header; then a left rail (sticky table of contents with progress) and numbered steps, each with plain instructions beside a drawn mock of the exact screen. Under 900px the rail becomes a sticky chip strip. */
+body{font-size:16.5px}
+.hd{position:relative;overflow:hidden;isolation:isolate;padding-bottom:clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hd .mesh{position:absolute;inset:-30% -10% auto;height:760px;pointer-events:none;z-index:-1}
+.hd .mesh i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.6;animation:drift 18s ease-in-out infinite}
+.hd .mesh i:nth-child(1){width:520px;height:520px;left:2%;top:10%;background:var(--lilac)}
+.hd .mesh i:nth-child(2){width:420px;height:420px;right:4%;top:0;background:color-mix(in srgb,var(--accent) 24%,transparent);animation-delay:-6s}
+.hd .mesh i:nth-child(3){width:340px;height:340px;left:45%;top:45%;background:var(--mint);animation-delay:-12s}
+@keyframes drift{33%{transform:translate(60px,-40px) scale(1.08)}66%{transform:translate(-40px,30px) scale(.95)}}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;height:72px}
+.top nav{display:flex;gap:6px;align-items:center}
+.top .login{background:transparent;border-color:transparent;color:var(--ink)}
+.hero{padding-top:clamp(30px,5vw,56px);display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:end}
+.hero h1{font-size:clamp(42px,6.6vw,80px);letter-spacing:-.05em;line-height:.98;margin-top:14px}
+.hero h1 span{background:linear-gradient(100deg,#5b3df5,#8f7bff,#5b3df5);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 6s linear infinite}
+@keyframes sheen{to{background-position:-200% 0}}
+.hero p{color:var(--muted);font-size:clamp(17px,2vw,20px);max-width:54ch;margin:16px 0 0}
+.need{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:20px 22px;box-shadow:var(--shadow)}
+.need b{display:block;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-text);margin-bottom:12px}
+.need li{margin:9px 0;list-style:none;display:flex;gap:10px;color:var(--ink);font-size:15px;font-weight:600}.need ul{margin:0;padding:0}
+.need li i{width:26px;height:26px;border-radius:9px;background:var(--lilac);display:grid;place-items:center;flex:none;font-style:normal;font-size:13px}
+.timer{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:8px 15px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:14px;box-shadow:0 6px 20px -12px rgba(0,0,0,.2)}
+.timer i{width:8px;height:8px;border-radius:50%;background:#4FD4A4;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:48px;align-items:start;padding-block:40px 70px}
+.toc{position:sticky;top:20px;display:flex;flex-direction:column;gap:2px;font-size:14.5px}
+.toc a{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;text-decoration:none;color:var(--muted);font-weight:500;transition:background .2s,color .2s}
+.toc a span{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font:500 12px var(--mono);background:var(--sunk);flex:none;transition:background .2s,color .2s}
+.toc a.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);font-weight:600}
+.toc a.on span{background:var(--brand);color:#fff}
+.toc a.done span{background:var(--mint-soft);color:var(--success-text)}
+.toc .bar{height:4px;border-radius:4px;background:var(--sunk);margin:4px 12px 12px;overflow:hidden}
+.toc .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .3s}
+.step{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:32px;padding:36px 0;border-top:1px solid var(--line);scroll-margin-top:16px}
+.step:first-child{border-top:0;padding-top:0}
+.step.full{grid-template-columns:minmax(0,1fr)}
+.step .n{display:inline-flex;align-items:center;gap:10px;font:500 12.5px/1 var(--mono);color:var(--brand-text);letter-spacing:.04em;text-transform:uppercase}
+.step .n b{width:30px;height:30px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:14px;letter-spacing:0}
+.step h2{font-size:clamp(25px,3vw,34px);letter-spacing:-.04em;margin:14px 0 12px}
+.step h3{font-size:18px;letter-spacing:-.02em;margin:22px 0 8px;display:flex;align-items:center;gap:10px}
+.step h3 .pl{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none}
+.step h3 .pl svg{width:15px;height:15px}
+.step p{margin:0 0 12px;color:var(--muted)}
+.step p b,.step li b{color:var(--ink);font-weight:600}
+.step a{color:var(--brand-text)}
+ol.do{margin:0 0 14px;padding:0;counter-reset:d;list-style:none}
+ol.do li{counter-increment:d;position:relative;padding:8px 0 8px 42px;color:var(--muted)}
+ol.do li::before{content:counter(d);position:absolute;left:0;top:7px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:500 12.5px var(--mono);background:var(--surface);color:var(--ink)}
+code,.code{font-family:var(--mono);font-size:.84em;background:var(--sunk);padding:2px 7px;border-radius:7px;word-break:break-word;color:var(--ink)}
+.code{display:block;padding:13px 70px 13px 14px;border-radius:14px;margin:8px 0 14px;position:relative;line-height:1.6;border:1px solid var(--line);word-break:break-all}
+.code em{font-style:normal;color:var(--brand-text)}.code u{text-decoration:none;color:var(--amber-text)}
+.copy{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 10px;font:600 12px var(--f);cursor:pointer;color:var(--ink)}
+.tip,.warn{border-radius:16px;padding:13px 16px;margin:10px 0 14px;font-size:15px;display:flex;gap:12px;align-items:flex-start;color:var(--ink)}
+.tip{background:var(--brand-soft)}.warn{background:var(--amber-soft)}
+.tip::before,.warn::before{content:"";width:20px;height:20px;flex:none;margin-top:1px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.tip::before{color:var(--brand-text);--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E")}
+.warn::before{color:var(--amber-text);--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3 2 21h20L12 3zM12 10v5M12 18h.01'/%3E%3C/svg%3E")}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 14px}
+.fork div{border:1px solid var(--line);border-radius:18px;padding:15px 17px;background:var(--surface)}
+.fork div>b{display:block;margin-bottom:4px;color:var(--ink)}.fork small b{color:var(--ink)}.fork small{color:var(--muted);font-size:14px}
+.maptbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.maptbl th,.maptbl td{padding:10px 12px;border-top:1px solid var(--line);text-align:left}
+.maptbl th{font-weight:600;color:var(--muted);font-size:13px;background:var(--sunk);border-top:0}
+.maptbl td code{white-space:nowrap;font-size:.8em}
+.maptbl td:first-child{font-weight:600;color:var(--ink)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.opts3{display:flex;flex-direction:column;gap:10px;margin:8px 0 16px}
+.opts3 .o{border:1px solid var(--line);border-radius:20px;padding:15px 17px;background:var(--surface)}
+.opts3 .o.rec{border-color:color-mix(in srgb,#5b3df5 45%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 10%,transparent)}
+.opts3 b{display:block;color:var(--ink);font-size:16px}.opts3 small{display:block;color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:4px}.opts3 small b{display:inline;font-size:inherit}
+.tag2{display:inline-block;margin-bottom:6px;padding:3px 10px;border-radius:99px;background:var(--lilac);color:var(--brand-text);font-size:12px;font-weight:800}
+.walk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center;padding:24px 28px;margin:40px 0 0;border-radius:32px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.walk.novid{display:none}
+.walk h2{font-size:clamp(26px,3vw,36px);letter-spacing:-.04em;margin:10px 0 8px}
+.walk p{margin:0;color:var(--muted)}
+.walk .kick{font-size:13px}
+.wphone{position:relative;margin:0;width:220px;aspect-ratio:9/16;border-radius:34px;border:8px solid #141413;background:#0b0a12;overflow:hidden}
+.wphone video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media (max-width:900px){.walk{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;padding:22px}.wphone{width:min(240px,70vw)}}
+/* drawn screens */
+.screen{background:#fff;border-radius:30px;border:8px solid #15131F;box-shadow:var(--shadow);overflow:hidden;font:14px/1.4 system-ui,-apple-system,sans-serif;color:#10202f;position:sticky;top:20px;align-self:start}
+.screen .hd2{background:#f6f6f6;border-bottom:1px solid #e3e3e3;padding:12px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+.screen .hd2 i{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2aabee,#229ed9);flex:none;display:grid;place-items:center;color:#fff;font-style:normal;font-size:14px}
+.screen .hd2 small{display:block;font-weight:500;color:#8a8a8a;font-size:12px}
+.chat{background:#cfe3c4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='1.4' fill='%23b4cfa6'/%3E%3C/svg%3E");padding:14px 12px;display:flex;flex-direction:column;gap:8px;min-height:300px}
+.msg{max-width:84%;padding:8px 11px;border-radius:14px;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.08);opacity:0;transform:translateY(8px)}
+.msg.me{align-self:flex-end;background:#e2ffc7}
+.screen.play .msg{animation:in .4s forwards}
+.screen.play .msg:nth-child(2){animation-delay:.5s}.screen.play .msg:nth-child(3){animation-delay:1s}.screen.play .msg:nth-child(4){animation-delay:1.5s}.screen.play .msg:nth-child(5){animation-delay:2s}.screen.play .msg:nth-child(6){animation-delay:2.5s}.screen.play .msg:nth-child(7){animation-delay:3s}
+@keyframes in{to{opacity:1;transform:none}}
+.tok{font-family:var(--mono);font-size:11.5px;background:#fff5d6;padding:4px 6px;border-radius:6px;display:block;margin-top:5px;word-break:break-all;outline:2px dashed #e0a800}
+.ui{background:#f7f6f2;padding:16px;min-height:340px;display:flex;flex-direction:column;gap:10px;color:#141413;font-family:var(--f)}
+.ui .lbl{font-size:12px;font-weight:600;color:#a19f98}
+.ui .inp{background:#fff;border:1px solid #e9e7e1;border-radius:12px;padding:10px 12px;font-family:var(--mono);font-size:12px;color:#141413;height:auto}
+.ui .inp.hl{border-color:#5b3df5;box-shadow:0 0 0 4px #efebff}
+.ui .bt{background:#5b3df5;color:#fff;border-radius:12px;padding:11px;text-align:center;font-weight:600}
+.ui .bt.tg{background:#2aabee}
+.ui .ok{background:#e8f3ec;color:#2e7d57;border-radius:12px;padding:10px 12px;font-weight:600;font-size:13px}
+.ui .row{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:12px;padding:10px 12px;border:1px solid #e9e7e1}
+.ui .sw{width:34px;height:20px;border-radius:99px;background:#34c759;position:relative;flex:none}.ui .sw::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.ui .sw.off{background:#d6d6d6}.ui .sw.off::after{right:auto;left:2px}
+.ui .card2{background:#fff;border-radius:14px;padding:12px;border:1px solid #e9e7e1}
+.ui h4{margin:0;font-size:16px;letter-spacing:-.02em}
+.ui .tabs{display:flex;gap:6px}.ui .tabs span{padding:6px 10px;border-radius:99px;background:#fff;border:1px solid #e9e7e1;font-size:12px;font-weight:600;color:#67665f}.ui .tabs span.on{background:#141413;color:#fff;border-color:#141413}
+.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{box-shadow:0 0 0 8px rgba(106,75,255,.15)}}
+.meta-ui{background:#f0f2f5;padding:14px;min-height:340px;display:flex;flex-direction:column;gap:10px;color:#1c1e21}
+.meta-ui .side{display:flex;gap:6px;flex-wrap:wrap}.meta-ui .side span{background:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600}
+.meta-ui .side span.on{background:#e7f0fd;color:#0866ff}
+.meta-ui .box{background:#fff;border-radius:10px;padding:12px;font-size:13px}
+.meta-ui .bl{background:#0866ff;color:#fff;border-radius:8px;padding:8px 12px;font-weight:700;display:inline-block;font-size:13px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:2px 18px;margin-bottom:10px}
+.faq details[open]{border-color:color-mix(in srgb,var(--brand) 30%,var(--line))}
+.faq summary{cursor:pointer;font-weight:600;padding:14px 0;list-style:none;display:flex;justify-content:space-between;gap:10px;color:var(--ink)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:22px;line-height:1;color:var(--brand-text);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:0 0 14px;color:var(--muted)}
+.end{position:relative;overflow:hidden;isolation:isolate;background:#0b0a12;color:#fff;border-radius:var(--r4);padding:clamp(26px,4vw,40px);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-top:24px}
+.end::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(50% 120% at 90% 50%,rgba(91,61,245,.55),transparent 70%)}
+.end h2{font-size:clamp(26px,3vw,34px);margin:0;color:#fff}.end p{margin:6px 0 0;color:#BDBAD8}
+footer{padding:26px 0 40px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line)}
+footer .fl{display:flex;flex-wrap:wrap;gap:6px 16px}footer a{color:var(--muted);text-decoration:none}footer a:hover{color:var(--ink)}
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:0}
+  .toc{position:sticky;top:0;z-index:4;flex-direction:row;overflow-x:auto;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 20px;margin-inline:-20px;scrollbar-width:none;margin-bottom:24px;border-bottom:1px solid var(--line)}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;padding:7px 10px}.toc .bar{display:none}
+  .step{grid-template-columns:minmax(0,1fr);scroll-margin-top:64px}
+  .screen{position:relative;top:0;max-width:340px;margin:0 auto;width:100%}
+  .fork{grid-template-columns:1fr}
+  .top nav .hide-m{display:none}
+}
+@media (max-width:480px){.top .blogl{display:none}}
+@media (max-width:420px){.top .btn{padding:9px 13px;font-size:14px}.top .logo{font-size:19px}.top .mark{width:34px;height:34px}}
+</style>
+<header class="hd">
+  <div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <div class="top"><a class="logo" href="/"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a>
+      <nav><a data-i18n="1jdup01" class="btn sm login blogl" href="/blog">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="btn sm login" href="/login">Log in</a><a data-i18n="fr3k4j" class="btn sm violet" href="/signup">Start free</a></nav></div>
+    <section class="hero">
+      <div><span data-i18n="1vj8zki" class="eyebrow">Setup guide</span><h1 data-i18n="1hnu2bk">Set up Joinvoo in <span>10 minutes.</span></h1>
+        <p data-i18n="yufls9">Follow these steps once. After that, every person who joins from your ads shows up in your dashboard and is sent to Meta, TikTok or Snapchat automatically. Deposits too, if you want them.</p>
+        <span data-i18n-t="1f3lqay" class="timer"><i></i>About 10 minutes, start to finish</span></div>
+      <div class="need"><b data-i18n="f0u36j">Have these ready</b><ul>
+        <li><i>📱</i><span data-i18n="1k4igwi">Telegram on your phone</span></li>
+        <li><i>📣</i><span data-i18n="1sfsw9">Your channel, group or bot (you must be the owner or an admin)</span></li>
+        <li><i>📊</i><span data-i18n="1fjux1e">Access to Meta Events Manager, TikTok Ads Manager or Snapchat Ads Manager</span></li></ul></div>
+    </section>
+  </div>
+</header>
+<div class="wrap">
+  <section class="walk novid" id="walk" aria-label="Video walkthrough">
+    <div><span data-i18n="pd0tu4" class="kick">Video</span><h2 data-i18n="15u5v0k">Watch the 2-minute walkthrough.</h2><p data-i18n="1g9p6re">The whole setup on one screen: bot, channel, Meta, TikTok or Snapchat, tracking link, first test join. Then follow the steps below at your own pace.</p></div>
+    <figure class="wphone"><video id="walkVid" controls playsinline preload="none" data-poster="media/joinvoo-guide.jpg" src="media/joinvoo-guide.mp4" aria-label="Video: Joinvoo setup walkthrough"></video></figure>
+  </section>
+  <div class="layout">
+    <nav class="toc" id="toc" aria-label="Steps">
+      <div class="bar"><i id="prog"></i></div>
+      <a data-i18n="8q5jsd" href="#account"><span>1</span>Create your account</a>
+      <a data-i18n="r79icc" href="#bot"><span>2</span>Make a bot</a>
+      <a data-i18n="jdwocy" href="#token"><span>3</span>Paste the token</a>
+      <a data-i18n="82cynw" href="#connect"><span>4</span>Connect your channel</a>
+      <a data-i18n="khfraz" href="#pixel"><span>5</span>Connect your ad platforms</a>
+      <a data-i18n="10042yu" href="#ads"><span>6</span>Put the link in your ads</a>
+      <a data-i18n="1iq76n2" href="#test"><span>7</span>Test with your phone</a>
+      <a data-i18n="1qq9pz9" href="#ftd"><span>8</span>Track deposits and sales</a>
+      <a data-i18n="lyjcr6" href="#requests"><span>9</span>Join-request mode</a>
+      <a data-i18n="nle36i" href="#integrations"><span>10</span>Connect your program</a>
+      <a data-i18n="22z3li" href="#wallet"><span>11</span>Credits and ranks</a>
+      <a data-i18n="ivzbl4" href="#pro"><span>12</span>Pro and the deposit trial</a>
+      <a data-i18n="134eaa7" href="#spend"><span>13</span>Ad spend and ROAS</a>
+      <a data-i18n="oy2ber" href="#alerts"><span>14</span>Telegram alerts</a>
+      <a data-i18n="190lzmz" href="#joe"><span>15</span>Meet Joe</a>
+      <a data-i18n="vkgpsg" href="#backup"><span>16</span>Backup channel</a>
+      <a data-i18n="okq8do" href="#earn"><span>17</span>Earn with referrals</a>
+      <a data-i18n="j5w7hk" href="#fix"><span>?</span>Fix a problem</a>
+    </nav>
+
+    <div>
+      <section class="step" id="account">
+        <div><span data-i18n="51p9jq" class="n"><b>1</b>1 minute</span><h2 data-i18n="1ps7pir">Create your account</h2>
+          <p data-i18n="aaxton">Go to <a href="/signup"><b>Sign up</b></a> and enter your name, email and a password. If a friend sent you their referral link, their code is filled in for you. Already have an account? <a href="/login"><b>Log in</b></a>.</p>
+          <p data-i18n="1w6515s">You land in your dashboard straight away. A short setup guide opens by itself and follows the same steps as this page.</p>
+          <div data-i18n="f9q6pn" class="tip"><span>Confirm your email and your <b>first 500 tracked joins are free</b>. No top-up needed until you’ve used them.</span></div></div>
+        <div class="screen"><div class="ui"><h4 data-i18n="1ps7pir">Create your account</h4><span data-i18n="g3lfb1" class="lbl">Your name</span><div data-i18n="j6ttnn" class="inp">Alex Morgan</div><span data-i18n="inbfc7" class="lbl">Email</span><div data-i18n="8310dg" class="inp">you@company.com</div><span data-i18n="cf437c" class="lbl">Password</span><div class="inp">••••••••••</div><div data-i18n="mfp3qa" class="bt pulse">Create account</div></div></div>
+      </section>
+
+      <section class="step" id="bot">
+        <div><span data-i18n="y101gh" class="n"><b>2</b>2 minutes</span><h2 data-i18n="pvsh40">Make a bot with BotFather</h2>
+          <p data-i18n="o0a8it">Joinvoo uses <b>your own bot</b>. The bot creates a fresh invite link for every person who clicks your ad, so we know exactly which ad each person came from. BotFather is Telegram’s official tool for making bots, and it’s free.</p>
+          <ol class="do">
+            <li data-i18n="hxurc0">In Telegram, search for <b>@BotFather</b> (with the blue tick) and tap <b>Start</b>.</li>
+            <li data-i18n="10wq13i">Send <code>/newbot</code>.</li>
+            <li data-i18n="4tj923">Send a name for your bot, for example <b>Daily Deals Tracker</b>. Members never see it.</li>
+            <li data-i18n="1a6lzkv">Send a username that ends in <b>bot</b>, for example <code>dailydeals_track_bot</code>. If it’s taken, try another.</li>
+            <li data-i18n="1x8xysy">BotFather replies with a long <b>token</b> that looks like <code>7712045533:AAHk3v…</code>. Tap it to copy it.</li>
+          </ol>
+          <div data-i18n="zv4s95" class="warn"><span>Keep the token private. Anyone with it can control your bot. If it leaks, send <code>/revoke</code> to BotFather and paste the new one into Joinvoo.</span></div>
+          <div data-i18n="s3e1xq" class="tip"><span>Use a <b>new bot just for Joinvoo</b>. A bot can only send its messages to one place, so a bot that already runs something else (a shop bot, a support bot, another tracker) can stop working if you connect it. Tracking your bot’s subscribers is the exception; see step 4.</span></div></div>
+        <div class="screen" data-play><div class="hd2"><i>🤖</i><span data-i18n="r2e95e">BotFather<small>bot</small></span></div>
+          <div class="chat"><div data-i18n="1lpuved" class="msg me">/newbot</div><div data-i18n="153x8p7" class="msg">Alright, a new bot. How are we going to call it?</div><div data-i18n="1b5hiph" class="msg me">Daily Deals Tracker</div><div data-i18n="1xr28na" class="msg">Good. Now choose a username. It must end in “bot”.</div><div data-i18n="qdrb3r" class="msg me">dailydeals_track_bot</div><div data-i18n-t="1rm6owk" class="msg">Done! Use this token to access the HTTP API:<span class="tok">7712045533:AAHk3vZq9xR2mW8pL4tN6cY1bJ0sD5fG7hE</span></div></div></div>
+      </section>
+
+      <section class="step" id="token">
+        <div><span data-i18n="1xcsuir" class="n"><b>3</b>30 seconds</span><h2 data-i18n="10rjlmc">Paste the token into Joinvoo</h2>
+          <ol class="do">
+            <li data-i18n="3gsjyq">On a new account, setup opens by itself. Later you can start it from <b>Channels → Add another channel</b>.</li>
+            <li data-i18n="6dimly">Paste the token and tap <b>Connect bot</b>.</li>
+            <li data-i18n="11p7fpj">You’ll see <b>✓ @yourbot connected</b>. That’s it.</li>
+          </ol>
+          <p data-i18n="cxfdmr">If you see “Telegram rejected this token”, part of it was missed when copying. Copy it again from BotFather, or send <code>/token</code> to BotFather to see it again.</p></div>
+        <div class="screen"><div class="ui"><span data-i18n="jzg93g" class="lbl">STEP 1 OF 3</span><h4 data-i18n="uf71xx">Connect your bot</h4><span data-i18n="g567ci" class="lbl">Bot token from BotFather</span><div data-i18n="w2x2yq" class="inp hl">7712045533:AAHk3vZq9xR2mW8p…</div><div data-i18n="an5gzc" class="bt">Connect bot</div><div data-i18n="1b2zzgr" class="ok">✓ @dailydeals_track_bot connected</div></div></div>
+      </section>
+
+      <section class="step" id="connect">
+        <div><span data-i18n="1fw1wdx" class="n"><b>4</b>1 minute</span><h2 data-i18n="bqr9ce">Connect your channel, group or bot</h2>
+          <p data-i18n="1i5pmmf">Choose what people are joining:</p>
+          <div class="fork"><div data-i18n="1rmqs6o"><b>📣 Channel or group</b><small>People join your channel or group from your ad.</small></div><div data-i18n="7jckyh"><b>🤖 Bot subscribers</b><small>People press <b>Start</b> on your bot from your ad.</small></div></div>
+          <p data-i18n="1qym54b"><b>Channel or group:</b></p>
+          <ol class="do">
+            <li data-i18n="1j9pqsm">Tap <b>Add to my channel</b> (for a group, tap <b>It’s a group, not a channel</b>). Telegram opens.</li>
+            <li data-i18n="1cl9wu7">Pick your channel or group. Telegram asks to make the bot an admin. Keep <b>Invite users via link</b> switched on, then tap <b>Add bot</b> or <b>Save</b>.</li>
+            <li data-i18n="14ewxiw">Come back to Joinvoo. Your channel appears by itself within a few seconds with <b>Live</b> next to it.</li>
+          </ol>
+          <div data-i18n="ymg5lt" class="tip"><span>Use a <b>private</b> channel or group if you can. With a public one, people can join by searching your name instead of using your ad link, and those joins can’t be matched to an ad. They show as “Organic”.</span></div>
+          <p data-i18n="byflr6"><b>Bot subscribers:</b> pick the option that fits your bot.</p>
+          <div class="opts3">
+            <div data-i18n="1lzvsgd" class="o rec"><span class="tag2">Recommended · no code</span><b>A. A new bot for Joinvoo</b><small>Make a bot in @BotFather and paste its token. Joinvoo tracks every Start and can send your welcome message and button. Nothing else to set up.</small></div>
+            <div data-i18n="pv4sum" class="o"><b>B. Your bot already runs on a server</b><small>Connect the token, then open <b>My bot already runs on its own server</b> and add that server’s address and its secret token. Joinvoo passes every message on, so your bot keeps working. Not for bots that use “polling”.</small></div>
+            <div data-i18n="19xcwdr" class="o"><b>C. Keep your token private</b><small>Don’t share the token at all. Your bot, your developer or your bot builder sends one ping to Joinvoo each time someone presses Start. The hook URL is in your dashboard: <b>Channels → the bot → Show code</b>.</small></div>
+          </div>
+          <p data-i18n="10g6er2">For channels and groups, your bot stays in the channel as an admin. Members don’t get messages from it.</p></div>
+        <div class="screen"><div class="hd2"><i>📣</i><span data-i18n="1044k96">Admin rights<small>@dailydeals_track_bot</small></span></div>
+          <div class="ui" style="background:#fff;min-height:300px"><div data-i18n="ve0fba" class="row"><span>Manage channel</span><span class="sw"></span></div><div data-i18n="1fzieos" class="row" style="outline:2px solid #5b3df5"><span><b>Invite users via link</b></span><span class="sw"></span></div><div data-i18n="cr65dl" class="row"><span>Post messages</span><span class="sw off"></span></div><div data-i18n="1huu5ns" class="row"><span>Delete messages</span><span class="sw off"></span></div><div data-i18n="vjcqbl" class="bt tg">Add bot</div></div></div>
+      </section>
+
+      <section class="step" id="pixel">
+        <div><span data-i18n="1jls6m5" class="n"><b>5</b>3 minutes</span><h2 data-i18n="py6lk1">Connect Meta, TikTok or Snapchat</h2>
+          <p data-i18n="1a73puw">This is what lets your ad platforms see your real joins, so they can find more people like them. Connect one, two or all three. Each join is then sent to every platform you connect.</p>
+          <h3 data-i18n-t="fzjz1s"><span class="pl" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg></span>Meta (Facebook and Instagram)</h3>
+          <p data-i18n="qy9ddg">You need two things from <b>Events Manager</b>:</p>
+          <ol class="do">
+            <li data-i18n="19bzfc1">Open <b>Events Manager</b> and choose your <b>dataset (pixel)</b> on the left. If you don’t have one, tap <b>Connect data</b> → <b>Web</b> to create it.</li>
+            <li data-i18n="pamvpr">Copy the <b>Dataset ID</b> (also called Pixel ID). It’s a long number like <code>884210395527140</code>.</li>
+            <li data-i18n="1l4ffqj">Open the <b>Settings</b> tab, scroll to <b>Conversions API</b>, and tap <b>Generate access token</b>. Copy the long token.</li>
+            <li data-i18n="6lt1c0">In Joinvoo, paste both and tap <b>Save and send a test</b>.</li>
+          </ol>
+          <div data-i18n="4mgvag" class="tip"><span>To watch the test arrive, open the <b>Test events</b> tab in Events Manager, copy the code shown there (like <code>TEST12345</code>), and paste it into Joinvoo’s <b>Test code</b> box before sending. <b>Clear the test code when you go live</b>, or real joins only show up in the test tab.</span></div>
+          <h3 data-i18n-t="1jo11wz"><span class="pl" style="background:#0B0B12"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></svg></span>TikTok</h3>
+          <p data-i18n="e2k38a">In TikTok Ads Manager go to <b>Tools → Events → Web events</b>, open your pixel, copy the <b>Pixel code</b> (letters and numbers, like <code>CABC123DEF456GHI</code>), then in its <b>Settings</b> tap <b>Generate access token</b>. Paste both into Joinvoo’s TikTok tab and send a test.</p>
+          <h3 data-i18n-t="9g3u43"><span class="pl" style="background:#FFFC00"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.6"/></svg></span>Snapchat</h3>
+          <ol class="do">
+            <li data-i18n="ucd3jl">In <b>Snapchat Ads Manager</b>, open <b>Events Manager</b> and select your <b>Snap Pixel</b> (create one if you don’t have it). Copy the <b>Pixel ID</b>. It looks like <code>a1b2c3d4-5678-90ab-cdef-1234567890ab</code>.</li>
+            <li data-i18n="171tqnv">Generate a <b>Conversions API token</b>. You’ll find it in <b>Business settings</b> or in the pixel’s setup in <b>Events Manager</b>. Copy it.</li>
+            <li data-i18n="102gt98">Paste both into Joinvoo’s <b>Snapchat</b> tab and tap <b>Send test</b>. The test goes to Snapchat’s validation endpoint, so it checks your ID and token without adding a real event.</li>
+          </ol>
+          <p data-i18n="9gwkmc" style="font-size:14px">Meta, TikTok and Snapchat rename menus now and then. If a name looks different, look for the same words nearby.</p></div>
+        <div class="screen"><div class="ui"><h4 data-i18n="19nj3dc">Ad platforms</h4><div data-i18n="1artucd" class="tabs"><span>Meta</span><span>TikTok</span><span class="on">Snapchat</span></div>
+          <span data-i18n="dpvgsa" class="lbl">Snap Pixel ID</span><div data-i18n="60fllw" class="inp hl">a1b2c3d4-5678-90ab-cdef-12345…</div>
+          <span data-i18n="xgcair" class="lbl">Conversions API token</span><div class="inp">••••••••••••••••••••••</div>
+          <span data-i18n="s27yvd" class="lbl">Join event</span><div data-i18n="zoyqhv" class="inp">SUBSCRIBE</div>
+          <div data-i18n="1v9gm2j" class="bt">Save and send test</div><div data-i18n="12oo2nq" class="ok">✓ Snapchat accepted the test event</div></div></div>
+      </section>
+
+      <section class="step" id="ads">
+        <div><span data-i18n="1cxf8t9" class="n"><b>6</b>2 minutes</span><h2 data-i18n="1rfnxra">Put your tracking link in your ads</h2>
+          <p data-i18n="1vybj2l">On the Channels page, copy your <b>tracking link</b>. It looks like <code>https://joinvoo.com/c/ab12c</code>. Use it everywhere your ad would normally use your Telegram link.</p>
+          <h3 data-i18n-t="yauh2a"><span class="pl" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg></span>In Meta Ads Manager</h3>
+          <ol class="do">
+            <li data-i18n="1m1c1ou">Create a campaign with the <b>Leads</b> or <b>Sales</b> objective and choose <b>Website</b> as the conversion location.</li>
+            <li data-i18n="1tv21rg">At the ad set, pick your dataset (pixel) and the conversion event <b>Subscribe</b>. That’s what Joinvoo sends by default; you can change it to Lead or CompleteRegistration on the Channels page.</li>
+            <li data-i18n="v6x6ft">At the ad, paste your tracking link as the <b>Website URL</b>.</li>
+            <li data-i18n="1xul7gi">Under <b>URL parameters</b>, paste this. Each person’s page then shows which campaign and ad brought them:</li>
+          </ol>
+          <div class="code" id="utm">utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}<button class="copy" data-copy="utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}">Copy</button></div>
+          <h3 data-i18n-t="i28d3p"><span class="pl" style="background:#0B0B12"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></svg></span>In TikTok Ads Manager</h3>
+          <p data-i18n="1827yqv">Choose a <b>Website conversions</b> objective, pick your pixel and the <b>Subscribe</b> event, and paste the tracking link as the <b>Destination URL</b>.</p>
+          <h3 data-i18n-t="10o8k5x"><span class="pl" style="background:#FFFC00"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.6"/></svg></span>In Snapchat Ads Manager</h3>
+          <p data-i18n="1p6yzli">Choose a <b>Website conversions</b> goal, pick your Snap Pixel and the <b>Subscribe</b> event, and paste the tracking link as the ad’s <b>Web URL</b> (the website attachment).</p>
+          <div data-i18n="f04yui" class="tip"><span>If an ad platform’s review is strict with your ads, set <b>When someone taps your ad</b> to <b>Join page</b> on the Channels page. Visitors then see a clean page with a Join button instead of being sent straight to Telegram.</span></div>
+          <div data-i18n="d42u8c" class="warn"><span>Don’t share the tracking link inside Telegram itself, and don’t replace it with your channel’s normal invite link. Only clicks that go through the tracking link can be matched to an ad.</span></div></div>
+        <div class="screen"><div class="meta-ui"><b data-i18n="59t4ct" style="font-size:15px">Ad · Destination</b>
+          <div class="box"><small data-i18n="1gz3d3j" style="color:#65676b">Website URL</small><div data-i18n="1szhuht" style="font-family:var(--mono);font-size:12px;border:2px solid #0866ff;border-radius:8px;padding:8px;margin-top:4px">https://joinvoo.com/c/ab12c</div></div>
+          <div class="box"><small data-i18n="109e89m" style="color:#65676b">URL parameters</small><div style="font-family:var(--mono);font-size:11px;margin-top:4px;word-break:break-all">utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}</div></div>
+          <div class="box"><small data-i18n="33xqkd" style="color:#65676b">Conversion event</small><div data-i18n="45v37" style="font-weight:700">Subscribe</div></div></div></div>
+      </section>
+
+      <section class="step" id="test">
+        <div><span data-i18n="rfa70c" class="n"><b>7</b>1 minute</span><h2 data-i18n="1ifljz5">Test it with your phone</h2>
+          <p data-i18n="10dv4gb">Do this once before you spend money. It proves every part works.</p>
+          <ol class="do">
+            <li data-i18n="uhlkgy">Send yourself the tracking link by email or chat, and open it on your phone. Use a Telegram account that <b>isn’t already in the channel</b>, or leave the channel first.</li>
+            <li data-i18n="1yx6xqt">Telegram opens. Tap <b>Join</b> (or <b>Start</b> for a bot).</li>
+            <li data-i18n="9709hq">Within a few seconds the join appears on your dashboard’s <b>Home</b> and <b>People</b> pages, marked <b>From ad</b>.</li>
+            <li data-i18n="gvn1gi">A <b>Meta ✓</b>, <b>TikTok ✓</b> or <b>Snapchat ✓</b> tag means the platform received it.</li>
+          </ol>
+          <p data-i18n="1jryrry">Seeing it on Joinvoo but the platform says <b>failed</b>? Tap the person to see the platform’s reason. It’s almost always the access token: generate a new one and paste it again.</p></div>
+        <div class="screen"><div class="ui"><span data-i18n="130cqjz" class="lbl">JUST NOW</span><div class="card2"><div data-i18n="mthroa" style="display:flex;justify-content:space-between"><b>Lena K.</b><span style="background:#efebff;color:#5636F0;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:600">From ad</span></div><small data-i18n="1ocuvut" style="color:#a19f98">Joined Daily Deals Club · 14 seconds after clicking</small></div>
+          <div data-i18n="e22ygx" class="ok">Meta ✓</div><div data-i18n="165rl8u" class="ok">TikTok ✓</div><div data-i18n="1vsar9q" class="ok">Snapchat ✓</div><div class="card2"><small data-i18n="18w9nmb" style="color:#a19f98">Campaign</small><div data-i18n="gwkspd"><b>Spring-Broad-Oct</b></div><small data-i18n="jnj6go" style="color:#a19f98">Ad</small><div data-i18n="vm8e76"><b>Video 3 · Hook B</b></div></div></div></div>
+      </section>
+
+      <section class="step" id="ftd">
+        <div><span data-i18n="1l7fqfr" class="n"><b>8</b>Optional · 5 minutes</span><h2 data-i18n="1ygiqq">Track deposits and sales</h2>
+          <div data-i18n="fz5abo" class="tip"><span>Deposit tracking is part of <b>Pro</b>. Every account gets a free trial: 7 days or 20 FTDs, whichever comes first (see step 12).</span></div>
+          <p data-i18n="17r1vpu">If your channel or bot sends people to a broker, casino, shop or app, you can send their <b>sign-ups, first deposits, repeat deposits and sales</b> back to your ad platforms too. Your ads then learn to find <b>depositors</b>, not just joiners. These events cost nothing extra.</p>
+          <ol class="do">
+            <li data-i18n="1dem0ja">In your dashboard, open <b>Conversions</b> and copy your <b>postback URL</b>. It’s unique to your account and looks like this:</li>
+          </ol>
+          <div class="code">https://joinvoo.com/pb/&lt;your-key&gt;?<em>sub1</em>=<u>{telegram_id}</u>&amp;<em>status</em>=<u>ftd</u>&amp;<em>payout</em>=<u>{payout}</u>&amp;<em>currency</em>=<u>USD</u>&amp;<em>txid</em>=<u>{transaction_id}</u></div>
+          <ol class="do" start="2" style="counter-reset:d 1">
+            <li data-i18n="14eeg40"><b>Pass the Telegram ID to your offer.</b> Your bot knows the Telegram ID of everyone who presses Start. Add it to the offer link the bot sends as <code>sub1</code>, for example <code>https://offer.example.com/?sub1=7012345678</code>. Most networks and trackers call this a sub ID or click ID.</li>
+            <li data-i18n="bcwf53"><b>Paste the postback URL</b> into your affiliate network, Keitaro, Binom, CRM or broker as the postback for registrations and deposits. Swap the placeholders for that tool’s own macros: its sub1 macro for <code>{telegram_id}</code>, its payout or amount macro for <code>{payout}</code>, and its transaction ID macro for <code>{transaction_id}</code>.</li>
+            <li data-i18n="cjz92k">Set <code>status</code> to the event: <code>lead</code>, <code>reg</code> (sign-up), <code>ftd</code> (first deposit), <code>dep</code> (repeat deposit), <code>sale</code> (course, VIP, subscription), <code>qualified</code> (CPA qualified) or <code>rejected</code> (chargeback or reversal: removes the revenue and sends nothing to ad platforms). Later deposits from the same person are recorded as repeat deposits automatically.</li>
+          </ol>
+          <p data-i18n="bmw2s2"><b>Example for Keitaro</b> (S2S postback):</p>
+          <div class="code">https://joinvoo.com/pb/&lt;your-key&gt;?<em>sub1</em>=<u>{sub_id_1}</u>&amp;<em>status</em>=<u>{status}</u>&amp;<em>payout</em>=<u>{revenue}</u>&amp;<em>txid</em>=<u>{tid}</u></div>
+          <p data-i18n="1ofklkr" style="font-size:14px">Macro names differ between tools; check your network’s postback help page. Joinvoo also accepts <code>subid</code>, <code>aff_sub</code> or <code>tg_id</code> for the Telegram ID; <code>event</code> or <code>goal</code> for the status; <code>value</code> or <code>amount</code> for the payout.</p>
+          <p data-i18n="1o7qsh3"><b>What gets sent:</b></p>
+          <div class="tblwrap"><table class="maptbl"><thead><tr><th data-i18n="ye3aoi">Platform</th><th data-i18n="10ih3fc">Registration</th><th data-i18n="4kq393">First deposit</th></tr></thead><tbody>
+            <tr><td data-i18n="1sm1htk">Meta</td><td data-i18n="19jkzkc"><code>CompleteRegistration</code></td><td data-i18n="1ixjhp7"><code>Purchase</code> + value</td></tr>
+            <tr><td data-i18n="1jo11wz">TikTok</td><td data-i18n="19jkzkc"><code>CompleteRegistration</code></td><td data-i18n="zjwz17"><code>CompletePayment</code> + value</td></tr>
+            <tr><td data-i18n="9g3u43">Snapchat</td><td data-i18n="11g8of"><code>SIGN_UP</code></td><td data-i18n="1b8ojsr"><code>PURCHASE</code> + value</td></tr>
+          </tbody></table></div>
+          <div data-i18n="ht7x62" class="tip"><span>No postback? Open a person’s profile in <b>People</b> and tap <b>Mark as deposited</b>. Joinvoo sends the deposit to your ad platforms just the same.</span></div>
+          <p data-i18n="m7x7vn">To optimise for depositors, pick <b>Purchase</b> (Meta), <b>CompletePayment</b> (TikTok) or <b>PURCHASE</b> (Snapchat) as the conversion event in your ad set once deposits start coming in.</p></div>
+        <div class="screen"><div class="ui"><h4 data-i18n="1mk3ftu">Conversions</h4><span data-i18n="cy2f6" class="lbl">Your postback URL</span><div data-i18n="qtasmt" class="inp hl" style="word-break:break-all">joinvoo.com/pb/k3y…?sub1={telegram_id}&amp;status=ftd&amp;payout={payout}</div>
+          <span data-i18n="8sub9i" class="lbl">LATEST</span>
+          <div class="card2"><div data-i18n="pmqbgm" style="display:flex;justify-content:space-between;align-items:center"><b>Lucas M. · First deposit</b><b style="color:#2e7d57">$120</b></div><small data-i18n="1k7x756" style="color:#a19f98">via postback · matched to Video 3 · Hook B</small></div>
+          <div data-i18n="1l2gusx" class="ok">Meta · Purchase ✓</div><div data-i18n="1ij36f4" class="ok">TikTok · CompletePayment ✓</div><div data-i18n="78xwtw" class="ok">Snapchat · PURCHASE ✓</div></div></div>
+      </section>
+
+      <section class="step full" id="requests">
+        <div><span data-i18n="5sh7xc" class="n"><b>9</b>For channels · 2 minutes</span><h2 data-i18n="xmposh">Join-request mode: deposits from channels</h2>
+          <p data-i18n="vv0hct">In a normal channel, Joinvoo knows who joined but can’t give your affiliate program a way to recognise that person. <b>Join-request mode</b> fixes that, so deposits from channel members can be matched too.</p>
+          <ol class="do">
+            <li data-i18n="1n1127k">In <b>Channels</b>, open your channel and switch <b>Join mode</b> to <b>Join requests</b>. Your bot needs the <b>Invite users via link</b> admin right (it already has it).</li>
+            <li data-i18n="1tzrad7">Write a short <b>welcome message</b>, a button label and your <b>offer link</b>. Put <code>{tg_id}</code> where your program expects the sub ID, for example <code>https://partner.example.com/?sub1={tg_id}</code>.</li>
+            <li data-i18n="ksv4mx">That’s it. Each click gets its own join-request link. When someone taps <b>Request to join</b>, the bot <b>approves them instantly</b>, records the join against the click, and sends them your welcome message with <b>their personal link</b>.</li>
+            <li data-i18n="i3ws7e">When they register or deposit through that link, your program sends the postback with their Telegram ID, and Joinvoo sends <b>Purchase</b> (Meta), <b>CompletePayment</b> (TikTok) or <b>PURCHASE</b> (Snapchat) with the value.</li>
+          </ol>
+          <div data-i18n="1tm3mln" class="tip"><span>People don’t wait: approval happens in about a second. The welcome message is sent once, by your own bot, so it comes from your brand.</span></div></div>
+      </section>
+
+      <section class="step full" id="integrations">
+        <div><span data-i18n="17d3qeq" class="n"><b>10</b>Optional · 3 minutes</span><h2 data-i18n="1cm2yhf">Connect your affiliate program</h2>
+          <p data-i18n="c9mvr3">Open <b>Integrations</b> in your dashboard. Pick your program (for example 1win Partners, Kingfin, Affstore, Pocket Option, Olymp Trade, Binomo, Quotex, Exness, 1xBet, Melbet) or your tracker (Keitaro, Binom). Each one shows a ready-made postback URL with the right macros already filled in, plus the steps for that program.</p>
+          <ol class="do">
+            <li data-i18n="3kv28f">Tap your program and <b>Copy postback</b>.</li>
+            <li data-i18n="8tr6qj">Paste it in the program’s postback or S2S settings for registrations and deposits.</li>
+            <li data-i18n="1dn7hv1">Make sure your offer link passes the Telegram ID as the program’s sub ID (join-request mode or your bot does this for you).</li>
+            <li data-i18n="5urd0k">Tap <b>Mark as connected</b>. The card shows the last event received, so you can see it working.</li>
+          </ol>
+          <p data-i18n="1kbauxg" style="font-size:14px">Program not listed? Use <b>Custom postback</b>: any network or CRM that can call a URL works.</p></div>
+      </section>
+
+      <section class="step full" id="wallet">
+        <div><span data-i18n="1ytwly1" class="n"><b>11</b>Good to know</span><h2 data-i18n="1i0b2ci">Credits, bonuses and ranks</h2>
+          <p data-i18n="panl63">Joinvoo is prepaid with <b>Joinvoo Credits</b>. <b>1 credit = $0.01.</b> You buy credits and tracking uses them, so there are no surprise bills.</p>
+          <div class="fork"><div data-i18n="1k6mpr7"><b>Basic: 3,000 credits a month</b><small>That’s $30. Starts once your 500 free joins are used, charged on the first ad click of each month. Includes <b>2,000 tracked joins</b>. Pro is 9,900 credits ($99) with 5,000 joins.</small></div><div data-i18n="785pl5"><b>2 credits per extra join</b><small>Only for joins that came from your ads. Organic joins are free and still counted.</small></div></div>
+          <p data-i18n="145izjd"><b>Buy credits</b> from Billing (or tap your balance at the top of the dashboard) with card, bank transfer or mobile money, or with crypto. Card payments show up straight away; crypto and bank transfers appear once confirmed.</p>
+          <p data-i18n="1d2r7pv"><b>Bonus credits:</b> bigger single purchases get extra credits, for example +5% from $100, +10% from $500, +15% from $1,000 and +20% from $5,000 (current offer; the live tiers are shown on the Buy credits page). Promo codes can add more.</p>
+          <p data-i18n="1p9wyr1"><b>Ranks:</b> Bronze, Silver, Gold, Platinum and Diamond, based on what you’ve paid in total. Higher ranks unlock perks such as a discount on tracked joins. Your rank and what you need for the next one are on the Billing page.</p>
+          <div data-i18n="8prmt2" class="warn"><span>Credits are for tracking. They can’t be withdrawn or refunded (see the <a href="/refunds">Refund Policy</a>). Only <b>referral earnings</b> can be withdrawn. If your credits run out, <b>your ads keep working</b>: people still get into your channel, but tracking pauses until you buy more.</span></div></div>
+      </section>
+
+      <section class="step full" id="pro">
+        <div><span data-i18n="1lwx70o" class="n"><b>12</b>Good to know</span><h2 data-i18n="1e3l1fg">Basic, Pro and the deposit trial</h2>
+          <div class="fork"><div data-i18n="9n6av3"><b>Basic · $30 a month</b><small>3,000 credits a month with <b>2,000 tracked joins</b>. Join tracking for channels, groups and bots, sent to Meta, TikTok and Snapchat. Smart links, fake-join filter, alerts and live support.</small></div><div data-i18n="16ltd6x"><b>Pro · $99 a month</b><small>9,900 credits a month with <b>5,000 tracked joins</b>. Everything in Basic plus deposit (FTD), sale and lead tracking, ROAS and cost per FTD dashboards, affiliate integrations and Joe’s insights.</small></div></div>
+          <p data-i18n="rh81m8"><b>Free deposit trial.</b> Every account can try deposit tracking for <b>7 days or 20 FTDs</b>, whichever comes first. The clock starts at your first tracked deposit. One trial per account and per ad account.</p>
+          <p data-i18n="1y6yv39"><b>After the trial on Basic</b>, Joinvoo still matches deposits and still sends them to Meta, TikTok and Snapchat, so <b>your ads keep learning</b>. You just can’t see which ads drove them until you upgrade. Your dashboard shows how many deposits were tracked.</p>
+          <ol class="do"><li data-i18n="6ljcb7">Open <b>Billing → Plan</b> and tap <b>Upgrade to Pro</b>. You pay the difference for the rest of the month in credits.</li><li data-i18n="ioya4k">Downgrading to Basic takes effect at the end of the month.</li></ol></div>
+      </section>
+
+      <section class="step full" id="spend">
+        <div><span data-i18n="1hjxwtk" class="n"><b>13</b>Optional · Pro</span><h2 data-i18n="p5vh2s">Ad spend, cost per FTD and ROAS</h2>
+          <p data-i18n="frq8hh">Add what you spent and Joinvoo shows the numbers media buyers actually manage: <b>cost per join</b>, <b>cost per FTD</b> and <b>ROAS</b> (revenue ÷ spend), by campaign and platform.</p>
+          <ol class="do">
+            <li data-i18n="x87d87">Open <b>Ad spend</b> and add a row: date, platform, campaign name and amount. Use the same campaign names as your UTM tags.</li>
+            <li data-i18n="1i1xwpr">Or import a CSV with <code>date,platform,campaign,amount</code>, exported from your ads manager.</li>
+            <li data-i18n="u5fdj6">Open <b>Breakdowns</b> by campaign or platform to see spend next to joins, FTDs and revenue.</li>
+          </ol>
+          <div data-i18n="g09hfb" class="tip"><span>Suspicious clicks (bots, data-centre traffic, repeat clicks) are flagged automatically. Fake joins (join bursts, deleted accounts, people re-joining) are recorded but never sent to your ad platforms, so your ads learn only from real people.</span></div></div>
+      </section>
+
+      <section class="step full" id="alerts">
+        <div><span data-i18n="d9ecfw" class="n"><b>14</b>Optional · 30 seconds</span><h2 data-i18n="153no95">Telegram alerts and daily report</h2>
+          <p data-i18n="7mzgh1">Get Joinvoo in your Telegram: a <b>daily report</b> (yesterday’s clicks, joins, FTDs, revenue, spend and cost per FTD), and alerts when something needs you: a pixel token stops working, invite links run low, or tracking pauses. You can also turn on a ping for every new FTD.</p>
+          <ol class="do"><li data-i18n="9libh6">Open <b>Settings → Alerts</b> and tap <b>Connect Telegram</b>.</li><li data-i18n="16ybqcq">Telegram opens our alert bot. Tap <b>Start</b>. Done.</li><li data-i18n="1aoi1kz">Pick which alerts you want.</li></ol></div>
+      </section>
+
+      <section class="step full" id="joe">
+        <div><span data-i18n="nt9683" class="n"><b>15</b>Built in</span><h2 data-i18n="1bhbqzm">Meet Joe, your media-buying copilot</h2>
+          <p data-i18n="r2lbs6">Joe lives in your dashboard. He watches your numbers and shows short insights on the overview: tracking is healthy, a channel went quiet, cost per FTD moved, your best and worst campaign, credits running low, fake joins filtered.</p>
+          <p data-i18n="1j8e0a8">Tap Joe to <b>ask a question</b> in plain words, for example “Which campaign is best this week?” or “Why did joins drop today?”. He answers from <b>your own data only</b> and never makes numbers up: if something isn’t tracked yet, he tells you.</p>
+          <div data-i18n="qumqts" class="tip"><span>Joe’s deeper insights (cost per FTD, ROAS, best campaigns by deposits) come with <b>Pro</b> or during your deposit trial.</span></div></div>
+      </section>
+
+      <section class="step full" id="backup">
+        <div><span data-i18n="oq07gv" class="n"><b>16</b>Smart links · 1 minute</span><h2 data-i18n="o0gca2">Channel banned? Use a backup channel</h2>
+          <p data-i18n="514u51">If a channel gets banned or restricted, you don’t need to edit or re-submit a single ad. Point its tracking link at another channel you own and every ad keeps sending people there.</p>
+          <ol class="do"><li data-i18n="1jd9m0i">Connect your backup channel first (step 4), with the same bot or another one.</li><li data-i18n="1u2lr9s">Open the old channel in <b>Channels</b> and set <b>Send visitors to</b> → your backup channel.</li><li data-i18n="1rkgc4r">Done. New clicks get invite links for the backup channel, joins are counted there, and its pixel settings are used.</li></ol>
+          <div data-i18n="g5h70a" class="tip"><span>Keep a backup channel ready before you scale. Switching takes one tap and no new ad review.</span></div></div>
+      </section>
+
+      <section class="step full" id="earn">
+        <div><span data-i18n="11afbq2" class="n"><b>17</b>Optional</span><h2 data-i18n="ud5rr">Earn with referrals</h2>
+          <p data-i18n="1rowy5g">Share your link from the <b>Earn</b> tab. When people you invite pay for credits, you get a share of their paid spend, for as long as they use Joinvoo.</p>
+          <div class="fork"><div data-i18n="xpqqrx"><b>10% → 20% → 30%</b><small>10% to start, 20% once 3 people you invited are paying, 30% at 10.</small></div><div data-i18n="xhb6ae"><b>Spend it or cash out</b><small>Move your earnings into your account as credits any time, or withdraw in USDT (TRC20) or BTC once you have $300. Referral earnings are the only balance that can be withdrawn.</small></div></div></div>
+      </section>
+
+      <section class="step full" id="fix">
+        <div><span data-i18n="20dc4x" class="n"><b>?</b>Troubleshooting</span><h2 data-i18n="q4dk1c">Fix a problem</h2>
+          <div class="faq">
+            <details><summary data-i18n="bpl09w">My channel didn’t appear after I added the bot</summary><p data-i18n="op5mxm">Make sure you added the bot as an <b>admin</b>, not just a member, and that <b>Invite users via link</b> is on. Then run setup again from the Help tab, and on the channel step tap <b>The bot was already an admin?</b>. Pick your bot and type your channel’s @username (or its ID for a private channel).</p></details>
+            <details><summary data-i18n="13mvolg">The channel says “Needs permission”</summary><p data-i18n="1ai1929">Someone removed the bot’s admin rights or switched off <b>Invite users via link</b>. In Telegram: open your channel → Administrators → your bot → switch it back on. Joinvoo picks it up by itself.</p></details>
+            <details><summary data-i18n="1b9dz9l">Most of my joins show as “Organic”</summary><p data-i18n="8nzot9">Those people joined without going through your tracking link: from search (public channels), a link someone shared, or an old invite link in your ad. Check that every ad uses the Joinvoo tracking link, and make the channel private if you can.</p></details>
+            <details><summary data-i18n="1423tps">My ad platform shows fewer events than Joinvoo</summary><p data-i18n="18oapfh">That’s normal. Meta, TikTok and Snapchat only count events they can match to one of their users, and they remove duplicates. Events can also take up to 20 minutes to appear. If a join shows <b>failed</b>, tap it to see the platform’s reason.</p></details>
+            <details><summary data-i18n="pztgev">“Invalid OAuth access token” or “token expired”</summary><p data-i18n="130k9j8">Generate a new access token in your ad platform (for Meta: Events Manager → Settings → Conversions API) and paste it on the Channels page. Joins that failed are retried for a while, so recent ones still get sent.</p></details>
+            <details><summary data-i18n="1588ae0">A deposit postback isn’t matched</summary><p data-i18n="1nju7m8">Joinvoo needs the person’s Telegram ID in <code>sub1</code> (or <code>subid</code>, <code>aff_sub</code>, <code>tg_id</code>). Check that your bot adds it to the offer link and that your network sends it back in the postback. Placeholders that weren’t filled in, like <code>{sub1}</code>, are ignored.</p></details>
+            <details><summary data-i18n="zhfx6f">My bot stopped doing its other job</summary><p data-i18n="13r131i">A bot can send its messages to one place only. If it was used for something else, either make a new bot for Joinvoo, or (for bot-subscriber tracking) paste your bot’s server address under <b>My bot already runs on its own server</b> so Joinvoo passes everything on.</p></details>
+            <details><summary data-i18n="76bf5k">“Invite links ready” is running low</summary><p data-i18n="188795a">Telegram limits how fast one bot can make links. For big campaigns, add a second or third bot to the same channel (make each one admin). Joinvoo uses all of them. If links ever run out, visitors still get in through a backup link; only those joins aren’t matched.</p></details>
+            <details><summary data-i18n="1r0bxce">Tracking is paused</summary><p data-i18n="b1i57f">Your credits ran out, or the month’s plan (3,000 credits) couldn’t be charged. Buy credits from Billing and tracking starts again straight away. Your links kept working the whole time.</p></details>
+            <details><summary data-i18n="1512x44">Is this allowed by Telegram?</summary><p data-i18n="6pweyp">Yes. Joinvoo only uses Telegram’s official Bot API, the same invite-link features any admin can use. Your bot never posts in your channel.</p></details>
+            <details><summary data-i18n="wu8z12">What do you store about the people who join?</summary><p data-i18n="1ld3raa">Their Telegram ID, name, username and language, plus the ad click details (time, campaign, browser and IP). Ad platforms receive a scrambled (hashed) Telegram ID, never the raw one. See our <a href="/privacy">privacy policy</a>.</p></details>
+          </div>
+          <div class="end"><div><h2 data-i18n="1q81mgj">Ready to stop guessing?</h2><p data-i18n="143vxpy">Your first 500 joins are free. Setup takes about 10 minutes.</p></div><a data-i18n="fr3k4j" class="btn lg" href="/signup" style="background:#fff;color:#141413;border-color:#fff">Start free</a></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <footer><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="1en182r" class="fl"><a href="/">Home</a><a href="/blog">Blog</a><a href="/login">Log in</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a><a href="/acceptable-use">Acceptable use</a><a href="/cookies">Cookies</a><a href="/referral-terms">Referral terms</a></span><div class="vfoot"><style>
+.vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
+.vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
+.vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
+.vfoot .vpart svg{width:18px;height:18px;flex:none}
+.vfoot .vmore{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px}.vfoot .vmore>span{margin-right:2px}
+.vfoot .vmore i{font-style:normal;opacity:.5}
+@media (max-width:560px){.vfoot{flex-direction:column;align-items:flex-start;gap:8px}.vfoot .vmore{gap:4px 9px}.vfoot .vmore>span{flex-basis:100%}}
+</style><a class="vpart" href="https://voosquare.com" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="t3vct1">Part of <b>VooSquare</b></span></a><span class="vmore"><span data-i18n="1qnawoj">More from Zedapex:</span><a data-i18n="ymx3wx" href="https://replyvoo.com" target="_blank" rel="noopener">Replyvoo</a><i>·</i><a data-i18n="ie6sla" href="https://castvoo.com" target="_blank" rel="noopener">Castvoo</a><i>·</i><a data-i18n="1r6o4vk" href="https://advoo.com" target="_blank" rel="noopener">Advoo</a><i>·</i><a data-i18n="1hbw4co" href="https://affleego.com" target="_blank" rel="noopener">Affleego</a></span></div>
+</footer>
+</div>
+<!-- Joinvoo website support widget (homepage + guide). Self-contained: styles, markup, script.
+     Talks to /api/support (GET history, POST message) and /api/config (team, reply time, hours, feature switches).
+     Falls back to a demo conversation when the API isn't there (static demo). Classes are prefixed sp- to avoid clashes. -->
+<style>
+.sp-launch{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:58;display:flex;align-items:center;gap:10px;height:58px;padding:0 20px 0 9px;border-radius:99px;border:0;cursor:pointer;background:#5b3df5;color:#fff;font:800 15px var(--f);box-shadow:0 18px 40px -12px rgba(91,61,245,.85),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s cubic-bezier(.2,.8,.2,1),bottom .45s cubic-bezier(.2,.8,.2,1),padding .3s,width .3s}
+.sp-launch:hover{transform:translateY(-2px)}
+.sp-launch .sp-faces{display:flex}
+.sp-launch .sp-faces .sp-av{width:36px;height:36px;border:2.5px solid #5b3df5;margin-left:-12px}
+.sp-launch .sp-faces .sp-av:first-child{margin-left:0}
+.sp-launch .sp-dot{position:absolute;left:34px;top:9px;width:12px;height:12px;border-radius:50%;background:#5cc48c;border:2.5px solid #5b3df5}
+.sp-launch .sp-x{display:none;width:24px;height:24px}
+.sp-launch[aria-expanded="true"]{width:58px;padding:0;justify-content:center}
+.sp-launch[aria-expanded="true"] .sp-faces,.sp-launch[aria-expanded="true"] .sp-lt,.sp-launch[aria-expanded="true"] .sp-dot{display:none}
+.sp-launch[aria-expanded="true"] .sp-x{display:block}
+body.mcta-on .sp-launch{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.sp-av{width:32px;height:32px;border-radius:50%;flex:none;display:block;overflow:hidden;background:var(--lilac)}
+.sp-av svg,.sp-av img{width:100%;height:100%;display:block;object-fit:cover}
+.sp{position:fixed;right:18px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:59;width:min(400px,calc(100vw - 24px));height:min(640px,calc(100dvh - 116px));border-radius:28px;background:var(--bg);border:1px solid var(--line);box-shadow:0 50px 100px -30px rgba(20,12,60,.5),0 0 0 1px rgba(0,0,0,.02);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom right;transform:translateY(16px) scale(.96);opacity:0;visibility:hidden;transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1),visibility .3s}
+.sp.open{opacity:1;visibility:visible;transform:none}
+body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 186px))}
+.sp-hd{position:relative;padding:20px 20px 22px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#8f7bff 0%,#5b3df5 45%,#21136f 100%);flex:none;overflow:hidden}
+.sp-hd::after{content:"";position:absolute;width:260px;height:260px;right:-90px;top:-120px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.sp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.sp-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.03em}
+.sp-brand .mark{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.18);box-shadow:none}.sp-brand .mark svg{width:16px;height:16px}
+.sp-cx{background:rgba(255,255,255,.16);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.sp-cx svg{width:16px;height:16px}
+.sp-team{display:flex;margin-top:18px;position:relative;z-index:1}
+.sp-team .sp-av{width:46px;height:46px;border:3px solid #4b31e0;margin-left:-12px}
+.sp-team .sp-av:first-child{margin-left:0}
+.sp-hd h3{font-size:24px;letter-spacing:-.04em;margin:12px 0 4px;position:relative;z-index:1}
+.sp-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:#dcd6ff;position:relative;z-index:1}
+.sp-meta span{display:inline-flex;align-items:center;gap:6px}
+.sp-meta i{width:8px;height:8px;border-radius:50%;background:#a49bd6}
+.sp-meta i.on{background:#7ee0a6;box-shadow:0 0 0 3px rgba(126,224,166,.3)}
+.sp-meta svg{width:13px;height:13px;opacity:.85}
+.sp-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.sp-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 30px -22px rgba(40,20,120,.35)}
+.sp-card .sp-who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sp-card .sp-who b{display:block;font-size:14px}.sp-card .sp-who small{display:block;font-size:12px;color:var(--faint)}
+.sp-card p{margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}
+.sp-quick{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sp-quick button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 13px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font:700 14px var(--f);color:var(--ink);cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+.sp-quick button:hover{border-color:color-mix(in srgb,#5b3df5 40%,var(--line));background:var(--lilac)}
+.sp-quick button span{color:var(--brand-text)}
+.sp-quick button.sp-person{background:#5b3df5;border-color:#5b3df5;color:#fff}.sp-quick button.sp-person span{color:#fff}
+.sp-guide{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.sp-guide .sp-gi{width:40px;height:40px;border-radius:12px;background:var(--lilac);color:var(--brand-text);display:grid;place-items:center;flex:none}
+.sp-guide .sp-gi svg{width:20px;height:20px}
+.sp-guide b{display:block;font-size:14px}.sp-guide small{display:block;font-size:12.5px;color:var(--muted)}
+.sp-guide em{margin-left:auto;font-style:normal;color:var(--faint);font-weight:800}
+.sp-row{display:flex;gap:8px;align-items:flex-end;max-width:88%;animation:spIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes spIn{from{opacity:0;transform:translateY(8px)}}
+.sp-row.me{align-self:flex-end;flex-direction:row-reverse}
+.sp-row .sp-av{width:28px;height:28px}
+.sp-col{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-name{font-size:11.5px;font-weight:700;color:var(--faint);padding-left:4px}
+.sp-msg{padding:10px 13px;border-radius:18px;font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.sp-row.me .sp-msg{background:#5b3df5;color:#fff;border-color:#5b3df5;border-radius:18px 18px 6px 18px}
+.sp-msg small{display:block;font-size:11px;opacity:.6;margin-top:3px}
+.sp-msg a{color:inherit;font-weight:700}
+.sp-sys{align-self:center;font-size:12px;color:var(--faint);text-align:center;padding:2px 10px;max-width:90%}
+.sp-typing{display:inline-flex;gap:4px;padding:13px 14px}
+.sp-typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:spB 1s infinite}
+.sp-typing i:nth-child(2){animation-delay:.2s}.sp-typing i:nth-child(3){animation-delay:.4s}
+@keyframes spB{50%{opacity:.25;transform:translateY(-2px)}}
+.sp-form{padding:10px 12px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--surface);flex:none}
+.sp-form .inp{padding:11px 14px;font-size:15px;border-radius:14px}
+.sp-crow{display:flex;gap:8px;align-items:flex-end}
+.sp-form textarea{flex:1;resize:none;min-height:46px;max-height:120px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);font:500 15px/1.4 var(--f);color:var(--ink)}
+.sp-form textarea:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.sp-send{width:46px;height:46px;border-radius:16px;border:0;background:#5b3df5;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.sp-send svg{width:18px;height:18px}
+.sp-err{font-size:13px;color:var(--rose);font-weight:600}
+.sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
+.sp-foot a{color:var(--faint)}
+.sp-hide{display:none!important}
+@media (max-width:560px){
+  .sp-launch{height:54px;padding:0 16px 0 8px;font-size:14.5px;right:14px}
+  .sp-launch .sp-faces .sp-av{width:32px;height:32px}
+  .sp-launch .sp-dot{left:30px;top:8px}
+  .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
+  .sp-launch[aria-expanded="true"]{display:none}
+  .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
+  body.mcta-on .sp{bottom:0;height:auto}
+  .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .sp-form{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+}
+@media (min-width:901px){body.mcta-on .sp-launch{bottom:calc(18px + env(safe-area-inset-bottom,0px))}body.mcta-on .sp{bottom:calc(88px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 116px))}}
+@media (prefers-reduced-motion:reduce){.sp,.sp-row{transition:none;animation:none}}
+</style>
+
+<button class="sp-launch" id="spLaunch" type="button" aria-expanded="false" aria-controls="spPanel" aria-label="Chat with Joinvoo support">
+  <span class="sp-faces" id="spLFaces"></span><span class="sp-dot" id="spLDot" hidden></span><span data-i18n="1c036wn" class="sp-lt">Chat with us</span>
+  <svg class="sp-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+</button>
+<section class="sp" id="spPanel" role="dialog" aria-modal="false" aria-labelledby="spTitle">
+  <header class="sp-hd">
+    <div class="sp-top"><span data-i18n-t="9b108k" class="sp-brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo support</span><button class="sp-cx" id="spClose" type="button" aria-label="Close chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="sp-team" id="spTeam"></div>
+    <h3 data-i18n="11gdjbh" id="spTitle">We’re here to help.</h3>
+    <div class="sp-meta"><span><i id="spOn"></i><span data-i18n="1fwx219" id="spOnTxt">Usually replies in a few minutes</span></span><span id="spHours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span></span></span></div>
+  </header>
+  <div class="sp-body" id="spBody" aria-live="polite">
+    <div class="sp-card" id="spWelcome">
+      <div class="sp-who" id="spWho"></div>
+      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <div class="sp-quick" id="spQuick">
+        <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
+        <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>
+        <button data-i18n="bn79q4" type="button" data-q="bot">Setting up my bot <span>→</span></button>
+        <button data-i18n="1eyzih9" type="button" data-q="person" class="sp-person">Talk to a person <span>→</span></button>
+      </div>
+    </div>
+    <a class="sp-card sp-guide" href="/guide"><span class="sp-gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM8 7h7M8 11h5"/></svg></span><span data-i18n="6err5n"><b>Setup guide</b><small>Bot, channel, pixels and your first test join</small></span><em>→</em></a>
+  </div>
+  <form class="sp-form" id="spForm" novalidate>
+    <div id="spEmailRow" hidden><label data-i18n="423ze" class="sr" for="spEmail">Your email</label><input data-i18n-ph="1pq88gt" class="inp" id="spEmail" type="email" autocomplete="email" placeholder="Your email, so we can reply if you leave"></div>
+    <div class="sp-err" id="spErr" hidden></div>
+    <div class="sp-crow"><label data-i18n="1cam7ic" class="sr" for="spText">Message</label><textarea data-i18n-ph="1g0yvse" id="spText" rows="1" placeholder="Write a message…"></textarea><button class="sp-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>
+    <div data-i18n="14kpqx" class="sp-foot"><span id="spNote">Real people · secure</span><a href="/privacy">Privacy</a></div>
+  </form>
+</section>
+
+<script>JVI();
+(function(){
+  const $=id=>document.getElementById(id);
+  const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
+  if(!launch||!panel) return;
+  let DEMO=!!window.JP_DEMO || location.protocol==='file:';
+  const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
+  let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
+  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false;
+
+  /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
+  const BG=['#efebff','#e8f3ec','#fbf2df','#ecf0fc','#fbeae8'], SKIN=['#f2c9a5','#d9a27a','#b97a52','#a8714d','#f6d7bf'], HAIR=['#1f1633','#3a2417','#6b3f1f','#0f0f14','#8a5a2b'], SHIRT=['#5b3df5','#2e7d57','#c2463f','#3d5ad6','#87631a'];
+  const hash=s=>{ let h=7; for(const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return h; };
+  function face(name){ const h=hash(name||'?'), bg=BG[h%5], sk=SKIN[(h>>>3)%5], hr=HAIR[(h>>>6)%5], sh=SHIRT[(h>>>9)%5], style=(h>>>12)%3;
+    const top=`<path d="M11.4 19.5c-.6-7.2 3.8-11.3 8.6-11.3s9.2 4.1 8.6 11.3c-1.6-3.6-4.6-5.3-8.6-5.3s-7 1.7-8.6 5.3z" fill="${hr}"/>`;
+    const back=style===1?`<path d="M10.5 20c0-7.5 4.2-11.5 9.5-11.5s9.5 4 9.5 11.5v8.5c0 1.6-1.3 2.5-3 2.5H13.5c-1.7 0-3-.9-3-2.5z" fill="${hr}"/>`:'';
+    const bun=style===2?`<circle cx="20" cy="8.2" r="3.6" fill="${hr}"/>`:'';
+    return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${bg}"/>${back}<path d="M6 42c1-8 7-12 14-12s13 4 14 12z" fill="${sh}"/><rect x="17" y="24" width="6" height="7" rx="3" fill="${sk}"/><circle cx="20" cy="19" r="8.5" fill="${sk}"/>${bun}${top}<circle cx="17" cy="20.5" r="1" fill="#2b1810"/><circle cx="23" cy="20.5" r="1" fill="#2b1810"/><path d="M17.5 23.8q2.5 2 5 0" fill="none" stroke="#7a3b22" stroke-width="1.2" stroke-linecap="round"/></svg>`; }
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function av(p){ const n=(p&&p.name)||'Joinvoo'; return `<span class="sp-av" title="${esc(n)}">${p&&p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy">`:face(n)}</span>`; }
+  function render(){ const t=team.slice(0,3);
+    $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
+    const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
+    $('spHello').textContent=_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
+    $('spOnTxt').textContent=online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
+    $('spOn').classList.toggle('on',online); $('spLDot').hidden=!online;
+    const hh=$('spHours'); hh.querySelector('span').textContent=_t(hours); hh.hidden=!hours; }
+  function applySupport(s){ if(!s) return; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
+  render();
+
+  const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
+  const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+  function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
+    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
+    r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
+    if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
+    body.appendChild(r); scroll(); return r; }
+  function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; body.appendChild(d); scroll(); }
+  function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(r); scroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
+  function showErr(m){ err.textContent=m||''; err.hidden=!m; }
+
+  /* quick starts: instant answers for common questions, then a person if they want one */
+  const GUIDE='/guide';
+  const ANSWERS={
+    how:[_t('How does tracking work?'),_t('Every click on your Joinvoo tracking link gets its own Telegram invite link (or bot link). When that person joins your channel, group or bot, we know exactly which campaign and ad brought them, and we send the join to Meta, TikTok or Snapchat server-side. Deposits too, if your broker or CRM sends us a postback. Your ads then optimise for real joiners, not clicks.')],
+    price:[_t('Pricing'),_t('Your first 500 tracked joins are free, plus a deposit-tracking trial (7 days or 20 FTDs). Basic is $30 a month with 2,000 tracked joins. Pro is $99 a month with 5,000 joins, deposit tracking, ROAS dashboards, integrations and Joe. Extra joins cost 2 credits ($0.02). Prepaid credits, no contracts.')],
+    bot:[_t('Setting up my bot'),esc(_t('Easiest way: make a new bot in @BotFather, paste its token into Joinvoo, and add it to your channel as an admin with “Invite users via link”. About 10 minutes in total. If your bot already runs somewhere, Joinvoo can pass its messages on, or your bot can ping us on each Start.'))+` <a href="${GUIDE}">${esc(_t('Open the step-by-step guide →'))}</a>`]};
+  const bot={name:'Joinvoo',photo:'',bot:true};
+  async function quick(k){ if(k==='person'){ sys(_t('Write your message below.')+' '+(online?_t('We’re online now.'):_t(replyTime)+'.')); text.focus(); return; }
+    const [q,a]=ANSWERS[k]; msg('me',q,Date.now()); await typing(team[0],700); msg('them',a,Date.now(),{name:team[0].name,photo:team[0].photo},k==='bot');
+    sys(_t('Need more? Write below and a real person will reply.')); }
+  $('spQuick').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) quick(b.dataset.q); });
+
+  async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
+    const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
+  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; applySupport(j); emRow.hidden=!!ticket;
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); }); render(); }
+  async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
+    try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
+  function demo(){ DEMO=true; online=true; emRow.hidden=true; $('spNote').textContent=_t('Demo preview · messages aren’t sent'); render(); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },4000); }
+  function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
+  function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
+    if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
+  launch.onclick=()=>open(!panel.classList.contains('open')); $('spClose').onclick=()=>{ open(false); launch.focus(); };
+  addEventListener('keydown',e=>{ if(e.key==='Escape'&&panel.classList.contains('open')){ open(false); launch.focus(); } });
+  text.addEventListener('input',()=>{ text.style.height='auto'; text.style.height=Math.min(120,text.scrollHeight)+'px'; });
+  text.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+  form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(!t||sending) return; showErr('');
+    if(DEMO){ msg('me',t,Date.now()); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
+      msg('them',_t('Thanks! A real person replies here within minutes during the day. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
+    const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
+    sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
+    try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
+      if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+    catch(x){ b.remove(); text.value=t; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
+    finally{ sending=false; } });
+
+  /* site config: team, reply time, hours, and the support_chat switch */
+  window.JV_CONFIG = window.JV_CONFIG || (DEMO ? Promise.resolve(null) : fetch('/api/config',{credentials:'same-origin'}).then(r=>(r.headers.get('content-type')||'').includes('json')?r.json():null).catch(()=>null));
+  window.JV_CONFIG.then(c=>{ if(!c) return; if(c.features&&c.features.support_chat===false){ launch.classList.add('sp-hide'); panel.classList.add('sp-hide'); return; } applySupport(c.support); });
+})();
+</script>
+
+<script>JVI();
+(function(){ const sec=document.getElementById('walk'), v=document.getElementById('walkVid'); if(!sec||!v) return;
+  const off=()=>{ sec.classList.add('novid'); try{ v.removeAttribute('src'); v.load(); }catch(e){} };
+  v.addEventListener('error',off);
+  fetch(v.getAttribute('src'),{headers:{Range:'bytes=0-1'}}).then(r=>{ const ct=r.headers.get('content-type')||''; if((r.ok||r.status===206)&&ct.indexOf('video')===0) sec.classList.remove('novid'), v.dataset.poster&&(v.poster=v.dataset.poster); else off(); }).catch(off); })();
+</script>
+<script>JVI();
+(function () {
+  const links = [...document.querySelectorAll('#toc a')], secs = links.map((a) => document.querySelector(a.getAttribute('href')));
+  function spy() {
+    const y = innerHeight * 0.3; let cur = 0;
+    secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < y) cur = i; });
+    links.forEach((a, i) => { a.classList.toggle('on', i === cur); a.classList.toggle('done', i < cur); });
+    const p = document.getElementById('prog'); if (p) p.style.width = (cur / (secs.length - 1) * 100) + '%';
+    const on = links[cur]; if (on && innerWidth < 900) { const t = on.parentElement; t.scrollTo({ left: on.offsetLeft - 20, behavior: 'smooth' }); }
+  }
+  addEventListener('scroll', spy, { passive: true }); spy();
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('play'); io.unobserve(e.target); } }), { threshold: 0.35 });
+  document.querySelectorAll('[data-play]').forEach((el) => io.observe(el));
+  document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+    navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); });
+  }));
+})();
+</script>

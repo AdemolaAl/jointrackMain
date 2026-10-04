@@ -1,0 +1,412 @@
+
+/* ---------- ad platform forms (shared by setup wizard and channel sheet) ---------- */
+const EVENTS = { meta:['Subscribe','Lead','CompleteRegistration','Contact'], tiktok:['Subscribe','CompleteRegistration','Contact','SubmitForm'], snap:['SUBSCRIBE','SIGN_UP','PURCHASE','START_TRIAL'] };
+function platFields(p, c, full){
+  c=c||{};
+  const sel=(cur)=>`<select class="sel" id="pf-ev">${EVENTS[p].map(e=>`<option ${cur===e?'selected':''}>${e}</option>`).join('')}</select>`;
+  if (p==='tiktok') return `
+    <div class="field"><label for="pf-px">TikTok pixel code</label><input class="inp mono" id="pf-px" autocomplete="off" spellcheck="false" placeholder="CABC123DEF456GHI" value="${esc(c.tt_pixel||(DEMO&&!full?'CQ7B9E3C77U5JHG0T1A0':''))}"><span class="hint">TikTok Ads Manager → Tools → Events → your web pixel. The code under its name.</span></div>
+    <div class="field"><label for="pf-tok">Events API access token</label><input class="inp" id="pf-tok" type="password" autocomplete="off" placeholder="${c.tt_has_token?'Saved. Paste a new one to replace it':'Paste token'}" ${DEMO&&!full?'value="ttdemo"':''}><span class="hint">Your pixel → Settings → Events API → Generate access token.</span></div>
+    <div class="field"><label for="pf-ev">A join counts as</label>${sel(c.tt_event)}</div>
+    ${full?`<div class="field"><label for="pf-test">Test event code <span class="faint" style="font-weight:400">(optional)</span></label><input class="inp mono" id="pf-test" value="${esc(c.tt_test_code)}" placeholder="TEST12345"><span class="hint">Only while testing. Clear it before you go live.</span></div>`:''}`;
+  if (p==='snap') return `
+    <div class="field"><label for="pf-px">Snap Pixel ID</label><input class="inp mono" id="pf-px" autocomplete="off" spellcheck="false" placeholder="a1b2c3d4-e5f6-7890-abcd-ef1234567890" value="${esc(c.sc_pixel||(DEMO&&!full?'5f1c2a9e-8b7d-4e3a-9c21-7d0e6b4a3f12':''))}"><span class="hint">Snapchat Ads Manager → Events Manager → your Pixel. It looks like a long code with dashes.</span></div>
+    <div class="field"><label for="pf-tok">Conversions API token</label><input class="inp" id="pf-tok" type="password" autocomplete="off" placeholder="${c.sc_has_token?'Saved. Paste a new one to replace it':'Paste token'}" ${DEMO&&!full?'value="scdemo"':''}><span class="hint">Business settings → Conversions API tokens → Generate token.</span></div>
+    <div class="field"><label for="pf-ev">A join counts as</label>${sel(c.sc_event||'SUBSCRIBE')}</div>
+    <div class="field" style="flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)"><span><b style="font-weight:600;font-size:14px">Test mode</b><span class="hint" style="display:block">Events show in Snap’s test view, not in your reports. Turn off before you go live.</span></span><button type="button" class="switch" id="pf-sct" role="switch" aria-checked="${!!c.sc_test}" aria-label="Test mode" data-act="switch"></button></div>`;
+  return `
+    <div class="field"><label for="pf-px">Pixel ID</label><input class="inp mono" id="pf-px" inputmode="numeric" autocomplete="off" placeholder="1234567890123456" value="${esc(c.pixel_id||(DEMO&&!full?'884210395527140':''))}"><span class="hint">Events Manager → Data sources → your pixel. The number under its name.</span></div>
+    <div class="field"><label for="pf-tok">Conversions API access token</label><input class="inp" id="pf-tok" type="password" autocomplete="off" placeholder="${c.has_token?'Saved. Paste a new one to replace it':'Paste token'}" ${DEMO&&!full?'value="EAAGdemo"':''}><span class="hint">Your pixel → Settings → Conversions API → Generate access token.</span></div>
+    <div class="field"><label for="pf-ev">A join counts as</label>${sel(c.event_name)}</div>
+    ${full?`<div class="field"><label for="pf-test">Test event code <span class="faint" style="font-weight:400">(optional)</span></label><input class="inp mono" id="pf-test" value="${esc(c.test_code)}" placeholder="TEST12345"><span class="hint">Only while testing. Clear it before you go live.</span></div>`:''}`;
+}
+function platBody(p){
+  const v=id=>{ const e=$('#'+id); return e?e.value.trim():undefined; };
+  if (p==='tiktok') return {platform:'tiktok',tt_pixel:v('pf-px'),tt_token:v('pf-tok'),tt_event:v('pf-ev'),...($('#pf-test')?{tt_test_code:v('pf-test')}:{})};
+  if (p==='snap') return {platform:'snap',sc_pixel:v('pf-px'),sc_token:v('pf-tok'),sc_event:v('pf-ev'),sc_test:$('#pf-sct').getAttribute('aria-checked')==='true'};
+  return {pixel_id:v('pf-px'),capi_token:v('pf-tok'),event_name:v('pf-ev'),...($('#pf-test')?{test_code:v('pf-test')}:{})};
+}
+const platOn = (c,p) => p==='tiktok' ? !!(c.tt_pixel&&c.tt_has_token) : p==='snap' ? !!(c.sc_pixel&&c.sc_has_token) : !!(c.pixel_id&&c.has_token);
+const platEvent = (c,p) => p==='tiktok' ? c.tt_event : p==='snap' ? (c.sc_event||'SUBSCRIBE') : c.event_name;
+const testQ = p => p==='meta' ? '' : '?platform='+p;
+
+/* ---------- setup wizard ---------- */
+const W = { step:1, bot:null, channel:null, poll:null, before:0, fromApp:false, plat:'meta', mode:'channel', bkind:null, bsub:null, ext:null };
+
+/* ---------- bots that already run elsewhere: hook URLs + copy-paste snippets (wizard, channel cards, sheet) ---------- */
+const botUser = c => String(c.title||'').replace(/^@/,'') || 'your_bot';
+function snippets(c){
+  const hs=c.hook_start||'', hb=c.hook_blocked||'', u=botUser(c);
+  const node=`// grammY: runs when someone presses Start
+bot.command("start", async (ctx) => {
+  const q = new URLSearchParams({
+    bot: "${u}",
+    start: ctx.match || "",               // the code after /start
+    tg_id: String(ctx.from.id),
+    first_name: ctx.from.first_name || "",
+    last_name: ctx.from.last_name || "",
+    username: ctx.from.username || "",
+    lang: ctx.from.language_code || "",
+  });
+  fetch("${hs}?" + q).catch(() => {});  // don't wait, never breaks your bot
+  // ...your usual welcome reply
+});
+// Telegraf: bot.start((ctx) => …) and use ctx.payload instead of ctx.match`;
+  const py=`# python-telegram-bot: runs when someone presses Start
+import httpx
+HOOK = "${hs}"
+
+async def start(update, context):
+    u = update.effective_user
+    payload = context.args[0] if context.args else ""   # the code after /start
+    try:
+        async with httpx.AsyncClient(timeout=5) as c:
+            await c.get(HOOK, params={
+                "bot": "${u}", "start": payload, "tg_id": u.id,
+                "first_name": u.first_name or "", "last_name": u.last_name or "",
+                "username": u.username or "", "lang": u.language_code or ""})
+    except Exception:
+        pass
+    # ...your usual welcome reply
+
+# aiogram 3: @dp.message(CommandStart()) and use command.args for the payload`;
+  const php=`<?php
+// Inside your webhook handler: when the message starts with /start
+$m = $update['message'] ?? [];
+$text = $m['text'] ?? '';
+if (strpos($text, '/start') === 0) {
+  $q = http_build_query([
+    'bot'        => '${u}',
+    'start'      => trim(substr($text, 6)),   // the code after /start
+    'tg_id'      => $m['from']['id'],
+    'first_name' => $m['from']['first_name'] ?? '',
+    'last_name'  => $m['from']['last_name'] ?? '',
+    'username'   => $m['from']['username'] ?? '',
+    'lang'       => $m['from']['language_code'] ?? '',
+  ]);
+  @file_get_contents('${hs}?' . $q);
+}`;
+  const nc=`${hs}?bot=${u}&tg_id={user id}&start={start parameter}&first_name={first name}`;
+  const T=[['node','Node.js'],['py','Python'],['php','PHP'],['nc','No-code bot builder']];
+  const pane=(k,code)=>`<div class="snip-pane" data-pane="${k}" ${k==='node'?'':'hidden'}><div class="codewrap"><pre class="codeblock">${esc(code)}</pre><button class="btn sm" data-act="copy" data-v="${esc(code)}">${I.copy} Copy</button></div></div>`;
+  return `<div class="snips"><div class="utabs snip-tabs" role="tablist">${T.map(([k,l],i)=>`<button role="tab" data-act="snip" data-k="${k}" aria-selected="${!i}">${l}</button>`).join('')}</div>
+    ${pane('node',node)}${pane('py',py)}${pane('php',php)}
+    <div class="snip-pane" data-pane="nc" hidden><ol class="howto" style="margin-bottom:12px">
+      <li><span class="n">1</span><span>Open the <b>Start</b> step (the flow that runs when someone presses Start).</span></li>
+      <li><span class="n">2</span><span>Add an <b>HTTP request</b> or <b>Webhook</b> block at the top. Method: <b>GET</b>.</span></li>
+      <li><span class="n">3</span><span>Paste the URL below, then swap each <b>{…}</b> for your builder’s variable (user ID, start parameter, first name). The names differ per builder.</span></li>
+      <li><span class="n">4</span><span>Save, then tap <b>Send a test</b> below or open your ad link on your phone.</span></li></ol>
+      <div class="codewrap"><pre class="codeblock">${esc(nc)}</pre><button class="btn sm" data-act="copy" data-v="${esc(nc)}">${I.copy} Copy</button></div></div></div>`;
+}
+function hookBoxes(c){
+  return `<div class="field"><label>Start hook</label><div class="codebox"><code>${esc(c.hook_start||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.hook_start||'')}">${I.copy} Copy</button></div><span class="hint">Your bot calls this when someone presses Start, with the code after “/start”.</span></div>
+    <div class="field"><label>Blocked hook <span class="faint" style="font-weight:500">(optional)</span></label><div class="codebox"><code>${esc(c.hook_blocked||'')}</code><button class="btn sm" data-act="copy" data-v="${esc(c.hook_blocked||'')}">${I.copy} Copy</button></div><span class="hint">Optional: call the blocked URL when someone blocks the bot so leaves are tracked.</span></div>`;
+}
+function hookPanel(c){
+  return `${hookBoxes(c)}
+    <div class="field"><label>Add this to your bot</label>${snippets(c)}</div>
+    <div class="hooktest"><button class="btn" data-act="hook-test" data-u="${esc(c.hook_start||'')}" data-b="${esc(botUser(c))}">${I.bolt} Send a test</button><span class="hint">Calls your Start hook with a test person (ID 1000000001, code “test”). It won’t count as an ad join.</span></div><div class="hook-res" aria-live="polite"></div>`;
+}
+async function hookTest(a){
+  const res=a.closest('.hooktest').nextElementSibling; a.disabled=true; const old=a.innerHTML; a.innerHTML='<span class="spin"></span> Sending';
+  try {
+    let r;
+    if (DEMO){ await new Promise(f=>setTimeout(f,700)); r={ok:true,duplicate:false,from_ad:false}; }
+    else { const q=new URLSearchParams({bot:a.dataset.b,tg_id:'1000000001',start:'test',first_name:'Test',username:'joinvoo_test'});
+      const x=await fetch(a.dataset.u+'?'+q,{method:'GET'}); r=await x.json().catch(()=>({})); if(!x.ok||r.error) throw new Error(r.error||('The hook answered '+x.status)); }
+    res.innerHTML=`<div class="okbar">${I.checkc}<span>Test received${r.duplicate?' (seen before)':''}. The hook works. Now add the call to your bot${DEMO?' — demo: simulated':''}.</span></div>`;
+  } catch(e){ res.innerHTML=`<div class="err">Couldn’t reach the hook: ${esc(e.message)}</div>`; }
+  a.disabled=false; a.innerHTML=old;
+}
+function openSnippets(id){
+  const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return;
+  sheet(`<h2>Connect your bot<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
+}
+function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo · sample data</b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
+async function renderSetup(step, fromApp){
+  stopTimers(); clearInterval(W.poll); closeChat(true);
+  W.fromApp = !!fromApp;
+  W.bkind=null; W.bsub=null; W.ext=null; W.jrSeen=false;
+  const d = S.chans || await refreshChans();
+  W.bot = d.bots.find(b=>b.status==='active') || null;
+  W.step = step || (W.bot ? 2 : 1);
+  $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' Back to dashboard</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
+    <div class="setup-body"><div class="prog" id="prog"></div><div id="stp"></div></div></div>`;
+  drawStep();
+}
+function drawProg(){
+  const p=$('#prog'); if(!p) return;
+  const done=n=>W.step>n, names=['Bot','Channel','Ads'];
+  const dot=n=>`<span class="dot ${done(n)?'done':W.step===n?'on':''}"><i>${done(n)?'✓':n}</i>${names[n-1]}</span>`;
+  p.innerHTML = `${dot(1)}<span class="ln ${done(1)?'done':''}"><i></i></span>${dot(2)}<span class="ln ${done(2)?'done':''}"><i></i></span>${dot(3)}`;
+}
+function drawStep(){
+  clearInterval(W.poll); drawProg();
+  const s=$('#stp'); let h='';
+  if (W.step===1) h = `<div class="step">
+    <span class="step-ico">${I.bot}</span>
+    <h1>Make your tracking bot.</h1><p class="lede">It sits in your channel and gives every visitor their own invite link. Takes about 2 minutes.</p>
+    <ol class="howto">
+      <li><span class="n">1</span><span>Open <a href="https://t.me/BotFather" target="_blank" rel="noopener"><b>@BotFather</b></a> in Telegram</span></li>
+      <li><span class="n">2</span><span>Send <button class="kbd" data-act="copy" data-v="/newbot">/newbot</button> and pick any name</span></li>
+      <li><span class="n">3</span><span>Pick a username that ends in <b>bot</b></span></li>
+      <li><span class="n">4</span><span>Copy the token it sends and paste it below</span></li>
+    </ol>
+    <form id="tf" class="field"><label for="tok">Bot token</label>
+      <input class="inp mono" id="tok" autocomplete="off" spellcheck="false" placeholder="123456789:AAH4k…" ${DEMO?'value="7712045533:AAHk3vZq_demoTokenForJoinvoo_88xQw"':''}>
+      <span class="hint">${DEMO?'Demo: a sample token is already filled in.':'For a channel, use a new bot just for tracking. To track an existing bot’s subscribers, paste that bot’s token.'}</span><div id="terr"></div>
+      <button class="btn primary lg wide" type="submit" id="tbtn" style="margin-top:8px">Connect bot ${I.arrow}</button></form>
+    <a class="btn ghost" href="https://t.me/BotFather" target="_blank" rel="noopener">Open BotFather ${I.ext}</a>
+    <button class="link" style="align-self:center;font-size:13.5px" data-act="no-token">My bot already runs elsewhere and I don’t want to share its token ${I.arrow}</button></div>`;
+  if (W.step===2){ const u=W.bot?W.bot.username:'yourbot'; const isBot=W.mode==='bot';
+    const pick=`<div class="mode2 plats" style="grid-template-columns:1fr 1fr"><button data-act="mode" data-m="channel" aria-pressed="${!isBot}">${pm('tg',1)}Channel or group<small>Track people who join</small></button>
+      <button data-act="mode" data-m="bot" aria-pressed="${isBot}"><span class="pm lg" style="background:var(--brand-soft);color:var(--brand-text)">${I.bot}</span>Bot subscribers<small>Track people who press Start</small></button></div>`;
+    h = isBot ? botStep(u, pick)
+    : `<div class="step">
+    <div class="okbar">${I.checkc}<span>@${esc(u)} is connected</span></div>
+    ${W.warn?`<div class="note warn">This bot was already connected to another server (${esc(W.prevWh)}). For a channel or group, use a new bot made just for Joinvoo, or that other service stops getting updates.</div>`:''}
+    <h1>What do you want to track?</h1>${pick}
+    <p class="lede" style="margin-top:0">Tap the button, pick your channel in Telegram and confirm. The right permission is already ticked.</p>
+    <a class="btn primary lg wide" data-act="addlink" href="https://t.me/${esc(u)}?startchannel&admin=invite_users+manage_chat" target="_blank" rel="noopener">Add to my channel ${I.arrow}</a>
+    <a class="btn lg wide" data-act="addlink" href="https://t.me/${esc(u)}?startgroup&admin=invite_users+manage_chat" target="_blank" rel="noopener">It’s a group, not a channel</a>
+    <div class="radar"><span class="r"><i></i><i></i><i></i><b></b></span><div><strong>Waiting for Telegram…</strong><span>This moves on by itself once the bot is in.</span></div></div>
+    ${DEMO?'<button class="btn ghost" data-act="demo-detect">Demo: pretend I added it</button>':'<button class="btn ghost" data-act="manual">The bot was already an admin?</button>'}</div>`;
+    if (!isBot){ W.before=(S.chans&&S.chans.channels.length)||0; W.poll=setInterval(checkArrived,2500); } }
+  if (W.step===3 && !W.jrSeen && FEAT('join_requests') && W.channel && W.channel.type!=='bot' && !jrOn(W.channel)){ s.innerHTML=jrStepHtml(); bindJrStep(); window.scrollTo(0,0); return; }
+  if (W.step===3){ const c=W.channel||{}; const p=W.plat; h = `<div class="step">
+    <div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>
+    <span class="step-ico">${I.target}</span>
+    <h1>Tell your ads about every join.</h1><p class="lede">Pick where you run ads. Your ads then learn from real joins, not taps. You can add the others later.</p>
+    <div class="plats" style="grid-template-columns:repeat(${PLATS().length},minmax(0,1fr))">${PLATS().map(k=>`<button data-act="plat" data-p="${k}" aria-pressed="${p===k}">${pm(k,1)}${PLAT[k].name}<small>${PLAT[k].sub}</small></button>`).join('')}</div>
+    <form id="pf" style="display:flex;flex-direction:column;gap:16px">${platFields(p,c,false)}
+      <div id="perr"></div><button class="btn primary lg wide" type="submit" id="pbtn">Save and send a test ${I.arrow}</button></form>
+    <div class="soon"><span style="display:flex;align-items:center;gap:8px">${pm('google')}Google Ads</span><span>Coming soon</span></div>
+    <button class="btn ghost" data-act="skip-meta">Skip, I’ll do this later</button></div>`; }
+  if (W.step===4){ const c=W.channel||{}; h = `<div class="step" style="text-align:center;align-items:center">
+    <span class="step-ico" style="color:var(--mint-ink)">${I.sparkles}</span>
+    <h1>You’re tracking.</h1><p class="lede">Use this link in your ad, in place of the t.me link. That’s the only change you make.</p>
+    <div class="codebox" style="width:100%"><code>${esc(c.tracking_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url||'')}">${I.copy} Copy</button></div>
+    <div class="note" style="text-align:left;width:100%"><b>See which ad brought each person.</b> Add your platform’s campaign and ad macros to the end of the link, for example on Meta:<div class="mono" style="margin-top:6px;overflow-wrap:anywhere;color:var(--ink)">?utm_source=meta&amp;utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}</div><span style="display:block;margin-top:6px">TikTok and Snapchat examples are on the Campaigns page.</span></div>
+    <button class="btn primary lg wide" data-act="finish">Go to my dashboard ${I.arrow}</button></div>`; setTimeout(confetti,150); }
+  s.innerHTML = h;
+  const tf=$('#tf'); tf && tf.addEventListener('submit', e=>{e.preventDefault(); connectBot();});
+  const pf=$('#pf'); pf && pf.addEventListener('submit', e=>{e.preventDefault(); savePixel();});
+  const xf=$('#xf'); xf && xf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#xbtn'); b.disabled=true;
+    try { const r=await api('POST','/api/bot-targets/external',{username:$('#xu').value.trim()}); await refreshChans(); W.ext=S.chans.channels.find(c=>c.id===r.channel)||{...r,title:'@'+$('#xu').value.trim().replace(/^@/,'')}; if(!W.ext.hook_start){ W.ext.hook_start=r.hook_start; W.ext.hook_blocked=r.hook_blocked; } drawStep(); toast('Hook ready'); }
+    catch(err){ $('#xerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+  const bf=$('#bf'); bf && bf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#bbtn'); b.disabled=true;
+    const fw=$('#bfw'), fs=$('#bfs'), body={bot_id:W.bot.id,welcome:$('#bw')?$('#bw').value:'',btn_text:$('#bbt')?$('#bbt').value:'',btn_url:$('#bbu')?$('#bbu').value:'',forward_url:fw?fw.value.trim():''};
+    if (fs && fs.value.trim()) body.forward_secret=fs.value.trim();
+    try { const r=await api('POST','/api/bot-targets',body);
+      await refreshChans(); W.channel=S.chans.channels.find(c=>c.id===r.channel)||S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); toast('Bot tracking is on'); }
+    catch(err){ $('#berr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+  window.scrollTo(0,0);
+}
+function botStep(u, pick){
+  const has=!!W.bot, head=`${has?`<div class="okbar">${I.checkc}<span>@${esc(u)} is connected</span></div>`:''}${W.warn&&has?`<div class="note warn">${esc(W.warn)}</div>`:''}`;
+  const back=(k,l)=>`<button class="link" style="align-self:flex-start" data-act="${k}">${I.chevl} ${l}</button>`;
+  const card=(act,k,on,ico,t,sub,rec)=>`<button class="bigpick" data-act="${act}" data-k="${k}" aria-pressed="${on}"><span class="bp-ico">${ico}</span><span class="bp-t">${t}${rec?' <em class="chip g">Recommended</em>':''}</span><small>${sub}</small></button>`;
+  if (!W.bkind) return `<div class="step">${head}<h1>What do you want to track?</h1>${pick}
+    <h2 class="q">Is this a new bot, or does it already run somewhere?</h2>
+    <div class="bigpicks">${card('bkind','new',false,I.sparkles,'New bot, or only used for this','Joinvoo runs it for you: a welcome message and a button. Nothing else to set up.',1)}
+      ${card('bkind','runs',false,I.globe,'It already runs on a server or a bot builder','Built by a developer, or with a bot builder (ManyChat-style tools, etc.). It keeps working as it is.')}</div></div>`;
+  if (W.bkind==='new' && !has) return `<div class="step">${back('bkind-back','Change bot type')}<h1>First, connect the bot.</h1><div class="note">Joinvoo runs a new bot for you, so it needs the bot’s token from @BotFather. It takes about 2 minutes.</div><button class="btn primary lg wide" data-act="goto-step1">Paste my bot token ${I.arrow}</button></div>`;
+  if (W.bkind==='new') return `<div class="step">${head}${back('bkind-back','Change bot type')}
+    <h1>Set up the welcome.</h1>
+    <p class="lede" style="margin-top:0">Your ad link opens <b>@${esc(u)}</b>. When someone presses <b>Start</b>, Joinvoo matches them to the ad they came from and sends this message.</p>
+    <form id="bf" style="display:flex;flex-direction:column;gap:16px">
+      <div class="field"><label for="bw">Welcome message <span class="faint" style="font-weight:400">(optional)</span></label><textarea class="inp" id="bw" rows="3" placeholder="Hi {name} 👋 Welcome! Tap below to get started.">${DEMO?'Hi {name} 👋 Welcome to Study Squad. Tap below to join today’s session.':''}</textarea><span class="hint">{name} becomes their first name.</span></div>
+      <div class="row-in" style="flex-wrap:wrap"><input class="inp" id="bbt" aria-label="Button text" placeholder="Button text, e.g. Join the group" style="flex:1;min-width:140px" ${DEMO?'value="Join the study group"':''}><input class="inp" id="bbu" aria-label="Button link" placeholder="Button link, https://…" style="flex:2;min-width:180px" ${DEMO?'value="https://t.me/+demoStudySquad"':''}></div>
+      <div id="berr"></div><button class="btn primary lg wide" type="submit" id="bbtn">Track @${esc(u)} ${I.arrow}</button></form></div>`;
+  // already runs somewhere
+  const subs=`<div class="bigpicks">${card('bsub','forward',W.bsub==='forward',I.link,'Let Joinvoo pass messages on','Joinvoo receives your bot’s messages, notes who pressed Start, then passes every message to your server unchanged.')}
+    ${card('bsub','external',W.bsub==='external',I.lock,'Keep my token private (no token)','Your bot tells Joinvoo when someone presses Start, with one small web request. Works with any server or bot builder.')}</div>`;
+  let body='';
+  if (W.bsub==='forward') body = !has ? `<div class="note warn"><b>This option needs your bot’s token.</b> Go back to step 1 and paste it, or pick “Keep my token private” instead.</div><button class="btn" data-act="goto-step1">${I.chevl} Paste my bot token</button>`
+    : `<form id="bf" style="display:flex;flex-direction:column;gap:16px">
+      <div class="note"><b>How it works.</b> Telegram sends your bot’s messages to Joinvoo first. Joinvoo notes who pressed Start (and from which ad), then passes every message on to your server, exactly as Telegram sent it. Your bot keeps replying as it always has.</div>
+      <div class="field"><label for="bfw">Your bot’s server address</label><input class="inp" id="bfw" inputmode="url" placeholder="https://your-server.com/telegram-webhook" value="${esc(W.prevWh||'')}"><span class="hint">The webhook address your bot used before. ${W.prevWh?'We found it on your bot and filled it in.':'Your developer or bot builder can tell you.'}</span></div>
+      <div class="field"><label for="bfs">Secret token <span class="faint" style="font-weight:400">(if your server checks one)</span></label><input class="inp" id="bfs" type="password" autocomplete="off" placeholder="Leave empty if you don’t use one"><span class="hint">We send it as the <span class="mono">X-Telegram-Bot-Api-Secret-Token</span> header, the same way Telegram does.</span></div>
+      <div class="note warn"><b>Bots that fetch their own messages (“polling”) can’t use this.</b> If your bot uses getUpdates, or you’re not sure, pick “Keep my token private” instead.</div>
+      <div id="berr"></div><button class="btn primary lg wide" type="submit" id="bbtn">Pass messages on and track ${I.arrow}</button></form>`;
+  if (W.bsub==='external') body = !W.ext ? `<form id="xf" style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label for="xu">Your bot’s username</label><input class="inp" id="xu" autocomplete="off" spellcheck="false" placeholder="@mystore_bot" value="${has?'@'+esc(u):DEMO?'@recipebox_help_bot':''}" required><span class="hint">No token needed. Joinvoo gives you a link for your ads and a hook URL for your bot.</span></div>
+      <div id="xerr"></div><button class="btn primary lg wide" type="submit" id="xbtn">Create my hook ${I.arrow}</button></form>`
+    : `<div class="okbar">${I.checkc}<span>Hook ready for ${esc(W.ext.title)}</span></div>
+      <p class="muted" style="font-size:14.5px">Your ad link opens <b>${esc(W.ext.title)}</b> with a code after “/start”. Add one call to your bot’s Start handler that passes that code to Joinvoo.</p>
+      ${hookPanel(W.ext)}
+      <button class="btn primary lg wide" data-act="ext-continue">Next: connect your ads ${I.arrow}</button>`;
+  return `<div class="step">${head}${back('bkind-back','Change bot type')}
+    <h1>Your bot already runs. Keep it that way.</h1><p class="lede" style="margin-top:0">Pick how Joinvoo should hear about people who press Start.</p>${subs}${body}</div>`;
+}
+async function connectBot(){
+  const b=$('#tbtn'); b.disabled=true; b.innerHTML='<span class="spin"></span> Checking with Telegram';
+  try { const r=await api('POST','/api/bots',{token:$('#tok').value}); W.bot=r.bot; W.prevWh=r.previous_webhook||''; W.warn=r.warning||''; await refreshChans(); W.step=2; drawStep(); }
+  catch(e){ $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; b.disabled=false; b.innerHTML='Connect bot '+I.arrow; }
+}
+async function checkArrived(){
+  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); } } catch{}
+}
+async function savePixel(){
+  const c=W.channel, b=$('#pbtn'), p=W.plat; b.disabled=true; b.innerHTML='<span class="spin"></span> Saving';
+  try {
+    await api('PATCH','/api/channels/'+c.id, platBody(p));
+    const t=await api('POST','/api/channels/'+c.id+'/test'+testQ(p)).catch(e=>({error:e.message}));
+    await refreshChans(); W.channel=S.chans.channels.find(x=>x.id===c.id);
+    if (t.error){ $('#perr').innerHTML=`<div class="err">Saved, but the test failed: ${esc(t.error)}</div>`; b.disabled=false; b.innerHTML='Try again '+I.arrow; return; }
+    toast(t.message||'Test event received'); W.step=4; drawStep();
+  } catch(e){ $('#perr').innerHTML=`<div class="err">${esc(e.message)}</div>`; b.disabled=false; b.innerHTML='Save and send a test '+I.arrow; }
+}
+function confetti(){
+  if (reduced) return;
+  const cv=$('#confetti'), ctx=cv.getContext('2d'), dpr=Math.min(2,devicePixelRatio||1), w=innerWidth, h=innerHeight;
+  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cols=['#6A4BFF','#9C7CFF','#12B886','#F2A93B','#3BC9FF','#C14BFF'];
+  const ps=Array.from({length:140},()=>({x:w/2+(Math.random()-.5)*120,y:h*.32,vx:(Math.random()-.5)*13,vy:-Math.random()*12-4,r:Math.random()*7+4,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.3}));
+  let t=0; (function f(){ ctx.clearRect(0,0,w,h); t++;
+    for(const p of ps){ p.vy+=.3; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.a+=p.va; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.globalAlpha=Math.max(0,1-t/160); ctx.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); ctx.restore(); }
+    if (t<160) requestAnimationFrame(f); else ctx.clearRect(0,0,w,h); })();
+}
+
+/* ---------- app shell ---------- */
+const PAGES = {
+  overview:{t:'Overview',f:'range',fn:()=>viewOverview()},
+  compare:{t:'Compare',f:'channel',fn:()=>viewCompare(),tag:'New'},
+  campaigns:{t:'Campaigns',f:'range',fn:()=>viewCampaigns()},
+  conversions:{t:'Conversions',sub:'Sign-ups, deposits & sales',f:'range',fn:()=>viewConversions()},
+  people:{t:'People',f:'range',fn:()=>viewPeople()},
+  channels:{t:'Channels',fn:()=>viewChannels()},
+  wallet:{t:'Credits',fn:()=>viewWallet()},
+  earn:{t:'Earn',fn:()=>viewEarn()},
+  help:{t:'Help & Support',fn:()=>viewHelp()},
+  joe:{t:'Joe',tag:'AI',fn:()=>viewJoe()},
+  me:{t:'My profile',fn:()=>viewMe()},
+  levels:{t:'My level',fn:()=>viewLevels()},
+  learn:{t:'Learn',fn:()=>viewLearn()},
+  replyvoo:{t:'Replyvoo',fn:()=>viewSister()},
+  apps:{t:'Zedapex apps',fn:()=>viewApps()},
+};
+const NAV = [['Analytics',['overview','joe','compare','campaigns','conversions','people']],['Setup',['channels','learn']],['Account',['me','wallet','earn','levels','help']]];
+const pageOn = k => !((k==='replyvoo'&&!sister())||(k==='apps'&&!appsOn())||(k==='earn'&&!FEAT('referrals'))||(k==='conversions'&&!FEAT('ftd'))||(k==='joe'&&!FEAT('joe')));
+const BBAR = ['overview','joe','compare','channels'];
+function renderApp(){
+  clearInterval(W.poll);
+  const me=S.me||{}, nm=me.name||(me.email||'You').split('@')[0];
+  const pt=k=>tt('nav.'+k,PAGES[k].t);
+  const navA=k=>`<button class="nav-a" data-act="nav" data-p="${k}" title="${esc(pt(k))}">${k==='joe'&&hasJ()?`<span class="nav-joe">${joeFace(22,{animate:false})}</span>`:k==='me'?`<span class="nav-me">${meFace(24,false)}</span>`:I[k]}<span>${pt(k)}${PAGES[k].sub?`<small class="nsub">${tt('nav.'+k+'.sub',PAGES[k].sub)}</small>`:''}</span>${PAGES[k].tag?`<em class="new">${PAGES[k].tag==='New'?tt('nav.new','New'):PAGES[k].tag}</em>`:''}${k==='help'?'<i class="nb" data-unread hidden></i>':''}</button>`;
+  $('#root').innerHTML = `<div class="shell ${S.collapsed?'col':''}" id="shell">
+    <aside class="side" id="side" aria-label="Main navigation">
+      <div class="side-top">${logo()}<button class="collapse" data-act="collapse" aria-label="Collapse sidebar">${I.chevl}</button></div>
+      <nav class="nav">${NAV.map(([h,ks])=>`<div class="nav-h">${tt('nav.h.'+h.toLowerCase(),h)}</div>${ks.filter(pageOn).map(navA).join('')}`).join('')}</nav>${(()=>{ const h=sisterNav(); return h?`<div class="side-sis">${h}</div>`:''; })()}
+      <div class="side-card" id="sidecard"><div><div class="sl">${tt('credits.title','Credits')}</div><div class="sv num sk" style="height:28px;width:110px;margin-top:4px"></div></div></div>
+      <button class="me-row" data-act="account" aria-label="${tt('menu.account','Account menu')}">${meFace(38,true)}<span class="who"><b>${esc(dispName())}<span class="melv" id="melv">${lvMini()}</span></b><small>${esc(me.email||'')}</small></span></button>
+    </aside>
+    <div class="drawer-scrim" data-act="drawer-close"></div>
+    <div class="mainc">${demoBar()}
+      <header class="topbar" id="topbar">
+        <button class="icon-btn ham" data-act="drawer" aria-label="Open menu">${I.menu}</button>
+        <span class="tb-logo">${logo()}</span>
+        <div class="tb-title" id="tbt"></div>
+        <div class="tb-filters" id="tbf"></div>
+        <span class="tb-sp"></span>
+        ${langBtn('tb-lang')}
+        <button class="icon-btn bell" data-act="inbox" aria-label="${tt('ib.title','Inbox')}" aria-haspopup="dialog">${I.bell}<i class="badge" data-ibx hidden></i></button>
+        <button class="balchip" id="balchip" data-act="nav" data-p="wallet" aria-label="Wallet balance">${I.wallet.replace('<svg','<svg class="wl"')}<span class="bl num">…</span><span class="plus">${I.plus}</span></button>
+        <button class="icon-btn" data-act="chat" aria-label="Support chat">${I.chat}<i class="badge" data-unread hidden></i></button>
+        <span class="tb-lvw" id="tblv">${lvTop()}</span>
+        <button class="tb-ava" data-act="account" aria-label="${tt('menu.account','Account menu')}">${meFace(40)}</button>
+      </header>
+      <div class="banners" id="banners"></div>
+      <main id="view" tabindex="-1"></main>
+    </div>
+    <nav class="bbar" aria-label="Quick navigation">${BBAR.filter(pageOn).map(k=>`<button data-act="nav" data-p="${k}">${k==='joe'&&hasJ()?`<span class="bb-joe">${joeFace(26,{animate:false})}</span>`:I[k]}<span>${pt(k)}</span></button>`).join('')}<button data-act="drawer">${I.menu}<span>${tt('nav.more','More')}</span><i class="nb" data-unread hidden></i></button></nav>
+  </div>
+  <button class="fab sup-launch" id="fab" data-act="chat" aria-label="Open support chat"><span class="lf">${faceStack(3)}</span><span class="lc">${I.chat}</span><i class="badge" data-unread hidden></i></button>`;
+  refreshBal(); drawBanners();
+  supportLoop(true); joeStart();
+  go(S.page, true);
+  if (S.openChat){ S.openChat=false; openChat(); }
+  setTimeout(lvCheckUp, 1400); ibStart();
+}
+function go(page, first){
+  if (!PAGES[page] || !pageOn(page)) page='overview';
+  S.page=page; stopTimers(); closePop();
+  if (location.hash.slice(1)!==page){ try{ history[first?'replaceState':'pushState'](null,'','#'+page); }catch{} }
+  $$('[data-act="nav"]').forEach(b=>b.dataset.p===page?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
+  $('#shell') && $('#shell').classList.remove('open');
+  const pt=tt('nav.'+page,PAGES[page].t), t=$('#tbt'); if(t) t.innerHTML=`<span class="crumb">Joinvoo /</span>${pt}`;
+  document.title = pt+' · Joinvoo'; if (page==='joe') dismissJoe();
+  drawFilters();
+  if (!first) window.scrollTo(0,0);
+  PAGES[page].fn();
+}
+addEventListener('popstate',()=>{ const h=location.hash.slice(1); if ($('#shell') && PAGES[h] && h!==S.page) go(h,true); });
+addEventListener('scroll',()=>{ const t=$('#topbar'); if(t) t.classList.toggle('scrolled',scrollY>4); },{passive:true});
+function drawFilters(){
+  const el=$('#tbf'); if(!el) return; const f=PAGES[S.page].f; const ch=((S.chans&&S.chans.channels)||[]).filter(c=>c.status!=='removed');
+  el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''}>${esc(c.title)}</option>`).join('')}</select>`:'');
+  el.hidden = !el.innerHTML;
+}
+function refreshView(){ PAGES[S.page].fn(); }
+/* former-style date pills, shown under the page title on pages that use a date range */
+const SHORT = [['today','Today'],['7d','7 days'],['30d','30 days'],['90d','3 months'],['180d','6 months'],['365d','1 year']];
+function rangePills(){
+  return `<div class="filters"><div class="pills" role="group" aria-label="Date range">${SHORT.map(([k,l])=>`<button class="pill-btn" data-act="preset" data-p="${k}" aria-pressed="${S.preset===k}">${l}</button>`).join('')}<button class="pill-btn" data-act="range" aria-haspopup="true" aria-pressed="${S.preset==='custom'}">${I.cal}${S.preset==='custom'?esc(rangeLabel()):'Pick dates'}</button></div></div>`;
+}
+
+/* ---------- popovers ---------- */
+function closePop(){ $$('.pop').forEach(p=>p.remove()); }
+function openPop(anchor, html, cls=''){
+  closePop(); const r=anchor.getBoundingClientRect(); const p=document.createElement('div'); p.className='pop '+cls; p.setAttribute('role','menu'); p.innerHTML=html; document.body.appendChild(p);
+  const w=p.offsetWidth, vw=document.documentElement.clientWidth; let left=r.right-w; if (left<8) left=Math.min(r.left, vw-w-8); left=Math.max(8,left);
+  const upward=r.top>innerHeight*.55 && r.top-p.offsetHeight-6>8; p.style.left=left+'px'; p.style.top=(upward?r.top-p.offsetHeight-6:Math.max(8,Math.min(r.bottom+6, innerHeight-p.offsetHeight-8)))+'px'; p.style.transformOrigin=(upward?'bottom ':'top ')+(left<r.left?'left':'right');
+  return p;
+}
+function rangePop(a){
+  const [f,t]=range(), today=ymd(new Date());
+  const p=openPop(a, `<div class="ph2">Date range</div>${PRESETS.filter(x=>x[0]!=='custom').map(([k,l])=>`<button class="pi" data-act="preset" data-p="${k}" aria-pressed="${S.preset===k}">${l}${S.preset===k?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}
+    <hr><div class="ph2">Custom</div><div class="cust"><input class="inp" type="date" id="df" value="${f}" max="${today}" aria-label="From"><input class="inp" type="date" id="dt" value="${t}" max="${today}" aria-label="To"></div>
+    <div style="padding:4px 6px 6px"><button class="btn sm primary wide" data-act="custom-apply">Apply custom range</button></div>`);
+  p.style.width='260px';
+}
+function accountPop(a){
+  const me=S.me||{}, th=store.get('theme','light');
+  const L=LANGS.find(x=>x[0]===I18N.lang)||LANGS[0], pro=isPro();
+  const p=openPop(a, `<div class="pu-card" data-act="me" role="button" tabindex="0"><span class="puc-face">${meFace(64,true)}${lvMini()}</span><span class="puc-t"><b>${esc(dispName())}${pro?` <em class="probadge">${tt('pro.badge','PRO')}</em>`:''}</b><small>${esc(me.email||'')}</small></span><button class="btn primary wide puc-btn" data-act="me">${I.sparkles} ${tt('menu.editprofile','Edit my face & profile')}</button></div><hr>
+    <div class="ph2">${tt('menu.appearance','Appearance')}</div><div class="theme">${[['system','System'],['light','Light'],['dark','Dark']].map(([k,l])=>`<button data-act="theme" data-v="${k}" aria-pressed="${th===k}">${tt('menu.theme.'+k,l)}</button>`).join('')}</div>
+    <button class="pi" data-act="lang-pop"><span class="flag">${L[1]}</span>${tt('lang.choose','Language')}<small class="faint" style="margin-left:auto">${L[2]}</small></button><hr>
+    <button class="pi" data-act="me">${I.user}${tt('nav.me','My profile')}</button>
+    <button class="pi" data-act="nav" data-p="levels">${I.levels}${tt('menu.level','My level')}${lvPopTag()}</button>
+    <button class="pi" data-act="nav" data-p="wallet">${I.wallet}${tt('menu.credits','Credits & plan')}${pro?'':`<small class="probadge sm" style="margin-left:auto">${tt('pro.try','Try Pro')}</small>`}</button>
+    <button class="pi" data-act="ib-prefs">${I.bell}${tt('menu.notif','Notifications')}</button>
+    <button class="pi" data-act="alerts">${I.bolt}${tt('menu.alerts','Telegram alerts')}${FEAT('alerts')?'':`<small class="faint" style="margin-left:auto">${tt('common.soon','Soon')}</small>`}</button>
+    <button class="pi" data-act="nav" data-p="channels">${I.channels}${tt('menu.channels','Channels & bots')}</button>
+    <button class="pi" data-act="chat">${I.chat}${tt('menu.support','Support chat')}</button>
+    ${DEMO?'':`<button class="pi" data-act="change-pass">${I.key}${tt('menu.pass','Change password')}</button>`}
+    ${me.admin?`<a class="pi" href="${DEMO?'admin.html':'/admin'}">${I.shield}${tt('menu.admin','Admin panel')}</a>`:''}
+    ${vooLink('menu')}
+    ${DEMO?'':`<hr><button class="pi" data-act="logout">${I.logout}${tt('menu.logout','Log out')}</button>`}`); p.style.width='280px';
+}
+// Our own attribute: the page host may set data-theme on <html>, which must not turn the dashboard dark. Light unless the user picks Dark or System.
+function applyTheme(v){ document.documentElement.dataset.jv = (v==='dark'||v==='system') ? v : 'light'; }
+applyTheme(store.get('theme','light'));
+
+/* ---------- wallet chip, banners ---------- */
+async function refreshBal(){
+  try { const b=await api('GET','/api/billing'); S.bill=b;
+    document.documentElement.classList.toggle('is-pro', planOf(b)==='pro');
+    const c=$('#balchip'); if(c){ const cr=credOf(b); c.querySelector('.bl').textContent = cr<0?tt('credits.topup','Top up'):tt('credits.n','{n} credits',{n:shortCr(cr)}); c.title=usdTxt(cr); c.setAttribute('aria-label',`${crTxt(cr)} credits, ${usdTxt(cr)}`); c.classList.toggle('low',b.billing_on&&cr<500); }
+    const sc=$('#sidecard'); if(sc){ const M=b.month||{}; const fl=b.free_joins_left||0, fg=b.free_joins_gift||PRICE().free_joins;
+      const w=fl>0?Math.min(100,pct(fg-fl,fg)):Math.min(100,pct(M.joins||0,M.included||PRICE().included));
+      sc.innerHTML=`<div><div class="sl">${tt('credits.title','Credits')}${planOf(b)==='pro'?` <em class="probadge">${tt('pro.badge','PRO')}</em>`:''}</div><div class="sv num">${crTxt(credOf(b))}</div><small>${usdTxt(credOf(b))}${b.rank&&FEAT('ranks')?` · ${esc(b.rank.name)}`:''}</small></div>
+        <div><div class="meter"><i style="width:${w}%"></i></div><small style="display:block;margin-top:6px">${fl>0?`🎁 ${fmt(fl)} of ${fmt(fg)} free joins left`:tt('credits.month','{a} of {b} joins this month',{a:fmt(M.joins||0),b:fmt(M.included||PRICE().included)})}</small></div>
+        <button class="btn sm primary wide" data-act="deposit">${I.plus} ${tt('credits.buy','Buy credits')}</button>`; }
+    drawBanners();
+  } catch{}
+}
+function drawBanners(){
+  const el=$('#banners'); if(!el) return; const b=S.bill, me=S.me||{}; let h='';
+  if (b && b.billing_on && b.tracking===false) h+=`<div class="banner pause" role="status"><span class="bd"></span><span><b>Tracking is paused.</b> ${b.state==='suspended'?'Your account is suspended. Contact support.':b.state==='need_plan'?`Add at least ${money(b.month.base_cents)} to start this month’s plan.`:'Your wallet is empty.'} Your ads still work; joins just aren’t tracked or sent to your ad platforms.</span>${b.state==='suspended'?'<button class="btn sm" data-act="chat">Contact support</button>':'<button class="btn sm primary" data-act="deposit">Top up</button>'}</div>`;
+  if (me.email_on && !me.verified && !S.mailHidden) h+=`<div class="banner mail" role="status"><span class="bd"></span><span>${S.verifyExpired?'<b>That confirmation link expired.</b> Send yourself a new one.':`<b>Confirm your email to unlock your first ${fmt(me.free_joins_gift||500)} tracked joins free.</b> Check your inbox for the link.`}</span><button class="btn sm" data-act="resend">${I.mail} Resend email</button><button class="x2" data-act="hide-mail" aria-label="Hide">${I.x}</button></div>`;
+  el.innerHTML=h;
+}

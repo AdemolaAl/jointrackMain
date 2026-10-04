@@ -1,0 +1,5 @@
+# Replace joinvoo.com with your domain. Caddy gets and renews the https certificate by itself.
+joinvoo.com, www.joinvoo.com {
+	encode gzip
+	reverse_proxy 127.0.0.1:3000
+}

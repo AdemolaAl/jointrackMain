@@ -1,0 +1,36 @@
+<style>
+/* VooSquare sign-in (login + signup). Hidden unless /api/config voo.login is 'both' or 'only' (preview: ?voo=both|only). */
+.vbox{display:flex;flex-direction:column;gap:10px;margin:0 0 4px}
+.vline{display:flex;align-items:center;gap:8px;margin:0;font-size:13.5px;font-weight:700;color:var(--muted)}
+.vline i{width:7px;height:7px;border-radius:50%;background:#0fae6b;box-shadow:0 0 0 4px color-mix(in srgb,#0fae6b 18%,transparent)}
+.vbtn{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;padding:12px 20px;border-radius:99px;background:#fff;color:#141413;border:1.5px solid #e4e2dc;font:800 16.5px var(--f);text-decoration:none;box-shadow:0 1px 2px rgba(20,20,18,.05),0 14px 30px -18px rgba(15,174,107,.55);transition:transform .2s,box-shadow .2s,border-color .2s}
+.vbtn:hover{transform:translateY(-2px);border-color:#0fae6b;box-shadow:0 0 0 4px color-mix(in srgb,#0fae6b 14%,transparent),0 18px 34px -18px rgba(15,174,107,.6)}
+.vbtn:focus-visible{outline:2px solid #0fae6b;outline-offset:3px}
+.vbtn .vm{width:26px;height:26px;flex:none}
+.vbtn .va{width:18px;height:18px;margin-left:2px;color:#0fae6b;transition:transform .2s}.vbtn:hover .va{transform:translateX(3px)}
+.vor{display:flex;align-items:center;gap:14px;margin:18px 0 14px;color:var(--faint);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.vor::before,.vor::after{content:"";flex:1;height:1px;background:var(--line)}
+.vstaff{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:700;color:var(--faint);text-decoration:none}.vstaff:hover{color:var(--ink);text-decoration:underline}
+.vonly-note{margin:6px 0 0;font-size:13.5px;color:var(--faint)}
+</style>
+<script>
+window.JVVoo=(function(){
+  var MARK='<svg class="vm" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg>';
+  var ARR='<svg class="va" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+  var q={}; try{ q=Object.fromEntries(new URLSearchParams(location.search)); }catch(e){}
+  var preview=!!window.JP_DEMO||location.protocol==='file:';
+  var norm=function(m){ return m==='both'||m==='only'?m:'off'; };
+  return {
+    local: q.local==='1',
+    /* calls cb(mode) once: 'off' | 'both' | 'only'. Live: /api/config voo.login. Preview: ?voo=both|only, otherwise off. */
+    mode: function(cb){
+      if(preview){ cb(norm(q.voo)); return; }
+      fetch('/api/config',{credentials:'same-origin'}).then(function(r){ return (r.headers.get('content-type')||'').indexOf('json')>-1?r.json():null; })
+        .then(function(c){ cb(norm(c&&c.voo&&c.voo.login)); }).catch(function(){ cb('off'); });
+    },
+    block: function(withOr){
+      return '<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
+    }
+  };
+})();
+</script>

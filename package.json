@@ -1,0 +1,14 @@
+{
+  "name": "joinvoo",
+  "version": "1.1.0",
+  "description": "Telegram join tracking for Meta and TikTok ads",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "backup": "node scripts/backup.js",
+    "build": "python3 build/build.py",
+    "test": "bash tests/runall.sh"
+  },
+  "engines": { "node": ">=22.13" },
+  "license": "UNLICENSED"
+}

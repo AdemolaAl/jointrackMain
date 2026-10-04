@@ -1,0 +1,175 @@
+[
+ {
+  "slug": "why-your-cost-per-subscriber-lies",
+  "title": "Why your cost per subscriber lies to you",
+  "description": "A cheap cost per subscriber can be the most expensive number in your account. How fake and junk joins get in, why they poison optimisation, and how to read subscriber cost honestly.",
+  "author": "Dchessking",
+  "date": "2026-09-29",
+  "tags": [
+   "Fake joins",
+   "Analytics"
+  ],
+  "cover": "/media/blog/why-your-cost-per-subscriber-lies.webp",
+  "reading_time": 6,
+  "url": "/blog/why-your-cost-per-subscriber-lies"
+ },
+ {
+  "slug": "how-to-track-telegram-channel-joins-from-meta-ads",
+  "title": "How to track Telegram channel joins from Meta ads",
+  "description": "Meta can't see who joins your Telegram channel. Here's how join tracking actually works, what to send back to Meta, and how to set it up so your ads optimise for real subscribers.",
+  "author": "Joinvoo Team",
+  "date": "2026-09-23",
+  "tags": [
+   "Tracking",
+   "Meta"
+  ],
+  "cover": "/media/blog/how-to-track-telegram-channel-joins-from-meta-ads.webp",
+  "reading_time": 6,
+  "url": "/blog/how-to-track-telegram-channel-joins-from-meta-ads"
+ },
+ {
+  "slug": "conversions-api-for-telegram-funnels-explained",
+  "title": "Conversions API for Telegram funnels, explained",
+  "description": "What Meta's Conversions API, TikTok's Events API and Snap's Conversions API actually do, which fields matter for matching, and how server-side events make Telegram campaigns optimise for real people.",
+  "author": "Joinvoo Team",
+  "date": "2026-09-09",
+  "tags": [
+   "CAPI",
+   "Meta",
+   "Tracking",
+   "Fake joins"
+  ],
+  "cover": "/media/blog/conversions-api-for-telegram-funnels-explained.webp",
+  "reading_time": 6,
+  "url": "/blog/conversions-api-for-telegram-funnels-explained"
+ },
+ {
+  "slug": "scale-a-winning-ad-set-without-killing-it",
+  "title": "How to scale a winning ad set without killing it",
+  "description": "Vertical vs horizontal scaling, how fast to raise budgets, when to duplicate, and how to protect lead quality while you push spend on Telegram campaigns.",
+  "author": "Dchessking",
+  "date": "2026-09-02",
+  "tags": [
+   "Scaling",
+   "Meta",
+   "Fake joins"
+  ],
+  "cover": "/media/blog/scale-a-winning-ad-set-without-killing-it.webp",
+  "reading_time": 6,
+  "url": "/blog/scale-a-winning-ad-set-without-killing-it"
+ },
+ {
+  "slug": "tiktok-ads-to-telegram-full-setup",
+  "title": "TikTok ads to Telegram: the full setup",
+  "description": "A complete, step-by-step setup for running TikTok ads to a Telegram channel, group or bot, with joins sent back through the TikTok Events API so campaigns optimise for real subscribers.",
+  "author": "Joinvoo Team",
+  "date": "2026-08-26",
+  "tags": [
+   "TikTok",
+   "Tracking",
+   "CAPI"
+  ],
+  "cover": "/media/blog/tiktok-ads-to-telegram-full-setup.webp",
+  "reading_time": 6,
+  "url": "/blog/tiktok-ads-to-telegram-full-setup"
+ },
+ {
+  "slug": "cost-per-ftd-vs-cost-per-join",
+  "title": "Cost per FTD vs cost per join: what you should actually optimise",
+  "description": "Optimise for joins and you get volume. Optimise for first deposits and you get buyers, if you have enough data. How to choose, when to switch, and how to run both without starving the algorithm.",
+  "author": "Dchessking",
+  "date": "2026-08-19",
+  "tags": [
+   "Deposits",
+   "Analytics"
+  ],
+  "cover": "/media/blog/cost-per-ftd-vs-cost-per-join.webp",
+  "reading_time": 5,
+  "url": "/blog/cost-per-ftd-vs-cost-per-join"
+ },
+ {
+  "slug": "backup-channels-ban-proof-telegram-funnel",
+  "title": "Backup channels: how to ban-proof your Telegram funnel",
+  "description": "Channels get restricted, bots get blocked, ads get rejected. How to build a Telegram funnel with backups at every layer, so one problem doesn't stop your ads or wipe out your tracking.",
+  "author": "Joinvoo Team",
+  "date": "2026-08-12",
+  "tags": [
+   "Funnels",
+   "Scaling"
+  ],
+  "cover": "/media/blog/backup-channels-ban-proof-telegram-funnel.webp",
+  "reading_time": 5,
+  "url": "/blog/backup-channels-ban-proof-telegram-funnel"
+ },
+ {
+  "slug": "snapchat-ads-for-telegram-channels",
+  "title": "Snapchat ads for Telegram channels: a practical playbook",
+  "description": "How to run Snapchat ads to a Telegram channel or bot, set up the Snap Pixel and Conversions API, pick the right event, and make vertical creative that earns the join.",
+  "author": "Joinvoo Team",
+  "date": "2026-08-05",
+  "tags": [
+   "Snapchat",
+   "Tracking",
+   "CAPI"
+  ],
+  "cover": "/media/blog/snapchat-ads-for-telegram-channels.webp",
+  "reading_time": 5,
+  "url": "/blog/snapchat-ads-for-telegram-channels"
+ },
+ {
+  "slug": "bot-vs-channel-funnels",
+  "title": "Bot funnels vs channel funnels: which one should you run?",
+  "description": "Channels are great for reach and trust. Bots are great for one-to-one conversion and clean tracking. How each funnel works, what each tracks well, and how to combine them.",
+  "author": "Dchessking",
+  "date": "2026-07-29",
+  "tags": [
+   "Funnels",
+   "Deposits"
+  ],
+  "cover": "/media/blog/bot-vs-channel-funnels.webp",
+  "reading_time": 5,
+  "url": "/blog/bot-vs-channel-funnels"
+ },
+ {
+  "slug": "postbacks-101-for-media-buyers",
+  "title": "Postbacks 101 for media buyers",
+  "description": "What a postback is, how the sub ID makes it work, which macros to use, and how to connect sign-ups, first deposits and sales from your offer back to your Telegram tracking and ad platforms.",
+  "author": "Joinvoo Team",
+  "date": "2026-07-22",
+  "tags": [
+   "Deposits",
+   "Tracking"
+  ],
+  "cover": "/media/blog/postbacks-101-for-media-buyers.webp",
+  "reading_time": 5,
+  "url": "/blog/postbacks-101-for-media-buyers"
+ },
+ {
+  "slug": "utm-naming-conventions-that-survive-scale",
+  "title": "UTM naming conventions that survive scale",
+  "description": "A naming system for campaigns, ad sets and ads that stays readable at hundreds of ads, works across Meta, TikTok and Snapchat, and makes your Telegram join and deposit reports actually useful.",
+  "author": "Joinvoo Team",
+  "date": "2026-07-15",
+  "tags": [
+   "Analytics",
+   "Scaling"
+  ],
+  "cover": "/media/blog/utm-naming-conventions-that-survive-scale.webp",
+  "reading_time": 5,
+  "url": "/blog/utm-naming-conventions-that-survive-scale"
+ },
+ {
+  "slug": "reading-your-numbers-roas-cpl-ftd-rate",
+  "title": "Reading your numbers: ROAS, CPL and FTD rate without fooling yourself",
+  "description": "The handful of metrics that matter in a Telegram funnel, how they connect, and the traps that make good campaigns look bad and bad campaigns look good.",
+  "author": "Dchessking",
+  "date": "2026-07-08",
+  "tags": [
+   "Analytics",
+   "Deposits"
+  ],
+  "cover": "/media/blog/reading-your-numbers-roas-cpl-ftd-rate.webp",
+  "reading_time": 5,
+  "url": "/blog/reading-your-numbers-roas-cpl-ftd-rate"
+ }
+]

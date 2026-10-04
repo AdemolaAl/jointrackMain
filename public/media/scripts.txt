@@ -1,0 +1,47 @@
+JOINVOO VIDEO SCRIPTS
+Presenter: one AI-generated presenter (same identity in both videos). English.
+
+==================================================
+1) "WHY" VIDEO (homepage, ~55 s, 4 takes)
+==================================================
+[Take 1]
+No tracking? You're paying for fake leads. Meta, TikTok and Snapchat can't see inside Telegram. So they optimize for clicks. Bots. Accidental taps. Your CPA climbs, and you can't tell which ad brings depositors.
+
+[Take 2]
+We know, because we buy traffic too. At Zedapex we needed every join, and every first deposit, fed back to the algorithm. Nothing did it cleanly. So we built Joinvoo.
+
+[Take 3]
+Every click gets its own invite link. So every join is matched to the exact campaign and ad. Then every join, and every deposit, goes straight back to Meta, TikTok and Snapchat.
+
+[Take 4]
+Now your ads learn from real depositors, not bots. Your first 500 joins are free. Set it up in 10 minutes at Joinvoo.
+
+==================================================
+2) SETUP GUIDE (~2 min 15 s, 9 takes)
+==================================================
+[Take 1]
+10 minutes, zero code. Let's set up Joinvoo together. Step one. Open Telegram, find BotFather, and send the newbot command. Pick any name, and a username that ends in bot.
+
+[Take 2]
+BotFather sends you a token. Copy it. Now, in Joinvoo, paste that token and tap Connect bot. That's it, your bot is live. Next, choose what you want to track.
+
+[Take 3]
+For a channel or group, tap Add to my channel and pick it. The bot joins as admin with Invite users switched on. Tracking a bot instead? Pick Bot subscribers.
+
+[Take 4]
+And if your bot already runs somewhere else, use the no token option, so you never share its token. Now the important part. Connecting your ads. This is what makes the algorithm smarter.
+
+[Take 5]
+Pick Meta, TikTok or Snapchat. Paste your pixel or dataset ID, and your access token. Then hit Save and send a test. You'll see the test event land in your Events Manager.
+
+[Take 6]
+Now your tracking link. Copy it, and put it in your ad as the website URL, instead of your Telegram link. Add UTM tags, so you can see which campaign and ad brought every person.
+
+[Take 7]
+Before you spend, test it. Click your link on your phone and join the channel. Then you'll see that join show up in your dashboard, matched to the campaign and ad.
+
+[Take 8]
+In the dashboard you'll see clicks, joins, join rate and first deposits. Compare this month against last month. And break it all down by campaign, ad, country and platform.
+
+[Take 9]
+Tracking deposits? Copy your postback URL into your network, tracker or bot. Every first deposit goes back to your ad platform too. Your first 500 joins are free. Set it up today at Joinvoo.

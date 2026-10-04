@@ -1,0 +1,465 @@
+<title>How to use Joinvoo</title>
+<meta name="description" content="Set up Joinvoo in about 10 minutes: create a bot, add it to your channel, connect Meta, TikTok or Snapchat, put your tracking link in your ads, and send deposits back too.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/*SHARED*/
+/* Layout: a manual. Dark glowing header; then a left rail (sticky table of contents with progress) and numbered steps, each with plain instructions beside a drawn mock of the exact screen. Under 900px the rail becomes a sticky chip strip. */
+body{font-size:16.5px}
+.hd{position:relative;overflow:hidden;isolation:isolate;padding-bottom:clamp(40px,6vw,72px);border-bottom:1px solid var(--line)}
+.hd .mesh{position:absolute;inset:-30% -10% auto;height:760px;pointer-events:none;z-index:-1}
+.hd .mesh i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.6;animation:drift 18s ease-in-out infinite}
+.hd .mesh i:nth-child(1){width:520px;height:520px;left:2%;top:10%;background:var(--lilac)}
+.hd .mesh i:nth-child(2){width:420px;height:420px;right:4%;top:0;background:color-mix(in srgb,var(--accent) 24%,transparent);animation-delay:-6s}
+.hd .mesh i:nth-child(3){width:340px;height:340px;left:45%;top:45%;background:var(--mint);animation-delay:-12s}
+@keyframes drift{33%{transform:translate(60px,-40px) scale(1.08)}66%{transform:translate(-40px,30px) scale(.95)}}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;height:72px}
+.top nav{display:flex;gap:6px;align-items:center}
+.top .login{background:transparent;border-color:transparent;color:var(--ink)}
+.hero{padding-top:clamp(30px,5vw,56px);display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:end}
+.hero h1{font-size:clamp(42px,6.6vw,80px);letter-spacing:-.05em;line-height:.98;margin-top:14px}
+.hero h1 span{background:linear-gradient(100deg,#5b3df5,#8f7bff,#5b3df5);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 6s linear infinite}
+@keyframes sheen{to{background-position:-200% 0}}
+.hero p{color:var(--muted);font-size:clamp(17px,2vw,20px);max-width:54ch;margin:16px 0 0}
+.need{background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:20px 22px;box-shadow:var(--shadow)}
+.need b{display:block;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-text);margin-bottom:12px}
+.need li{margin:9px 0;list-style:none;display:flex;gap:10px;color:var(--ink);font-size:15px;font-weight:600}.need ul{margin:0;padding:0}
+.need li i{width:26px;height:26px;border-radius:9px;background:var(--lilac);display:grid;place-items:center;flex:none;font-style:normal;font-size:13px}
+.timer{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:8px 15px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:14px;box-shadow:0 6px 20px -12px rgba(0,0,0,.2)}
+.timer i{width:8px;height:8px;border-radius:50%;background:#4FD4A4;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:48px;align-items:start;padding-block:40px 70px}
+.toc{position:sticky;top:20px;display:flex;flex-direction:column;gap:2px;font-size:14.5px}
+.toc a{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;text-decoration:none;color:var(--muted);font-weight:500;transition:background .2s,color .2s}
+.toc a span{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font:500 12px var(--mono);background:var(--sunk);flex:none;transition:background .2s,color .2s}
+.toc a.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);font-weight:600}
+.toc a.on span{background:var(--brand);color:#fff}
+.toc a.done span{background:var(--mint-soft);color:var(--success-text)}
+.toc .bar{height:4px;border-radius:4px;background:var(--sunk);margin:4px 12px 12px;overflow:hidden}
+.toc .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .3s}
+.step{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:32px;padding:36px 0;border-top:1px solid var(--line);scroll-margin-top:16px}
+.step:first-child{border-top:0;padding-top:0}
+.step.full{grid-template-columns:minmax(0,1fr)}
+.step .n{display:inline-flex;align-items:center;gap:10px;font:500 12.5px/1 var(--mono);color:var(--brand-text);letter-spacing:.04em;text-transform:uppercase}
+.step .n b{width:30px;height:30px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:14px;letter-spacing:0}
+.step h2{font-size:clamp(25px,3vw,34px);letter-spacing:-.04em;margin:14px 0 12px}
+.step h3{font-size:18px;letter-spacing:-.02em;margin:22px 0 8px;display:flex;align-items:center;gap:10px}
+.step h3 .pl{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none}
+.step h3 .pl svg{width:15px;height:15px}
+.step p{margin:0 0 12px;color:var(--muted)}
+.step p b,.step li b{color:var(--ink);font-weight:600}
+.step a{color:var(--brand-text)}
+ol.do{margin:0 0 14px;padding:0;counter-reset:d;list-style:none}
+ol.do li{counter-increment:d;position:relative;padding:8px 0 8px 42px;color:var(--muted)}
+ol.do li::before{content:counter(d);position:absolute;left:0;top:7px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:500 12.5px var(--mono);background:var(--surface);color:var(--ink)}
+code,.code{font-family:var(--mono);font-size:.84em;background:var(--sunk);padding:2px 7px;border-radius:7px;word-break:break-word;color:var(--ink)}
+.code{display:block;padding:13px 70px 13px 14px;border-radius:14px;margin:8px 0 14px;position:relative;line-height:1.6;border:1px solid var(--line);word-break:break-all}
+.code em{font-style:normal;color:var(--brand-text)}.code u{text-decoration:none;color:var(--amber-text)}
+.copy{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 10px;font:600 12px var(--f);cursor:pointer;color:var(--ink)}
+.tip,.warn{border-radius:16px;padding:13px 16px;margin:10px 0 14px;font-size:15px;display:flex;gap:12px;align-items:flex-start;color:var(--ink)}
+.tip{background:var(--brand-soft)}.warn{background:var(--amber-soft)}
+.tip::before,.warn::before{content:"";width:20px;height:20px;flex:none;margin-top:1px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.tip::before{color:var(--brand-text);--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z'/%3E%3C/svg%3E")}
+.warn::before{color:var(--amber-text);--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 3 2 21h20L12 3zM12 10v5M12 18h.01'/%3E%3C/svg%3E")}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 14px}
+.fork div{border:1px solid var(--line);border-radius:18px;padding:15px 17px;background:var(--surface)}
+.fork div>b{display:block;margin-bottom:4px;color:var(--ink)}.fork small b{color:var(--ink)}.fork small{color:var(--muted);font-size:14px}
+.maptbl{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.maptbl th,.maptbl td{padding:10px 12px;border-top:1px solid var(--line);text-align:left}
+.maptbl th{font-weight:600;color:var(--muted);font-size:13px;background:var(--sunk);border-top:0}
+.maptbl td code{white-space:nowrap;font-size:.8em}
+.maptbl td:first-child{font-weight:600;color:var(--ink)}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.opts3{display:flex;flex-direction:column;gap:10px;margin:8px 0 16px}
+.opts3 .o{border:1px solid var(--line);border-radius:20px;padding:15px 17px;background:var(--surface)}
+.opts3 .o.rec{border-color:color-mix(in srgb,#5b3df5 45%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 10%,transparent)}
+.opts3 b{display:block;color:var(--ink);font-size:16px}.opts3 small{display:block;color:var(--muted);font-size:14.5px;line-height:1.55;margin-top:4px}.opts3 small b{display:inline;font-size:inherit}
+.tag2{display:inline-block;margin-bottom:6px;padding:3px 10px;border-radius:99px;background:var(--lilac);color:var(--brand-text);font-size:12px;font-weight:800}
+.walk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:center;padding:24px 28px;margin:40px 0 0;border-radius:32px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)}
+.walk.novid{display:none}
+.walk h2{font-size:clamp(26px,3vw,36px);letter-spacing:-.04em;margin:10px 0 8px}
+.walk p{margin:0;color:var(--muted)}
+.walk .kick{font-size:13px}
+.wphone{position:relative;margin:0;width:220px;aspect-ratio:9/16;border-radius:34px;border:8px solid #141413;background:#0b0a12;overflow:hidden}
+.wphone video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media (max-width:900px){.walk{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;padding:22px}.wphone{width:min(240px,70vw)}}
+/* drawn screens */
+.screen{background:#fff;border-radius:30px;border:8px solid #15131F;box-shadow:var(--shadow);overflow:hidden;font:14px/1.4 system-ui,-apple-system,sans-serif;color:#10202f;position:sticky;top:20px;align-self:start}
+.screen .hd2{background:#f6f6f6;border-bottom:1px solid #e3e3e3;padding:12px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+.screen .hd2 i{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2aabee,#229ed9);flex:none;display:grid;place-items:center;color:#fff;font-style:normal;font-size:14px}
+.screen .hd2 small{display:block;font-weight:500;color:#8a8a8a;font-size:12px}
+.chat{background:#cfe3c4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='1.4' fill='%23b4cfa6'/%3E%3C/svg%3E");padding:14px 12px;display:flex;flex-direction:column;gap:8px;min-height:300px}
+.msg{max-width:84%;padding:8px 11px;border-radius:14px;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.08);opacity:0;transform:translateY(8px)}
+.msg.me{align-self:flex-end;background:#e2ffc7}
+.screen.play .msg{animation:in .4s forwards}
+.screen.play .msg:nth-child(2){animation-delay:.5s}.screen.play .msg:nth-child(3){animation-delay:1s}.screen.play .msg:nth-child(4){animation-delay:1.5s}.screen.play .msg:nth-child(5){animation-delay:2s}.screen.play .msg:nth-child(6){animation-delay:2.5s}.screen.play .msg:nth-child(7){animation-delay:3s}
+@keyframes in{to{opacity:1;transform:none}}
+.tok{font-family:var(--mono);font-size:11.5px;background:#fff5d6;padding:4px 6px;border-radius:6px;display:block;margin-top:5px;word-break:break-all;outline:2px dashed #e0a800}
+.ui{background:#f7f6f2;padding:16px;min-height:340px;display:flex;flex-direction:column;gap:10px;color:#141413;font-family:var(--f)}
+.ui .lbl{font-size:12px;font-weight:600;color:#a19f98}
+.ui .inp{background:#fff;border:1px solid #e9e7e1;border-radius:12px;padding:10px 12px;font-family:var(--mono);font-size:12px;color:#141413;height:auto}
+.ui .inp.hl{border-color:#5b3df5;box-shadow:0 0 0 4px #efebff}
+.ui .bt{background:#5b3df5;color:#fff;border-radius:12px;padding:11px;text-align:center;font-weight:600}
+.ui .bt.tg{background:#2aabee}
+.ui .ok{background:#e8f3ec;color:#2e7d57;border-radius:12px;padding:10px 12px;font-weight:600;font-size:13px}
+.ui .row{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:12px;padding:10px 12px;border:1px solid #e9e7e1}
+.ui .sw{width:34px;height:20px;border-radius:99px;background:#34c759;position:relative;flex:none}.ui .sw::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.ui .sw.off{background:#d6d6d6}.ui .sw.off::after{right:auto;left:2px}
+.ui .card2{background:#fff;border-radius:14px;padding:12px;border:1px solid #e9e7e1}
+.ui h4{margin:0;font-size:16px;letter-spacing:-.02em}
+.ui .tabs{display:flex;gap:6px}.ui .tabs span{padding:6px 10px;border-radius:99px;background:#fff;border:1px solid #e9e7e1;font-size:12px;font-weight:600;color:#67665f}.ui .tabs span.on{background:#141413;color:#fff;border-color:#141413}
+.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{box-shadow:0 0 0 8px rgba(106,75,255,.15)}}
+.meta-ui{background:#f0f2f5;padding:14px;min-height:340px;display:flex;flex-direction:column;gap:10px;color:#1c1e21}
+.meta-ui .side{display:flex;gap:6px;flex-wrap:wrap}.meta-ui .side span{background:#fff;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600}
+.meta-ui .side span.on{background:#e7f0fd;color:#0866ff}
+.meta-ui .box{background:#fff;border-radius:10px;padding:12px;font-size:13px}
+.meta-ui .bl{background:#0866ff;color:#fff;border-radius:8px;padding:8px 12px;font-weight:700;display:inline-block;font-size:13px}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:2px 18px;margin-bottom:10px}
+.faq details[open]{border-color:color-mix(in srgb,var(--brand) 30%,var(--line))}
+.faq summary{cursor:pointer;font-weight:600;padding:14px 0;list-style:none;display:flex;justify-content:space-between;gap:10px;color:var(--ink)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-size:22px;line-height:1;color:var(--brand-text);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:0 0 14px;color:var(--muted)}
+.end{position:relative;overflow:hidden;isolation:isolate;background:#0b0a12;color:#fff;border-radius:var(--r4);padding:clamp(26px,4vw,40px);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-top:24px}
+.end::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(50% 120% at 90% 50%,rgba(91,61,245,.55),transparent 70%)}
+.end h2{font-size:clamp(26px,3vw,34px);margin:0;color:#fff}.end p{margin:6px 0 0;color:#BDBAD8}
+footer{padding:26px 0 40px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line)}
+footer .fl{display:flex;flex-wrap:wrap;gap:6px 16px}footer a{color:var(--muted);text-decoration:none}footer a:hover{color:var(--ink)}
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .layout{grid-template-columns:minmax(0,1fr);gap:0;padding-top:0}
+  .toc{position:sticky;top:0;z-index:4;flex-direction:row;overflow-x:auto;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 20px;margin-inline:-20px;scrollbar-width:none;margin-bottom:24px;border-bottom:1px solid var(--line)}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{white-space:nowrap;padding:7px 10px}.toc .bar{display:none}
+  .step{grid-template-columns:minmax(0,1fr);scroll-margin-top:64px}
+  .screen{position:relative;top:0;max-width:340px;margin:0 auto;width:100%}
+  .fork{grid-template-columns:1fr}
+  .top nav .hide-m{display:none}
+}
+@media (max-width:480px){.top .blogl{display:none}}
+@media (max-width:420px){.top .btn{padding:9px 13px;font-size:14px}.top .logo{font-size:19px}.top .mark{width:34px;height:34px}}
+</style>
+<header class="hd">
+  <div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap">
+    <div class="top"><a class="logo" href="{{HOME}}">{{LOGO}}Joinvoo</a>
+      <nav><a class="btn sm login blogl" href="{{BLOG}}">Blog</a><div class="lsw" data-lsw></div><a class="btn sm login" href="{{LOGIN}}">Log in</a><a class="btn sm violet" href="{{SIGNUP}}">Start free</a></nav></div>
+    <section class="hero">
+      <div><span class="eyebrow">Setup guide</span><h1>Set up Joinvoo in <span>10 minutes.</span></h1>
+        <p>Follow these steps once. After that, every person who joins from your ads shows up in your dashboard and is sent to Meta, TikTok or Snapchat automatically. Deposits too, if you want them.</p>
+        <span class="timer"><i></i>About 10 minutes, start to finish</span></div>
+      <div class="need"><b>Have these ready</b><ul>
+        <li><i>📱</i><span>Telegram on your phone</span></li>
+        <li><i>📣</i><span>Your channel, group or bot (you must be the owner or an admin)</span></li>
+        <li><i>📊</i><span>Access to Meta Events Manager, TikTok Ads Manager or Snapchat Ads Manager</span></li></ul></div>
+    </section>
+  </div>
+</header>
+<div class="wrap">
+  <section class="walk novid" id="walk" aria-label="Video walkthrough">
+    <div><span class="kick">Video</span><h2>Watch the 2-minute walkthrough.</h2><p>The whole setup on one screen: bot, channel, Meta, TikTok or Snapchat, tracking link, first test join. Then follow the steps below at your own pace.</p></div>
+    <figure class="wphone"><video id="walkVid" controls playsinline preload="none" data-poster="media/joinvoo-guide.jpg" src="media/joinvoo-guide.mp4" aria-label="Video: Joinvoo setup walkthrough"></video></figure>
+  </section>
+  <div class="layout">
+    <nav class="toc" id="toc" aria-label="Steps">
+      <div class="bar"><i id="prog"></i></div>
+      <a href="#account"><span>1</span>Create your account</a>
+      <a href="#bot"><span>2</span>Make a bot</a>
+      <a href="#token"><span>3</span>Paste the token</a>
+      <a href="#connect"><span>4</span>Connect your channel</a>
+      <a href="#pixel"><span>5</span>Connect your ad platforms</a>
+      <a href="#ads"><span>6</span>Put the link in your ads</a>
+      <a href="#test"><span>7</span>Test with your phone</a>
+      <a href="#ftd"><span>8</span>Track deposits and sales</a>
+      <a href="#requests"><span>9</span>Join-request mode</a>
+      <a href="#integrations"><span>10</span>Connect your program</a>
+      <a href="#wallet"><span>11</span>Credits and ranks</a>
+      <a href="#pro"><span>12</span>Pro and the deposit trial</a>
+      <a href="#spend"><span>13</span>Ad spend and ROAS</a>
+      <a href="#alerts"><span>14</span>Telegram alerts</a>
+      <a href="#joe"><span>15</span>Meet Joe</a>
+      <a href="#backup"><span>16</span>Backup channel</a>
+      <a href="#earn"><span>17</span>Earn with referrals</a>
+      <a href="#fix"><span>?</span>Fix a problem</a>
+    </nav>
+
+    <div>
+      <section class="step" id="account">
+        <div><span class="n"><b>1</b>1 minute</span><h2>Create your account</h2>
+          <p>Go to <a href="{{SIGNUP}}"><b>Sign up</b></a> and enter your name, email and a password. If a friend sent you their referral link, their code is filled in for you. Already have an account? <a href="{{LOGIN}}"><b>Log in</b></a>.</p>
+          <p>You land in your dashboard straight away. A short setup guide opens by itself and follows the same steps as this page.</p>
+          <div class="tip"><span>Confirm your email and your <b>first 500 tracked joins are free</b>. No top-up needed until you’ve used them.</span></div></div>
+        <div class="screen"><div class="ui"><h4>Create your account</h4><span class="lbl">Your name</span><div class="inp">Alex Morgan</div><span class="lbl">Email</span><div class="inp">you@company.com</div><span class="lbl">Password</span><div class="inp">••••••••••</div><div class="bt pulse">Create account</div></div></div>
+      </section>
+
+      <section class="step" id="bot">
+        <div><span class="n"><b>2</b>2 minutes</span><h2>Make a bot with BotFather</h2>
+          <p>Joinvoo uses <b>your own bot</b>. The bot creates a fresh invite link for every person who clicks your ad, so we know exactly which ad each person came from. BotFather is Telegram’s official tool for making bots, and it’s free.</p>
+          <ol class="do">
+            <li>In Telegram, search for <b>@BotFather</b> (with the blue tick) and tap <b>Start</b>.</li>
+            <li>Send <code>/newbot</code>.</li>
+            <li>Send a name for your bot, for example <b>Daily Deals Tracker</b>. Members never see it.</li>
+            <li>Send a username that ends in <b>bot</b>, for example <code>dailydeals_track_bot</code>. If it’s taken, try another.</li>
+            <li>BotFather replies with a long <b>token</b> that looks like <code>7712045533:AAHk3v…</code>. Tap it to copy it.</li>
+          </ol>
+          <div class="warn"><span>Keep the token private. Anyone with it can control your bot. If it leaks, send <code>/revoke</code> to BotFather and paste the new one into Joinvoo.</span></div>
+          <div class="tip"><span>Use a <b>new bot just for Joinvoo</b>. A bot can only send its messages to one place, so a bot that already runs something else (a shop bot, a support bot, another tracker) can stop working if you connect it. Tracking your bot’s subscribers is the exception; see step 4.</span></div></div>
+        <div class="screen" data-play><div class="hd2"><i>🤖</i><span>BotFather<small>bot</small></span></div>
+          <div class="chat"><div class="msg me">/newbot</div><div class="msg">Alright, a new bot. How are we going to call it?</div><div class="msg me">Daily Deals Tracker</div><div class="msg">Good. Now choose a username. It must end in “bot”.</div><div class="msg me">dailydeals_track_bot</div><div class="msg">Done! Use this token to access the HTTP API:<span class="tok">7712045533:AAHk3vZq9xR2mW8pL4tN6cY1bJ0sD5fG7hE</span></div></div></div>
+      </section>
+
+      <section class="step" id="token">
+        <div><span class="n"><b>3</b>30 seconds</span><h2>Paste the token into Joinvoo</h2>
+          <ol class="do">
+            <li>On a new account, setup opens by itself. Later you can start it from <b>Channels → Add another channel</b>.</li>
+            <li>Paste the token and tap <b>Connect bot</b>.</li>
+            <li>You’ll see <b>✓ @yourbot connected</b>. That’s it.</li>
+          </ol>
+          <p>If you see “Telegram rejected this token”, part of it was missed when copying. Copy it again from BotFather, or send <code>/token</code> to BotFather to see it again.</p></div>
+        <div class="screen"><div class="ui"><span class="lbl">STEP 1 OF 3</span><h4>Connect your bot</h4><span class="lbl">Bot token from BotFather</span><div class="inp hl">7712045533:AAHk3vZq9xR2mW8p…</div><div class="bt">Connect bot</div><div class="ok">✓ @dailydeals_track_bot connected</div></div></div>
+      </section>
+
+      <section class="step" id="connect">
+        <div><span class="n"><b>4</b>1 minute</span><h2>Connect your channel, group or bot</h2>
+          <p>Choose what people are joining:</p>
+          <div class="fork"><div><b>📣 Channel or group</b><small>People join your channel or group from your ad.</small></div><div><b>🤖 Bot subscribers</b><small>People press <b>Start</b> on your bot from your ad.</small></div></div>
+          <p><b>Channel or group:</b></p>
+          <ol class="do">
+            <li>Tap <b>Add to my channel</b> (for a group, tap <b>It’s a group, not a channel</b>). Telegram opens.</li>
+            <li>Pick your channel or group. Telegram asks to make the bot an admin. Keep <b>Invite users via link</b> switched on, then tap <b>Add bot</b> or <b>Save</b>.</li>
+            <li>Come back to Joinvoo. Your channel appears by itself within a few seconds with <b>Live</b> next to it.</li>
+          </ol>
+          <div class="tip"><span>Use a <b>private</b> channel or group if you can. With a public one, people can join by searching your name instead of using your ad link, and those joins can’t be matched to an ad. They show as “Organic”.</span></div>
+          <p><b>Bot subscribers:</b> pick the option that fits your bot.</p>
+          <div class="opts3">
+            <div class="o rec"><span class="tag2">Recommended · no code</span><b>A. A new bot for Joinvoo</b><small>Make a bot in @BotFather and paste its token. Joinvoo tracks every Start and can send your welcome message and button. Nothing else to set up.</small></div>
+            <div class="o"><b>B. Your bot already runs on a server</b><small>Connect the token, then open <b>My bot already runs on its own server</b> and add that server’s address and its secret token. Joinvoo passes every message on, so your bot keeps working. Not for bots that use “polling”.</small></div>
+            <div class="o"><b>C. Keep your token private</b><small>Don’t share the token at all. Your bot, your developer or your bot builder sends one ping to Joinvoo each time someone presses Start. The hook URL is in your dashboard: <b>Channels → the bot → Show code</b>.</small></div>
+          </div>
+          <p>For channels and groups, your bot stays in the channel as an admin. Members don’t get messages from it.</p></div>
+        <div class="screen"><div class="hd2"><i>📣</i><span>Admin rights<small>@dailydeals_track_bot</small></span></div>
+          <div class="ui" style="background:#fff;min-height:300px"><div class="row"><span>Manage channel</span><span class="sw"></span></div><div class="row" style="outline:2px solid #5b3df5"><span><b>Invite users via link</b></span><span class="sw"></span></div><div class="row"><span>Post messages</span><span class="sw off"></span></div><div class="row"><span>Delete messages</span><span class="sw off"></span></div><div class="bt tg">Add bot</div></div></div>
+      </section>
+
+      <section class="step" id="pixel">
+        <div><span class="n"><b>5</b>3 minutes</span><h2>Connect Meta, TikTok or Snapchat</h2>
+          <p>This is what lets your ad platforms see your real joins, so they can find more people like them. Connect one, two or all three. Each join is then sent to every platform you connect.</p>
+          <h3><span class="pl" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg></span>Meta (Facebook and Instagram)</h3>
+          <p>You need two things from <b>Events Manager</b>:</p>
+          <ol class="do">
+            <li>Open <b>Events Manager</b> and choose your <b>dataset (pixel)</b> on the left. If you don’t have one, tap <b>Connect data</b> → <b>Web</b> to create it.</li>
+            <li>Copy the <b>Dataset ID</b> (also called Pixel ID). It’s a long number like <code>884210395527140</code>.</li>
+            <li>Open the <b>Settings</b> tab, scroll to <b>Conversions API</b>, and tap <b>Generate access token</b>. Copy the long token.</li>
+            <li>In Joinvoo, paste both and tap <b>Save and send a test</b>.</li>
+          </ol>
+          <div class="tip"><span>To watch the test arrive, open the <b>Test events</b> tab in Events Manager, copy the code shown there (like <code>TEST12345</code>), and paste it into Joinvoo’s <b>Test code</b> box before sending. <b>Clear the test code when you go live</b>, or real joins only show up in the test tab.</span></div>
+          <h3><span class="pl" style="background:#0B0B12"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></svg></span>TikTok</h3>
+          <p>In TikTok Ads Manager go to <b>Tools → Events → Web events</b>, open your pixel, copy the <b>Pixel code</b> (letters and numbers, like <code>CABC123DEF456GHI</code>), then in its <b>Settings</b> tap <b>Generate access token</b>. Paste both into Joinvoo’s TikTok tab and send a test.</p>
+          <h3><span class="pl" style="background:#FFFC00"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.6"/></svg></span>Snapchat</h3>
+          <ol class="do">
+            <li>In <b>Snapchat Ads Manager</b>, open <b>Events Manager</b> and select your <b>Snap Pixel</b> (create one if you don’t have it). Copy the <b>Pixel ID</b>. It looks like <code>a1b2c3d4-5678-90ab-cdef-1234567890ab</code>.</li>
+            <li>Generate a <b>Conversions API token</b>. You’ll find it in <b>Business settings</b> or in the pixel’s setup in <b>Events Manager</b>. Copy it.</li>
+            <li>Paste both into Joinvoo’s <b>Snapchat</b> tab and tap <b>Send test</b>. The test goes to Snapchat’s validation endpoint, so it checks your ID and token without adding a real event.</li>
+          </ol>
+          <p style="font-size:14px">Meta, TikTok and Snapchat rename menus now and then. If a name looks different, look for the same words nearby.</p></div>
+        <div class="screen"><div class="ui"><h4>Ad platforms</h4><div class="tabs"><span>Meta</span><span>TikTok</span><span class="on">Snapchat</span></div>
+          <span class="lbl">Snap Pixel ID</span><div class="inp hl">a1b2c3d4-5678-90ab-cdef-12345…</div>
+          <span class="lbl">Conversions API token</span><div class="inp">••••••••••••••••••••••</div>
+          <span class="lbl">Join event</span><div class="inp">SUBSCRIBE</div>
+          <div class="bt">Save and send test</div><div class="ok">✓ Snapchat accepted the test event</div></div></div>
+      </section>
+
+      <section class="step" id="ads">
+        <div><span class="n"><b>6</b>2 minutes</span><h2>Put your tracking link in your ads</h2>
+          <p>On the Channels page, copy your <b>tracking link</b>. It looks like <code>https://joinvoo.com/c/ab12c</code>. Use it everywhere your ad would normally use your Telegram link.</p>
+          <h3><span class="pl" style="background:#0866FF"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg></span>In Meta Ads Manager</h3>
+          <ol class="do">
+            <li>Create a campaign with the <b>Leads</b> or <b>Sales</b> objective and choose <b>Website</b> as the conversion location.</li>
+            <li>At the ad set, pick your dataset (pixel) and the conversion event <b>Subscribe</b>. That’s what Joinvoo sends by default; you can change it to Lead or CompleteRegistration on the Channels page.</li>
+            <li>At the ad, paste your tracking link as the <b>Website URL</b>.</li>
+            <li>Under <b>URL parameters</b>, paste this. Each person’s page then shows which campaign and ad brought them:</li>
+          </ol>
+          <div class="code" id="utm">utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}<button class="copy" data-copy="utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}">Copy</button></div>
+          <h3><span class="pl" style="background:#0B0B12"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></svg></span>In TikTok Ads Manager</h3>
+          <p>Choose a <b>Website conversions</b> objective, pick your pixel and the <b>Subscribe</b> event, and paste the tracking link as the <b>Destination URL</b>.</p>
+          <h3><span class="pl" style="background:#FFFC00"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.6"/></svg></span>In Snapchat Ads Manager</h3>
+          <p>Choose a <b>Website conversions</b> goal, pick your Snap Pixel and the <b>Subscribe</b> event, and paste the tracking link as the ad’s <b>Web URL</b> (the website attachment).</p>
+          <div class="tip"><span>If an ad platform’s review is strict with your ads, set <b>When someone taps your ad</b> to <b>Join page</b> on the Channels page. Visitors then see a clean page with a Join button instead of being sent straight to Telegram.</span></div>
+          <div class="warn"><span>Don’t share the tracking link inside Telegram itself, and don’t replace it with your channel’s normal invite link. Only clicks that go through the tracking link can be matched to an ad.</span></div></div>
+        <div class="screen"><div class="meta-ui"><b style="font-size:15px">Ad · Destination</b>
+          <div class="box"><small style="color:#65676b">Website URL</small><div style="font-family:var(--mono);font-size:12px;border:2px solid #0866ff;border-radius:8px;padding:8px;margin-top:4px">https://joinvoo.com/c/ab12c</div></div>
+          <div class="box"><small style="color:#65676b">URL parameters</small><div style="font-family:var(--mono);font-size:11px;margin-top:4px;word-break:break-all">utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}</div></div>
+          <div class="box"><small style="color:#65676b">Conversion event</small><div style="font-weight:700">Subscribe</div></div></div></div>
+      </section>
+
+      <section class="step" id="test">
+        <div><span class="n"><b>7</b>1 minute</span><h2>Test it with your phone</h2>
+          <p>Do this once before you spend money. It proves every part works.</p>
+          <ol class="do">
+            <li>Send yourself the tracking link by email or chat, and open it on your phone. Use a Telegram account that <b>isn’t already in the channel</b>, or leave the channel first.</li>
+            <li>Telegram opens. Tap <b>Join</b> (or <b>Start</b> for a bot).</li>
+            <li>Within a few seconds the join appears on your dashboard’s <b>Home</b> and <b>People</b> pages, marked <b>From ad</b>.</li>
+            <li>A <b>Meta ✓</b>, <b>TikTok ✓</b> or <b>Snapchat ✓</b> tag means the platform received it.</li>
+          </ol>
+          <p>Seeing it on Joinvoo but the platform says <b>failed</b>? Tap the person to see the platform’s reason. It’s almost always the access token: generate a new one and paste it again.</p></div>
+        <div class="screen"><div class="ui"><span class="lbl">JUST NOW</span><div class="card2"><div style="display:flex;justify-content:space-between"><b>Lena K.</b><span style="background:#efebff;color:#5636F0;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:600">From ad</span></div><small style="color:#a19f98">Joined Daily Deals Club · 14 seconds after clicking</small></div>
+          <div class="ok">Meta ✓</div><div class="ok">TikTok ✓</div><div class="ok">Snapchat ✓</div><div class="card2"><small style="color:#a19f98">Campaign</small><div><b>Spring-Broad-Oct</b></div><small style="color:#a19f98">Ad</small><div><b>Video 3 · Hook B</b></div></div></div></div>
+      </section>
+
+      <section class="step" id="ftd">
+        <div><span class="n"><b>8</b>Optional · 5 minutes</span><h2>Track deposits and sales</h2>
+          <div class="tip"><span>Deposit tracking is part of <b>Pro</b>. Every account gets a free trial: 7 days or 20 FTDs, whichever comes first (see step 12).</span></div>
+          <p>If your channel or bot sends people to a broker, casino, shop or app, you can send their <b>sign-ups, first deposits, repeat deposits and sales</b> back to your ad platforms too. Your ads then learn to find <b>depositors</b>, not just joiners. These events cost nothing extra.</p>
+          <ol class="do">
+            <li>In your dashboard, open <b>Conversions</b> and copy your <b>postback URL</b>. It’s unique to your account and looks like this:</li>
+          </ol>
+          <div class="code">https://joinvoo.com/pb/&lt;your-key&gt;?<em>sub1</em>=<u>{telegram_id}</u>&amp;<em>status</em>=<u>ftd</u>&amp;<em>payout</em>=<u>{payout}</u>&amp;<em>currency</em>=<u>USD</u>&amp;<em>txid</em>=<u>{transaction_id}</u></div>
+          <ol class="do" start="2" style="counter-reset:d 1">
+            <li><b>Pass the Telegram ID to your offer.</b> Your bot knows the Telegram ID of everyone who presses Start. Add it to the offer link the bot sends as <code>sub1</code>, for example <code>https://offer.example.com/?sub1=7012345678</code>. Most networks and trackers call this a sub ID or click ID.</li>
+            <li><b>Paste the postback URL</b> into your affiliate network, Keitaro, Binom, CRM or broker as the postback for registrations and deposits. Swap the placeholders for that tool’s own macros: its sub1 macro for <code>{telegram_id}</code>, its payout or amount macro for <code>{payout}</code>, and its transaction ID macro for <code>{transaction_id}</code>.</li>
+            <li>Set <code>status</code> to the event: <code>lead</code>, <code>reg</code> (sign-up), <code>ftd</code> (first deposit), <code>dep</code> (repeat deposit), <code>sale</code> (course, VIP, subscription), <code>qualified</code> (CPA qualified) or <code>rejected</code> (chargeback or reversal: removes the revenue and sends nothing to ad platforms). Later deposits from the same person are recorded as repeat deposits automatically.</li>
+          </ol>
+          <p><b>Example for Keitaro</b> (S2S postback):</p>
+          <div class="code">https://joinvoo.com/pb/&lt;your-key&gt;?<em>sub1</em>=<u>{sub_id_1}</u>&amp;<em>status</em>=<u>{status}</u>&amp;<em>payout</em>=<u>{revenue}</u>&amp;<em>txid</em>=<u>{tid}</u></div>
+          <p style="font-size:14px">Macro names differ between tools; check your network’s postback help page. Joinvoo also accepts <code>subid</code>, <code>aff_sub</code> or <code>tg_id</code> for the Telegram ID; <code>event</code> or <code>goal</code> for the status; <code>value</code> or <code>amount</code> for the payout.</p>
+          <p><b>What gets sent:</b></p>
+          <div class="tblwrap"><table class="maptbl"><thead><tr><th>Platform</th><th>Registration</th><th>First deposit</th></tr></thead><tbody>
+            <tr><td>Meta</td><td><code>CompleteRegistration</code></td><td><code>Purchase</code> + value</td></tr>
+            <tr><td>TikTok</td><td><code>CompleteRegistration</code></td><td><code>CompletePayment</code> + value</td></tr>
+            <tr><td>Snapchat</td><td><code>SIGN_UP</code></td><td><code>PURCHASE</code> + value</td></tr>
+          </tbody></table></div>
+          <div class="tip"><span>No postback? Open a person’s profile in <b>People</b> and tap <b>Mark as deposited</b>. Joinvoo sends the deposit to your ad platforms just the same.</span></div>
+          <p>To optimise for depositors, pick <b>Purchase</b> (Meta), <b>CompletePayment</b> (TikTok) or <b>PURCHASE</b> (Snapchat) as the conversion event in your ad set once deposits start coming in.</p></div>
+        <div class="screen"><div class="ui"><h4>Conversions</h4><span class="lbl">Your postback URL</span><div class="inp hl" style="word-break:break-all">joinvoo.com/pb/k3y…?sub1={telegram_id}&amp;status=ftd&amp;payout={payout}</div>
+          <span class="lbl">LATEST</span>
+          <div class="card2"><div style="display:flex;justify-content:space-between;align-items:center"><b>Lucas M. · First deposit</b><b style="color:#2e7d57">$120</b></div><small style="color:#a19f98">via postback · matched to Video 3 · Hook B</small></div>
+          <div class="ok">Meta · Purchase ✓</div><div class="ok">TikTok · CompletePayment ✓</div><div class="ok">Snapchat · PURCHASE ✓</div></div></div>
+      </section>
+
+      <section class="step full" id="requests">
+        <div><span class="n"><b>9</b>For channels · 2 minutes</span><h2>Join-request mode: deposits from channels</h2>
+          <p>In a normal channel, Joinvoo knows who joined but can’t give your affiliate program a way to recognise that person. <b>Join-request mode</b> fixes that, so deposits from channel members can be matched too.</p>
+          <ol class="do">
+            <li>In <b>Channels</b>, open your channel and switch <b>Join mode</b> to <b>Join requests</b>. Your bot needs the <b>Invite users via link</b> admin right (it already has it).</li>
+            <li>Write a short <b>welcome message</b>, a button label and your <b>offer link</b>. Put <code>{tg_id}</code> where your program expects the sub ID, for example <code>https://partner.example.com/?sub1={tg_id}</code>.</li>
+            <li>That’s it. Each click gets its own join-request link. When someone taps <b>Request to join</b>, the bot <b>approves them instantly</b>, records the join against the click, and sends them your welcome message with <b>their personal link</b>.</li>
+            <li>When they register or deposit through that link, your program sends the postback with their Telegram ID, and Joinvoo sends <b>Purchase</b> (Meta), <b>CompletePayment</b> (TikTok) or <b>PURCHASE</b> (Snapchat) with the value.</li>
+          </ol>
+          <div class="tip"><span>People don’t wait: approval happens in about a second. The welcome message is sent once, by your own bot, so it comes from your brand.</span></div></div>
+      </section>
+
+      <section class="step full" id="integrations">
+        <div><span class="n"><b>10</b>Optional · 3 minutes</span><h2>Connect your affiliate program</h2>
+          <p>Open <b>Integrations</b> in your dashboard. Pick your program (for example 1win Partners, Kingfin, Affstore, Pocket Option, Olymp Trade, Binomo, Quotex, Exness, 1xBet, Melbet) or your tracker (Keitaro, Binom). Each one shows a ready-made postback URL with the right macros already filled in, plus the steps for that program.</p>
+          <ol class="do">
+            <li>Tap your program and <b>Copy postback</b>.</li>
+            <li>Paste it in the program’s postback or S2S settings for registrations and deposits.</li>
+            <li>Make sure your offer link passes the Telegram ID as the program’s sub ID (join-request mode or your bot does this for you).</li>
+            <li>Tap <b>Mark as connected</b>. The card shows the last event received, so you can see it working.</li>
+          </ol>
+          <p style="font-size:14px">Program not listed? Use <b>Custom postback</b>: any network or CRM that can call a URL works.</p></div>
+      </section>
+
+      <section class="step full" id="wallet">
+        <div><span class="n"><b>11</b>Good to know</span><h2>Credits, bonuses and ranks</h2>
+          <p>Joinvoo is prepaid with <b>Joinvoo Credits</b>. <b>1 credit = $0.01.</b> You buy credits and tracking uses them, so there are no surprise bills.</p>
+          <div class="fork"><div><b>Basic: 3,000 credits a month</b><small>That’s $30. Starts once your 500 free joins are used, charged on the first ad click of each month. Includes <b>2,000 tracked joins</b>. Pro is 9,900 credits ($99) with 5,000 joins.</small></div><div><b>2 credits per extra join</b><small>Only for joins that came from your ads. Organic joins are free and still counted.</small></div></div>
+          <p><b>Buy credits</b> from Billing (or tap your balance at the top of the dashboard) with card, bank transfer or mobile money, or with crypto. Card payments show up straight away; crypto and bank transfers appear once confirmed.</p>
+          <p><b>Bonus credits:</b> bigger single purchases get extra credits, for example +5% from $100, +10% from $500, +15% from $1,000 and +20% from $5,000 (current offer; the live tiers are shown on the Buy credits page). Promo codes can add more.</p>
+          <p><b>Ranks:</b> Bronze, Silver, Gold, Platinum and Diamond, based on what you’ve paid in total. Higher ranks unlock perks such as a discount on tracked joins. Your rank and what you need for the next one are on the Billing page.</p>
+          <div class="warn"><span>Credits are for tracking. They can’t be withdrawn or refunded (see the <a href="{{REFUNDS}}">Refund Policy</a>). Only <b>referral earnings</b> can be withdrawn. If your credits run out, <b>your ads keep working</b>: people still get into your channel, but tracking pauses until you buy more.</span></div></div>
+      </section>
+
+      <section class="step full" id="pro">
+        <div><span class="n"><b>12</b>Good to know</span><h2>Basic, Pro and the deposit trial</h2>
+          <div class="fork"><div><b>Basic · $30 a month</b><small>3,000 credits a month with <b>2,000 tracked joins</b>. Join tracking for channels, groups and bots, sent to Meta, TikTok and Snapchat. Smart links, fake-join filter, alerts and live support.</small></div><div><b>Pro · $99 a month</b><small>9,900 credits a month with <b>5,000 tracked joins</b>. Everything in Basic plus deposit (FTD), sale and lead tracking, ROAS and cost per FTD dashboards, affiliate integrations and Joe’s insights.</small></div></div>
+          <p><b>Free deposit trial.</b> Every account can try deposit tracking for <b>7 days or 20 FTDs</b>, whichever comes first. The clock starts at your first tracked deposit. One trial per account and per ad account.</p>
+          <p><b>After the trial on Basic</b>, Joinvoo still matches deposits and still sends them to Meta, TikTok and Snapchat, so <b>your ads keep learning</b>. You just can’t see which ads drove them until you upgrade. Your dashboard shows how many deposits were tracked.</p>
+          <ol class="do"><li>Open <b>Billing → Plan</b> and tap <b>Upgrade to Pro</b>. You pay the difference for the rest of the month in credits.</li><li>Downgrading to Basic takes effect at the end of the month.</li></ol></div>
+      </section>
+
+      <section class="step full" id="spend">
+        <div><span class="n"><b>13</b>Optional · Pro</span><h2>Ad spend, cost per FTD and ROAS</h2>
+          <p>Add what you spent and Joinvoo shows the numbers media buyers actually manage: <b>cost per join</b>, <b>cost per FTD</b> and <b>ROAS</b> (revenue ÷ spend), by campaign and platform.</p>
+          <ol class="do">
+            <li>Open <b>Ad spend</b> and add a row: date, platform, campaign name and amount. Use the same campaign names as your UTM tags.</li>
+            <li>Or import a CSV with <code>date,platform,campaign,amount</code>, exported from your ads manager.</li>
+            <li>Open <b>Breakdowns</b> by campaign or platform to see spend next to joins, FTDs and revenue.</li>
+          </ol>
+          <div class="tip"><span>Suspicious clicks (bots, data-centre traffic, repeat clicks) are flagged automatically. Fake joins (join bursts, deleted accounts, people re-joining) are recorded but never sent to your ad platforms, so your ads learn only from real people.</span></div></div>
+      </section>
+
+      <section class="step full" id="alerts">
+        <div><span class="n"><b>14</b>Optional · 30 seconds</span><h2>Telegram alerts and daily report</h2>
+          <p>Get Joinvoo in your Telegram: a <b>daily report</b> (yesterday’s clicks, joins, FTDs, revenue, spend and cost per FTD), and alerts when something needs you: a pixel token stops working, invite links run low, or tracking pauses. You can also turn on a ping for every new FTD.</p>
+          <ol class="do"><li>Open <b>Settings → Alerts</b> and tap <b>Connect Telegram</b>.</li><li>Telegram opens our alert bot. Tap <b>Start</b>. Done.</li><li>Pick which alerts you want.</li></ol></div>
+      </section>
+
+      <section class="step full" id="joe">
+        <div><span class="n"><b>15</b>Built in</span><h2>Meet Joe, your media-buying copilot</h2>
+          <p>Joe lives in your dashboard. He watches your numbers and shows short insights on the overview: tracking is healthy, a channel went quiet, cost per FTD moved, your best and worst campaign, credits running low, fake joins filtered.</p>
+          <p>Tap Joe to <b>ask a question</b> in plain words, for example “Which campaign is best this week?” or “Why did joins drop today?”. He answers from <b>your own data only</b> and never makes numbers up: if something isn’t tracked yet, he tells you.</p>
+          <div class="tip"><span>Joe’s deeper insights (cost per FTD, ROAS, best campaigns by deposits) come with <b>Pro</b> or during your deposit trial.</span></div></div>
+      </section>
+
+      <section class="step full" id="backup">
+        <div><span class="n"><b>16</b>Smart links · 1 minute</span><h2>Channel banned? Use a backup channel</h2>
+          <p>If a channel gets banned or restricted, you don’t need to edit or re-submit a single ad. Point its tracking link at another channel you own and every ad keeps sending people there.</p>
+          <ol class="do"><li>Connect your backup channel first (step 4), with the same bot or another one.</li><li>Open the old channel in <b>Channels</b> and set <b>Send visitors to</b> → your backup channel.</li><li>Done. New clicks get invite links for the backup channel, joins are counted there, and its pixel settings are used.</li></ol>
+          <div class="tip"><span>Keep a backup channel ready before you scale. Switching takes one tap and no new ad review.</span></div></div>
+      </section>
+
+      <section class="step full" id="earn">
+        <div><span class="n"><b>17</b>Optional</span><h2>Earn with referrals</h2>
+          <p>Share your link from the <b>Earn</b> tab. When people you invite pay for credits, you get a share of their paid spend, for as long as they use Joinvoo.</p>
+          <div class="fork"><div><b>10% → 20% → 30%</b><small>10% to start, 20% once 3 people you invited are paying, 30% at 10.</small></div><div><b>Spend it or cash out</b><small>Move your earnings into your account as credits any time, or withdraw in USDT (TRC20) or BTC once you have $300. Referral earnings are the only balance that can be withdrawn.</small></div></div></div>
+      </section>
+
+      <section class="step full" id="fix">
+        <div><span class="n"><b>?</b>Troubleshooting</span><h2>Fix a problem</h2>
+          <div class="faq">
+            <details><summary>My channel didn’t appear after I added the bot</summary><p>Make sure you added the bot as an <b>admin</b>, not just a member, and that <b>Invite users via link</b> is on. Then run setup again from the Help tab, and on the channel step tap <b>The bot was already an admin?</b>. Pick your bot and type your channel’s @username (or its ID for a private channel).</p></details>
+            <details><summary>The channel says “Needs permission”</summary><p>Someone removed the bot’s admin rights or switched off <b>Invite users via link</b>. In Telegram: open your channel → Administrators → your bot → switch it back on. Joinvoo picks it up by itself.</p></details>
+            <details><summary>Most of my joins show as “Organic”</summary><p>Those people joined without going through your tracking link: from search (public channels), a link someone shared, or an old invite link in your ad. Check that every ad uses the Joinvoo tracking link, and make the channel private if you can.</p></details>
+            <details><summary>My ad platform shows fewer events than Joinvoo</summary><p>That’s normal. Meta, TikTok and Snapchat only count events they can match to one of their users, and they remove duplicates. Events can also take up to 20 minutes to appear. If a join shows <b>failed</b>, tap it to see the platform’s reason.</p></details>
+            <details><summary>“Invalid OAuth access token” or “token expired”</summary><p>Generate a new access token in your ad platform (for Meta: Events Manager → Settings → Conversions API) and paste it on the Channels page. Joins that failed are retried for a while, so recent ones still get sent.</p></details>
+            <details><summary>A deposit postback isn’t matched</summary><p>Joinvoo needs the person’s Telegram ID in <code>sub1</code> (or <code>subid</code>, <code>aff_sub</code>, <code>tg_id</code>). Check that your bot adds it to the offer link and that your network sends it back in the postback. Placeholders that weren’t filled in, like <code>{sub1}</code>, are ignored.</p></details>
+            <details><summary>My bot stopped doing its other job</summary><p>A bot can send its messages to one place only. If it was used for something else, either make a new bot for Joinvoo, or (for bot-subscriber tracking) paste your bot’s server address under <b>My bot already runs on its own server</b> so Joinvoo passes everything on.</p></details>
+            <details><summary>“Invite links ready” is running low</summary><p>Telegram limits how fast one bot can make links. For big campaigns, add a second or third bot to the same channel (make each one admin). Joinvoo uses all of them. If links ever run out, visitors still get in through a backup link; only those joins aren’t matched.</p></details>
+            <details><summary>Tracking is paused</summary><p>Your credits ran out, or the month’s plan (3,000 credits) couldn’t be charged. Buy credits from Billing and tracking starts again straight away. Your links kept working the whole time.</p></details>
+            <details><summary>Is this allowed by Telegram?</summary><p>Yes. Joinvoo only uses Telegram’s official Bot API, the same invite-link features any admin can use. Your bot never posts in your channel.</p></details>
+            <details><summary>What do you store about the people who join?</summary><p>Their Telegram ID, name, username and language, plus the ad click details (time, campaign, browser and IP). Ad platforms receive a scrambled (hashed) Telegram ID, never the raw one. See our <a href="{{PRIVACY}}">privacy policy</a>.</p></details>
+          </div>
+          <div class="end"><div><h2>Ready to stop guessing?</h2><p>Your first 500 joins are free. Setup takes about 10 minutes.</p></div><a class="btn lg" href="{{SIGNUP}}" style="background:#fff;color:#141413;border-color:#fff">Start free</a></div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <footer><span>© Joinvoo · By Zedapex company</span><span class="fl"><a href="{{HOME}}">Home</a><a href="{{BLOG}}">Blog</a><a href="{{LOGIN}}">Log in</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a></span>{{VOOFOOT}}</footer>
+</div>
+{{SUPPORT}}
+<script>
+(function(){ const sec=document.getElementById('walk'), v=document.getElementById('walkVid'); if(!sec||!v) return;
+  const off=()=>{ sec.classList.add('novid'); try{ v.removeAttribute('src'); v.load(); }catch(e){} };
+  v.addEventListener('error',off);
+  fetch(v.getAttribute('src'),{headers:{Range:'bytes=0-1'}}).then(r=>{ const ct=r.headers.get('content-type')||''; if((r.ok||r.status===206)&&ct.indexOf('video')===0) sec.classList.remove('novid'), v.dataset.poster&&(v.poster=v.dataset.poster); else off(); }).catch(off); })();
+</script>
+<script>
+(function () {
+  const links = [...document.querySelectorAll('#toc a')], secs = links.map((a) => document.querySelector(a.getAttribute('href')));
+  function spy() {
+    const y = innerHeight * 0.3; let cur = 0;
+    secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < y) cur = i; });
+    links.forEach((a, i) => { a.classList.toggle('on', i === cur); a.classList.toggle('done', i < cur); });
+    const p = document.getElementById('prog'); if (p) p.style.width = (cur / (secs.length - 1) * 100) + '%';
+    const on = links[cur]; if (on && innerWidth < 900) { const t = on.parentElement; t.scrollTo({ left: on.offsetLeft - 20, behavior: 'smooth' }); }
+  }
+  addEventListener('scroll', spy, { passive: true }); spy();
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('play'); io.unobserve(e.target); } }), { threshold: 0.35 });
+  document.querySelectorAll('[data-play]').forEach((el) => io.observe(el));
+  document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+    navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); });
+  }));
+})();
+</script>
