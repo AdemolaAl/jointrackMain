@@ -70,6 +70,12 @@ Point your domain’s **A record** at the server’s IP before step 4. Check the
 ### Cloudflare (recommended either way)
 Put your domain on Cloudflare. It soaks up traffic spikes and gives Joinvoo each visitor’s country. In **SSL/TLS**, choose **Full (strict)**. For Railway, the CNAME can stay proxied (orange cloud). **When the orange cloud is on, set `TRUST_CLOUDFLARE=1`**, otherwise leave it at 0 (so nobody can fake their IP).
 
+### Visitor addresses behind proxies (`TRUST_PROXY`)
+Rate limits (log-in, sign-up, VooSquare login) and click IPs use the visitor's address. By default Joinvoo believes the last
+`X-Forwarded-For` hop only when the connection comes from a private or loopback address (Caddy on the same machine, Railway's edge),
+so someone reaching the app directly cannot pick their own address. Set `TRUST_PROXY=<number of proxies>` if you run behind more
+than one proxy, or `TRUST_PROXY=0` to never read the header.
+
 ---
 
 ## Turn on payments

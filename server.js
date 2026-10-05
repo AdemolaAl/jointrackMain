@@ -184,6 +184,12 @@ for (const sql of [
   `ALTER TABLE ticket_msgs ADD COLUMN source TEXT`, `ALTER TABLE ticket_msgs ADD COLUMN ext_id TEXT`, `ALTER TABLE ticket_msgs ADD COLUMN agent_name TEXT`,
   `CREATE UNIQUE INDEX IF NOT EXISTS ticket_msgs_ext ON ticket_msgs(ext_id) WHERE ext_id IS NOT NULL`,
   `CREATE TABLE IF NOT EXISTS voo_support_out(id INTEGER PRIMARY KEY, msg_id INTEGER UNIQUE, ticket_id INTEGER, attempts INTEGER DEFAULT 0, next_at INTEGER, sent_at INTEGER, last_error TEXT, created_at INTEGER, failed INTEGER DEFAULT 0)`,
+  // round 14: Voo Connect kit (outbox in the database, money reported to VooSquare, refunds and chargebacks of top-ups)
+  `CREATE TABLE IF NOT EXISTS voo_kit_outbox(event_id TEXT PRIMARY KEY, body TEXT, seq INTEGER)`,
+  `ALTER TABLE users ADD COLUMN voo_linked_at INTEGER`, `ALTER TABLE users ADD COLUMN voo_spent_cents INTEGER DEFAULT 0`,
+  `CREATE TABLE IF NOT EXISTS voo_spends(event_id TEXT PRIMARY KEY, user_id INTEGER, cents INTEGER, reversed_cents INTEGER DEFAULT 0, kind TEXT, at INTEGER, created_at INTEGER)`, `CREATE INDEX IF NOT EXISTS voo_spends_u ON voo_spends(user_id, created_at)`,
+  `CREATE TABLE IF NOT EXISTS voo_use(user_id INTEGER, day TEXT, cents INTEGER, event_id TEXT, created_at INTEGER, PRIMARY KEY(user_id, day))`,
+  `ALTER TABLE deposits ADD COLUMN refunded_cents INTEGER DEFAULT 0`, `ALTER TABLE deposits ADD COLUMN charged_back_at INTEGER`,
 ]) { try { db.exec(sql); } catch { /* already there */ } }
 const Q = (sql) => { const s = db.prepare(sql); return { get: (...a) => s.get(...a), all: (...a) => s.all(...a), run: (...a) => s.run(...a) }; };
 
@@ -319,7 +325,7 @@ const SETTING_DEFS = {
   'sister.clicks': { def: () => 0, v: int(0, 1e12) },
   // ----- round 11: VooSquare (one login for all Zedapex tools) — everything off until configured -----
   'voo.login_mode': { def: () => (['both', 'only'].includes(env.VOO_LOGIN_MODE) ? env.VOO_LOGIN_MODE : 'off'), v: (x) => (['off', 'both', 'only'].includes(x) ? x : (() => { throw new Error('Login mode is off, both or only.'); })()) },
-  'voo.issuer': { def: () => (env.VOO_ISSUER || '').replace(/\/$/, ''), v: (x) => { x = str(200)(x).replace(/\/$/, ''); if (x && !/^https?:\/\/[^\s/]+/.test(x)) throw new Error('The VooSquare address is a URL like https://voosquare.com'); return x; } },
+  'voo.issuer': { def: () => (env.VOO_BASE || env.VOO_ISSUER || '').replace(/\/+$/, ''), v: (x) => { x = str(200)(x).replace(/\/$/, ''); if (x && !/^https?:\/\/[^\s/]+/.test(x)) throw new Error('The VooSquare address is a URL like https://voosquare.com'); return x; } },
   'voo.client_id': { def: () => env.VOO_CLIENT_ID || '', v: str(200) },
   'voo.client_secret': { def: () => env.VOO_CLIENT_SECRET || '', v: str(300), secret: true },
   'voo.redirect_uri': { def: () => env.VOO_REDIRECT_URI || '', v: (x) => { x = str(300)(x); if (x && !/^https?:\/\//.test(x)) throw new Error('The callback URL must start with https://'); return x; } },
@@ -330,6 +336,7 @@ const SETTING_DEFS = {
   'voo.api_key': { def: () => env.VOO_API_KEY || '', v: str(300), secret: true },
   'voo.support_bridge': { def: () => envBool('VOO_SUPPORT_BRIDGE', false), v: bool },
   'voo.affiliate_url': { def: () => env.VOO_AFFILIATE_URL || 'https://affiliate.voosquare.com', v: (x) => { x = str(300)(x); if (x && !/^https:\/\/[^\s]+$/.test(x)) throw new Error('The affiliate link must start with https://'); return x || 'https://affiliate.voosquare.com'; } },
+  'voo.widget': { def: () => envBool('VOO_WIDGET', false), v: bool },
   'voo.referrals': { def: () => (env.VOO_REFERRALS === 'voosquare' ? 'voosquare' : 'local'), v: (x) => (x === 'voosquare' ? 'voosquare' : 'local') },
   // ----- round 11: Zedapex apps catalog (cross-promotion); `sister` above stays for older dashboards -----
   'apps': { def: () => DEFAULT_APPS.map((a) => ({ ...a })), v: (a) => appsValidate(a) },
@@ -693,7 +700,6 @@ function changePlan(user, want) {
     tx(() => {
       if (cost > 0 && addLedger(user.id, 'plan', -cost, `planup:${user.id}:${m}`, `${P.pro.name} upgrade, ${left} of ${dim} days (prorated)`)) payCommission(user.id, cost);
       Q(`UPDATE users SET plan='pro', plan_pending=NULL, plan_pending_from=NULL WHERE id=?`).run(user.id);
-      vooEvent(user.id, 'plan_started', `jv_plan_pro_${user.id}_${now()}`, 'Pro plan started');
     });
     log('plan upgrade', user.email, 'pro', cost);
     notifyUser(user.id, 'pro_welcome', { name: user.name || '', plan: P.pro.name, base_cents: priceFor(user.id, 'pro').base, included: priceFor(user.id, 'pro').included, charged_cents: cost }, { ref: 'pro:' + m });
@@ -705,7 +711,7 @@ function changePlan(user, want) {
   }
   const from = nextMonthStart().slice(0, 7);
   Q(`UPDATE users SET plan_pending='basic', plan_pending_from=? WHERE id=?`).run(from, user.id);
-  vooEvent(user.id, 'plan_cancelled', `jv_plan_cancel_${user.id}_${m}`, 'Pro plan cancelled (ends this month)');
+  vooEvent(user.id, 'plan_cancelled', `jv_cancel_${user.id}_${m}`, `${P.pro.name} plan cancelled (ends this month)`, { plan: P.pro.name });
   notifyUser(user.id, 'plan_changed', { to: P.basic.name, from: P.pro.name, date: nextMonthStart(), applied: false }, { ref: 'down:' + m });
   return { ok: true, plan: 'pro', change_pending: 'basic', renews: nextMonthStart(), message: `You’ll move to ${P.basic.name} on ${nextMonthStart()}. ${P.pro.name} stays on until then.` };
 }
@@ -862,16 +868,31 @@ function addLedger(userId, kind, cents, ref, note) {
       .run(userId, kind, Math.round(cents), ref || 'x:' + rid(10), note || null, Date.now());
     if (!r.changes) return false;
     Q(`UPDATE users SET balance_cents=COALESCE(balance_cents,0)+? WHERE id=?`).run(Math.round(cents), userId);
-    // VooSquare activity: money in (top-ups) and plan charges. Per-join charges are summed in the summary API instead.
-    if (kind === 'deposit' || kind === 'plan') vooEvent(userId, 'spend', 'jv_spend_' + String(ref || '').replace(/[^\w:.-]/g, '').slice(0, 80), kind === 'deposit' ? String(note || 'Credits bought') : 'Plan charged', { value: Math.abs(Math.round(cents)) / 100, currency: 'USD', kind: kind === 'deposit' ? 'topup' : 'plan' });
+    // VooSquare: a plan charge is money used (spend + plan sync). Top-ups are reported by markDepositPaid, other use by vooUseJob.
+    if (kind === 'plan' && cents < 0) vooPlanCharged(userId, Number(r.lastInsertRowid), -Math.round(cents), ref);
     return true;
   });
 }
 const safeEq = (a, b) => { a = Buffer.from(String(a || '')); b = Buffer.from(String(b || '')); return a.length === b.length && a.length > 0 && crypto.timingSafeEqual(a, b); };
 function publicHttpsUrl(u) {
   try { const x = new URL(u); if (x.protocol !== 'https:') return false;
-    const h = x.hostname.toLowerCase();
-    return !(h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal') || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[)/.test(h) || /^\d+$/.test(h)); } catch { return false; }
+    const h = x.hostname.toLowerCase().replace(/\.$/, '');
+    return !(h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal') || privateIp(h) || /^\[/.test(h) || /^\d+$/.test(h)); } catch { return false; }
+}
+/** Private, loopback, link-local, CGNAT and other non-public IPv4 / IPv6 addresses. */
+function privateIp(ip) {
+  ip = String(ip || '').toLowerCase().replace(/^\[|\]$/g, '');
+  const m4 = /^(?:::ffff:)?(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(ip);
+  if (m4) { const [a, b] = [+m4[1], +m4[2]]; return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 198 && (b === 18 || b === 19)) || a >= 224; }
+  if (!ip.includes(':')) return false;
+  return ip === '::' || ip === '::1' || /^f[cd]/.test(ip) || /^fe[89ab]/.test(ip) || /^::ffff:/.test(ip) || /^64:ff9b:/.test(ip);
+}
+/** Customer-supplied addresses we POST to (bot forwarding): https, a public host name, and every address it resolves to is public
+ * (no DNS tricks like a name that points at 127.0.0.1 or the cloud metadata address). */
+async function publicHttpsTarget(u) {
+  if (!publicHttpsUrl(u)) return false;
+  const h = new URL(u).hostname;
+  try { const addrs = await require('dns').promises.lookup(h, { all: true, verbatim: true }); return addrs.length > 0 && !addrs.some((a) => privateIp(a.address)); } catch { return false; }
 }
 const isAdminEmail = (email) => ADMIN_EMAILS.includes(String(email || '').toLowerCase());
 const isVerified = (u) => !!(u.verified_at ?? (Q(`SELECT verified_at FROM users WHERE id=?`).get(u.id) || {}).verified_at);
@@ -1036,8 +1057,11 @@ function payCommission(userId, cents) {
   if (cents <= 0 || !feature('referrals') || setting('voo.referrals') === 'voosquare') return; // referrals live in VooSquare: no new local commissions
   const u = Q(`SELECT referred_by FROM users WHERE id=?`).get(userId);
   if (!u || !u.referred_by) return;
-  const paid = Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind='deposit'`).get(userId).n;
-  const spent = -Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN ('plan','joins','ftds')`).get(userId).n;
+  // Real money paid in: top-ups minus refunds and chargebacks of them (a charged-back top-up never earns a referrer anything more).
+  const paid = Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN ('deposit','refund','chargeback')`).get(userId).n;
+  // Everything paid from the wallet counts as using it up, Joe answers included (they earn no commission themselves, but money
+  // already used on them cannot pay for a plan a second time).
+  const spent = -Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN ('plan','joins','ftds','joe')`).get(userId).n;
   const base = Math.max(0, Math.min(spent, paid) - Math.min(spent - cents, paid));
   if (!base) return;
   const { tier } = refTier(u.referred_by);
@@ -1073,6 +1097,9 @@ function send(res, code, body, headers = {}) {
   if (typeof body === 'object' && body !== null && !Buffer.isBuffer(body)) {
     body = JSON.stringify(body); headers['content-type'] = 'application/json; charset=utf-8';
   }
+  // Keep cookies set earlier on this response (the Voo Connect kit's attribution and login cookies) next to ours.
+  const pre = res.getHeader('set-cookie'); if (pre && headers['set-cookie']) headers['set-cookie'] = [].concat(pre, headers['set-cookie']);
+  if (res._noStore) headers['cache-control'] = 'no-store'; // a response that sets a visitor's cookie is never cached by a CDN
   res.writeHead(code, { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'x-frame-options': 'SAMEORIGIN', ...headers });
   res.end(body);
 }
@@ -1097,11 +1124,18 @@ function cookies(req) {
 function cookie(name, value, maxAgeSec) {
   return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSec}; HttpOnly; SameSite=Lax${SECURE ? '; Secure' : ''}`;
 }
+/** Proxies in front of Joinvoo whose X-Forwarded-For we believe. TRUST_PROXY=<n>: n hops (the visitor is the n-th address from the
+ * right), 0 = never read the header. Unset: one hop, but only when the connection itself comes from a private or loopback address
+ * (Caddy on the same machine, Railway's edge); a visitor connecting straight from the internet cannot pick their own address. */
+const TRUST_PROXY = env.TRUST_PROXY == null || String(env.TRUST_PROXY).trim() === '' ? null : Math.max(0, Math.min(10, Math.floor(Number(env.TRUST_PROXY)) || 0));
 function clientIp(req) {
-  // Cloudflare's header if present; otherwise the address our own proxy (Caddy/Railway) appended last, which a visitor can't fake.
-  const xff = String(req.headers['x-forwarded-for'] || '').split(',').map((s) => s.trim()).filter(Boolean);
+  // Cloudflare's header if the operator says traffic comes through Cloudflare; otherwise the address our own proxy appended last.
   if (TRUST_CLOUDFLARE && req.headers['cf-connecting-ip']) return String(req.headers['cf-connecting-ip']);
-  return xff[xff.length - 1] || req.socket.remoteAddress || '';
+  const peer = String(req.socket.remoteAddress || '');
+  const hops = TRUST_PROXY != null ? TRUST_PROXY : privateIp(peer) ? 1 : 0;
+  if (!hops) return peer;
+  const xff = String(req.headers['x-forwarded-for'] || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return xff.length ? xff[Math.max(0, xff.length - hops)] : peer;
 }
 function currentUser(req) {
   const t = cookies(req).jp_session; if (!t) return null;
@@ -1515,6 +1549,7 @@ const welcomeData = (name, uid, resend) => ({ name, url: `${BASE_URL}/verify?t=$
 // Pages are written as fragments; the server wraps them in a document.
 const PUBLIC = path.join(__dirname, 'public');
 function page(file, extraHead = '') {
+  if (file !== 'app.html' && file !== 'admin.html') extraHead += vooHead();
   const key = file + extraHead;
   if (pageCache.has(key) && env.NODE_ENV === 'production') return pageCache.get(key);
   let html = fs.readFileSync(path.join(PUBLIC, file), 'utf8')
@@ -1882,7 +1917,8 @@ async function onUpdate(bot, u) {
   const target = Q(`SELECT * FROM channels WHERE owner_id=? AND bot_id=? AND type='bot' AND status<>'removed'`).get(bot.owner_id, bot.id);
   if (target && target.forward_url) {   // keep the user's own bot working: pass every update on to their server
     const fh = { 'content-type': 'application/json' }; if (target.forward_secret) fh['x-telegram-bot-api-secret-token'] = target.forward_secret; // so their server still trusts it
-    fetch(target.forward_url, { method: 'POST', headers: fh, body: JSON.stringify(u), signal: AbortSignal.timeout(10000) }).catch(() => {});
+    // Never follow redirects (a public URL could bounce the update to an internal address) and re-check where the name points now.
+    publicHttpsTarget(target.forward_url).then((ok) => (ok ? fetch(target.forward_url, { method: 'POST', headers: fh, body: JSON.stringify(u), redirect: 'manual', signal: AbortSignal.timeout(10000) }) : log('bot forward skipped: not a public address', target.id))).catch(() => {});
   }
   if (target && await onBotUpdate(bot, target, u)) return;
   if (u.my_chat_member) {
@@ -2025,8 +2061,9 @@ function recordConversion(ownerId, { tgUserId, joinId, event, valueCents = 0, cu
     }
     Q(`UPDATE conversions SET meta_status=?, tt_status=?, sc_status=? WHERE id=?`).run(st.meta, st.tiktok, st.snap, id);
     { const vt = { reg: 'registration', ftd: 'ftd', dep: 'deposit', lead: 'lead' }[ev];
+      // VooSquare's type for a funnel sign-up is `signup` (the event_id keeps its old stable form). value_usd only when the postback was in USD.
       if (vt) { const vch = j ? Q(`SELECT title, username FROM channels WHERE id=?`).get(j.channel_id) : null;
-        vooEvent(ownerId, vt, `jv_${vt}_${id}`, `${{ registration: 'Registration', ftd: 'First deposit', deposit: 'Deposit', lead: 'New lead' }[vt]}${vch ? ' via ' + srcLabel(vch) : ''}`, ['ftd', 'deposit'].includes(vt) && valueCents ? { value: Math.round(valueCents) / 100, currency: cur } : {}); } }
+        vooEvent(ownerId, vt === 'registration' ? 'signup' : vt, `jv_${vt}_${id}`, `${{ registration: 'Registration', ftd: 'First deposit', deposit: 'Deposit', lead: 'New lead' }[vt]}${vch ? ' via ' + srcLabel(vch) : ''}`, ['ftd', 'deposit'].includes(vt) && valueCents && String(cur || 'USD').toUpperCase() === 'USD' ? { value: Math.round(valueCents) / 100 } : {}); } }
     if (ev === 'ftd' && j && j.click_id) setImmediate(() => { chargeFtd(ownerId); checkTrial(ownerId); });
     if (ev === 'ftd' && j && j.click_id) setImmediate(() => { const L = userLang(ownerId); alertUser(ownerId, 'ftd_live', tr(L, 'alert.ftd_live', { value: valueCents ? ` · ${(valueCents / 100).toFixed(2)} ${cur}` : '', who: j.first_name ? tr(L, 'alert.ftd_from', { name: j.first_name }) : '' })); });
     return { ok: true, id, matched: !!j, event: ev, attributed: !!(j && j.click_id) };
@@ -3630,7 +3667,6 @@ async function api(req, res, url, user) {
     if (ps.length) Q(`UPDATE users SET ${ps.map(([k]) => k + '=?').join(', ')} WHERE id=?`).run(...ps.map(([, v]) => v), uid);
     setUserCountry(uid, country, 'signup');
     affAttach(req, uid, b.aff || null);
-    vooEvent(uid, 'signup', 'jv_signup_' + uid, 'New Joinvoo account');
     // With email set up, the welcome credit arrives when they confirm their inbox. Without it, straight away.
     if (!resendKey()) grantWelcome(uid);
     sendTemplate(email, 'welcome', welcomeData(String(b.name || '').trim(), uid), { userId: uid });
@@ -3653,7 +3689,7 @@ async function api(req, res, url, user) {
   if (p === '/api/logout' && m === 'POST') {
     const t = cookies(req).jp_session, sess = t ? Q(`SELECT via, id_token FROM sessions WHERE token=?`).get(t) : null;
     if (t) Q(`DELETE FROM sessions WHERE token=?`).run(t);
-    const out = await vooLogoutUrl(sess);
+    const out = vooLogoutUrl(sess);
     return send(res, 200, { ok: true, logout_url: out }, { 'set-cookie': cookie('jp_session', '', 0) });
   }
   if (p === '/api/forgot' && m === 'POST') {
@@ -3689,6 +3725,8 @@ async function api(req, res, url, user) {
   if (p === '/api/support') return feature('support_chat') ? supportApi(req, res, url, user) : send(res, 403, { error: 'Live chat is switched off right now.', off: true });
   if (p === '/api/config') return send(res, 200, publicConfig());
   if (p === '/api/voosquare/summary') {
+    const k = vooEventsOn() ? voo.kit() : null; // the kit checks the Bearer API key and answers {"linked": false} for an unknown Voo ID
+    if (k) return k.summaryHandler((vooId, period) => { const r = vooSummary(vooId, period); return r.linked ? r : null; })(req, res);
     if (!vooAuthOk(req)) return send(res, 401, { error: 'unauthorized' });
     const r = vooSummary(qs.get('voo_id'), qs.get('period') || '7d');
     return send(res, 200, r);
@@ -4105,7 +4143,7 @@ function markDepositPaid(ref, txid) {
     const r = Q(`UPDATE deposits SET status='paid', paid_at=?, tx=COALESCE(?,tx) WHERE id=? AND status<>'paid'`).run(now(), txid || null, d.id);
     if (!r.changes) return false;
     const label = depLabel(d);
-    addLedger(d.user_id, 'deposit', d.amount_cents, `dep:${d.id}`, `Top-up via ${label}`);
+    if (addLedger(d.user_id, 'deposit', d.amount_cents, `dep:${d.id}`, `Top-up via ${label}`)) vooTopup({ ...d, paid_at: now(), tx: txid || d.tx });
     // Loyalty bonus for bigger top-ups, plus any promo code. Bonus credits are spendable, never withdrawable, and earn no referral commission.
     let bonus = 0;
     const bt = feature('credits_bonus') ? setting('credit.bonus_tiers').filter((t) => d.amount_cents >= t.min_cents).pop() : null;
@@ -4633,7 +4671,7 @@ function adminSettings() {
     voo: { login_mode: setting('voo.login_mode'), active: vooLoginOn(), issuer: setting('voo.issuer'), client_id: setting('voo.client_id'), client_secret: mask(setting('voo.client_secret')), redirect_uri: setting('voo.redirect_uri'),
       callback_url: vooRedirect(), service_key: mask(setting('voo.service_key')), webhook_secret: mask(setting('voo.webhook_secret')), events_url: setting('voo.events_url'), home: setting('voo.home'), referrals: setting('voo.referrals'),
       summary_url: `${BASE_URL}/api/voosquare/summary`, outbox: vooOutboxStats(), api_key: mask(setting('voo.api_key')), support_bridge: !!setting('voo.support_bridge'),
-      support_webhook_url: `${BASE_URL}/api/voosquare/support/webhook`, affiliate_url: setting('voo.affiliate_url'), support_out: vooSupportStats() },
+      support_webhook_url: `${BASE_URL}/hooks/voosquare/support`, logout_return_url: BASE_URL + '/', affiliate_url: setting('voo.affiliate_url'), support_out: vooSupportStats(), widget: !!setting('voo.widget') },
     limits: setting('limits'),
     keys: { anthropic_key: mask(joeKey()), anthropic_set: !!joeKey(), anthropic_from_env: !!env.ANTHROPIC_API_KEY && !changed.has('joe.api_key'),
       openai_key: mask(setting('joe.openai_key')), openai_set: !!setting('joe.openai_key'), openai_from_env: !!env.OPENAI_API_KEY && !changed.has('joe.openai_key'), openai_base: setting('joe.openai_base'),
@@ -5182,6 +5220,15 @@ async function adminApi(req, res, url, admin, st) {
     return send(res, 200, { deposits: Q(`SELECT d.*, u.email FROM deposits d JOIN users u ON u.id=d.user_id WHERE d.status=? ${st === 'pending' ? "AND d.provider IN ('crypto','manual')" : ''} ORDER BY d.id DESC LIMIT 200`).all(st)
       .map((d) => ({ ...d, label: depLabel(d), explorer_url: depExplorer(d), manual: d.provider === 'crypto' || d.provider === 'manual' })) });
   }
+  if ((mm = /^\/api\/admin\/deposits\/(\d+)\/(refund|chargeback)$/.exec(p)) && m === 'POST') { // money going back: reported to VooSquare (refund keeps commission, chargeback reverses it)
+    const d = Q(`SELECT * FROM deposits WHERE id=?`).get(+mm[1]);
+    if (!d) return send(res, 404, { error: 'Deposit not found.' });
+    const b = await readJson(req);
+    const r = mm[2] === 'refund' ? refundDeposit(d, Math.round(Number(b.amount) * 100), req) : chargebackDeposit(d, req);
+    if (r.error) return send(res, r.status || 400, r);
+    log('admin', mm[2], admin.email, 'deposit', d.id);
+    return send(res, 200, r);
+  }
   if ((mm = /^\/api\/admin\/deposits\/(\d+)\/(approve|reject)$/.exec(p)) && m === 'POST') {
     const d = Q(`SELECT * FROM deposits WHERE id=?`).get(+mm[1]);
     if (!d || d.status !== 'pending') return send(res, 400, { error: 'That deposit isn’t waiting for review.' });
@@ -5337,7 +5384,7 @@ async function adminApi(req, res, url, admin, st) {
       keys: (k) => ({ anthropic_key: 'joe.api_key', resend_key: 'email.resend_key', openai_key: 'joe.openai_key', openai_base: 'joe.openai_base' }[k]),
       links: (k) => ({ domain: 'link.domain', backups: 'link.backups' }[k]),
       voo: (k) => ({ login_mode: 'voo.login_mode', issuer: 'voo.issuer', client_id: 'voo.client_id', client_secret: 'voo.client_secret', redirect_uri: 'voo.redirect_uri', service_key: 'voo.service_key',
-        webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals', api_key: 'voo.api_key', support_bridge: 'voo.support_bridge', affiliate_url: 'voo.affiliate_url' }[k]),
+        webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals', api_key: 'voo.api_key', support_bridge: 'voo.support_bridge', affiliate_url: 'voo.affiliate_url', widget: 'voo.widget' }[k]),
       payments: (k) => ({ paystack_secret: 'pay.paystack_secret', paystack_currency: 'pay.paystack_currency', flw_secret: 'pay.flw_secret', flw_webhook_hash: 'pay.flw_webhook_hash', flw_currency: 'pay.flw_currency' }[k]) };
     // each group needs its own permission (Finance can save payment keys, Marketing the sister card and Joe's knowledge…)
     const needs = new Set();
@@ -5583,7 +5630,7 @@ async function adminApi(req, res, url, admin, st) {
   // ----- run a background job now (handy after changing settings, and for tests) -----
   if (p === '/api/admin/jobs/run' && m === 'POST') {
     const job = (await readJson(req)).job;
-    const jobs = { levels: levelJobs, alerts: alertJobs, trials: trialJobs, meet_joe: meetJoeJobs, inbox_daily: inboxDailyJobs, blog: blogJobs };
+    const jobs = { levels: levelJobs, alerts: alertJobs, trials: trialJobs, meet_joe: meetJoeJobs, inbox_daily: inboxDailyJobs, blog: blogJobs, voo_use: vooUseJob, voo_flush: vooFlush };
     if (!jobs[job]) return send(res, 400, { error: 'Jobs: ' + Object.keys(jobs).join(', ') });
     jobs[job](); return send(res, 200, { ok: true, job });
   }
@@ -5625,16 +5672,17 @@ const fillPage = (txt) => txt.replaceAll('{{BASE_URL}}', BASE_URL).replaceAll('{
 function sendStatic(req, res, file, type, { long = false, versioned = false, maxAge = 300, fill = false, wrap = false, notFound } = {}) {
   let st; try { st = fs.statSync(file); } catch { st = null; }
   if (!st || !st.isFile()) return notFound ? notFound() : send(res, 404, 'Not found', { 'content-type': 'text/plain' });
-  const key = file + (fill ? '|f' : '') + (wrap ? '|w' : '');
+  const vh = fill && wrap ? vooHead() : ''; // blog pages: the Voo Connect snippet (and the VooSquare widget when switched on)
+  const key = file + (fill ? '|f' : '') + (wrap ? '|w' : '') + vh;
   let c = staticCache.get(key);
   if (!c || c.mtime !== st.mtimeMs || c.size !== st.size) {
     let body = fs.readFileSync(file);
-    if (fill || wrap) { let t = body.toString('utf8'); if (fill) t = fillPage(t); if (wrap && !/^\s*(<!doctype|<html)/i.test(t)) t = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${t}</body></html>`; body = Buffer.from(t); }
+    if (fill || wrap) { let t = body.toString('utf8'); if (fill) t = fillPage(t); if (vh) t = /<\/head>/i.test(t) ? t.replace(/<\/head>/i, vh + '</head>') : vh + t; if (wrap && !/^\s*(<!doctype|<html)/i.test(t)) t = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${t}</body></html>`; body = Buffer.from(t); }
     c = { mtime: st.mtimeMs, size: st.size, body, etag: '"' + crypto.createHash('sha1').update(body).digest('base64url').slice(0, 22) + '"' };
     if (staticCache.size > 600) staticCache.clear();
     staticCache.set(key, c);
   }
-  const cc = versioned ? 'public, max-age=31536000, immutable' : long ? 'public, max-age=86400, stale-while-revalidate=2592000' : `public, max-age=${maxAge}`;
+  const cc = res._noStore ? 'no-store' : versioned ? 'public, max-age=31536000, immutable' : long ? 'public, max-age=86400, stale-while-revalidate=2592000' : `public, max-age=${maxAge}`;
   const h = { etag: c.etag, 'cache-control': cc, 'x-content-type-options': 'nosniff' };
   if (type.startsWith('image/svg')) h['content-security-policy'] = "default-src 'none'; style-src 'unsafe-inline'";
   if (String(req.headers['if-none-match'] || '').split(/\s*,\s*/).includes(c.etag)) { res.writeHead(304, h); return res.end(); }
@@ -5651,148 +5699,79 @@ function startSession(res, userId, email) {
   send(res, 200, { ok: true, email }, { 'set-cookie': cookie('jp_session', token, 30 * 86400) });
 }
 
-// ---------- VooSquare: OIDC login (Authorization Code + PKCE), summary API, events outbox ----------
-// Zero dependencies: discovery + JWKS over fetch, ID-token signatures checked with node:crypto. Off unless an issuer + client are set.
-const vooLoginOn = () => setting('voo.login_mode') !== 'off' && !!setting('voo.issuer') && !!setting('voo.client_id');
+// ---------- VooSquare: Voo ID login, affiliate hand-off, money events, support (the Voo Connect kit, see VOOSQUARE-CONNECT.md) ----------
+// The kit is in ./voo-connect (copied unchanged from VooSquare's sdk/voo-connect); lib/voo.js builds it from the settings below.
+// Everything is off until a VooSquare address is set (VOO_BASE or Admin → Settings → Integrations → VooSquare).
+const VC = require('./voo-connect');
+const VOO_SIGNAL_SECRET = env.VOO_SIGNAL_SECRET || crypto.createHmac('sha256', APP_SECRET).update('voo-signals').digest('hex');
 const vooRedirect = () => setting('voo.redirect_uri') || `${BASE_URL}/auth/voosquare/callback`;
-const b64u = (b) => Buffer.from(b).toString('base64url');
-const discoCache = new Map(), jwksCache = new Map();
-async function vooDiscovery(force) {
-  const iss = setting('voo.issuer'); if (!iss) throw new Error('No VooSquare issuer set.');
-  const hit = discoCache.get(iss);
-  if (hit && !force && Date.now() - hit.at < 3600e3) return hit.doc;
-  let r; try { r = await fetch(`${iss}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(8000) }); } catch { throw new Error('Could not reach VooSquare.'); }
-  if (r.status === 404) { // VooSquare's own OAuth 2.0 (no discovery document): fixed endpoints, HS256 id_token signed with the client secret
-    const doc = { native: true, issuer: iss, authorization_endpoint: `${iss}/oauth/authorize`, token_endpoint: `${iss}/oauth/token`, userinfo_endpoint: `${iss}/oauth/userinfo`, end_session_endpoint: `${iss}/oauth/logout`, token_endpoint_auth_methods_supported: ['client_secret_post'] };
-    discoCache.set(iss, { at: Date.now(), doc }); return doc;
-  }
-  if (!r.ok) throw new Error(`Discovery failed (HTTP ${r.status}).`);
-  const doc = await r.json();
-  if (!doc.authorization_endpoint || !doc.token_endpoint || !doc.jwks_uri) throw new Error('Discovery is missing authorization, token or jwks endpoints.');
-  if (doc.issuer && doc.issuer.replace(/\/$/, '') !== iss) throw new Error('Discovery issuer does not match the configured issuer.');
-  discoCache.set(iss, { at: Date.now(), doc }); return doc;
-}
-async function vooJwks(uri, force) {
-  const hit = jwksCache.get(uri);
-  if (hit && !force && Date.now() - hit.at < 3600e3) return hit.keys;
-  const r = await fetch(uri, { signal: AbortSignal.timeout(8000) });
-  if (!r.ok) throw new Error(`JWKS failed (HTTP ${r.status}).`);
-  const keys = ((await r.json()).keys || []).filter((k) => k.kty === 'RSA' || k.kty === 'EC');
-  jwksCache.set(uri, { at: Date.now(), keys }); return keys;
-}
-/** Verify an ID token: signature (RS256/ES256 via JWKS), iss, aud, exp, iat, nonce. Returns the claims or throws. */
-async function vooVerifyIdToken(tok, nonce, doc) {
-  const parts = String(tok || '').split('.'); if (parts.length !== 3) throw new Error('bad_token');
-  let h, c; try { h = JSON.parse(Buffer.from(parts[0], 'base64url')); c = JSON.parse(Buffer.from(parts[1], 'base64url')); } catch { throw new Error('bad_token'); }
-  if (!['RS256', 'ES256'].includes(h.alg)) throw new Error('bad_alg');
-  let keys = await vooJwks(doc.jwks_uri), jwk = keys.find((k) => !h.kid || k.kid === h.kid);
-  if (!jwk) { keys = await vooJwks(doc.jwks_uri, true); jwk = keys.find((k) => !h.kid || k.kid === h.kid); } // key rotation
-  if (!jwk) throw new Error('unknown_key');
-  const key = crypto.createPublicKey({ key: jwk, format: 'jwk' }), data = Buffer.from(parts[0] + '.' + parts[1]), sig = Buffer.from(parts[2], 'base64url');
-  const ok = h.alg === 'RS256' ? crypto.verify('RSA-SHA256', data, key, sig) : crypto.verify('sha256', data, { key, dsaEncoding: 'ieee-p1363' }, sig);
-  if (!ok) throw new Error('bad_signature');
-  const t = Math.floor(Date.now() / 1000), iss = setting('voo.issuer'), cid = setting('voo.client_id');
-  if (String(c.iss || '').replace(/\/$/, '') !== iss) throw new Error('bad_iss');
-  if (!(Array.isArray(c.aud) ? c.aud.includes(cid) : c.aud === cid)) throw new Error('bad_aud');
-  if (Array.isArray(c.aud) && c.aud.length > 1 && c.azp && c.azp !== cid) throw new Error('bad_aud');
-  if (!(c.exp > t - 60)) throw new Error('expired');
-  if (c.iat && c.iat > t + 300) throw new Error('bad_iat');
-  if (!nonce || !safeEq(c.nonce, nonce)) throw new Error('bad_nonce');
-  if (!c.sub) throw new Error('no_sub');
-  return c;
-}
-/** VooSquare's own OAuth: the token reply carries {access_token, id_token (HS256, client secret), user}. Verify the id_token when present,
- * otherwise read the user from /oauth/userinfo with the access token (server to server over TLS). */
-async function vooNativeClaims(tok, nonce, doc) {
-  let c = null;
-  if (tok.id_token) {
-    const parts = String(tok.id_token).split('.'); if (parts.length !== 3) throw new Error('bad_token');
-    let h; try { h = JSON.parse(Buffer.from(parts[0], 'base64url')); c = JSON.parse(Buffer.from(parts[1], 'base64url')); } catch { throw new Error('bad_token'); }
-    if (h.alg === 'HS256') {
-      const want = crypto.createHmac('sha256', setting('voo.client_secret')).update(parts[0] + '.' + parts[1]).digest('base64url');
-      if (!safeEq(parts[2], want)) throw new Error('bad_signature');
-    } else c = await vooVerifyIdToken(tok.id_token, nonce, { ...doc, jwks_uri: doc.jwks_uri || `${doc.issuer}/.well-known/jwks.json` });
-    const t = Math.floor(Date.now() / 1000), cid = setting('voo.client_id');
-    if (c.aud && !(Array.isArray(c.aud) ? c.aud.includes(cid) : c.aud === cid)) throw new Error('bad_aud');
-    if (c.exp && !(c.exp > t - 60)) throw new Error('expired');
-    if (c.nonce && nonce && !safeEq(c.nonce, nonce)) throw new Error('bad_nonce');
-  }
-  let u = tok.user && typeof tok.user === 'object' ? tok.user : null;
-  if (!u && tok.access_token) {
-    const r = await fetch(doc.userinfo_endpoint, { headers: { authorization: 'Bearer ' + tok.access_token, accept: 'application/json' }, signal: AbortSignal.timeout(10000) });
-    if (r.ok) { const j = await r.json().catch(() => null); u = j && (j.user || j); }
-  }
-  const src = { ...(c || {}), ...(u || {}) };
-  const sub = src.voo_id || src.sub || src.id;
-  if (!sub) throw new Error('no_sub');
-  if (c && c.sub && u && (u.voo_id || u.sub) && String(c.sub) !== String(u.voo_id || u.sub)) throw new Error('bad_token');
-  // VooSquare signs people in with an emailed 6-digit code, so its email is verified unless it says otherwise.
-  return { ...src, sub: String(sub), email: src.email, email_verified: src.email_verified !== false, voo_ref: src.voo_ref || src.ref || null };
-}
-/** Only paths on this site: "/app", "/app#credits"… never "//evil.com", "/\\evil.com" or "https://…". */
-const safeReturn = (r) => { r = String(r || ''); return /^\/(?![\/\\])[^\s\\]*$/.test(r) && !/^\/[^?#]*:/.test(r) ? r.slice(0, 300) : '/app'; };
-const signBlob = (o) => { const v = b64u(JSON.stringify(o)); return v + '.' + crypto.createHmac('sha256', APP_SECRET).update('voo:' + v).digest('base64url'); };
-const readBlob = (s) => { const [v, sg] = String(s || '').split('.'); if (!v || !sg || !safeEq(sg, crypto.createHmac('sha256', APP_SECRET).update('voo:' + v).digest('base64url'))) return null; try { const o = JSON.parse(Buffer.from(v, 'base64url')); return o.exp > Date.now() ? o : null; } catch { return null; } };
-const oidcCookie = (v, age) => `jv_oidc=${encodeURIComponent(v)}; Path=/auth/voosquare; Max-Age=${age}; HttpOnly; SameSite=Lax${SECURE ? '; Secure' : ''}`;
+/** The key VooSquare gave Joinvoo (Admin → Products → Joinvoo → API key). Older setups only had the service key. */
+const vooApiKey = () => setting('voo.api_key') || setting('voo.service_key');
+const vooBase = () => setting('voo.issuer') || '';
+const vooStore = (() => { // the kit's event outbox, kept in the database so events survive restarts and deploys
+  let last = new Map();
+  return {
+    load() { const rows = Q(`SELECT event_id, body FROM voo_kit_outbox ORDER BY seq`).all(); last = new Map(rows.map((r) => [r.event_id, r.body])); return rows.map((r) => { try { return JSON.parse(r.body); } catch { return null; } }).filter(Boolean); },
+    save(list) {
+      tx(() => {
+        const next = new Map(); let seq = 0;
+        for (const x of list) { const b = JSON.stringify(x); next.set(x.event.event_id, b); if (last.get(x.event.event_id) !== b) Q(`INSERT INTO voo_kit_outbox(event_id,body,seq) VALUES(?,?,?) ON CONFLICT(event_id) DO UPDATE SET body=excluded.body`).run(x.event.event_id, b, Date.now() * 1000 + (seq++ % 1000)); }
+        for (const id of last.keys()) if (!next.has(id)) Q(`DELETE FROM voo_kit_outbox WHERE event_id=?`).run(id);
+        last = next;
+      });
+    },
+  };
+})();
+const voo = require('./lib/voo')({ store: vooStore, log: (...a) => log(...a),
+  config: () => ({ base: vooBase(), serverBase: (env.VOO_SERVER_BASE || '').replace(/\/+$/, ''), clientId: setting('voo.client_id'), clientSecret: setting('voo.client_secret'), apiKey: vooApiKey(),
+    redirectUri: vooRedirect(), signalSecret: VOO_SIGNAL_SECRET, secureCookies: SECURE, backoffMs: Math.max(50, +env.VOO_BACKOFF_MS || 1000) }) });
+const vooLoginOn = () => setting('voo.login_mode') !== 'off' && !!vooBase() && !!setting('voo.client_id') && !!setting('voo.client_secret');
+const vooEventsOn = () => !!vooBase() && !!vooApiKey();
+/** Public pages: the Voo Connect browser snippet (keeps ref / vclick / coupon for "Continue with VooSquare"), and VooSquare's chat widget when switched on. */
+const vooHead = () => (vooBase() ? '<script src="/voo-connect-browser.js" defer></script>' + (setting('voo.widget') ? `<script src="${esc(vooBase())}/widget.js" data-product="joinvoo" defer></script>` : '') : '');
+/** Joinvoo's own paths for the addresses VooSquare uses for every tool (its launcher opens /auth/voosquare?return_to=/dashboard). */
+const vooLocalPath = (r) => (r === '/dashboard' || r.startsWith('/dashboard?') ? '/app' : r === '/settings' ? '/app#help' : r);
+/** Adds Set-Cookie headers to what the kit already set on this response. */
+const addCookies = (res, list) => { for (const c of list) VC.appendCookie(res, c); };
+
 async function vooStart(req, res, url) {
-  if (!vooLoginOn()) return send(res, 302, '', { location: '/login?voo_error=off' });
-  let doc; try { doc = await vooDiscovery(); } catch (e) { log('voosquare discovery', e.message); return send(res, 302, '', { location: '/login?voo_error=unavailable' }); }
-  const verifier = b64u(crypto.randomBytes(32)), state = b64u(crypto.randomBytes(16)), nonce = b64u(crypto.randomBytes(16));
-  const ret = safeReturn(url.searchParams.get('return_to'));
-  const q = new URLSearchParams({ response_type: 'code', client_id: setting('voo.client_id'), redirect_uri: vooRedirect(), scope: 'openid email profile', state, nonce,
-    code_challenge: b64u(crypto.createHash('sha256').update(verifier).digest()), code_challenge_method: 'S256' });
-  if (url.searchParams.get('signup') === '1' || url.searchParams.get('prompt') === 'signup') q.set('prompt', 'signup');
-  { const a = affRead(req); if (a) { q.set('ref', a.code); q.set('aff', a.code); if (a.sub) q.set('sub1', a.sub); } }
-  return send(res, 302, '', { location: `${doc.authorization_endpoint}${doc.authorization_endpoint.includes('?') ? '&' : '?'}${q}`, 'set-cookie': oidcCookie(signBlob({ state, nonce, verifier, ret, exp: Date.now() + 600000 }), 600) });
+  const k = vooLoginOn() ? voo.kit() : null;
+  if (!k) return send(res, 302, '', { location: '/login?voo_error=off' });
+  // Joinvoo's older affiliate links (?aff=CODE, /a/CODE) are VooSquare affiliate codes: hand the code on as ref when the kit has no click.
+  const a = k.readAttribution(req), old = affRead(req);
+  if (!a.ref && !a.vclick && old && !url.searchParams.has('ref')) req.url += (req.url.includes('?') ? '&' : '?') + 'ref=' + encodeURIComponent(old.code);
+  k.startLogin(req, res);
 }
-async function vooCallback(req, res, url) {
-  const fail = (code, why) => { if (why) log('voosquare login refused:', code, why); return send(res, 302, '', { location: '/login?voo_error=' + code, 'set-cookie': oidcCookie('', 0) }); };
-  if (!vooLoginOn()) return fail('off');
-  const ck = readBlob(cookies(req).jv_oidc);
-  if (!ck) return fail('expired', 'no or bad state cookie');
-  if (url.searchParams.get('error')) return fail('denied', url.searchParams.get('error'));
-  if (!safeEq(url.searchParams.get('state'), ck.state)) return fail('state', 'state mismatch');
-  const code = url.searchParams.get('code'); if (!code) return fail('state', 'no code');
-  let doc, tok, claims;
-  try {
-    doc = await vooDiscovery();
-    const form = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: vooRedirect(), code_verifier: ck.verifier, client_id: setting('voo.client_id') });
-    const headers = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
-    if (doc.native) form.set('client_secret', setting('voo.client_secret'));
-    const methods = doc.native ? ['client_secret_post'] : doc.token_endpoint_auth_methods_supported || ['client_secret_basic'];
-    if (methods.includes('client_secret_post') && !methods.includes('client_secret_basic')) form.set('client_secret', setting('voo.client_secret'));
-    else headers.authorization = 'Basic ' + Buffer.from(encodeURIComponent(setting('voo.client_id')) + ':' + encodeURIComponent(setting('voo.client_secret'))).toString('base64');
-    const r = await fetch(doc.token_endpoint, { method: 'POST', headers, body: form.toString(), signal: AbortSignal.timeout(10000) });
-    tok = await r.json().catch(() => ({}));
-    if (doc.native) {
-      if (!r.ok || (!tok.user && !tok.id_token && !tok.access_token)) return fail('token', `token endpoint HTTP ${r.status} ${tok.error || ''}`);
-      claims = await vooNativeClaims(tok, ck.nonce, doc);
-    } else {
-      if (!r.ok || !tok.id_token) return fail('token', `token endpoint HTTP ${r.status} ${tok.error || ''}`);
-      claims = await vooVerifyIdToken(tok.id_token, ck.nonce, doc);
-    }
-  } catch (e) { return fail(['bad_signature', 'bad_iss', 'bad_aud', 'bad_nonce', 'expired', 'bad_alg', 'unknown_key', 'bad_token', 'no_sub', 'bad_iat'].includes(e.message) ? 'token' : 'unavailable', e.message); }
-  const vooId = String(claims.sub).slice(0, 200), email = String(claims.email || '').trim().toLowerCase();
+const VOO_ERR = { state_missing: 'expired', state_expired: 'expired', state_mismatch: 'state', access_denied: 'denied', invalid_grant: 'token', invalid_client: 'token', invalid_id_token: 'token', invalid_request: 'token' };
+async function vooCallback(req, res) {
+  const fail = (code, why) => { if (why) log('voosquare login refused:', code, why); res.writeHead(302, { location: '/login?voo_error=' + code, 'cache-control': 'no-store' }); return res.end(); };
+  const k = vooLoginOn() ? voo.kit() : null;
+  if (!k) return fail('off');
+  let r;
+  try { r = await k.handleCallback(req, res); } catch (e) { return fail(VOO_ERR[e.code] || 'unavailable', `${e.code || ''} ${e.message}`); }
+  const vu = r.user, vooId = String(vu.voo_id || '').slice(0, 200), email = String(vu.email || '').trim().toLowerCase();
+  if (!vooId) return fail('token', 'no voo_id');
   let u = Q(`SELECT id, email, status FROM users WHERE voo_id=?`).get(vooId);
-  if (!u) {
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('no_email', 'no email claim');
+  const me = currentUser(req), mine = me ? Q(`SELECT id, email, status, voo_id FROM users WHERE id=?`).get(me.id) : null;
+  if (!u && mine) {
+    // "Connect your VooSquare account": the member is logged in to Joinvoo, so this Voo ID belongs to THIS account.
+    if (mine.voo_id) return fail('link', `account ${mine.id} is already linked to another Voo ID`);
+    vooLink(req, mine, vooId, 'session'); u = mine;
+  } else if (!u) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('no_email', 'no email in the VooSquare user');
     const local = Q(`SELECT id, email, status, verified_at, voo_id FROM users WHERE email=?`).get(email);
     if (local) {
-      // One-time link: same email, confirmed on both sides, not linked to another VooSquare account yet.
-      // Both sides must have confirmed the email: an unconfirmed local account could have been opened by someone else with this address (pre-account takeover).
-      if (!local.verified_at || claims.email_verified !== true || local.voo_id) return fail('link', `cannot link ${email}: local verified=${!!local.verified_at} token verified=${claims.email_verified} already=${!!local.voo_id}`);
-      Q(`UPDATE users SET voo_id=? WHERE id=? AND voo_id IS NULL`).run(vooId, local.id);
-      audit(req, null, 'users.voo_link', 'user:' + local.id, { email, voo_id: vooId });
-      inboxAdd(local.id, { kind: 'account', title: tr(userLang(local.id), 'voo.linked_title'), body: tr(userLang(local.id), 'voo.linked_body'), tag: 'voo_link' });
-      u = local; log('voosquare: linked', email);
+      // One-time link by email: confirmed on both sides (an unconfirmed local account could have been opened by someone else
+      // with this address: pre-account takeover), and not linked to another Voo ID yet.
+      if (!local.verified_at || vu.email_verified !== true || local.voo_id) return fail('link', `cannot link ${email}: local verified=${!!local.verified_at} voosquare verified=${vu.email_verified} already=${!!local.voo_id}`);
+      vooLink(req, local, vooId, 'email'); u = local;
     } else {
-      const country = normCountry(claims.country || (claims.address && claims.address.country));
-      const name = String(claims.name || claims.given_name || '').trim().slice(0, 80) || null, ref = claims.voo_ref ? String(claims.voo_ref).slice(0, 80) : null;
-      const r = Q(`INSERT INTO users(email,pass,created_at,ref_code,name,canon,verified_at,voo_id,referred_by_voo,country) VALUES(?,?,?,?,?,?,?,?,?,?)`)
-        .run(email, hashPass(rid(24)), now(), newRefCode(), name, canonicalEmail(email), now(), vooId, ref, country);
-      const uid = Number(r.lastInsertRowid);
-      affAttach(req, uid, claims.voo_aff || claims.aff || null);
-      vooEvent(uid, 'signup', 'jv_signup_' + uid, 'New Joinvoo account');
+      const country = normCountry(vu.country);
+      const name = String(vu.name || '').trim().slice(0, 80) || null, ref = vu.voo_ref ? String(vu.voo_ref).slice(0, 80) : null;
+      const ins = Q(`INSERT INTO users(email,pass,created_at,ref_code,name,canon,verified_at,voo_id,referred_by_voo,country,voo_linked_at,voo_spent_cents) VALUES(?,?,?,?,?,?,?,?,?,?,?,0)`)
+        .run(email, hashPass(rid(24)), now(), newRefCode(), name, canonicalEmail(email), now(), vooId, ref, country, now());
+      const uid = Number(ins.lastInsertRowid);
+      affAttach(req, uid, null);
       if (country) Q(`UPDATE users SET country_history=? WHERE id=?`).run(JSON.stringify([{ from: null, to: country, at: now(), by: 'voosquare' }]), uid);
       grantWelcome(uid);
       if (setting('trial.starts') === 'signup') checkTrial(uid);
@@ -5801,26 +5780,34 @@ async function vooCallback(req, res, url) {
   }
   if (u.status === 'suspended') return fail('suspended');
   const token = rid(24);
-  Q(`INSERT INTO sessions(token,user_id,expires_at,via,id_token) VALUES(?,?,?,?,?)`).run(token, u.id, now() + 30 * 864e5, 'voosquare', String(tok.id_token || '').slice(0, 4000) || null);
-  res.writeHead(302, { location: ck.ret || '/app', 'cache-control': 'no-store', 'set-cookie': [cookie('jp_session', token, 30 * 86400), oidcCookie('', 0)] });
+  Q(`INSERT INTO sessions(token,user_id,expires_at,via,id_token) VALUES(?,?,?,?,?)`).run(token, u.id, now() + 30 * 864e5, 'voosquare', null);
+  if (me) { const old = cookies(req).jp_session; if (old) Q(`DELETE FROM sessions WHERE token=?`).run(old); }
+  addCookies(res, [cookie('jp_session', token, 30 * 86400)]);
+  res.writeHead(302, { location: vooLocalPath(r.returnTo || '/app'), 'cache-control': 'no-store' });
   return res.end();
 }
-/** Where to send someone after logging out: VooSquare's end_session_endpoint for VooSquare sessions, else null. */
-async function vooLogoutUrl(sess) {
-  if (!sess || sess.via !== 'voosquare' || !setting('voo.issuer')) return null;
-  try { const doc = await vooDiscovery(); if (!doc.end_session_endpoint) return null;
-    const q = new URLSearchParams({ post_logout_redirect_uri: BASE_URL, redirect_uri: BASE_URL, client_id: setting('voo.client_id') }); if (sess.id_token) q.set('id_token_hint', sess.id_token);
-    return `${doc.end_session_endpoint}${doc.end_session_endpoint.includes('?') ? '&' : '?'}${q}`; } catch { return null; }
+/** Save a Voo ID on an existing Joinvoo account (once). Money already spent before the link is never reported to VooSquare. */
+function vooLink(req, local, vooId, how) {
+  Q(`UPDATE users SET voo_id=?, voo_linked_at=?, voo_spent_cents=? WHERE id=? AND voo_id IS NULL`).run(vooId, now(), vooFunded(local.id), local.id);
+  audit(req, null, 'users.voo_link', 'user:' + local.id, { email: local.email, voo_id: vooId, how });
+  inboxAdd(local.id, { kind: 'account', title: tr(userLang(local.id), 'voo.linked_title'), body: tr(userLang(local.id), 'voo.linked_body'), tag: 'voo_link' });
+  log('voosquare: linked', local.email, how);
 }
-/** Admin "Test discovery": fetch discovery + JWKS fresh and report what was found. */
+/** Where to send someone after logging out: VooSquare's /oauth/logout ("log out everywhere", back to our home page) for a session
+ * that started with VooSquare; a password session just logs out here. */
+function vooLogoutUrl(sess) {
+  const k = vooLoginOn() ? voo.kit() : null;
+  return k && sess && sess.via === 'voosquare' ? k.logoutUrl(BASE_URL + '/') : null;
+}
+/** Admin "Test connection": the kit's own self-test (check.js) against the saved settings. Changes nothing in VooSquare. */
 async function vooTest() {
+  if (!vooBase()) return { ok: false, error: 'Fill in the VooSquare address first.' };
   try {
-    const doc = await vooDiscovery(true);
-    if (doc.native) return { ok: true, native: true, message: 'VooSquare login found (VooSquare OAuth: /oauth/authorize and /oauth/token). Logout supported.', issuer: doc.issuer,
-      endpoints: { authorization: doc.authorization_endpoint, token: doc.token_endpoint, userinfo: doc.userinfo_endpoint, end_session: doc.end_session_endpoint } };
-    const keys = await vooJwks(doc.jwks_uri, true);
-    return { ok: true, message: `Discovery OK: ${keys.length} signing ${keys.length === 1 ? 'key' : 'keys'}${doc.end_session_endpoint ? ', logout supported' : ''}.`, issuer: doc.issuer || setting('voo.issuer'),
-      endpoints: { authorization: doc.authorization_endpoint, token: doc.token_endpoint, jwks: doc.jwks_uri, end_session: doc.end_session_endpoint || null } };
+    const out = await voo.runChecks({ base: vooBase(), clientId: setting('voo.client_id'), clientSecret: setting('voo.client_secret'), apiKey: vooApiKey(),
+      redirectUris: [vooRedirect()], logoutUri: BASE_URL + '/', summaryUrl: vooApiKey() ? `${BASE_URL}/api/voosquare/summary` : '', timeoutMs: 8000 });
+    const bad = out.results.filter((x) => x.status === 'fail');
+    return { ok: out.ok, message: out.ok ? `VooSquare connection OK: ${out.results.filter((x) => x.status === 'pass').length} checks passed.` : undefined,
+      error: out.ok ? undefined : bad.map((x) => x.name + (x.detail ? ': ' + x.detail : '')).join(' · ').slice(0, 900), results: out.results };
   } catch (e) { return { ok: false, error: e.message || 'Could not reach VooSquare.' }; }
 }
 
@@ -5846,8 +5833,6 @@ function vooSummary(vooId, period) {
     open_url: `${BASE_URL}/app` };
 }
 
-// ----- events outbox → VooSquare (HMAC-signed batches; never end-customer personal data) -----
-/** Queue one event for a Joinvoo user linked to VooSquare. event_id is stable, so a retry or a second call is a no-op. */
 // ----- VooSquare affiliates: ?aff=CODE (also ?voo_aff=, ?via=, /a/CODE) is remembered for 90 days and tied to the account at sign-up, for life -----
 const AFF_RE = /^[A-Za-z0-9_-]{2,40}$/;
 function affCapture(req, url) {
@@ -5876,7 +5861,6 @@ function vooAuthOk(req) {
   return !!got && [setting('voo.api_key'), setting('voo.service_key')].some((k) => k && safeEq(got, k));
 }
 // ----- support bridge: customer messages are copied to the VooSquare HQ inbox; replies made there come back into the same chat -----
-const vooBase = () => setting('voo.issuer') || '';
 function vooSupportQueue(ticketId, msgId) {
   try { if (!setting('voo.support_bridge') || !vooApiKey() || !vooBase()) return;
     Q(`INSERT OR IGNORE INTO voo_support_out(msg_id,ticket_id,attempts,next_at,created_at) VALUES(?,?,0,?,?)`).run(msgId, ticketId, now(), now()); } catch (e) { log('voo support queue', e.message); }
@@ -5893,11 +5877,9 @@ async function vooSupportFlush() {
     for (const r of rows) {
       let err = null;
       try {
-        const x = await fetch(vooBase() + '/api/v1/support/messages', { method: 'POST', signal: AbortSignal.timeout(10000), headers: { authorization: 'Bearer ' + vooApiKey(), 'content-type': 'application/json', 'user-agent': 'Joinvoo/support' },
-          body: JSON.stringify({ email: r.uemail || r.email || '', name: r.uname || r.name || '', subject: 'Joinvoo support chat', body: r.body, external_ref: 'joinvoo-' + r.tid, ...(r.voo_id ? { voo_id: r.voo_id } : {}), product: 'joinvoo' }) });
-        const j = await x.json().catch(() => ({}));
-        if (!x.ok) err = 'HTTP ' + x.status; else if (j && (j.ticket_id || j.id)) Q(`UPDATE tickets SET voo_ticket=? WHERE id=? AND voo_ticket IS NULL`).run(String(j.ticket_id || j.id), r.tid);
-      } catch (e) { err = e.message || 'network error'; }
+        const j = await voo.kit().support.send({ email: r.uemail || r.email || '', name: r.uname || r.name || '', subject: 'Joinvoo support chat', body: r.body, externalRef: 'joinvoo-' + r.tid, vooId: r.voo_id || undefined });
+        if (j && (j.ticket_id || j.id)) Q(`UPDATE tickets SET voo_ticket=? WHERE id=? AND voo_ticket IS NULL`).run(String(j.ticket_id || j.id), r.tid);
+      } catch (e) { err = e.status ? 'HTTP ' + e.status : e.message || 'network error'; }
       if (!err) { Q(`UPDATE voo_support_out SET sent_at=?, last_error=NULL WHERE id=?`).run(now(), r.id); vsLast = { at: now(), error: null, sent: vsLast.sent + 1 }; }
       else { Q(`UPDATE voo_support_out SET attempts=attempts+1, next_at=?, last_error=? WHERE id=?`).run(now() + Math.min(6 * 3600e3, Math.max(100, +env.VOO_BACKOFF_MS || 15000) * 2 ** Math.min(r.attempts, 12)), err, r.id); vsLast = { ...vsLast, error: err, error_at: now() }; log('voo support: send failed', err); break; }
     }
@@ -5924,53 +5906,166 @@ function vooSupportReply(b) {
   if (to && (!u || !u.last_seen || u.last_seen < now() - 5 * 60000)) sendTemplate(to, 'support_reply', { body, agent: { name: agent, photo: '', role: '' }, user: !!u }, { userId: t.user_id || null, ref: 'ticket:' + t.id });
   return { ok: true };
 }
-/** Where events go: the admin's events URL, else <VooSquare address>/api/v1/events. */
-const vooEventsUrl = () => setting('voo.events_url') || (setting('voo.issuer') ? setting('voo.issuer') + '/api/v1/events' : '');
-/** The key VooSquare gave Joinvoo (Admin → Products → Joinvoo → API key). Older setups only had the service key. */
-const vooApiKey = () => setting('voo.api_key') || setting('voo.service_key');
-const vooEventsOn = () => !!(setting('voo.webhook_secret') || setting('voo.api_key')) && !!vooEventsUrl();
-const AFF_EVENT_TYPES = new Set(['signup', 'spend', 'plan_started', 'plan_cancelled']);
+// ----- events → VooSquare (the kit queues, batches, retries; never end-customer personal data) -----
+// Money (VOOSQUARE-CONNECT.md): a top-up is `wallet_topup` (no commission); credits as they are USED are `spend` (commission):
+// a plan charge at once (+ plan_started / plan_renewed), extra joins / FTD fees / Joe answers as one `spend` per customer per day;
+// a refund of unused top-up money is `refund`; a card dispute is `chargeback` against the spends it funded.
+// Only money that came from real payments counts: welcome, bonus and promo credits never earn an affiliate anything.
+const VOO_USE_KINDS = `'joins','ftds','joe'`, VOO_CONSUME_KINDS = `'plan','joins','ftds','joe'`, VOO_PAID_KINDS = `'deposit','refund','chargeback'`;
+/** Real money this customer has used up to `until` (ms): what they consumed, but never more than they paid in (net of refunds and chargebacks). */
+function vooFunded(uid, until) {
+  const t = until || 9e15;
+  const used = -Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN (${VOO_CONSUME_KINDS}) AND created_at<?`).get(uid, t).n;
+  const paid = Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN (${VOO_PAID_KINDS}) AND created_at<?`).get(uid, t).n;
+  return Math.max(0, Math.min(used, paid));
+}
+const vooUser = (uid) => Q(`SELECT id, voo_id, country, voo_spent_cents, voo_linked_at FROM users WHERE id=?`).get(uid);
+/** Activity in the customer's funnels (join, lead, signup, ftd, deposit, bot_blocked) and plan_cancelled. Linked members only. */
 function vooEvent(uid, type, eventId, label, extra = {}) {
-  try {
-    if (!vooEventsOn()) return;
-    const u = Q(`SELECT voo_id, aff_code, aff_sub FROM users WHERE id=?`).get(uid); if (!u) return;
-    // Not linked to VooSquare: only affiliate-attributed accounts send their sign-up and money events, keyed by an anonymous customer_ref.
-    if (!u.voo_id && !(u.aff_code && AFF_EVENT_TYPES.has(type))) return;
-    const body = { event_id: eventId, type, tool: 'joinvoo', ...(u.voo_id ? { voo_id: u.voo_id } : {}), customer_ref: 'jv_' + crypto.createHmac('sha256', APP_SECRET).update('cref:' + uid).digest('hex').slice(0, 20),
-      ...(u.aff_code ? { aff_code: u.aff_code, ...(u.aff_sub ? { aff_sub: u.aff_sub } : {}) } : {}), occurred_at: new Date().toISOString(), label: String(label || '').slice(0, 120), ...extra,
-      ...(extra.value != null ? { value_usd: extra.value } : {}) };
-    Q(`INSERT OR IGNORE INTO voo_outbox(event_id,body,attempts,next_at,created_at) VALUES(?,?,0,?,?)`).run(eventId, JSON.stringify(body), now(), now());
-  } catch (e) { log('voo event', e.message); }
+  if (!vooEventsOn()) return;
+  const u = vooUser(uid); if (!u || !u.voo_id) return;
+  voo.track((k) => k.events.activity(type, { eventId, vooId: u.voo_id, label: String(label || '').slice(0, 120), ...(extra.value > 0 ? { valueUsd: extra.value } : {}), ...(extra.plan ? { plan: extra.plan } : {}) }));
+}
+/** Records a reported spend and queues it. cents: real money in this spend (≥ 1). */
+function vooSpend(u, eventId, cents, label, extra = {}) {
+  Q(`UPDATE users SET voo_spent_cents=COALESCE(voo_spent_cents,0)+? WHERE id=?`).run(cents, u.id);
+  Q(`INSERT OR IGNORE INTO voo_spends(event_id,user_id,cents,reversed_cents,kind,at,created_at) VALUES(?,?,?,0,?,?,?)`).run(eventId, u.id, cents, extra.kind || 'spend', extra.at || now(), now());
+  voo.track((k) => k.events.spend({ eventId, vooId: u.voo_id, valueUsd: cents / 100, label, plan: extra.plan, occurredAt: extra.at, country: u.country || undefined }));
+}
+/** A plan charge was written to the ledger (inside its transaction): spend for the real money in it, plus the plan sync event. */
+function vooPlanCharged(uid, ledgerId, cost, ref) {
+  if (!vooEventsOn()) return;
+  const u = vooUser(uid); if (!u || !u.voo_id) return;
+  const plan = String(ref).startsWith('planup:') ? 'pro' : userPlan(uid), P = plansDef()[plan] || { name: plan }, k = voo.kit(); // an upgrade is written before users.plan changes
+  const cents = Math.max(0, Math.min(cost, vooFunded(uid) - (u.voo_spent_cents || 0)));
+  const label = `Joinvoo ${P.name}${String(ref).startsWith('planup:') ? ' upgrade' : ''}, monthly`;
+  const payId = k.events.id('pay', ledgerId);
+  if (cents >= 1) vooSpend(u, payId, cents, label, { plan: P.name, kind: 'plan' });
+  const first = String(ref).startsWith('planup:') || !Q(`SELECT 1 FROM ledger WHERE user_id=? AND kind='plan' AND id<? AND created_at>=? LIMIT 1`).get(uid, ledgerId, u.voo_linked_at || 0);
+  // VooSquare keeps this as the plan's catalogue price (affiliate Offers page): always the list price, never a customer's custom deal.
+  const price = (plansDef()[plan] || {}).base_cents || 0;
+  if (price >= 1) voo.track((kk) => (first ? kk.events.planStarted : kk.events.planRenewed).call(kk.events, { eventId: kk.events.id(first ? 'plan' : 'renew', ledgerId), vooId: u.voo_id, plan: P.name, valueUsd: price / 100, label: `Joinvoo ${P.name}` }));
+}
+/** A top-up was paid: money into the wallet, not commissionable. */
+function vooTopup(d) {
+  if (!vooEventsOn()) return;
+  const u = vooUser(d.user_id); if (!u || !u.voo_id || !(d.amount_cents >= 1)) return;
+  voo.track((k) => k.events.walletTopup({ eventId: k.events.id('topup', d.id), vooId: u.voo_id, valueUsd: d.amount_cents / 100, label: `Wallet top-up (${depLabel(d)})`.slice(0, 120), occurredAt: d.paid_at || now(),
+    ...(d.tx ? { signals: { payment_fingerprint: voo.kit().hashSignal(d.tx) } } : {}) }));
+}
+/** Daily job: one `spend` per customer per finished UTC day for the extra joins, FTD fees and Joe answers paid with real money. */
+function vooUseJob() {
+  if (!vooEventsOn()) return 0;
+  const today0 = Date.parse(new Date().toISOString().slice(0, 10) + 'T00:00:00Z'); let n = 0;
+  for (const u0 of Q(`SELECT id FROM users WHERE voo_id IS NOT NULL`).all()) {
+    const u = vooUser(u0.id);
+    const days = Q(`SELECT strftime('%Y-%m-%d', created_at/1000, 'unixepoch') day, -SUM(amount_cents) c FROM ledger WHERE user_id=? AND kind IN (${VOO_USE_KINDS}) AND created_at>=? AND created_at<? GROUP BY day ORDER BY day`).all(u.id, u.voo_linked_at || 0, today0);
+    for (const d of days) {
+      if (Q(`SELECT 1 FROM voo_use WHERE user_id=? AND day=?`).get(u.id, d.day)) continue;
+      tx(() => {
+        const cur = vooUser(u.id), end = Date.parse(d.day + 'T00:00:00Z') + 864e5;
+        // Real money used by the end of that day, minus what was already reported for money used before then; and never more
+        // than everything paid in minus everything reported so far (a plan charged since then may already have counted it).
+        const before = Q(`SELECT COALESCE(SUM(cents-reversed_cents),0) n FROM voo_spends WHERE user_id=? AND at<?`).get(u.id, end).n;
+        const cents = Math.max(0, Math.min(d.c, vooFunded(u.id, end) - before, vooFunded(u.id) - (cur.voo_spent_cents || 0)));
+        const id = voo.kit().events.id('use', d.day, u.voo_id);
+        Q(`INSERT INTO voo_use(user_id,day,cents,event_id,created_at) VALUES(?,?,?,?,?)`).run(u.id, d.day, cents, cents >= 1 ? id : null, now());
+        if (cents >= 1) { vooSpend(cur, id, cents, 'Credits used (tracked joins, FTD fees, Joe)', { kind: 'use', at: end - 1000 }); n++; }
+      });
+    }
+  }
+  return n;
+}
+/** After a chargeback: take back commission on the most recent reported spends until reported ≤ real money kept. */
+function vooClawback(uid, depId) {
+  const u = vooUser(uid); if (!u || !u.voo_id) return 0;
+  let excess = (u.voo_spent_cents || 0) - vooFunded(uid), i = 0, done = 0;
+  if (excess <= 0) return 0;
+  for (const s of Q(`SELECT * FROM voo_spends WHERE user_id=? AND cents>reversed_cents ORDER BY at DESC, rowid DESC`).all(uid)) {
+    if (excess <= 0) break;
+    const take = Math.min(excess, s.cents - s.reversed_cents);
+    Q(`UPDATE voo_spends SET reversed_cents=reversed_cents+? WHERE event_id=?`).run(take, s.event_id);
+    voo.track((k) => k.events.chargeback({ eventId: k.events.id('cb', depId, ++i), vooId: u.voo_id, valueUsd: take / 100, originalEventId: s.event_id, label: 'Card payment charged back' }));
+    excess -= take; done += take;
+  }
+  Q(`UPDATE users SET voo_spent_cents=voo_spent_cents-? WHERE id=?`).run(done, uid);
+  return done;
+}
+/** Real money still in the wallet (what can be refunded in cash): paid in minus what was used. */
+const vooCashLeft = (uid) => { const paid = Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN (${VOO_PAID_KINDS})`).get(uid).n; return Math.max(0, paid - vooFunded(uid)); };
+/** Admin: refund (part of) a paid top-up that was not used. The money itself is sent back in the payment provider. */
+function refundDeposit(d, cents, req) {
+  return tx(() => {
+    d = Q(`SELECT * FROM deposits WHERE id=?`).get(d.id) || d; // the row as it is now: two clicks in parallel must not both pass the checks
+    const u = Q(`SELECT balance_cents FROM users WHERE id=?`).get(d.user_id);
+    const max = Math.min(d.amount_cents - (d.refunded_cents || 0), vooCashLeft(d.user_id), Math.max(0, u.balance_cents || 0));
+    if (d.status !== 'paid' || d.charged_back_at) return { error: 'Only a paid top-up can be refunded.', status: 400 };
+    if (!(cents >= 1) || cents > max) return { error: `You can refund up to ${(max / 100).toFixed(2)} USD of this top-up (unused money paid in).`, status: 400, max_cents: max };
+    const n = Q(`SELECT COUNT(*) n FROM ledger WHERE ref LIKE ?`).get(`refund:dep:${d.id}:%`).n + 1;
+    addLedger(d.user_id, 'refund', -cents, `refund:dep:${d.id}:${n}`, `Refund of top-up #${d.id}`);
+    Q(`UPDATE deposits SET refunded_cents=COALESCE(refunded_cents,0)+? WHERE id=?`).run(cents, d.id);
+    const vu = vooUser(d.user_id);
+    if (vooEventsOn() && vu && vu.voo_id) voo.track((k) => k.events.refund({ eventId: k.events.id('rf', d.id, n), vooId: vu.voo_id, valueUsd: cents / 100, originalEventId: k.events.id('topup', d.id), label: 'Unused wallet money returned' }));
+    audit(req, null, 'deposits.refund', 'deposit:' + d.id, { cents });
+    return { ok: true, refunded_cents: cents };
+  });
+}
+/** Admin: a card dispute charged this top-up back. The wallet loses it (it can go below zero) and commission on what it paid for is reversed. */
+function chargebackDeposit(d, req) {
+  return tx(() => {
+    d = Q(`SELECT * FROM deposits WHERE id=?`).get(d.id) || d; // the row as it is now (a refund or a chargeback may have just been recorded)
+    if (d.status !== 'paid' || d.charged_back_at) return { error: 'Only a paid top-up can be charged back, once.', status: 400 };
+    const cents = d.amount_cents - (d.refunded_cents || 0);
+    const paidBefore = refPaidIn(d.user_id);
+    if (cents > 0) addLedger(d.user_id, 'chargeback', -cents, `cb:dep:${d.id}`, `Chargeback of top-up #${d.id}`);
+    Q(`UPDATE deposits SET charged_back_at=? WHERE id=?`).run(now(), d.id);
+    const reversed = vooEventsOn() ? vooClawback(d.user_id, d.id) : 0;
+    const refReversed = refClawback(d.user_id, d.id, paidBefore);
+    audit(req, null, 'deposits.chargeback', 'deposit:' + d.id, { cents, reversed, ref_reversed: refReversed });
+    return { ok: true, charged_back_cents: cents, commission_base_reversed_cents: reversed, referral_commission_reversed_cents: refReversed };
+  });
+}
+/** Real money a customer paid in (top-ups minus refunds and chargebacks) and what they used from the wallet (plan, joins, FTD fees, Joe), as payCommission counts it. */
+const refPaidIn = (uid) => Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN ('deposit','refund','chargeback')`).get(uid).n;
+const refSpent = (uid) => -Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE user_id=? AND kind IN ('plan','joins','ftds','joe')`).get(uid).n;
+/** Joinvoo's own referral program after a chargeback (referral terms §6): the referrer loses the commission earned on the spending that
+ * the charged-back money paid for. Written as one negative ref_earnings row (never more than they earned from this customer). */
+function refClawback(uid, depId, paidBefore) {
+  const u = Q(`SELECT referred_by FROM users WHERE id=?`).get(uid); if (!u || !u.referred_by) return 0;
+  const spent = refSpent(uid), lost = Math.max(0, Math.min(spent, Math.max(0, paidBefore)) - Math.min(spent, Math.max(0, refPaidIn(uid))));
+  if (!lost) return 0;
+  const e = Q(`SELECT COALESCE(SUM(CASE WHEN amount_cents>0 THEN base_cents END),0) base, COALESCE(SUM(CASE WHEN amount_cents>0 THEN amount_cents END),0) pos, COALESCE(SUM(amount_cents),0) net FROM ref_earnings WHERE referrer_id=? AND from_user=?`).get(u.referred_by, uid);
+  if (!(e.base > 0) || !(e.net > 0)) return 0;
+  const take = Math.min(e.net, Math.round(lost * e.pos / e.base));
+  if (take <= 0) return 0;
+  Q(`INSERT INTO ref_earnings(referrer_id,from_user,ref,base_cents,amount_cents,rate,created_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(ref) DO NOTHING`)
+    .run(u.referred_by, uid, `refcb:dep:${depId}`, -lost, -take, e.pos / e.base, Date.now());
+  log('referral commission reversed', u.referred_by, 'from user', uid, take);
+  return take;
 }
 const srcLabel = (ch) => (ch ? (ch.title || (ch.username ? '@' + ch.username : 'your link')).slice(0, 60) : 'your link');
-let vooBusy = false, vooLast = { at: null, error: null, sent: 0 };
-async function vooFlush() {
-  if (vooBusy) return; vooBusy = true;
-  try {
-    const secret = setting('voo.webhook_secret'), url = vooEventsUrl(), key = setting('voo.api_key');
-    if (!(secret || key) || !url) return;
-    Q(`UPDATE voo_outbox SET failed=1 WHERE sent_at IS NULL AND COALESCE(failed,0)=0 AND created_at<?`).run(now() - 24 * 3600e3); // give up after a day
-    const rows = Q(`SELECT id, body, attempts FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0 AND next_at<=? ORDER BY id LIMIT 100`).all(now());
-    if (!rows.length) return;
-    const raw = '{"events":[' + rows.map((r) => r.body).join(',') + ']}';
-    let err = null;
-    try {
-      const hd = { 'content-type': 'application/json', 'user-agent': 'Joinvoo/voo-events' };
-      if (secret) hd['x-voo-signature'] = crypto.createHmac('sha256', secret).update(raw).digest('hex');
-      if (key) hd.authorization = 'Bearer ' + key;
-      const r = await fetch(url, { method: 'POST', headers: hd, body: raw, signal: AbortSignal.timeout(10000) });
-      if (!r.ok) err = `HTTP ${r.status}`;
-    } catch (e) { err = e.message || 'network error'; }
-    if (!err) { const ids = rows.map((r) => r.id); Q(`UPDATE voo_outbox SET sent_at=?, last_error=NULL WHERE id IN (${ids.map(() => '?').join(',')})`).run(now(), ...ids); vooLast = { at: now(), error: null, sent: vooLast.sent + ids.length }; }
-    else { tx(() => { for (const r of rows) Q(`UPDATE voo_outbox SET attempts=attempts+1, next_at=?, last_error=? WHERE id=?`).run(now() + Math.min(6 * 3600e3, Math.max(100, +env.VOO_BACKOFF_MS || 15000) * 2 ** Math.min(r.attempts, 12)), err, r.id); }); vooLast = { ...vooLast, error: err, error_at: now() }; log('voo events: send failed', err); }
-  } catch (e) { log('voo flush', e.message); } finally { vooBusy = false; }
-}
+async function vooFlush() { try { await voo.flush(); } catch (e) { log('voo flush', e.message); } }
 function vooOutboxStats() {
-  const one = (sql, ...a) => Object.values(Q(sql).get(...a))[0] || 0;
-  return { enabled: vooEventsOn(), url: vooEventsUrl(), pending: one(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`), failed: one(`SELECT COUNT(*) FROM voo_outbox WHERE COALESCE(failed,0)=1`),
-    sent_24h: one(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at>?`, now() - 864e5), oldest_pending_at: one(`SELECT MIN(created_at) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`) || null,
-    last_error: (Q(`SELECT last_error FROM voo_outbox WHERE last_error IS NOT NULL ORDER BY id DESC LIMIT 1`).get() || {}).last_error || null, last_sent_at: one(`SELECT MAX(sent_at) FROM voo_outbox`) || null };
+  const s = voo.stats(), legacy = cnt(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`);
+  return { ...s, legacy_pending: legacy };
 }
+/** One-time: events queued by the pre-kit outbox go into the kit's queue (those the kit refuses, e.g. without a Voo ID, are dropped). */
+(function vooMigrateOutbox() {
+  try {
+    const rows = Q(`SELECT id, body FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`).all();
+    if (!rows.length) return;
+    let moved = 0;
+    for (const r of rows) {
+      let b; try { b = JSON.parse(r.body); } catch { b = null; }
+      if (b && b.voo_id && voo.kit()) { const ev = { event_id: b.event_id, voo_id: b.voo_id, type: b.type === 'spend' && b.kind === 'topup' ? 'wallet_topup' : b.type, label: b.label, occurred_at: b.occurred_at, ...(b.value_usd ? { value_usd: b.value_usd } : {}) };
+        if (voo.track((k) => k.events.track(ev))) moved++; }
+      Q(`UPDATE voo_outbox SET failed=1, last_error=? WHERE id=?`).run('moved to the Voo Connect outbox', r.id);
+    }
+    log('voo: moved', moved, 'of', rows.length, 'queued events to the Voo Connect outbox');
+  } catch (e) { log('voo outbox migration', e.message); }
+})();
+/** One-time for members linked before this version: only money spent from now on is reported. */
+for (const u of Q(`SELECT id FROM users WHERE voo_id IS NOT NULL AND voo_linked_at IS NULL`).all()) Q(`UPDATE users SET voo_linked_at=?, voo_spent_cents=? WHERE id=?`).run(now(), vooFunded(u.id), u.id);
 
 const seenUpdates = new Map();
 // ---------- router ----------
@@ -5980,19 +6075,30 @@ const server = http.createServer(async (req, res) => {
     const p = url.pathname;
     let mm;
     if (p === '/health') return send(res, 200, { ok: true });
+    if ((p === '/auth/voosquare' || p === '/auth/voosquare/callback') && req.method === 'GET' && limited('voo:' + clientIp(req), 120, 600)) // each callback costs a call to VooSquare
+      return send(res, 302, '', { location: '/login?voo_error=unavailable', 'cache-control': 'no-store' });
     if (p === '/auth/voosquare' && req.method === 'GET') return await vooStart(req, res, url);
-    if (p === '/auth/voosquare/callback' && req.method === 'GET') return await vooCallback(req, res, url);
-    if (p === '/logout' && req.method === 'GET') { // plain-link logout; VooSquare sessions also end at VooSquare
-      const t = cookies(req).jp_session, sess = t ? Q(`SELECT via, id_token FROM sessions WHERE token=?`).get(t) : null;
+    if (p === '/auth/voosquare/callback' && req.method === 'GET') return await vooCallback(req, res);
+    if (p === '/logout' && req.method === 'GET') { // plain-link logout; VooSquare members are logged out of VooSquare too ("log out everywhere")
+      const t = cookies(req).jp_session, sess = t ? Q(`SELECT via FROM sessions WHERE token=?`).get(t) : null;
       if (t) Q(`DELETE FROM sessions WHERE token=?`).run(t);
-      return send(res, 302, '', { location: (await vooLogoutUrl(sess)) || '/login', 'set-cookie': cookie('jp_session', '', 0) });
+      return send(res, 302, '', { location: vooLogoutUrl(sess) || '/login', 'set-cookie': cookie('jp_session', '', 0) });
     }
+    if (p === '/hooks/voosquare/support' && req.method === 'POST') { // VooSquare's support-reply webhook (Bearer API key, checked by the kit)
+      const k = vooEventsOn() ? voo.kit() : null;
+      if (!k) return send(res, 404, { error: 'VooSquare is not connected.' });
+      return k.supportWebhook(async (b) => { const r = vooSupportReply(b); if (r.error && r.status !== 404) throw new Error(r.error); })(req, res);
+    }
+    if (p === '/voo-connect-browser.js' && (req.method === 'GET' || req.method === 'HEAD')) return sendStatic(req, res, path.join(__dirname, 'voo-connect', 'voo-connect-browser.js'), 'application/javascript; charset=utf-8', { maxAge: 3600 });
+    if ((p === '/dashboard' || p === '/settings') && req.method === 'GET') return send(res, 302, '', { location: p === '/dashboard' ? '/app' : '/app#help' });
     if (p === '/webhooks/paystack' && req.method === 'POST') {
       const raw = await readBody(req, 512 * 1024).catch(() => '');
       const sig = crypto.createHmac('sha512', C.PAYSTACK_SECRET).update(raw).digest('hex');
       if (!C.PAYSTACK_SECRET || !safeEq(sig, req.headers['x-paystack-signature'])) return send(res, 401, 'bad signature');
-      try { const ev = JSON.parse(raw); if (ev.event === 'charge.success') { const d = Q(`SELECT * FROM deposits WHERE reference=?`).get(ev.data.reference);
-        if (d && ev.data.amount >= d.local_amount) markDepositPaid(ev.data.reference, String(ev.data.id)); } } catch (e) { log('paystack webhook', e.message); }
+      // Same checks as every other gateway: a Paystack deposit, paid in full, in its own currency (a cheap charge in another
+      // currency, or a Paystack charge carrying the reference of a Stripe or crypto top-up, must never credit it).
+      try { const ev = JSON.parse(raw); if (ev.event === 'charge.success' && ev.data && ev.data.status !== 'failed')
+        gatewayPaid(ev.data.reference, { amount: ev.data.amount, currency: ev.data.currency, txid: String(ev.data.id), provider: 'paystack' }); } catch (e) { log('paystack webhook', e.message); }
       return send(res, 200, 'ok');
     }
     if ((mm = /^\/webhooks\/(paystack|stripe)\/([\w-]{2,40})$/.exec(p)) && req.method === 'POST') {
@@ -6096,6 +6202,9 @@ const server = http.createServer(async (req, res) => {
       if (req.method !== 'GET' && req.headers.origin) { try { if (new URL(req.headers.origin).host !== req.headers.host) return send(res, 403, { error: 'Cross-site request blocked.' }); } catch { return send(res, 403, { error: 'Bad origin.' }); } }
       return await api(req, res, url, currentUser(req));
     }
+    if (req.method === 'GET' && /[?&](ref|vclick|coupon)=/.test(url.search)) { // VooSquare affiliate click (ref, vclick, coupon): kept in the voo_attr cookie for the login hand-off
+      const k = voo.kit(); if (k && k.affiliate) { k.captureAttribution()(req, res); if (res.getHeader('set-cookie')) res._noStore = true; }
+    }
     if ((mm = /^\/a\/([A-Za-z0-9_-]{2,40})$/.exec(p))) { // short affiliate link: joinvoo.com/a/CODE
       const ac = affCapture(req, new URL(BASE_URL + '/?aff=' + encodeURIComponent(mm[1]) + (url.searchParams.get('sub1') ? '&sub1=' + encodeURIComponent(url.searchParams.get('sub1')) : '')));
       return send(res, 302, '', { location: '/', ...(ac ? { 'set-cookie': ac } : {}) });
@@ -6171,7 +6280,8 @@ const server = http.createServer(async (req, res) => {
 // ---------- background jobs ----------
 setInterval(fillPools, 400);
 setInterval(sendCapi, 2000);
-setInterval(vooFlush, Math.max(200, +env.VOO_OUTBOX_MS || 15000)).unref(); // VooSquare events (no-op until a webhook secret is set)
+setInterval(vooFlush, Math.max(200, +env.VOO_OUTBOX_MS || 5000)).unref(); // VooSquare events (no-op until VooSquare is connected)
+setInterval(() => { try { vooUseJob(); } catch (e) { log('voo use job', e.message); } }, Math.max(1000, +env.VOO_USE_JOB_MS || 3600000)).unref(); setTimeout(() => { try { vooUseJob(); } catch (e) { log('voo use job', e.message); } }, 20000).unref();
 setInterval(() => { // links handed out but not used are retired, never re-used, so a late joiner is still credited to the right click
   Q(`UPDATE links SET status='expired' WHERE status='assigned' AND assigned_at<?`).run(now() - RECYCLE_MIN * 60000);
   Q(`DELETE FROM links WHERE status IN ('expired','dead') AND created_at<?`).run(now() - 30 * 864e5);
@@ -6223,7 +6333,8 @@ function backupNow() {
   } catch (e) { log('backup failed', e.message); return null; }
 }
 setInterval(backupNow, 24 * 3600000);
-function shutdown() { log('shutting down'); server.close(); setTimeout(() => { try { db.close(); } catch {} process.exit(0); }, 1500); }
+function shutdown() { log('shutting down'); server.close(); const k = vooEventsOn() ? voo.kit() : null; // send queued VooSquare events first (they also survive in the database)
+  Promise.resolve(k ? k.events.drain({ timeoutMs: 1200 }).catch(() => {}) : null).finally(() => setTimeout(() => { try { db.close(); } catch {} process.exit(0); }, 300)); }
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 process.on('unhandledRejection', (e) => log('unhandled', e && (e.stack || e.message || e)));
 process.on('uncaughtException', (e) => log('uncaught', e && (e.stack || e.message || e)));

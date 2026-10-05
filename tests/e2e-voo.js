@@ -1,5 +1,5 @@
-// Round 11: VooSquare login (OIDC + PKCE against tests/oidcmock.js on :4400), one-time account linking, token checks,
-// safe return_to, login modes, logout via end_session, the summary API, the signed events outbox, referrals mode,
+// VooSquare login through the Voo Connect kit (VooSquare's own OAuth, faked by tests/oidcmock.js on :4400), one-time account
+// linking, token checks, safe return_to, login modes, logout everywhere, the summary API, the events outbox, referrals mode,
 // the Zedapex apps catalog (+ clicks, admin edits, sister compatibility) and the admin VooSquare card.
 // The runner turns VooSquare on for this suite only (VOO_* env); by default everything here is off.
 const B = 'http://localhost:3999';
@@ -21,7 +21,7 @@ const put = (f, p, b) => f(p, { method: 'PUT', body: JSON.stringify(b || {}) });
 const sleep = (t) => new Promise((r) => setTimeout(r, t));
 const logTxt = () => fs.readFileSync(process.env.SRV_LOG, 'utf8');
 async function verify(email) { await sleep(120); const m = [...logTxt().matchAll(new RegExp(`to ${email.replace(/[.@]/g, '\\$&')} .*?(/verify\\?t=[\\w.-]+)`, 'g'))].pop(); await fetch(B + m[1], { redirect: 'manual' }); }
-const MOCK = start(4400), SK = 'svc_test_key_123', WH = 'whsec_voo_test_456';
+const MOCK = start(4400), SK = 'svc_test_key_123', WH = 'whsec_voo_test_456', CS = 'cs_test_secret';
 
 /** Full browser-style login: Joinvoo → mock authorize → callback. Returns the client, the final redirect and the error code. */
 async function vooLogin(claims, { returnTo = '/app#credits', f = client(), breakState = false, dropCookie = false } = {}) {
@@ -31,7 +31,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
   const auth = r.h.get('location');
   r = await fetch(auth, { redirect: 'manual' });
   let cb = r.headers.get('location'); if (breakState) cb = cb.replace(/state=[^&]+/, 'state=wrong');
-  if (dropCookie) delete f.jar.jv_oidc;
+  if (dropCookie) delete f.jar.voo_state;
   r = await f(cb.replace('http://localhost:3999', ''));
   const loc = r.h.get('location') || '';
   return { f, s: r.s, loc, auth, err: (/voo_error=(\w+)/.exec(loc) || [])[1] || null, session: !!f.jar.jp_session };
@@ -49,19 +49,19 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     const cj = JSON.stringify(c);
     assert(![SK, WH, 'cs_test_secret'].some((x) => cj.includes(x)), '/api/config has no VooSquare secrets');
 
-    // ---------- start: PKCE + state/nonce cookie ----------
-    let f = client(), r = await f('/auth/voosquare?return_to=/app');
+    // ---------- start: state cookie (the kit) ----------
+    let f = client(), r = await f('/auth/voosquare?return_to=/app&signup=1');
     const au = new URL(r.h.get('location'));
-    assert(r.s === 302 && au.origin === MOCK.base && au.pathname === '/authorize' && au.searchParams.get('code_challenge_method') === 'S256' && au.searchParams.get('code_challenge').length === 43
-      && au.searchParams.get('scope') === 'openid email profile' && au.searchParams.get('state') && au.searchParams.get('nonce') && au.searchParams.get('redirect_uri') === B + '/auth/voosquare/callback', 'GET /auth/voosquare → authorize with PKCE S256, state, nonce, scope');
-    const ck = r.h.getSetCookie().find((x) => x.startsWith('jv_oidc='));
-    assert(ck && /HttpOnly/.test(ck) && /Max-Age=600/.test(ck) && /Path=\/auth\/voosquare/.test(ck) && !ck.includes(au.searchParams.get('nonce')), 'state/nonce/verifier in a short-lived signed HttpOnly cookie');
+    assert(r.s === 302 && au.origin === MOCK.base && au.pathname === '/oauth/authorize' && au.searchParams.get('client_id') === 'joinvoo-test' && au.searchParams.get('prompt') === 'signup'
+      && (au.searchParams.get('state') || '').length >= 20 && au.searchParams.get('redirect_uri') === B + '/auth/voosquare/callback', 'GET /auth/voosquare?signup=1 → /oauth/authorize with client_id, exact redirect_uri, state, prompt=signup');
+    const ck = r.h.getSetCookie().find((x) => x.startsWith('voo_state='));
+    assert(ck && /HttpOnly/.test(ck) && /Max-Age=600/.test(ck) && /SameSite=Lax/.test(ck), 'state in a short-lived signed HttpOnly cookie (voo_state)');
 
     // ---------- new user from claims ----------
     let L = await vooLogin({ sub: 'voo_u_1', email: 'New@X.com', name: 'Lina', country: 'br', voo_ref: 'vref_abc' });
     assert(L.s === 302 && L.loc === '/app#credits' && L.session && !L.err, 'callback: code exchanged, token verified, session set, back to return_to');
     const tc = MOCK.M.tokenCalls.at(-1);
-    assert(tc.client_secret === 'cs_test_secret' && tc.code_verifier && tc.grant_type === 'authorization_code', 'token request: client_secret_post + PKCE verifier');
+    assert(tc.client_secret === 'cs_test_secret' && tc.grant_type === 'authorization_code' && tc.redirect_uri === B + '/auth/voosquare/callback', 'token request: code + client secret + the same redirect_uri');
     let me = (await L.f('/api/me')).j;
     assert(me.email === 'new@x.com' && me.country === 'BR' && me.verified && me.voo.linked === true, 'new user created from claims (email, country, verified)');
     const linaId = (await ADM('/api/admin/users?q=new@x.com')).j.users[0].id;
@@ -85,7 +85,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     assert((await post(client(), '/api/login', { email: 'old@x.com', password: 'password1' })).s === 200, 'linked users can still use their password (mode both)');
 
     // ---------- token checks ----------
-    for (const [t, name] of [[{ nonce: 'other' }, 'nonce'], [{ aud: 'someone-else' }, 'aud'], [{ iss: 'https://evil.example' }, 'iss'], [{ sig: true }, 'signature'], [{ expired: true }, 'expiry']]) {
+    for (const [t, name] of [[{ aud: 'someone-else' }, 'aud'], [{ iss: 'https://evil.example' }, 'iss'], [{ sig: true }, 'signature'], [{ expired: true }, 'expiry']]) {
       L = await vooLogin({ sub: 'voo_bad_' + name, email: `bad_${name}@x.com`, tamper: t });
       assert(L.err === 'token' && !L.session, `bad ${name} → refused`);
     }
@@ -94,18 +94,21 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     assert((await ADM('/api/admin/users?q=bad_')).j.users.length === 0, 'no account created from a rejected token');
 
     // ---------- return_to ----------
-    for (const bad of ['//evil.com/x', 'https://evil.com', '/\\evil.com', 'javascript:alert(1)', '/app:evil']) {
+    for (const bad of ['//evil.com/x', 'https://evil.com', '/\\evil.com', 'javascript:alert(1)']) {
       L = await vooLogin({ sub: 'voo_u_1', email: 'new@x.com' }, { returnTo: bad });
       assert(L.session && L.loc === '/app', `unsafe return_to ${JSON.stringify(bad)} → /app`);
     }
 
-    // ---------- logout → end_session ----------
+    L = await vooLogin({ sub: 'voo_u_1', email: 'new@x.com' }, { returnTo: '/dashboard' });
+    assert(L.session && L.loc === '/app', 'return_to=/dashboard (VooSquare launcher) → /app');
+
+    // ---------- logout everywhere ----------
     L = await vooLogin({ sub: 'voo_u_1', email: 'new@x.com' });
     r = await post(L.f, '/api/logout', {});
-    assert(r.s === 200 && r.j.logout_url && r.j.logout_url.startsWith(MOCK.base + '/logout?') && r.j.logout_url.includes('post_logout_redirect_uri=' + encodeURIComponent(B)) && /id_token_hint=/.test(r.j.logout_url), 'POST /api/logout of a VooSquare session → logout_url at end_session (with id_token_hint)');
+    assert(r.s === 200 && r.j.logout_url === MOCK.base + '/oauth/logout?redirect_uri=' + encodeURIComponent(B + '/'), 'POST /api/logout of a VooSquare session → logout_url = VooSquare /oauth/logout?redirect_uri=<home page>');
     assert((await L.f('/api/me')).s === 401, 'session is gone');
     L = await vooLogin({ sub: 'voo_u_1', email: 'new@x.com' });
-    r = await L.f('/logout'); assert(r.s === 302 && r.h.get('location').startsWith(MOCK.base + '/logout'), 'GET /logout → redirect to end_session');
+    r = await L.f('/logout'); assert(r.s === 302 && r.h.get('location').startsWith(MOCK.base + '/oauth/logout?redirect_uri='), 'GET /logout → VooSquare /oauth/logout');
     r = await post(OLD, '/api/logout', {}); assert(r.j.logout_url === null, 'a password session just logs out locally');
 
     // ---------- mode only ----------
@@ -120,8 +123,8 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
 
     // ---------- summary API ----------
     const S = (q, key = SK) => fetch(`${B}/api/voosquare/summary${q}`, { headers: key ? { authorization: 'Bearer ' + key } : {} }).then(async (x) => ({ s: x.status, j: await x.json() }));
-    assert((await S('?voo_id=voo_u_2', null)).s === 401 && (await S('?voo_id=voo_u_2', 'wrong')).s === 401, 'summary: 401 without the service key');
-    r = await S('?voo_id=nobody'); assert(r.s === 200 && r.j.linked === false && r.j.tool === 'joinvoo', 'summary: unknown voo_id → 200 {linked:false}');
+    assert((await S('?voo_id=voo_u_2', null)).s === 401 && (await S('?voo_id=voo_u_2', 'wrong')).s === 401, 'summary: 401 without the API key');
+    r = await S('?voo_id=nobody'); assert(r.s === 200 && JSON.stringify(r.j) === '{"linked":false}', 'summary: unknown voo_id → 200 {"linked":false}');
     // data for old@x.com: FTD + registration postbacks, ad spend
     await post(OLD, '/api/login', { email: 'old@x.com', password: 'password1' });
     const pbUrl = (await OLD('/api/conversions')).j.postback_url;
@@ -132,7 +135,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     await post(OLD, '/api/spend', { date: new Date().toISOString().slice(0, 10), platform: 'meta', amount: 50 });
     const t0 = Date.now(); r = await S('?voo_id=voo_u_2&period=7d'); const ms = Date.now() - t0;
     const mt = Object.fromEntries((r.j.metrics || []).map((x) => [x.key, x]));
-    assert(r.s === 200 && r.j.tool === 'joinvoo' && r.j.linked && r.j.period === '7d' && r.j.open_url === B + '/app' && ['active', 'trial', 'paused', 'none'].includes(r.j.status), 'summary: tool, linked, status, period, open_url');
+    assert(r.s === 200 && r.j.linked && r.j.open_url === B + '/app' && ['active', 'trial', 'paused', 'none'].includes(r.j.status), 'summary: linked, status, open_url');
     assert(['joins', 'ftds', 'revenue_usd', 'cost_per_ftd_usd', 'bots_blocked'].every((k) => mt[k] && 'change_pct' in mt[k] && mt[k].label && mt[k].unit), 'summary: the five metrics with label, unit, change_pct');
     assert(mt.ftds.value === 2 && mt.revenue_usd.value === 200 && mt.revenue_usd.unit === 'usd' && mt.cost_per_ftd_usd.value === 25 && mt.ftds.change_pct === null, 'summary: values (2 FTDs, $200, $25 per FTD; change_pct null when the previous period was 0)');
     assert(ms < 800, `summary answers in ${ms} ms`);
@@ -144,14 +147,14 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     for (let i = 0; i < 30 && !MOCK.M.events.length; i++) await sleep(200);
     await sleep(800);
     const evs = MOCK.M.events.flatMap((e) => JSON.parse(e.raw).events);
-    const firstRaw = MOCK.M.events[0];
-    assert(firstRaw && firstRaw.sig === crypto.createHmac('sha256', WH).update(firstRaw.raw).digest('hex'), 'events POST signed: X-Voo-Signature = HMAC-SHA256(raw body)');
+    assert(MOCK.M.events.length && MOCK.M.events.every((e) => e.auth === 'Bearer ' + SK), 'events POST /api/v1/events with Authorization: Bearer <API key>');
     assert(MOCK.M.events.every((e) => Array.isArray(JSON.parse(e.raw).events) && JSON.parse(e.raw).events.length <= 100), 'events sent in batches {"events":[…]} of up to 100');
     const types = new Set(evs.map((e) => e.type));
-    assert(['registration', 'ftd', 'plan_started', 'spend'].every((t) => types.has(t)), `event types sent: ${[...types].join(', ')}`);
+    assert(['signup', 'ftd', 'plan_started'].every((t) => types.has(t)), `event types sent: ${[...types].join(', ')}`);
+    assert(!types.has('spend') && !types.has('wallet_topup'), 'admin gift credits are not money: a plan paid with them sends plan_started but no spend');
     const ftdE = evs.filter((e) => e.type === 'ftd');
-    assert(ftdE.length === 2 && new Set(evs.map((e) => e.event_id)).size === evs.length && evs.filter((e) => e.type !== 'signup').every((e) => /^jv_/.test(e.event_id) && e.voo_id === 'voo_u_2' && e.tool === 'joinvoo' && e.occurred_at) && evs.every((e) => e.voo_id && e.tool === 'joinvoo'), 'stable unique event_ids (duplicate postback → no second event)');
-    assert(ftdE.some((e) => e.value === 120 && e.currency === 'USD'), 'deposit events carry the amount');
+    assert(ftdE.length === 2 && new Set(evs.map((e) => e.event_id)).size === evs.length && evs.every((e) => /^jv_/.test(e.event_id) && e.voo_id === 'voo_u_2' && e.occurred_at), 'stable unique event_ids (duplicate postback → no second event)');
+    assert(ftdE.some((e) => e.value_usd === 120), 'deposit events carry value_usd');
     const allRaw = MOCK.M.events.map((e) => e.raw).join('');
     assert(!/777000111|777000222|Customer|old@x\.com|new@x\.com/.test(allRaw), 'no end-customer personal data (Telegram ids, names, emails) in events');
     assert(!evs.some((e) => e.voo_id === 'voo_u_1' && e.type === 'ftd'), 'only events of the linked user');
@@ -160,11 +163,11 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     await fetch(`${pbUrl}?sub1=777000333&status=ftd&payout=10&txid=t3`);
     for (let i = 0; i < 20 && MOCK.M.events.length === before; i++) await sleep(150);
     let hh = (await ADM('/api/admin/health')).j.voo_outbox;
-    assert(hh.pending >= 1 && /HTTP 500/.test(hh.last_error) && hh.enabled, 'receiver down → event stays in the outbox, Health shows backlog + last error');
+    assert(hh.pending >= 1 && /500/.test(hh.last_error) && hh.enabled, 'receiver down → event stays in the outbox, Health shows backlog + last error');
     MOCK.M.fail = false;
     for (let i = 0; i < 40 && (await ADM('/api/admin/health')).j.voo_outbox.pending; i++) await sleep(200);
     hh = (await ADM('/api/admin/health')).j.voo_outbox;
-    const t3 = MOCK.M.events.flatMap((e) => JSON.parse(e.raw).events).filter((e) => e.type === 'ftd' && e.value === 10);
+    const t3 = MOCK.M.events.flatMap((e) => JSON.parse(e.raw).events).filter((e) => e.type === 'ftd' && e.value_usd === 10);
     assert(hh.pending === 0 && t3.length >= 2, 'retried with backoff and delivered when the receiver is back (same event_id each time)');
     assert(new Set(t3.map((e) => e.event_id)).size === 1, 'retries reuse the same event_id');
 
@@ -179,12 +182,12 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     // ---------- admin VooSquare card ----------
     let as = (await ADM('/api/admin/settings')).j.voo;
     assert(as.issuer === MOCK.base && as.client_secret.includes('••••') && !JSON.stringify(as).includes('cs_test_secret') && !JSON.stringify(as).includes(SK) && as.callback_url === B + '/auth/voosquare/callback', 'admin settings: VooSquare card data, secrets masked, callback URL');
-    r = await post(ADM, '/api/admin/voo/test', {}); assert(r.j.ok && /1 signing key/.test(r.j.message) && r.j.endpoints.end_session, 'Test discovery: discovery + JWKS OK');
+    r = await post(ADM, '/api/admin/voo/test', {}); assert(Array.isArray(r.j.results) && r.j.results.some((x) => x.status === 'pass' && /reachable/.test(x.name)), 'Test connection runs the Voo Connect self-test (check.js)');
     await post(ADM, '/api/admin/staff', { email: 'mk@x.com', role: 'marketing' }); await sleep(120);
     const tok = [...logTxt().matchAll(/to mk@x\.com .*?\/app\?reset=([\w-]+)/g)].pop()[1]; const MK = client(); await post(MK, '/api/reset', { token: tok, password: 'password1' });
-    assert((await post(MK, '/api/admin/voo/test', {})).s === 403 && (await put(MK, '/api/admin/settings', { voo: { login_mode: 'off' } })).s === 403, 'Test discovery and VooSquare settings need keys.manage');
+    assert((await post(MK, '/api/admin/voo/test', {})).s === 403 && (await put(MK, '/api/admin/settings', { voo: { login_mode: 'off' } })).s === 403, 'Test connection and VooSquare settings need keys.manage');
     r = await put(ADM, '/api/admin/settings', { voo: { issuer: 'http://localhost:4499' } });
-    r = await post(ADM, '/api/admin/voo/test', {}); assert(r.j.ok === false && r.j.error, 'Test discovery reports an unreachable issuer');
+    r = await post(ADM, '/api/admin/voo/test', {}); assert(r.j.ok === false && r.j.error, 'Test connection reports an unreachable VooSquare');
     await put(ADM, '/api/admin/settings', { voo: { issuer: MOCK.base } });
     r = await put(ADM, '/api/admin/settings', { voo: { login_mode: 'sometimes' } }); assert(r.s === 400, 'bad login mode refused');
 
@@ -223,7 +226,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     assert((await client()('/api/config')).j.apps.length === 7, 'apps:null → back to the seeded catalog');
 
     const html = await (await fetch(B + '/admin')).text();
-    assert(html.includes('Zedapex apps') && html.includes('Test discovery') && html.includes('VooSquare'), 'admin page: Zedapex apps editor + VooSquare card');
+    assert(html.includes('Zedapex apps') && html.includes('Test connection') && html.includes('VooSquare'), 'admin page: Zedapex apps editor + VooSquare card');
   } catch (e) { console.log('FAIL: crashed', e.stack); process.exitCode = 1; }
   MOCK.close();
 })();

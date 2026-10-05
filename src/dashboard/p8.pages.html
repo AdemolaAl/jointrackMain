@@ -253,6 +253,13 @@ function guideVideo(){
   // preload is "none", so check the file is really there before showing the player
   fetch(src.getAttribute('src'),{method:'HEAD'}).then(r=>{ if(!r.ok) fail(); }).catch(fail);
 }
+/* VooSquare (Voo ID): an account made with email + password can be connected once, while logged in. */
+function vooConnectBtn(){
+  const v=(S.cfg&&S.cfg.voo)||{}, me=S.me||{};
+  if (DEMO||!v.login||v.login==='off') return '';
+  if (me.voo&&me.voo.linked) return `<span class="btn sm ghost" style="cursor:default" title="${esc(tt('voo.linked.t','You can log in with VooSquare'))}">${I.check} ${tt('voo.linked','VooSquare connected')}</span>`;
+  return `<a class="btn sm primary" href="/auth/voosquare?return_to=%2Fapp%23help" data-voo-start>${tt('voo.connect','Connect your VooSquare account')}</a>`;
+}
 function viewHelp(){
   S.redraw=[]; setTimeout(guideVideo,0);
   $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow">Help &amp; Support</div><h1>How can we help?</h1><p>Real people, inside your dashboard. Most setups are done in about 10 minutes.</p></div></div>
@@ -288,7 +295,7 @@ function viewHelp(){
     <details><summary>The bot says it needs permission</summary><p>In Telegram, open your channel → Administrators → your bot, and turn on “Invite users via link”.</p></details>
   </section>
   <section class="card" style="padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div style="display:flex;align-items:center;gap:12px;min-width:0"><span class="ava">${esc(((S.me.name||S.me.email||'?')[0]||'?').toUpperCase())}</span><div style="min-width:0"><div class="faint" style="font-size:12.5px">Signed in as</div><b style="font-weight:600;overflow-wrap:anywhere">${esc(S.me.email)}</b></div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="add-channel">Run setup again</button>${DEMO?'':'<button class="btn sm" data-act="change-pass">Change password</button><button class="btn sm ghost" data-act="logout">Log out</button>'}${S.me.admin?`<a class="btn sm dark" href="${DEMO?'admin.html':'/admin'}">Admin panel</a>`:''}</div></section>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${vooConnectBtn()}<button class="btn sm" data-act="add-channel">Run setup again</button>${DEMO?'':'<button class="btn sm" data-act="change-pass">Change password</button><button class="btn sm ghost" data-act="logout">Log out</button>'}${S.me.admin?`<a class="btn sm dark" href="${DEMO?'admin.html':'/admin'}">Admin panel</a>`:''}</div></section>
   <p style="text-align:center;color:var(--faint);font-size:12.5px;margin:4px 0 0"><a href="${HOME_LINK}terms" style="color:inherit">Terms</a> · <a href="${HOME_LINK}privacy" style="color:inherit">Privacy</a> · By Zedapex company</p></div>`;
 }
 

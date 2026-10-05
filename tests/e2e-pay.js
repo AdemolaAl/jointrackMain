@@ -38,6 +38,19 @@ const post = (p, b) => f(p, { method: 'POST', body: JSON.stringify(b) });
   await fetch(P + '/__paid/' + r.j.reference + '/5');
   await f('/api/billing/verify?ref=' + r.j.reference);
   assert((await f('/api/billing')).j.balance_cents === 6500, 'Flutterwave underpayment not credited');
+  // AU-5: the old Paystack webhook only credits Paystack top-ups, in their own currency
+  { const other = r.j.reference; // the unpaid Flutterwave top-up above
+    const ev2 = JSON.stringify({ event: 'charge.success', data: { reference: other, amount: 1e9, currency: 'NGN', id: 77 } });
+    await fetch(B + '/webhooks/paystack', { method: 'POST', headers: { 'x-paystack-signature': sign(ev2) }, body: ev2 });
+    assert((await f('/api/billing')).j.balance_cents === 6500, 'AU-5: a signed Paystack charge carrying a Flutterwave top-up reference credits nothing');
+    const pr = await post('/api/billing/deposit', { provider: 'paystack', amount: 20 }), pk = (await (await fetch(P + '/__amount/' + pr.j.reference)).json()).amount;
+    const ev3 = JSON.stringify({ event: 'charge.success', data: { reference: pr.j.reference, amount: pk, currency: 'GHS', id: 78 } });
+    await fetch(B + '/webhooks/paystack', { method: 'POST', headers: { 'x-paystack-signature': sign(ev3) }, body: ev3 });
+    assert((await f('/api/billing')).j.balance_cents === 6500, 'AU-5: the right amount in another currency (GHS for an NGN top-up) credits nothing');
+    const ev4 = JSON.stringify({ event: 'charge.success', data: { reference: pr.j.reference, amount: pk, currency: 'NGN', id: 79 } });
+    await fetch(B + '/webhooks/paystack', { method: 'POST', headers: { 'x-paystack-signature': sign(ev4) }, body: ev4 });
+    assert((await f('/api/billing')).j.balance_cents === 8500, 'AU-5: the same charge in NGN credits the $20');
+  }
   r = await post('/api/billing/deposit', { provider: 'paystack', amount: 5 });
   assert(r.s === 400, 'minimum top-up enforced');
 })();

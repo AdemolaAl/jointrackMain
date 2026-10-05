@@ -209,14 +209,9 @@ const srv = http.createServer((req, res) => {
     await csend({ reference: cref, amount: '15.00', currency: 'USD', status: 'paid', txid: 'c1' });
     assert((await U('/api/billing')).j.balance_cents === bal1 + 1500, 'custom: paid credited once');
 
-    // ---------- VooSquare: events (Bearer key, value_usd, affiliate) ----------
+    // ---------- VooSquare: accounts without a Voo ID send no events (VooSquare can only credit a Voo ID) ----------
     await sleep(900);
-    const sg = M.events.find((e) => e.type === 'signup' && e.aff_code === 'AFF123');
-    assert(sg && sg.aff_sub === 's9' && !sg.voo_id && /^jv_/.test(sg.customer_ref) && !JSON.stringify(sg).includes('cust@x.com'), 'affiliate sign-up event: aff_code, aff_sub, anonymous customer_ref, no email');
-    const spend = M.events.filter((e) => e.type === 'spend' && e.aff_code === 'AFF123');
-    assert(spend.length >= 2 && spend.some((e) => e.value_usd === 20) && spend.some((e) => e.value_usd === 15), 'spend events for the affiliate customer carry value_usd (' + spend.map((e) => e.value_usd).join(',') + ')');
-    assert(M.eventAuth.length && M.eventAuth.every((a) => a === 'Bearer ' + API_KEY), 'events sent with Authorization: Bearer <VOO_API_KEY> to <VooSquare>/api/v1/events');
-    assert(!M.events.some((e) => e.type === 'signup' && !e.voo_id && !e.aff_code), 'accounts with no VooSquare link and no affiliate send nothing');
+    assert(!M.events.some((e) => !e.voo_id), 'no events for accounts that are not linked to VooSquare (the affiliate customer signed up with a password)');
 
     // ---------- VooSquare native OAuth login ----------
     const N = client({ jv_aff: encodeURIComponent('AFF123|s9') });
@@ -234,8 +229,16 @@ const srv = http.createServer((req, res) => {
     assert(r.s === 302 && r.h.get('location') === '/app' && N.jar.jp_session && M.tokenBody.client_secret === CS && M.tokenBody.grant_type === 'authorization_code', 'native login: code exchanged with the client secret, signed in');
     const me = (await N('/api/me')).j;
     assert(me.email === 'native@x.com' && me.voo && me.voo.linked, 'new account created from the VooSquare user (linked)');
+    // events of a linked member: Bearer API key, value_usd, never personal data
+    const nid = (await ADM('/api/admin/users?q=native@x.com')).j.users[0].id;
+    await post(ADM, `/api/admin/users/${nid}/credits`, { credits: 20000, reason: 'test' });
+    await post(N, '/api/billing/plan', { plan: 'pro' });
+    for (let i = 0; i < 30 && !M.events.some((e) => e.type === 'plan_started'); i++) await sleep(150);
+    const ps = M.events.find((e) => e.type === 'plan_started');
+    assert(ps && ps.voo_id === 'vs_native_1' && ps.plan && ps.value_usd > 0 && /^jv_plan_\d+$/.test(ps.event_id) && M.eventAuth.every((a) => a === 'Bearer ' + API_KEY), 'linked member: plan_started (plan, price) sent with Authorization: Bearer <VOO_API_KEY> to <VooSquare>/api/v1/events');
+    assert(!M.events.some((e) => e.type === 'spend'), 'a plan paid with gift credits is not money: no spend');
     r = await N('/logout');
-    assert(/^http:\/\/localhost:4700\/oauth\/logout\?/.test(r.h.get('location') || ''), 'logout also signs out of VooSquare');
+    assert(/^http:\/\/localhost:4700\/oauth\/logout\?redirect_uri=/.test(r.h.get('location') || ''), 'logout also signs out of VooSquare');
     // local sign-up still works while VooSquare login is on (mode both)
     r = await post(client(), '/api/signup', { country: 'GB', email: 'plain@x.com', password: 'password1' });
     assert(r.s === 200, 'email + password sign-up still works next to VooSquare');
@@ -253,22 +256,25 @@ const srv = http.createServer((req, res) => {
     const sup = (await U('/api/support')).j;
     const hq = sup.messages.filter((x) => x.from_admin && x.body === 'Hi Mia, check the token');
     assert(r.s === 200 && hq.length === 1 && hq[0].agent.name === 'Ada' && hq[0].agent.voosquare, 'reply from VooSquare shows in the customer’s chat once, with the agent');
+    { const wk = (body, key = API_KEY) => fetch(B + '/hooks/voosquare/support', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key }, body: JSON.stringify(body) }).then((x) => x.status);
+      assert(await wk({ ...reply, body: 'x' }, 'wrong') === 401, 'kit webhook /hooks/voosquare/support needs the API key');
+      assert(await wk({ ...reply, body: 'Second answer from HQ', created_at: new Date(Date.now() + 1000).toISOString() }) === 200 && (await U('/api/support')).j.messages.some((x) => x.body === 'Second answer from HQ'), 'kit webhook /hooks/voosquare/support delivers the reply into the chat'); }
     const vauth = { authorization: 'Bearer ' + API_KEY };
     let tl = await fetch(B + '/api/voosquare/support/tickets', { headers: vauth }).then((x) => x.json());
     const tref = 'jv-' + sm.external_ref.split('-')[1];
     assert(tl.tickets.some((t) => t.ref === tref && t.status === 'open'), 'HQ lists Joinvoo tickets');
     let td = await fetch(B + '/api/voosquare/support/tickets/' + tref, { headers: vauth }).then((x) => x.json());
-    assert(td.messages.length === 2 && td.messages[0].from === 'customer' && td.messages[1].agent === 'Ada', 'HQ reads one ticket with its messages');
+    assert(td.messages.length === 3 && td.messages[0].from === 'customer' && td.messages[1].agent === 'Ada', 'HQ reads one ticket with its messages');
     await fetch(B + `/api/voosquare/support/tickets/${tref}/reply`, { method: 'POST', headers: { ...vauth, 'content-type': 'application/json' }, body: JSON.stringify({ text: 'Fixed on our side', agent: 'Bola' }) });
     await fetch(B + `/api/voosquare/support/tickets/${tref}/update`, { method: 'POST', headers: { ...vauth, 'content-type': 'application/json' }, body: JSON.stringify({ status: 'solved' }) });
     td = await fetch(B + '/api/voosquare/support/tickets/' + tref, { headers: vauth }).then((x) => x.json());
-    assert(td.messages.length === 3 && td.ticket.status === 'solved', 'HQ replies and solves the ticket');
+    assert(td.messages.length === 4 && td.ticket.status === 'solved', 'HQ replies and solves the ticket');
     assert((await fetch(B + '/api/voosquare/support/tickets', { headers: { authorization: 'Bearer no' } })).status === 401, 'HQ endpoints need the API key');
     const adm = (await ADM('/api/admin/support?status=closed')).j.tickets.find((t) => t.id === +sm.external_ref.split('-')[1]);
     assert(adm && adm.source === 'voosquare', 'admin support list marks the ticket as answered in VooSquare');
     as = (await ADM('/api/admin/settings')).j;
     if (!as.voo.support_out || !as.voo.api_key) console.log('voo card', JSON.stringify(as.voo));
-    assert(as.voo.api_key.includes('•') && !as.voo.api_key.includes('key_r11') && as.voo.support_bridge === true && as.voo.support_webhook_url === B + '/api/voosquare/support/webhook' && as.voo.affiliate_url === 'https://affiliate.voosquare.com' && as.voo.support_out.sent >= 1, 'admin VooSquare card: API key masked, bridge on, webhook URL, affiliate link, bridge stats');
+    assert(as.voo.api_key.includes('•') && !as.voo.api_key.includes('key_r11') && as.voo.support_bridge === true && as.voo.support_webhook_url === B + '/hooks/voosquare/support' && as.voo.affiliate_url === 'https://affiliate.voosquare.com' && as.voo.support_out.sent >= 1, 'admin VooSquare card: API key masked, bridge on, webhook URL, affiliate link, bridge stats');
 
     // ---------- QA fixes: existing customers over the limit keep their channels; disconnect/reconnect can't bypass the limit ----------
     r = await fetch(B + '/?via=fb', { redirect: 'manual' }); assert(r.status === 200, '?via= is not an affiliate code (no redirect, no cookie)');

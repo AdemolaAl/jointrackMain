@@ -14,7 +14,7 @@ Joinvoo is already live on Railway with real users. This update is safe to deplo
 | **TRAINING.md** | How Joe works, where his knowledge lives, how to update it, pricing and costs | After deploying |
 | **ARCHITECTURE.md** | How the code is organised, the data model and request flows | When changing code |
 | **README.md** | Short project summary, commands and settings list | Any time |
-| **VOOSQUARE-CONNECT.md** | Exactly what Joinvoo sends to and expects from VooSquare (login, events, affiliates, support) | When connecting VooSquare |
+| **VOOSQUARE-CONNECT.md** | How Joinvoo connects to VooSquare with the Voo Connect kit (`./voo-connect`): settings, login, affiliate hand-off, money events, refunds/chargebacks, support, `check.js` | When connecting VooSquare |
 
 ## Deploy today's update (about 15 minutes)
 
@@ -50,7 +50,7 @@ Joinvoo is already live on Railway with real users. This update is safe to deplo
 - [ ] **Custom payment methods (optional).** Admin → Payment methods → Add → **Custom gateway**: logo, text, checkout link or API URL, webhook secret.
 - [ ] **Zedapex apps.** Admin → Settings → **Zedapex apps**: check each app's link (spyvoo.com, replyvoo.com, castvoo.com, vooads.com, affleego.com, gatevoo.com). They feed the swipeable showcase at the bottom of the customer Overview.
 - [ ] **Payments.** Admin → Settings → **Payment methods**: add your Paystack and/or Stripe keys and set which countries see each method.
-- [ ] **VooSquare (login, affiliates, support).** Leave Login **Off** until VooSquare is live; email + password always keeps working. When ready: UPGRADE.md section 6 (10 minutes), and send VOOSQUARE-CONNECT.md to the VooSquare developer.
+- [ ] **VooSquare (login, affiliates, support).** Leave Login **Off** until VooSquare is live; email + password always keeps working. When ready: UPGRADE.md section 6 (10 minutes) and VOOSQUARE-CONNECT.md; `node voo-connect/check.js` must show every line PASS.
 - [ ] **Forgot password needs email.** Reset links are sent by email, so a Resend key must be set (Admin → Settings → Integrations & API keys, or `RESEND_API_KEY`). Check Admin → Emails shows "password_reset" sent after you try it once.
 
 ## Joe's training: what lives where (don't delete these)

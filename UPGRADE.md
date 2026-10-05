@@ -2,7 +2,25 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
-## What's new in this update (round 11, 5 October 2026)
+## What's new in this update (round 14: Voo Connect + audit fixes, 5 October 2026)
+
+Safe for current users: only new tables and columns (`voo_kit_outbox`, `voo_spends`, `voo_use`, `users.voo_linked_at`,
+`users.voo_spent_cents`, `deposits.refunded_cents`, `deposits.charged_back_at`). Nothing changes until VooSquare is set up (section 6).
+
+- **VooSquare through the Voo Connect kit** (`./voo-connect`, copied unchanged from VooSquare). Login, affiliate hand-off, money
+  events, summary and support now use the kit. Money is reported the VooSquare way: a top-up is `wallet_topup` (no commission),
+  credits actually used are `spend` (commission), refunds and chargebacks point at what they reverse. Details: VOOSQUARE-CONNECT.md.
+  Events still queued by the old outbox are moved into the kit's queue on first start.
+- **Refunds and chargebacks of top-ups** (Admin → Deposits → Paid → Refund / Chargeback). A refund is capped at the unused money of
+  that top-up; a chargeback takes what is left of it out of the wallet (it can go below zero). A chargeback also takes back the
+  referral commission earned on what that money paid for (referral terms §6).
+- **Fixes from the audit:** a refund and a chargeback clicked at the same moment could take more than the top-up; the old
+  `/webhooks/paystack` address could credit a Paystack charge to another provider's top-up or in another currency; referral
+  commission counted money already spent on Joe; plan events told VooSquare a customer's custom price as the plan price; rate
+  limits could be dodged with a made-up `X-Forwarded-For` when Joinvoo is reached directly (new `TRUST_PROXY` setting, see DEPLOY.md);
+  bot forwarding addresses that point at private networks are refused; Admin → Health "sent in 24h" was blank.
+
+## Round 11 (5 October 2026)
 
 Everything below is safe for current users: the database only gets new columns and tables, and nothing a customer already has is taken away.
 
@@ -114,29 +132,28 @@ The older version simply ignores the new tables and columns, so your data is fin
 
 ## 6. Switching on VooSquare (login, events, affiliates, support)
 
-Nothing here is needed for Joinvoo to work. Do it when VooSquare is live.
+Nothing here is needed for Joinvoo to work. Do it when VooSquare is live. Full reference: **VOOSQUARE-CONNECT.md**.
 
 1. **In VooSquare:** Admin → Products → Joinvoo. Set:
+   - **URL:** `https://joinvoo.com`, **SSO:** on
    - **Redirect URI:** `https://joinvoo.com/auth/voosquare/callback`
    - **Summary URL:** `https://joinvoo.com/api/voosquare/summary`
-   - **Support webhook:** `https://joinvoo.com/api/voosquare/support/webhook`
+   - **Support webhook:** `https://joinvoo.com/hooks/voosquare/support`
    - Copy the **client ID**, **client secret** and **API key**.
-2. **In Joinvoo:** Admin → Settings → Integrations & API keys → VooSquare (owners and admins can):
-   - **VooSquare address:** `https://voosquare.com`
-   - **Client ID**, **Client secret**, **API key**
-   - leave Events URL empty (it becomes `https://voosquare.com/api/v1/events`)
-   - **Support bridge:** on, if you want chats in the VooSquare HQ inbox
-   - **Affiliate link:** `https://affiliate.voosquare.com`
-
-   Or as Railway variables: `VOO_ISSUER`, `VOO_CLIENT_ID`, `VOO_CLIENT_SECRET`, `VOO_API_KEY`, `VOO_SUPPORT_BRIDGE=1`, `VOO_HOME`. Values saved in the admin win.
-3. Tap **Test discovery**. It should say "VooSquare login found (VooSquare OAuth…)".
+2. **In Railway** (Joinvoo service → Variables): `VOO_BASE=https://voosquare.com`, `VOO_CLIENT_ID`, `VOO_CLIENT_SECRET`, `VOO_API_KEY`,
+   `VOO_SIGNAL_SECRET` (any long random string), optionally `VOO_SUPPORT_BRIDGE=1`. The same fields are in Admin → Settings →
+   Integrations & API keys → VooSquare (values saved there win).
+3. Tap **Test connection** on that card (or run `node voo-connect/check.js …`, see VOOSQUARE-CONNECT.md). Every check must pass.
 4. Set **Login** to **Both**. Login and sign-up pages show "Continue with VooSquare" next to the usual form.
-   - **New people** who use it get a Joinvoo account created from their Voo ID (email, name, country, referral code).
-   - **Existing customers** with the same email are linked once, keeping all their data, if their Joinvoo email is confirmed. If not, they're asked to log in with their password first (this blocks someone pre-registering a victim's email).
-   - **Everyone can still use email and password.** If VooSquare is down, nothing breaks: the button shows an error, the password form works.
+   - **New people** get a Joinvoo account created from their Voo ID (email, name, country).
+   - **Existing customers** are linked once: automatically when the email matches and is confirmed on both sides, or from
+     Help → Account → "Connect your VooSquare account" while logged in. All their data stays.
+   - **Everyone can still use email and password.** If VooSquare is down, the button shows an error and the password form works.
 5. **Off switch:** set Login back to **Off**. Linked accounts keep working with their passwords.
-6. "VooSquare only" mode makes everyone use VooSquare; owners and staff keep a break-glass login at `/login?local=1`. Only use it once VooSquare has been stable for a while.
-7. **Events:** with the API key set, activity of linked users, plus sign-ups and payments of affiliate-referred users, is sent every 15 seconds with `Authorization: Bearer <API key>`. Admin → Health → **VooSquare events** shows waiting items and the last error. If VooSquare is down, events wait and retry for up to 24 hours.
-8. **Referrals:** set to **VooSquare** only when the referral program moves there. Joinvoo's Earn page then points to VooSquare and existing balances stay withdrawable.
-
-What VooSquare's developer must accept is in **VOOSQUARE-CONNECT.md**.
+6. "VooSquare only" mode makes everyone use VooSquare; owners and staff keep a break-glass login at `/login?local=1`.
+7. **Events** of linked customers are sent every 5 seconds. Admin → Health → **VooSquare events** shows waiting, sent and the last
+   error; events wait in the database and retry while VooSquare is down.
+8. **Refunds and chargebacks:** record them in Admin → Deposits (Paid) so Joinvoo's wallet, the referral program and VooSquare's
+   affiliate commissions all stay right. The money itself is returned in the payment provider.
+9. **Referrals:** set to **VooSquare** only when the referral program moves there. Joinvoo's Earn page then points to VooSquare and
+   existing balances stay withdrawable.
