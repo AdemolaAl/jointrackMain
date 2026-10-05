@@ -69,8 +69,9 @@ function drawPerf(el, series, anim){
 
 /* ---------- overview ---------- */
 function startCard(){
-  const st=setupState(); if (st.done && st.ads) return '';
-  if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button></section>`;
+  const st=setupState();
+  if (st.done && st.ads) return `<section class="card nudge">${I.checkc}<span><b>Tracking setup is complete.</b> Add another bot or channel whenever you’re ready.</span><button class="btn sm primary" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
+  if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button><button class="btn sm" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
   const li=(ok,n,t)=>`<li class="${ok?'done':''}"><span class="n">${ok?'✓':n}</span><span>${t}</span></li>`;
   return `<section class="card start"><div><h2>Let’s get you tracking.</h2><p>Three quick steps, about 10 minutes. Your numbers appear here as soon as people start joining.</p>
     <ol>${li(st.bot,1,'Make your tracking bot')}${li(st.ch,2,'Add it to your channel or bot')}${li(st.ads,3,'Connect Meta, TikTok or Snapchat')}</ol></div>

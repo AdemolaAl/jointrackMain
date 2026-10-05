@@ -234,6 +234,14 @@ main#view{width:100%;max-width:1180px;margin:0 auto;padding:4px 32px 90px}
 .banner .x2{border:0;background:none;color:inherit;opacity:.6;cursor:pointer;padding:4px;display:grid}
 .banner .x2 svg{width:16px;height:16px}
 @media(max-width:560px){.banner{flex-wrap:wrap;align-items:flex-start;position:relative;padding-right:40px}.banner>span:nth-child(2){flex:1 1 calc(100% - 30px);min-width:0}.banner .btn{margin-left:22px}.banner .x2{position:absolute;top:10px;right:10px}}
+.banner.pause .pause-mobile{display:none}
+@media(max-width:560px){
+  .banner.pause{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:7px;padding:7px 9px;line-height:1.3;font-size:clamp(10px,2.8vw,12px)}
+  .banner.pause>span:nth-child(2){min-width:0}
+  .banner.pause .pause-full{display:none}
+  .banner.pause .pause-mobile{display:inline}
+  .banner.pause .btn{height:28px;padding:0 10px;margin:0;font-size:clamp(10px,2.8vw,12px)}
+}
 @keyframes pp{0%{box-shadow:0 0 0 0 var(--pc)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .bbar{display:none}
 .drawer-scrim{display:none}
@@ -1226,9 +1234,15 @@ table.coh th{text-align:center}table.coh th:first-child{text-align:left}
 @media (max-width:900px){.cr-hero{grid-template-columns:1fr}.cr-art{height:260px;order:-1;margin:-10px -10px -20px}}
 @media (max-width:700px){
   .kpis.k8{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cr-hero{padding:22px;border-radius:28px}.cr-art{height:220px}
+  .cr-hero{padding:16px;border-radius:22px;gap:8px}.cr-art{height:112px;margin:-4px -4px 0}
+  .cr-big{margin-top:2px;gap:6px}.cr-big span{font-size:38px}.cr-big small{font-size:15px}
+  .cr-usd{font-size:13px}.cr-note{font-size:11.5px;margin-top:6px}.wallet .cr-note{margin-top:6px}
   .cr-badges .rbadge{width:24px;height:24px}.cr-b.cur .rbadge{width:36px;height:36px}
-  .tiers4{padding:12px 16px 14px;gap:10px}
+  .tiers4{padding:8px 12px 10px;gap:8px}
+  .tcard{gap:1px;padding:12px 10px 10px;border-radius:16px}
+  .tcard b{font-size:20px}.tc-usd,.tcard small,.tc-bonus{font-size:11.5px}
+  .tc-bonus{margin-top:4px;padding:3px 7px}.tcard em{right:8px;font-size:9px;padding:2px 6px}
+  .rank-b{gap:12px}.perks{gap:5px}.perks li{font-size:12.5px;gap:6px}.perks li svg{width:14px;height:14px}
   .ladder{padding:16px 10px 6px}.rung .rbadge{height:30px}.rung b{font-size:11.5px}.rung small{display:none}.ladder-ln{top:30px;left:calc(10% + 4px);right:calc(10% + 4px)}
   .rank-b{grid-template-columns:1fr;padding:10px 16px 18px}
   .fc{padding:8px 16px 16px}
@@ -1471,9 +1485,14 @@ table.coh th{text-align:center}table.coh th:first-child{text-align:left}
   .tb-lang{padding:0;width:40px;justify-content:center}
 }
 @media (max-width:700px){
-  .plan2{grid-template-columns:1fr 1fr;padding:12px 16px;gap:10px}
-  .pc{padding:14px}.pc-p{font-size:21px}
-  .pcmp{margin:0 16px 12px}.pcmp li{padding:9px 10px;font-size:12.5px;gap:6px}
+  .trialc{gap:8px;padding:10px 12px}.tc-ic{width:32px;height:32px;border-radius:11px}
+  .trialc>div{min-width:0}.trialc b{font-size:13.5px}.trialc span{font-size:12px}
+  .plan2{grid-template-columns:1fr 1fr;padding:8px 12px;gap:6px}
+  .pc{padding:10px;gap:2px;border-radius:16px}.pc-n{font-size:12.5px}.pc-p{font-size:18px;gap:4px}.pc-p small,.pc-u{font-size:11px}
+  .pc .btn{height:34px;padding:0 10px;font-size:12px}
+  .pcmp{margin:0 12px 8px;border-radius:14px}.pcmp li{padding:6px 8px;font-size:11px;gap:4px;line-height:1.3}
+  .pcmp li.h{font-size:10.5px}.pcmp .yes svg{width:14px;height:14px}
+  .plancard>.hint{font-size:11.5px!important;padding:0 12px 12px!important}
   .tc-bars{grid-template-columns:1fr}
   .jh-copy h1{font-size:30px}
   .jq{font-size:12.5px;padding:7px 12px}
@@ -3561,7 +3580,7 @@ async function refreshBal(){
 }
 function drawBanners(){
   const el=$('#banners'); if(!el) return; const b=S.bill, me=S.me||{}; let h='';
-  if (b && b.billing_on && b.tracking===false) h+=`<div class="banner pause" role="status"><span class="bd"></span><span><b>Tracking is paused.</b> ${b.state==='suspended'?'Your account is suspended. Contact support.':b.state==='need_plan'?`Add at least ${money(b.month.base_cents)} to start this month’s plan.`:'Your wallet is empty.'} Your ads still work; joins just aren’t tracked or sent to your ad platforms.</span>${b.state==='suspended'?'<button class="btn sm" data-act="chat">Contact support</button>':'<button class="btn sm primary" data-act="deposit">Top up</button>'}</div>`;
+  if (b && b.billing_on && b.tracking===false) h+=`<div class="banner pause" role="status"><span class="bd"></span><span><span class="pause-full"><b>Tracking is paused.</b> ${b.state==='suspended'?'Your account is suspended. Contact support.':b.state==='need_plan'?`Add at least ${money(b.month.base_cents)} to start this month’s plan.`:'Your wallet is empty.'} Your ads still work; joins just aren’t tracked or sent to your ad platforms.</span><span class="pause-mobile"><b>Paused.</b> ${b.state==='suspended'?'Account suspended.':b.state==='need_plan'?`Add ${money(b.month.base_cents)} to resume.`:'Add credits to resume.'}</span></span>${b.state==='suspended'?'<button class="btn sm" data-act="chat">Support</button>':'<button class="btn sm primary" data-act="deposit">Top up</button>'}</div>`;
   if (me.email_on && !me.verified && !S.mailHidden) h+=`<div class="banner mail" role="status"><span class="bd"></span><span>${S.verifyExpired?'<b>That confirmation link expired.</b> Send yourself a new one.':`<b>Confirm your email to unlock your first ${fmt(me.free_joins_gift||500)} tracked joins free.</b> Check your inbox for the link.`}</span><button class="btn sm" data-act="resend">${I.mail} Resend email</button><button class="x2" data-act="hide-mail" aria-label="Hide">${I.x}</button></div>`;
   el.innerHTML=h;
 }
@@ -3636,8 +3655,9 @@ function drawPerf(el, series, anim){
 
 /* ---------- overview ---------- */
 function startCard(){
-  const st=setupState(); if (st.done && st.ads) return '';
-  if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button></section>`;
+  const st=setupState();
+  if (st.done && st.ads) return `<section class="card nudge">${I.checkc}<span><b>Tracking setup is complete.</b> Add another bot or channel whenever you’re ready.</span><button class="btn sm primary" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
+  if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button><button class="btn sm" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
   const li=(ok,n,t)=>`<li class="${ok?'done':''}"><span class="n">${ok?'✓':n}</span><span>${t}</span></li>`;
   return `<section class="card start"><div><h2>Let’s get you tracking.</h2><p>Three quick steps, about 10 minutes. Your numbers appear here as soon as people start joining.</p>
     <ol>${li(st.bot,1,'Make your tracking bot')}${li(st.ch,2,'Add it to your channel or bot')}${li(st.ads,3,'Connect Meta, TikTok or Snapchat')}</ol></div>
