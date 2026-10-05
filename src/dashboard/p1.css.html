@@ -65,6 +65,8 @@ html,body{min-height:100%}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
+/* Keep text-entry controls at 16px to prevent iOS Safari from zooming on focus. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]):not([type="hidden"]):not([type="color"]),textarea,select{font-size:16px!important}
 a{color:inherit}
 h1,h2,h3,h4{margin:0;letter-spacing:-.035em;font-weight:800;text-wrap:balance}
 p{margin:0}
