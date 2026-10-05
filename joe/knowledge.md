@@ -132,3 +132,25 @@ Joinvoo is made by Zedapex. Sister tools: Replyvoo (AI Closers that reply to Tel
 
 ## VooSquare
 VooSquare is the shared Zedapex account: one login for all Zedapex tools. If it is switched on, the login page shows "Continue with VooSquare", and an existing account with the same verified email is linked automatically, keeping all data and balances. If referrals have moved to VooSquare, the Earn page links there and existing Joinvoo referral balances stay withdrawable.
+
+## Channel and bot limits
+Basic tracks up to 3 channels (bot-subscriber trackers count as channels) and 3 bots. Pro, and the Pro trial, are unlimited. The admin can change these numbers.
+When you are at the limit, adding another one shows "You've used 3 of 3" with two choices: upgrade to Pro, or remove a channel (Channels → ⋯ → Remove channel) or disconnect a bot (Channels → Your bots → Disconnect).
+A channel you add in Telegram while over the limit shows "not tracking yet" and starts tracking by itself as soon as there is room. Removing a channel keeps its past stats; its tracking link stops working, so don't leave it in live ads.
+Accounts that already had more than 3 before the limits started keep all of them.
+
+## Adding another bot
+Channels → Add channel asks "Which bot?": pick one you already connected or tap "+ Add a new bot" and paste a new BotFather token. Each channel can use any of your bots, and one channel can use several bots for heavy traffic.
+
+## Click IDs and invite link names
+Every ad click gets a click ID like c-0a3f9. Joinvoo names the person's single-use invite link in Telegram after the click, for example "Meta · c-0a3f9 · NG", so in Telegram → your channel → Invite links you can see which platform and click each link belongs to. Open a person in People (or Just joined) to see their click ID, the invite link name, the campaign, country, device and which match keys were sent to Meta (click ID fbc, browser ID fbp, IP, device). Search People by click ID too.
+To check Meta is receiving joins: Meta Events Manager → your dataset → Subscribe events from "Server", and look at Event Match Quality.
+
+## Left (people who left)
+"Left" shows people who joined in the chosen period and have since left, as a share of new joins. "+N older members" counts people who left but joined before that period or before Joinvoo tracked them.
+
+## Paying with crypto (Gatevoo)
+Credits → Top up → "USDT or Bitcoin" opens a secure Gatevoo checkout. Pay the exact amount shown in USDT (TRC20) or Bitcoin; the credits arrive automatically once the network confirms (usually a few minutes for USDT, longer for Bitcoin). No transaction ID to paste.
+
+## Affiliates vs referrals
+Referrals: customers invite friends from the Earn page inside Joinvoo. Affiliates: marketers and creators promote Joinvoo through the VooSquare affiliate program and can earn up to 50% for life (with conditions, see affiliate.voosquare.com). Joinvoo's page about it is /affiliates.

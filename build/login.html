@@ -166,7 +166,7 @@ form{display:flex;flex-direction:column;gap:16px}
       try{
         let m=_t('If that email has an account, a reset link is on its way. Check spam too.');
         if(!DEMO){ const r=await fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:v})});
-          const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Couldn’t send the email. Try again.')); m=j.message||m; }
+          const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Couldn’t send the email. Try again.')); m=j.message||m; if(j.no_email){ document.body.classList.add('sp-show'); setTimeout(()=>{ const l=document.querySelector('.sp-launch'); if(l&&l.getAttribute('aria-expanded')!=='true') l.click(); },600); } }
         else { await new Promise(r=>setTimeout(r,700)); m+=' '+_t('(Demo: no email was sent.)'); }
         show('ok',icOk,m); go.innerHTML=_t('Sent')+' ✓';
         setTimeout(()=>{ go.disabled=false; go.innerHTML=_t('Send again')+' '+arrow; },20000);
@@ -180,3 +180,6 @@ form{display:flex;flex-direction:column;gap:16px}
   if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP); }).catch(()=>{});
 })();
 </script>
+
+<style>/* login: chat stays out of the way, it appears only when we need it (e.g. reset emails are not available) */body:not(.sp-show) .sp-launch{display:none!important}</style>
+{{SUPPORT}}

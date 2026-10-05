@@ -2,7 +2,30 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
-## What's new in this update
+## What's new in this update (round 11, 5 October 2026)
+
+Everything below is safe for current users: the database only gets new columns and tables, and nothing a customer already has is taken away.
+
+- **Plan limits for channels and bots.** Basic: 3 channels (bot-subscriber trackers count) and 3 bots. Pro and the Pro trial: unlimited.
+  - Change the numbers in **Admin → Settings → Plans & trial → Plan limits** (0 = unlimited), or with `BASIC_MAX_CHANNELS`, `BASIC_MAX_BOTS`, `PRO_MAX_CHANNELS`, `PRO_MAX_BOTS`.
+  - Limits only apply when **adding**. Customers who already have more keep every channel and bot, and a bot that leaves and rejoins a channel keeps its slot.
+  - At the limit, the customer sees "You've used 3 of 3" with **Upgrade to Pro** or **Remove one**. A channel added in Telegram over the limit shows "not tracking yet" and starts by itself when there's room.
+- **Customers can add more bots and remove things.** "Add channel" now asks "Which bot?" (an existing bot or **+ Add a new bot**). Each channel has **⋯ → Remove channel**, and **Your bots** has **Disconnect**.
+- **Click IDs in Telegram.** Every ad click gets an ID like `c-0a3f9`, and its single-use invite link is renamed in Telegram to e.g. `Meta · c-0a3f9 · NG` (Telegram → channel → Invite links). Renaming is paced separately and never slows down link creation. Switch: feature `link_names` (on by default).
+- **Person details.** Tapping anyone in Just joined / People shows the click ID, the Telegram invite link name, campaign, country, device and the match keys sent to Meta (fbc, fbp, IP, device). People search accepts a click ID.
+- **"Left" fixed.** It counted members who were there before tracking (e.g. "489% of joins"). Now: people who joined in the period and left, plus "+N older members" separately.
+- **Gatevoo crypto checkout (USDT + Bitcoin), confirmed automatically.** A "USDT or Bitcoin · Secure crypto checkout by Gatevoo" method is added **switched off**. To switch it on:
+  1. In Gatevoo: Apps → Connect an app → name it "Joinvoo". Copy the API key and webhook secret.
+  2. Joinvoo Admin → Settings → Payment methods → Gatevoo: paste them (Gatevoo address `https://gatevoo.com`), copy the **Webhook URL** shown (`https://joinvoo.com/webhooks/gatevoo/gatevoo`) into Gatevoo, switch the method on.
+  3. Make one real $10 top-up in USDT. Credits arrive after Gatevoo confirms; Joinvoo re-reads the invoice from Gatevoo before crediting, so a forged webhook can't add credits.
+- **Custom payment gateways.** Admin → Payment methods → Add → **Custom gateway**: upload a logo, write the text under it, paste a checkout link template (`{amount} {currency} {reference} {email} {return_url}`) or an API create URL, and a webhook secret. The gateway confirms with a signed webhook (shown on the card).
+- **VooSquare login matches VooSquare's real setup.** Joinvoo now speaks VooSquare's own OAuth (`/oauth/authorize`, `/oauth/token`, HS256 id_token signed with the client secret). Login stays **Off** until you switch it on, and email + password always keeps working in "Both" mode. See section 6.
+- **VooSquare affiliates.** Visitors arriving with `?aff=CODE` (or `joinvoo.com/a/CODE`) are remembered for 90 days and tied to the account at sign-up, for life. Their sign-up and every payment are reported to VooSquare (with `aff_code`, never their email) so VooSquare pays the affiliate. New page **/affiliates** ("Earn up to 50% for life"), linked from the home page. Joinvoo's own Referral program is unchanged and separate.
+- **Support bridge with VooSquare.** Optional: customer chats are copied to the VooSquare HQ inbox and replies typed there appear in the customer's Joinvoo chat (and email). VooSquare can also list, read, reply to and solve Joinvoo tickets through `/api/voosquare/support/*`.
+- **Product showcase.** A swipeable, animated card row at the very bottom of the Overview: VooSquare Affiliates, Spyvoo, Replyvoo, Castvoo, Vooads, Gatevoo (waitlist). Edit the apps in Admin → Settings → Zedapex apps; "Advoo" is renamed "Vooads" if you never changed its name.
+- **Website.** Pricing now shows the channel/bot limits; new /affiliates page; better error messages after a failed VooSquare login.
+
+### Earlier in this release line
 
 - **Joe pay-as-you-go.** Every customer gets free Joe chats each day (5 on Basic, 30 on Pro and the Pro trial; they come back at the customer's midnight). After that, each AI answer is paid from Joinvoo Credits at the real AI cost × your markup (default 4×), never below 3 or above 40 credits, so every paid answer makes money. Answers Joe gives without AI are always free, and nobody is charged for an error.
   - The first time a customer runs out of free chats, Joe asks "Continue with paid answers?" and charges nothing until they tap Continue. Each customer has a monthly Joe budget (default 1,000 credits; they can lower it or set it to 0).
@@ -59,9 +82,9 @@ Railway starts the new version, waits for it to be healthy, then switches traffi
 
 On start, Joinvoo upgrades its database by itself:
 
-- it **only adds** new tables and columns: staff, roles, audit, voo_outbox, users.voo_id, sessions.via and a few more;
+- it **only adds** new tables and columns: staff, roles, audit, voo_outbox, users.voo_id, sessions.via and a few more; this round adds channels.locked / removed_by_user, links.name, users.aff_code / aff_sub / aff_at, tickets.source / voo_ticket, ticket_msgs.source / ext_id / agent_name and the voo_support_out table;
 - it never deletes or rewrites your data;
-- the one exception is a settings copy: the old `sister` card is copied into the new `apps` list, and the old `sister` setting stays where it is.
+- the small one-time settings changes: the old `sister` card is copied into the `apps` list; Spyvoo and Gatevoo are added to a saved apps list (your edits stay; Advoo is renamed Vooads only if you never renamed it); a Gatevoo payment method is added **switched off**.
 
 It's safe to start the same version twice. Each step checks whether it was already done.
 
@@ -74,6 +97,11 @@ In **Deployments → View logs** you should see the usual `Joinvoo running on ht
 3. **A tracking link still works.** Open one of your `/c/…` links in a private window: it should open Telegram as before. Back in the dashboard, the click shows up under today.
 4. Open `/admin`. You land on the Overview as an **Owner** (see the role chip next to the logo). Have a look at **Team & roles** and the **Audit log**.
 5. Optional: Admin → Settings → **Zedapex apps** shows the catalog. If you'd rather not promote anything yet, switch off "Sister product card" in Features.
+6. **New this round:**
+   - Channels page shows "N of 3 channels · N of 3 bots on Basic" for a Basic customer, and existing customers with more than 3 still have every channel tracking (no amber "not tracking" badge on their old channels).
+   - Click a tracking link, join, and open the person in People: you see a click ID like `c-0a3f9`. In Telegram → channel → Invite links, that link is named `Meta · c-0a3f9 · …` within a few seconds.
+   - Admin → Settings → Payment methods shows **Gatevoo** (off until you add its keys) and **Custom gateway** in "Add method".
+   - `https://joinvoo.com/affiliates` opens the affiliate page.
 
 ## 5. If you need to roll back
 
@@ -84,28 +112,31 @@ Railway keeps your earlier builds:
 
 The older version simply ignores the new tables and columns, so your data is fine either way. Only restore the backup from step 1 if data itself went wrong. To do that, stop the service, copy the backup over `/data/joinvoo.db` (for example with `railway run` or a temporary shell), then start it again.
 
-## 6. Switching on VooSquare later
+## 6. Switching on VooSquare (login, events, affiliates, support)
 
-When the VooSquare team gives you your client details:
+Nothing here is needed for Joinvoo to work. Do it when VooSquare is live.
 
-1. **Admin → Settings → Integrations & API keys → VooSquare.** You need the "API keys and link domains" permission; owners and admins have it. Fill in:
-   - **Issuer**, e.g. `https://auth.voosquare.com`;
-   - **Client ID** and **Client secret**;
-   - **Service key**: VooSquare uses it to read the summary;
-   - **Webhook secret**: Joinvoo signs the events it sends with it;
-   - **Events URL**: leave the default unless told otherwise.
+1. **In VooSquare:** Admin → Products → Joinvoo. Set:
+   - **Redirect URI:** `https://joinvoo.com/auth/voosquare/callback`
+   - **Summary URL:** `https://joinvoo.com/api/voosquare/summary`
+   - **Support webhook:** `https://joinvoo.com/api/voosquare/support/webhook`
+   - Copy the **client ID**, **client secret** and **API key**.
+2. **In Joinvoo:** Admin → Settings → Integrations & API keys → VooSquare (owners and admins can):
+   - **VooSquare address:** `https://voosquare.com`
+   - **Client ID**, **Client secret**, **API key**
+   - leave Events URL empty (it becomes `https://voosquare.com/api/v1/events`)
+   - **Support bridge:** on, if you want chats in the VooSquare HQ inbox
+   - **Affiliate link:** `https://affiliate.voosquare.com`
 
-   You can set the same values as Railway variables instead (`VOO_ISSUER`, `VOO_CLIENT_ID`, `VOO_CLIENT_SECRET`, `VOO_SERVICE_KEY`, `VOO_WEBHOOK_SECRET`, `VOO_EVENTS_URL`, `VOO_HOME`). Values saved in the admin win over the variables.
-2. Give VooSquare:
-   - the **Callback URL** shown on the card (`https://your-domain/auth/voosquare/callback`);
-   - the **Summary API** URL (`https://your-domain/api/voosquare/summary`).
-3. Tap **Test discovery**. It should say "Discovery OK" with the number of signing keys.
-4. Set **Login** to **Both**. Your login and sign-up pages then show "Continue with VooSquare" next to the usual form. Try it with your own account:
-   - if your email is confirmed on both sides, your existing account is **linked once**;
-   - you keep all your data;
-   - you get an inbox note saying so.
-5. Later, if you want everyone to use VooSquare, set **Login** to **VooSquare only**. Customers then can't use a password any more. Owners and staff still can, as a break-glass, at `https://your-domain/login?local=1`.
-6. **Referrals:** set it to **VooSquare** when your referral program moves there. The Earn page then points to VooSquare, no new Joinvoo commissions are added, and balances people already earned stay withdrawable.
-7. **Events:** once the webhook secret is set, activity of linked users is sent every 15 seconds. Admin → Health → **VooSquare events** shows how many are waiting and the last error. If VooSquare is down, events wait and are retried for up to 24 hours.
+   Or as Railway variables: `VOO_ISSUER`, `VOO_CLIENT_ID`, `VOO_CLIENT_SECRET`, `VOO_API_KEY`, `VOO_SUPPORT_BRIDGE=1`, `VOO_HOME`. Values saved in the admin win.
+3. Tap **Test discovery**. It should say "VooSquare login found (VooSquare OAuth…)".
+4. Set **Login** to **Both**. Login and sign-up pages show "Continue with VooSquare" next to the usual form.
+   - **New people** who use it get a Joinvoo account created from their Voo ID (email, name, country, referral code).
+   - **Existing customers** with the same email are linked once, keeping all their data, if their Joinvoo email is confirmed. If not, they're asked to log in with their password first (this blocks someone pre-registering a victim's email).
+   - **Everyone can still use email and password.** If VooSquare is down, nothing breaks: the button shows an error, the password form works.
+5. **Off switch:** set Login back to **Off**. Linked accounts keep working with their passwords.
+6. "VooSquare only" mode makes everyone use VooSquare; owners and staff keep a break-glass login at `/login?local=1`. Only use it once VooSquare has been stable for a while.
+7. **Events:** with the API key set, activity of linked users, plus sign-ups and payments of affiliate-referred users, is sent every 15 seconds with `Authorization: Bearer <API key>`. Admin → Health → **VooSquare events** shows waiting items and the last error. If VooSquare is down, events wait and retry for up to 24 hours.
+8. **Referrals:** set to **VooSquare** only when the referral program moves there. Joinvoo's Earn page then points to VooSquare and existing balances stay withdrawable.
 
-To switch it all off again, set **Login** back to **Off** and clear the webhook secret. Linked accounts keep working with their passwords.
+What VooSquare's developer must accept is in **VOOSQUARE-CONNECT.md**.

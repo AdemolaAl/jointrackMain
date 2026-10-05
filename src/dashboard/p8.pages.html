@@ -9,13 +9,13 @@ async function viewChannels(){
   every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
 }
 function drawChannels(){
-  const d=S.chans, el=$('#cl'); if(!el) return;
-  el.innerHTML = `<div class="chans">${d.channels.map((c,i)=>{ const isB=c.type==='bot';
-    const st=c.status==='active'?'<span class="chip g"><i class="d"></i>Tracking</span>':c.status==='no_rights'?'<span class="chip y"><i class="d"></i>Needs permission</span>':'<span class="chip r"><i class="d"></i>Bot removed</span>';
+  const d=S.chans, el=$('#cl'); if(!el) return; const list=visChans(d);
+  el.innerHTML = `${limitsCard(d)}<div class="chans">${list.map((c,i)=>{ const isB=c.type==='bot';
+    const st=c.locked?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${tt('lim.notrack','Not tracking')}</span>`:c.status==='active'?'<span class="chip g"><i class="d"></i>Tracking</span>':c.status==='no_rights'?'<span class="chip y"><i class="d"></i>Needs permission</span>':'<span class="chip r"><i class="d"></i>Bot removed</span>';
     const prow=p=>{ const on=platOn(c,p); const test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
       return `<div class="prow2">${pm(p)}<b>${PLAT[p].name}</b>${on?`<span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto">${test?'<span class="chip y" title="Test mode is on">Test</span>':''}<button class="chip g" style="cursor:pointer" data-act="plat-open" data-id="${c.id}" data-p="${p}">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${esc(platEvent(c,p))}</button></span>`:`<button class="btn sm" data-act="plat-open" data-id="${c.id}" data-p="${p}">Connect</button>`}</div>`; };
     const pool=c.pool_target?Math.min(100,c.pool/c.pool_target*100):0;
-    return `<article class="card chan"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}</div>
+    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
       <div class="chan-sec"><span class="lbl">Your link for ads</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} Copy</button></div></div>
       <div class="chan-sec" style="gap:4px"><span class="lbl" style="margin-bottom:4px">Ad platforms</span>${PLATS().map(prow).join('')}<div class="prow2" style="opacity:.6">${pm('google')}<b>Google Ads</b><span class="chip o">Coming soon</span></div></div>
       ${isB&&c.external?`<div class="chan-sec"><div class="prow2"><span class="chip v">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} Tracked via your bot (no token)</span></div>
@@ -28,7 +28,7 @@ function drawChannels(){
       ${jrCardSection(c)}
       ${backupSection(c)}
       <div class="chan-foot">${isB?(c.external?`<button class="btn sm" data-act="show-code" data-id="${c.id}">${I.bolt} Show code</button>`:`<button class="btn sm" data-act="bot-settings" data-id="${c.id}">${I.bot} Bot settings</button>`):''}${PLATS().filter(p=>platOn(c,p)).map(p=>`<button class="btn sm" data-act="test" data-id="${c.id}" data-p="${p}">Test ${PLAT[p].name}</button>`).join('')}<a class="btn sm ghost" href="${esc(c.tracking_url)}" target="_blank" rel="noopener">${I.ext} Open link</a></div></article>`; }).join('')}
-    <button class="add-card" data-act="add-channel"><span class="ei">${I.plus}</span>${d.channels.length?'Add another channel or bot':'Connect your first channel'}<small class="faint" style="font-weight:500">About 3 minutes</small></button></div>`;
+    <button class="add-card" data-act="add-channel"><span class="ei">${I.plus}</span>${list.length?'Add another channel or bot':'Connect your first channel'}<small class="faint" style="font-weight:500">About 3 minutes</small></button></div>${botsCard(d)}`;
 }
 function openPlatform(id, p){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const on=platOn(c,p);
@@ -68,7 +68,7 @@ function manualAdd(){
     <div class="field"><label for="mch">Channel @username or ID</label><input class="inp" id="mch" placeholder="@mychannel"><span class="hint">Private channel? Forward a post from it to @userinfobot to get the ID.</span></div><div id="mmerr"></div><button class="btn primary lg wide" type="submit">Add channel</button></form>`);
   $('#mmf').addEventListener('submit', async e=>{ e.preventDefault();
     try { await api('POST','/api/channels',{bot_id:$('#mb').value,chat:$('#mch').value}); closeSheet(); await refreshChans(); W.channel=S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); }
-    catch(err){ $('#mmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+    catch(err){ if (limitCatch(err)) return; $('#mmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
 }
 
 /* ---------- wallet ---------- */
@@ -128,7 +128,7 @@ async function openDeposit(){
 const depHint = a => { const P=PRICE(), base=P.base_cents/100, pj=P.per_join_cents/100; if(!(a>0)) return 'Enter an amount.'; if(!pj) return `$${a} added to your wallet.`; return `$${a} ≈ ${fmt(Math.max(0,(a-base)/pj)+Math.min(P.included,base?a/base*P.included:P.included))} tracked joins on a fresh month, or about ${fmt(a/pj)} extra joins on top of your plan.`; };
 function pricingLine(b){ const P=PRICE(), M=(b&&b.month)||{}, base=M.base_cents??P.base_cents, inc=M.included??P.included, pj=M.per_join_cents??P.per_join_cents, fj=(b&&b.free_joins_gift)||P.free_joins;
   return `${fj?`Your first ${fmt(fj)} tracked joins are free. Then `:''}${centsTxt(base)} a month includes ${fmt(inc)} tracked joins, and ${pj}¢ per extra join. Organic joins and deposit events are always free.`; }
-const isRedirect = m => m && (m.type==='paystack'||m.type==='stripe'||m.type==='flutterwave');
+const isRedirect = m => m && (m.type==='paystack'||m.type==='stripe'||m.type==='flutterwave'||m.type==='gatevoo'||m.type==='custom'||m.brand==='gatevoo');
 function drawDeposit(){
   const D=S.dep, b=S.bill||{}; if(!D) return;
   const m=D.list.find(x=>x.id===D.mid);
@@ -163,7 +163,8 @@ async function depPay(btn){
   try {
     if (isRedirect(m) && m.type!=='flutterwave'){
       const r=await api('POST','/api/billing/topup',{method_id:m.id,usd:D.amt,...(D.promo?{promo:D.promo}:{})});
-      if (r.redirect_url){ btn.innerHTML=`<span class="spin"></span> ${tt('dep.opening','Opening {name}…',{name:esc(m.label)})}`; if(DEMO) toast(tt('dep.demo','Demo: skipping the checkout page')); setTimeout(()=>{ location.href=r.redirect_url; }, DEMO?700:0); return; }
+      const go=r.redirect_url||r.url; /* Paystack/Stripe answer redirect_url; Gatevoo and custom gateways answer url */
+      if (go){ btn.innerHTML=`<span class="spin"></span> ${tt('dep.opening','Opening {name}…',{name:esc(m.brand==='gatevoo'||m.type==='gatevoo'?'Gatevoo':m.label)})}`; if(DEMO) toast(tt('dep.demo','Demo: skipping the checkout page')); setTimeout(()=>{ location.href=go; }, DEMO?700:0); return; }
       throw new Error(r.message||tt('dep.nourl','We couldn’t open the payment page. Try again.'));
     }
     const body = isRedirect(m) ? {provider:m.type,amount:D.amt} : m.type==='crypto' ? {provider:'crypto',amount:D.amt} : {provider:'manual',method_id:m.id,amount:D.amt};
@@ -443,7 +444,7 @@ document.addEventListener('click', e=>{
     case 'bot-settings': openBotSettings(a.dataset.id); break;
     case 'start-setup': renderSetup(null, true); break;
     case 'test': { a.disabled=true; const p=a.dataset.p||'meta'; api('POST','/api/channels/'+a.dataset.id+'/test'+testQ(p)).then(r=>toast(r.message||'Test sent')).catch(err=>toast(err.message,false)).finally(()=>a.disabled=false); break; }
-    case 'add-channel': closeSheet(); renderSetup(S.chans.bots.some(b=>b.status==='active')?2:1, true); break;
+    case 'add-channel': closeSheet(); closePop(); renderSetup(1, true, {pick:true}); break;
     case 'leave-setup': renderApp(); break;
     case 'addlink': if (DEMO){ e.preventDefault(); toast('In the real app this opens Telegram'); setTimeout(()=>Demo.addChannel(),1600); } break;
     case 'demo-detect': Demo.addChannel(); break;

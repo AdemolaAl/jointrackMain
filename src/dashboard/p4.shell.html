@@ -123,13 +123,16 @@ function openSnippets(id){
   sheet(`<h2>Connect your bot<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
 }
 function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo · sample data</b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
-async function renderSetup(step, fromApp){
+async function renderSetup(step, fromApp, opt){
   stopTimers(); clearInterval(W.poll); closeChat(true);
   W.fromApp = !!fromApp;
-  W.bkind=null; W.bsub=null; W.ext=null; W.jrSeen=false;
+  W.bkind=null; W.bsub=null; W.ext=null; W.jrSeen=false; W.warn=''; W.prevWh='';
   const d = S.chans || await refreshChans();
-  W.bot = d.bots.find(b=>b.status==='active') || null;
-  W.step = step || (W.bot ? 2 : 1);
+  const act = d.bots.filter(b=>b.status==='active');
+  /* adding from the app with bots already connected: ask which bot first (or a new one) instead of reusing the first bot */
+  W.pickBot = !!(opt&&opt.pick) && act.length>0;
+  W.bot = W.pickBot ? null : (act[0] || null);
+  W.step = W.pickBot ? 1 : (step || (W.bot ? 2 : 1));
   $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' Back to dashboard</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
     <div class="setup-body"><div class="prog" id="prog"></div><div id="stp"></div></div></div>`;
   drawStep();
@@ -143,7 +146,9 @@ function drawProg(){
 function drawStep(){
   clearInterval(W.poll); drawProg();
   const s=$('#stp'); let h='';
-  if (W.step===1) h = `<div class="step">
+  if (W.step===1 && W.pickBot) h = botPickStep();
+  else if (W.step===1) h = `<div class="step">
+    ${(S.chans&&S.chans.bots.some(b=>b.status==='active'))&&W.fromApp?`<button class="link" style="align-self:flex-start" data-act="bot-pick-back">${I.chevl} ${tt('bp.back','Use a bot I already connected')}</button>`:''}
     <span class="step-ico">${I.bot}</span>
     <h1>Make your tracking bot.</h1><p class="lede">It sits in your channel and gives every visitor their own invite link. Takes about 2 minutes.</p>
     <ol class="howto">
@@ -153,7 +158,7 @@ function drawStep(){
       <li><span class="n">4</span><span>Copy the token it sends and paste it below</span></li>
     </ol>
     <form id="tf" class="field"><label for="tok">Bot token</label>
-      <input class="inp mono" id="tok" autocomplete="off" spellcheck="false" placeholder="123456789:AAH4k…" ${DEMO?'value="7712045533:AAHk3vZq_demoTokenForJoinvoo_88xQw"':''}>
+      <input class="inp mono" id="tok" autocomplete="off" spellcheck="false" placeholder="123456789:AAH4k…" ${DEMO?`value="${(S.chans&&S.chans.bots||[]).some(b=>String(b.tg_id)==='7712045533')?'7809914420:AAGq2mWx_demoTokenForJoinvoo_51bTz':'7712045533:AAHk3vZq_demoTokenForJoinvoo_88xQw'}"`:''}>
       <span class="hint">${DEMO?'Demo: a sample token is already filled in.':'For a channel, use a new bot just for tracking. To track an existing bot’s subscribers, paste that bot’s token.'}</span><div id="terr"></div>
       <button class="btn primary lg wide" type="submit" id="tbtn" style="margin-top:8px">Connect bot ${I.arrow}</button></form>
     <a class="btn ghost" href="https://t.me/BotFather" target="_blank" rel="noopener">Open BotFather ${I.ext}</a>
@@ -174,7 +179,7 @@ function drawStep(){
     if (!isBot){ W.before=(S.chans&&S.chans.channels.length)||0; W.poll=setInterval(checkArrived,2500); } }
   if (W.step===3 && !W.jrSeen && FEAT('join_requests') && W.channel && W.channel.type!=='bot' && !jrOn(W.channel)){ s.innerHTML=jrStepHtml(); bindJrStep(); window.scrollTo(0,0); return; }
   if (W.step===3){ const c=W.channel||{}; const p=W.plat; h = `<div class="step">
-    <div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>
+    ${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>`}
     <span class="step-ico">${I.target}</span>
     <h1>Tell your ads about every join.</h1><p class="lede">Pick where you run ads. Your ads then learn from real joins, not taps. You can add the others later.</p>
     <div class="plats" style="grid-template-columns:repeat(${PLATS().length},minmax(0,1fr))">${PLATS().map(k=>`<button data-act="plat" data-p="${k}" aria-pressed="${p===k}">${pm(k,1)}${PLAT[k].name}<small>${PLAT[k].sub}</small></button>`).join('')}</div>
@@ -182,7 +187,10 @@ function drawStep(){
       <div id="perr"></div><button class="btn primary lg wide" type="submit" id="pbtn">Save and send a test ${I.arrow}</button></form>
     <div class="soon"><span style="display:flex;align-items:center;gap:8px">${pm('google')}Google Ads</span><span>Coming soon</span></div>
     <button class="btn ghost" data-act="skip-meta">Skip, I’ll do this later</button></div>`; }
-  if (W.step===4){ const c=W.channel||{}; h = `<div class="step" style="text-align:center;align-items:center">
+  if (W.step===4 && W.channel && W.channel.locked){ const c=W.channel; h = `<div class="step">${chLockNote(c,true)}
+    <h1>${tt('lim.s4.h','Almost there.')}</h1><p class="lede">${tt('lim.s4.p','Your settings are saved. {t} starts tracking as soon as you upgrade or free a slot. Until then, don’t put its link in an ad.',{t:esc(c.title||'This channel')})}</p>
+    <button class="btn lg wide" data-act="finish">${tt('lim.s4.go','Go to my dashboard')} ${I.arrow}</button></div>`; }
+  else if (W.step===4){ const c=W.channel||{}; h = `<div class="step" style="text-align:center;align-items:center">
     <span class="step-ico" style="color:var(--mint-ink)">${I.sparkles}</span>
     <h1>You’re tracking.</h1><p class="lede">Use this link in your ad, in place of the t.me link. That’s the only change you make.</p>
     <div class="codebox" style="width:100%"><code>${esc(c.tracking_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url||'')}">${I.copy} Copy</button></div>
@@ -193,13 +201,13 @@ function drawStep(){
   const pf=$('#pf'); pf && pf.addEventListener('submit', e=>{e.preventDefault(); savePixel();});
   const xf=$('#xf'); xf && xf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#xbtn'); b.disabled=true;
     try { const r=await api('POST','/api/bot-targets/external',{username:$('#xu').value.trim()}); await refreshChans(); W.ext=S.chans.channels.find(c=>c.id===r.channel)||{...r,title:'@'+$('#xu').value.trim().replace(/^@/,'')}; if(!W.ext.hook_start){ W.ext.hook_start=r.hook_start; W.ext.hook_blocked=r.hook_blocked; } drawStep(); toast('Hook ready'); }
-    catch(err){ $('#xerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+    catch(err){ b.disabled=false; if (limitCatch(err)) return; $('#xerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
   const bf=$('#bf'); bf && bf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#bbtn'); b.disabled=true;
     const fw=$('#bfw'), fs=$('#bfs'), body={bot_id:W.bot.id,welcome:$('#bw')?$('#bw').value:'',btn_text:$('#bbt')?$('#bbt').value:'',btn_url:$('#bbu')?$('#bbu').value:'',forward_url:fw?fw.value.trim():''};
     if (fs && fs.value.trim()) body.forward_secret=fs.value.trim();
     try { const r=await api('POST','/api/bot-targets',body);
       await refreshChans(); W.channel=S.chans.channels.find(c=>c.id===r.channel)||S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); toast('Bot tracking is on'); }
-    catch(err){ $('#berr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+    catch(err){ b.disabled=false; if (limitCatch(err)) return; $('#berr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
   window.scrollTo(0,0);
 }
 function botStep(u, pick){
@@ -242,10 +250,10 @@ function botStep(u, pick){
 async function connectBot(){
   const b=$('#tbtn'); b.disabled=true; b.innerHTML='<span class="spin"></span> Checking with Telegram';
   try { const r=await api('POST','/api/bots',{token:$('#tok').value}); W.bot=r.bot; W.prevWh=r.previous_webhook||''; W.warn=r.warning||''; await refreshChans(); W.step=2; drawStep(); }
-  catch(e){ $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; b.disabled=false; b.innerHTML='Connect bot '+I.arrow; }
+  catch(e){ b.disabled=false; b.innerHTML='Connect bot '+I.arrow; if (limitCatch(e)) return; $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; }
 }
 async function checkArrived(){
-  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); } } catch{}
+  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); if (W.channel&&W.channel.locked) setTimeout(()=>openLimitSheet({kind:'channels'},{arrived:W.channel}),500); } } catch{}
 }
 async function savePixel(){
   const c=W.channel, b=$('#pbtn'), p=W.plat; b.disabled=true; b.innerHTML='<span class="spin"></span> Saving';
@@ -297,7 +305,7 @@ function renderApp(){
   $('#root').innerHTML = `<div class="shell ${S.collapsed?'col':''}" id="shell">
     <aside class="side" id="side" aria-label="Main navigation">
       <div class="side-top">${logo()}<button class="collapse" data-act="collapse" aria-label="Collapse sidebar">${I.chevl}</button></div>
-      <nav class="nav">${NAV.map(([h,ks])=>`<div class="nav-h">${tt('nav.h.'+h.toLowerCase(),h)}</div>${ks.filter(pageOn).map(navA).join('')}`).join('')}</nav>${(()=>{ const h=sisterNav(); return h?`<div class="side-sis">${h}</div>`:''; })()}
+      <nav class="nav">${NAV.map(([h,ks])=>`<div class="nav-h">${tt('nav.h.'+h.toLowerCase(),h)}</div>${ks.filter(pageOn).map(navA).join('')}${h==='Account'?affNav():''}`).join('')}</nav>${(()=>{ const h=sisterNav(); return h?`<div class="side-sis">${h}</div>`:''; })()}
       <div class="side-card" id="sidecard"><div><div class="sl">${tt('credits.title','Credits')}</div><div class="sv num sk" style="height:28px;width:110px;margin-top:4px"></div></div></div>
       <button class="me-row" data-act="account" aria-label="${tt('menu.account','Account menu')}">${meFace(38,true)}<span class="who"><b>${esc(dispName())}<span class="melv" id="melv">${lvMini()}</span></b><small>${esc(me.email||'')}</small></span></button>
     </aside>

@@ -106,7 +106,7 @@ function jrCardSection(c){
 }
 function jrStepHtml(){
   const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
-  return `<div class="step"><div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>
+  return `<div class="step">${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>`}
     <span class="step-ico">${I.coin}</span><h1>Track deposits too?</h1><p class="lede">Turn on request-to-join with a welcome message. It’s the easiest way to see who deposits, not just who joins.</p>
     ${jrWhy}
     <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields({...c,offer_text:c.offer_text||'Welcome 👋 Thanks for joining! Tap below to get today’s offer.',offer_btn:c.offer_btn||'Get the offer'})}

@@ -29,7 +29,9 @@ window.JVVoo=(function(){
         .then(function(c){ cb(norm(c&&c.voo&&c.voo.login)); }).catch(function(){ cb('off'); });
     },
     block: function(withOr){
-      return '<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
+      var E={unavailable:'Can’t reach VooSquare right now. Try again in a minute, or log in with your email.',link:'This email already has a Joinvoo account that isn’t confirmed yet. Log in with your email and password (or reset it), then use VooSquare next time.',suspended:'This account is suspended. Contact support.',no_email:'Your VooSquare account has no email yet. Add one in VooSquare, then try again.',off:'VooSquare login is switched off right now. Log in with your email.'};
+      var err=q.voo_error?'<p class="vonly-note" role="alert" style="color:#b42318;font-weight:700;margin:0 0 10px">'+_t(E[q.voo_error]||'VooSquare sign-in didn’t finish. Please try again.')+'</p>':'';
+      return err+'<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app'+(/\/signup/.test(location.pathname)?'&signup=1':'')+'">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
     }
   };
 })();

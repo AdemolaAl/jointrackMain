@@ -517,6 +517,28 @@ section.blk{padding-block:110px}
 .cta>*:not(.blob){position:relative}
 .cta .btn.ghost2{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
 .cta .have{color:#a9a6bd}.cta .have a{color:#fff}
+/* r11: VooSquare affiliate band (links to /affiliates) */
+.affb{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:20px 28px;align-items:center;padding:26px 28px;border-radius:30px;background:#0A0914;color:#F2F1FA;text-decoration:none;box-shadow:0 40px 80px -40px rgba(15,174,107,.5);transition:transform .3s}
+.affb:hover{transform:translateY(-4px)}
+.affb::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(50% 120% at 0% 50%,rgba(15,174,107,.38),transparent 70%),radial-gradient(40% 120% at 100% 50%,rgba(106,75,255,.45),transparent 70%)}
+.affb::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.07) 50%,transparent 65%);background-size:250% 100%;animation:shine 5s ease-in-out infinite;pointer-events:none}
+.affb .am{position:relative;width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.affb .am svg{width:38px;height:38px}
+.affb .am::after{content:"";position:absolute;inset:-6px;border-radius:28px;border:2px solid rgba(15,174,107,.5);animation:affp 2.6s cubic-bezier(.2,.6,.3,1) infinite}
+@keyframes affp{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+.affb .kick{color:#9fe6c4}
+.affb h2{font-size:clamp(28px,3.6vw,42px);line-height:1.02;margin-top:4px;color:#fff}
+.affb h2 span{background:linear-gradient(100deg,#c6f45a,#7ff0b8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.affb p{margin:6px 0 0;color:#B9B5CC;font-size:16px;max-width:52ch}
+.affb .ago{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:99px;background:#c6f45a;color:#0b0a12;font-weight:800;font-size:16px;white-space:nowrap;box-shadow:0 14px 34px -12px rgba(198,244,90,.55)}
+.affb .ago svg{width:18px;height:18px;transition:transform .2s}.affb:hover .ago svg{transform:translateX(3px)}
+.affb .mos{display:flex;gap:4px;align-items:flex-end;height:30px;margin-top:12px}
+.affb .mos i{width:12px;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#7ff0b8,#0fae6b);transform-origin:bottom;animation:affg 3s cubic-bezier(.2,.8,.2,1) infinite}
+.affb .mos i:nth-child(1){height:40%}.affb .mos i:nth-child(2){height:50%;animation-delay:.1s}.affb .mos i:nth-child(3){height:58%;animation-delay:.2s}.affb .mos i:nth-child(4){height:66%;animation-delay:.3s}.affb .mos i:nth-child(5){height:76%;animation-delay:.4s}.affb .mos i:nth-child(6){height:86%;animation-delay:.5s}.affb .mos i:nth-child(7){height:96%;animation-delay:.6s}
+.affb .mos b{font-size:20px;line-height:1;color:#c6f45a;margin-left:6px;align-self:center}
+.affb .mos small{margin-left:8px;align-self:center;font-size:12.5px;font-weight:700;color:#8D89A8}
+@keyframes affg{0%{transform:scaleY(.15);opacity:.4}30%,100%{transform:scaleY(1);opacity:1}}
+@media (max-width:900px){.affb{grid-template-columns:minmax(0,1fr);padding:24px 20px;gap:14px}.affb .am{width:60px;height:60px;border-radius:19px}.affb .am svg{width:30px;height:30px}.affb .ago{justify-content:center}}
 .mcta{display:none}
 footer.site .wrap{align-items:flex-start}
 footer.site .fby{display:flex;flex-direction:column;gap:10px}
@@ -887,7 +909,7 @@ footer.site nav a:hover{color:var(--ink)}
 
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="{{HOME}}" aria-label="Joinvoo home">{{LOGO}}Joinvoo</a>
-  <nav aria-label="Main"><a class="plain" href="#how">How it works</a><a class="plain" href="#features">Features</a><a class="plain" href="#pricing">Pricing</a><a class="plain" href="{{GUIDE}}">Guide</a><a class="plain" href="{{BLOG}}">Blog</a><div class="lsw" data-lsw></div><a class="plain login" href="{{LOGIN}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Log in</a><a class="btn violet navbtn" href="{{SIGNUP}}">Start free</a></nav>
+  <nav aria-label="Main"><a class="plain" href="#how">How it works</a><a class="plain" href="#features">Features</a><a class="plain" href="#pricing">Pricing</a><a class="plain" href="{{GUIDE}}">Guide</a><a class="plain" href="{{BLOG}}">Blog</a><a class="plain" href="{{AFFILIATES}}">Affiliates</a><div class="lsw" data-lsw></div><a class="plain login" href="{{LOGIN}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Log in</a><a class="btn violet navbtn" href="{{SIGNUP}}">Start free</a></nav>
 </div></header>
 
 <main>
@@ -1405,9 +1427,9 @@ footer.site nav a:hover{color:var(--ink)}
   <div class="freebar reveal"><b>Start free:</b> first 500 tracked joins <span>+</span> a deposit trial of 7 days or 20 FTDs <span>· no card needed</span></div>
   <div class="tiers3">
     <article class="tc reveal"><span class="tn">Basic</span><div class="tp" data-plan="basic"><span class="pv">$30</span><small>/ month</small></div><p class="ts"><b class="pc">3,000 credits</b> a month, including <b class="pi">2,000 tracked joins</b>. Then <span class="pj">2 credits</span> per extra join.</p>
-      <ul><li>Join tracking for channels, groups and bots</li><li>Meta, TikTok and Snapchat</li><li>Smart links and fake-join filter</li><li>Telegram alerts and live support</li></ul><a class="btn lg" href="{{SIGNUP}}">Start free</a></article>
+      <ul><li>Join tracking for channels, groups and bots</li><li class="lim" data-l="basic">Up to 3 channels and 3 bots</li><li>Meta, TikTok and Snapchat</li><li>Smart links and fake-join filter</li><li>Telegram alerts and live support</li></ul><a class="btn lg" href="{{SIGNUP}}">Start free</a></article>
     <article class="tc pro reveal"><span class="tn">Pro <em>For buyers who track deposits</em></span><div class="tp" data-plan="pro"><span class="pv">$99</span><small>/ month</small></div><p class="ts"><b class="pc">9,900 credits</b> a month, including <b class="pi">5,000 tracked joins</b>. Then <span class="pj">2 credits</span> per extra join.</p>
-      <ul><li class="plus">Everything in Basic</li><li>Deposit (FTD), sale and lead tracking</li><li>ROAS and cost per FTD dashboards</li><li>Affiliate program integrations</li><li>Joe’s insights and answers</li></ul><a class="btn violet lg" href="{{SIGNUP}}">Start free trial</a></article>
+      <ul><li class="plus">Everything in Basic</li><li class="lim" data-l="pro">Unlimited channels and bots</li><li>Deposit (FTD), sale and lead tracking</li><li>ROAS and cost per FTD dashboards</li><li>Affiliate program integrations</li><li>Joe’s insights and answers</li></ul><a class="btn violet lg" href="{{SIGNUP}}">Start free trial</a></article>
     <article class="tc ent reveal" data-f="enterprise"><span class="tn">Enterprise</span><div class="tp">Custom</div><p class="ts">Custom pricing for big media buyers and agencies.</p>
       <ul><li>Volume pricing per join</li><li>Dedicated manager</li><li>Custom offers and onboarding</li><li>Priority support</li></ul><button class="btn dark lg" type="button" id="salesOpen">Talk to us</button></article>
   </div>
@@ -1443,6 +1465,15 @@ footer.site nav a:hover{color:var(--ink)}
   </div>
 </div></section>
 
+<section class="blk" id="affiliates" style="padding-top:0"><div class="wrap">
+  <a class="affb reveal" href="{{AFFILIATES}}">
+    <span class="am" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg></span>
+    <span style="min-width:0"><span class="kick">For marketers and creators</span><h2>Earn up to <span>50% for life.</span></h2><p>Promote Joinvoo through the VooSquare affiliate program and get paid every month your customers stay, on every Zedapex tool.</p>
+      <span class="mos" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><b>∞</b><small>Paid monthly</small></span></span>
+    <span class="ago">See the affiliate program <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+  </a>
+</div></section>
+
 <section class="blk" id="faq" style="padding-top:0"><div class="wrap center">
   <span class="kick reveal">FAQ</span>
   <h2 class="h2 reveal">Questions, answered.</h2>
@@ -1473,7 +1504,7 @@ footer.site nav a:hover{color:var(--ink)}
 <div class="mcta" id="mcta"><a class="btn login" href="{{LOGIN}}">Log in</a><a class="btn violet" href="{{SIGNUP}}">Start free · 500 joins on us</a></div>
 <footer class="site"><div class="wrap">
   <div class="fby"><a class="logo" href="{{HOME}}" style="font-size:18px">{{LOGO}}Joinvoo</a><span>© <span id="yr">2026</span> Joinvoo · By <b>Zedapex</b> company</span></div>
-  <nav aria-label="Footer"><a href="{{GUIDE}}">Guide</a><a href="{{BLOG}}">Blog</a><a href="#pricing">Pricing</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a><a href="{{LOGIN}}">Log in</a><a href="{{SIGNUP}}">Start free</a></nav>
+  <nav aria-label="Footer"><a href="{{GUIDE}}">Guide</a><a href="{{BLOG}}">Blog</a><a href="#pricing">Pricing</a><a href="{{AFFILIATES}}">Affiliates</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a><a href="{{LOGIN}}">Log in</a><a href="{{SIGNUP}}">Start free</a></nav>
 {{VOOFOOT}}</div></footer>
 
 <div class="sm" id="sales" role="dialog" aria-modal="true" aria-labelledby="salesT" hidden>
@@ -1611,6 +1642,10 @@ footer.site nav a:hover{color:var(--ink)}
       const card=document.querySelector(`.tp[data-plan="${k}"]`); if(!card) return; const t=card.closest('.tc'); const P=PLANS[k];
       card.querySelector('.pv').textContent='$'+(P.base/100).toLocaleString('en-US',{maximumFractionDigits:2});
       t.querySelector('.pc').textContent=P.base.toLocaleString('en-US')+' '+_t('credits'); t.querySelector('.pi').textContent=P.inc.toLocaleString('en-US')+' '+_t('tracked joins'); t.querySelector('.pj').textContent=P.per+' '+_t('credits'); }); est(); });
+  /* channel + bot limits per plan from /api/config.limits (0 = unlimited) */
+  (window.JV_CONFIG||Promise.resolve(null)).then(c=>{ const L=c&&c.limits; if(!L) return;
+    $$('.lim').forEach(li=>{ const x=L[li.dataset.l]; if(!x) return; const ch=+x.channels||0, bt=+x.bots||0;
+      li.textContent=!ch&&!bt?_t('Unlimited channels and bots'):(_t('Up to')+' '+(ch?ch+' '+_t(ch===1?'channel':'channels'):_t('unlimited channels'))+' '+_t('and')+' '+(bt?bt+' '+_t(bt===1?'bot':'bots'):_t('unlimited bots'))); }); });
   rng.addEventListener('input',est); est();
 
   /* referral wallet */

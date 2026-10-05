@@ -747,7 +747,7 @@ def render_post(T, p, posts):
 def sitemap(posts, tags, counts):
     today = dt.date.today().isoformat()
     newest = max(p['date'] for p in posts)
-    pages = [('/', today, 'weekly', '1.0'), ('/guide', today, 'monthly', '0.9'), ('/signup', today, 'yearly', '0.7'), ('/login', today, 'yearly', '0.3'),
+    pages = [('/', today, 'weekly', '1.0'), ('/guide', today, 'monthly', '0.9'), ('/signup', today, 'yearly', '0.7'), ('/login', today, 'yearly', '0.3'), ('/affiliates', today, 'monthly', '0.6'),
              ('/blog', newest, 'weekly', '0.9')]
     pages += [('/blog/' + p['slug'], p.get('updated') or p['date'], 'monthly', '0.8') for p in posts]
     pages += [('/blog/tag/' + tag_slug(t), max(q['date'] for q in counts[t]), 'weekly', '0.5') for t in tags]

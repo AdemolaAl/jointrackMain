@@ -16,8 +16,8 @@ LOGO = '<span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" st
 HEAD = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
 DEMO_FLAG = '<script>window.JP_DEMO=true</script>'
 
-DEMO = {'SIGNUP': 'signup.html', 'DEMO': 'app.html', 'LOGIN': 'login.html', 'HOME': 'index.html', 'APP': 'app.html', 'GUIDE': 'guide.html', 'TERMS': 'terms.html', 'PRIVACY': 'privacy.html', 'REFUNDS': 'refunds.html', 'AUP': 'acceptable-use.html', 'COOKIES': 'cookies.html', 'REFTERMS': 'referral-terms.html', 'BLOG': 'blog/index.html', 'CONTACT': 'the support link in your dashboard'}
-LIVE = {'SIGNUP': '/signup', 'DEMO': '/demo', 'LOGIN': '/login', 'HOME': '/', 'APP': '/app', 'GUIDE': '/guide', 'TERMS': '/terms', 'PRIVACY': '/privacy', 'REFUNDS': '/refunds', 'AUP': '/acceptable-use', 'COOKIES': '/cookies', 'REFTERMS': '/referral-terms', 'BLOG': '/blog'}
+DEMO = {'SIGNUP': 'signup.html', 'DEMO': 'app.html', 'LOGIN': 'login.html', 'HOME': 'index.html', 'APP': 'app.html', 'GUIDE': 'guide.html', 'TERMS': 'terms.html', 'PRIVACY': 'privacy.html', 'REFUNDS': 'refunds.html', 'AUP': 'acceptable-use.html', 'COOKIES': 'cookies.html', 'REFTERMS': 'referral-terms.html', 'AFFILIATES': 'affiliates.html', 'BLOG': 'blog/index.html', 'CONTACT': 'the support link in your dashboard'}
+LIVE = {'SIGNUP': '/signup', 'DEMO': '/demo', 'LOGIN': '/login', 'HOME': '/', 'APP': '/app', 'GUIDE': '/guide', 'TERMS': '/terms', 'PRIVACY': '/privacy', 'REFUNDS': '/refunds', 'AUP': '/acceptable-use', 'COOKIES': '/cookies', 'REFTERMS': '/referral-terms', 'AFFILIATES': '/affiliates', 'BLOG': '/blog'}
 
 def read(*p): return open(os.path.join(*p)).read()
 def write(path, s):
@@ -44,6 +44,7 @@ PAGES = [
     ('login.html',   'login.html',   'login.html',   True),
     ('signup.html',  'signup.html',  'signup.html',  True),
     ('guide.html',   'guide.html',   'guide.html',   True),
+    ('affiliates.html', 'affiliates.html', 'affiliates.html', True),  # /affiliates: the VooSquare affiliate program
     ('terms.html',   'terms.html',   'terms.html',   False),
     ('privacy.html', 'privacy.html', 'privacy.html', False),
     ('refunds.html', 'refunds.html', 'refunds.html', False),

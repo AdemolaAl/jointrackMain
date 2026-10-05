@@ -2446,6 +2446,396 @@ table.coh th{text-align:center}table.coh th:first-child{text-align:left}
 }
 </style>
 <style>@media (max-width:700px){.jc-msgs>*{scroll-margin-bottom:250px}}</style>
+<style>
+img.app-logo,img.sis-logo{display:block;flex:none;object-fit:cover;border-radius:24%}
+.sc-av img.sis-logo,.pz-rep img.sis-logo{border-radius:28%}
+.pz-rep img.sis-logo{display:inline-block;vertical-align:-2px}
+</style>
+<style>
+/* ================= Round 11b: plan limits, bots, remove, people match keys, Gatevoo pill, product showcase ================= */
+/* usage meter (Channels) */
+.lim-card{border:1px solid var(--line);background:var(--surface);border-radius:var(--r2);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px;min-width:0;margin-bottom:16px;animation:rise .5s var(--ease) both}
+.lim-card.unl{padding-bottom:16px}
+.lm-top{display:flex;align-items:center;gap:14px;min-width:0}
+.lm-ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;flex:none;background:var(--lilac);color:var(--lilac-ink)}.lm-ic svg{width:20px;height:20px}
+.lim-card.full .lm-ic,.lim-card.over .lm-ic{background:var(--amber-soft);color:var(--amber-ink)}
+.lm-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.lm-b b{font-size:15.5px;font-weight:800;letter-spacing:-.02em;line-height:1.35}
+.lm-b small{font-size:13.5px;color:var(--muted);line-height:1.45}
+.lm-up{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:99px;border:0;background:linear-gradient(135deg,var(--brand),color-mix(in srgb,var(--brand) 62%,#c14bff));color:#fff;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;box-shadow:0 8px 20px -10px color-mix(in srgb,var(--brand) 80%,transparent);transition:transform .15s var(--ease),box-shadow .2s}
+.lm-up:hover{transform:translateY(-1px);box-shadow:0 12px 26px -12px color-mix(in srgb,var(--brand) 90%,transparent)}.lm-up:active{transform:scale(.98)}
+.lm-up svg{width:15px;height:15px;transition:transform .2s var(--ease)}.lm-up:hover svg{transform:translateX(2px)}
+.lm-ms{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding-left:54px}
+.lm-m{display:flex;flex-direction:column;gap:8px;min-width:0}
+.lm-t{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11.5px;color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.lm-t b{font-size:14px;color:var(--ink);letter-spacing:0;text-transform:none;font-weight:800}.lm-t b small{color:var(--faint);font-weight:600;font-size:13px}
+.lm-bar{display:block;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.lm-bar i{display:block;height:100%;width:var(--w);border-radius:inherit;background:linear-gradient(90deg,var(--brand),var(--brand-2));transform-origin:left;animation:lmgrow 1s .15s var(--ease) both}
+.lm-m.full .lm-bar i{background:linear-gradient(90deg,#e0a43c,#f0bf5f)}
+.lm-m.over .lm-bar i{background:linear-gradient(90deg,#e0a43c,#d9534a)}
+.lm-m.full .lm-t b,.lm-m.over .lm-t b{color:var(--amber-ink)}
+@keyframes lmgrow{from{transform:scaleX(0)}}
+@media (max-width:640px){ .lim-card{padding:14px 16px 16px} .lm-top{flex-wrap:wrap;align-items:flex-start} .lm-up{order:3;width:100%;height:42px} .lm-ms{padding-left:0;gap:12px 16px} .lm-chip{margin-left:54px} }
+/* channel card: menu + locked state */
+.chan-top .ch-more{width:34px;height:34px;flex:none;border-radius:50%;border:0;background:transparent;color:var(--faint);display:grid;place-items:center;cursor:pointer;margin:0 -8px 0 -4px;transition:background .15s,color .15s}
+.chan-top .ch-more:hover{background:var(--sunk);color:var(--ink)}.ch-more svg{width:20px;height:20px}
+.pop.chm .pi svg{width:17px;height:17px;flex:none}
+.pop .pi.pi-danger{color:var(--coral-ink)}.pop .pi.pi-danger:hover{background:var(--coral-soft)}
+.chan.locked{border-color:color-mix(in srgb,var(--amber) 55%,var(--line))}
+.chan.locked .chan-ico{filter:grayscale(.7);opacity:.6}
+.chan.locked>.chan-sec,.chan.locked>details,.chan.locked>.chan-foot{opacity:.55}
+.ch-lock{margin:0 16px 14px;padding:14px;border-radius:18px;background:var(--amber-soft);display:flex;gap:12px;align-items:flex-start;color:color-mix(in srgb,var(--amber-ink) 82%,var(--ink));animation:pop .4s var(--ease)}
+.step .ch-lock{margin:0}
+.cl-ic{width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--amber) 24%,transparent);display:grid;place-items:center;flex:none;color:var(--amber-ink)}.cl-ic svg{width:17px;height:17px}
+.cl-b{display:flex;flex-direction:column;gap:3px;min-width:0}.cl-b b{font-size:14.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em}.cl-b small{font-size:13px;line-height:1.45}
+.cl-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+/* bots */
+.bots-card{margin-top:16px}
+.bots-card .card-h h2 svg{width:19px;height:19px;color:var(--brand-text)}
+.bot-list{display:flex;flex-direction:column;padding-top:6px}
+.bot-row,.rm-row{display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid var(--line);min-width:0}
+.bot-list .bot-row:first-child,.rm-list .rm-row:first-child{border-top:0}
+.bot-av{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;flex:none;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}.bot-av svg{width:20px;height:20px}
+.bot-n{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.bot-n b{font-size:15px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
+.bot-n small{font-size:13px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bot-st{display:inline-flex;align-items:center;gap:5px;font-weight:700}.bot-st i{width:6px;height:6px;border-radius:50%;background:currentColor}.bot-st.ok{color:var(--mint-ink)}.bot-st.warn{color:var(--amber-ink)}
+.btn.bot-x{color:var(--muted)}.btn.bot-x:hover{color:var(--coral-ink);background:var(--coral-soft)}
+.bot-add{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:8px 16px 16px;height:46px;border-radius:14px;border:1.5px dashed var(--line-2);background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:border-color .2s,color .2s,background .2s}
+.bot-add svg{width:17px;height:17px}.bot-add:hover{border-color:var(--brand);color:var(--brand-text);background:color-mix(in srgb,var(--brand) 5%,transparent)}
+@media (max-width:560px){ .bot-row{padding:12px 16px} .btn.bot-x{width:36px;padding:0} .btn.bot-x span{display:none} }
+/* setup: which bot */
+.bpick{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--surface)}
+.bpk-row{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left;cursor:pointer;font:inherit;color:inherit;padding:14px 16px;min-width:0;transition:background .15s}
+.bpick .bpk-row:first-child{border-top:0}
+.bpk-row:hover{background:var(--sunk)}.bpk-row:active{background:color-mix(in srgb,var(--brand) 7%,var(--sunk))}
+.bpk-go{color:var(--faint);flex:none;transition:transform .2s var(--ease),color .2s}.bpk-go svg{width:18px;height:18px;display:block}
+.bpk-row:hover .bpk-go{transform:translateX(3px);color:var(--ink)}
+.bpk-new{background:color-mix(in srgb,var(--brand) 4%,var(--surface))}
+.bpk-new .bot-av.new{background:var(--brand);color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--brand) 80%,transparent)}
+.bpk-new .bot-n b{color:var(--brand-text)}
+/* 402 limit sheet */
+.lim-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:24px 18px 22px;border-radius:24px;border:1px solid var(--line);background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--brand) 13%,transparent),transparent 70%),var(--surface)}
+.lh-slots{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.lh-slots i{width:36px;height:36px;border-radius:12px;background:linear-gradient(145deg,var(--brand),var(--brand-2));box-shadow:0 8px 16px -8px color-mix(in srgb,var(--brand) 80%,transparent);display:grid;place-items:center;color:#fff;animation:slotin .5s var(--d) var(--ease) both}
+.lh-slots i svg{width:17px;height:17px}
+.lh-plus{width:36px;height:36px;border-radius:12px;border:1.5px dashed var(--amber);color:var(--amber-ink);display:grid;place-items:center;background:var(--amber-soft);animation:slotin .5s .4s var(--ease) both,wob 2.6s 1.2s ease-in-out infinite}
+.lh-plus svg{width:15px;height:15px}
+@keyframes slotin{from{opacity:0;transform:translateY(8px) scale(.8)}}
+@keyframes wob{0%,100%{transform:rotate(0)}6%{transform:rotate(-9deg)}12%{transform:rotate(7deg)}18%{transform:rotate(-4deg)}24%{transform:rotate(0)}}
+.lim-hero b{font-size:21px;font-weight:800;letter-spacing:-.035em;line-height:1.22;text-wrap:balance}
+.lim-hero>span{font-size:14px;color:var(--muted);max-width:36ch;line-height:1.5}
+.lim-opts{display:flex;flex-direction:column;gap:10px}
+.lim-opt{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;padding:16px;border-radius:20px;border:1.5px solid var(--line);background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer;transition:transform .2s var(--ease),border-color .2s,box-shadow .2s}
+.lim-opt:hover{transform:translateY(-1px);border-color:var(--line-2);box-shadow:var(--sh2)}.lim-opt:active{transform:scale(.99)}
+.lo-ic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;flex:none;background:var(--sunk);color:var(--ink)}.lo-ic svg{width:21px;height:21px}
+.lo-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.lo-t b{font-size:16px;font-weight:800;letter-spacing:-.02em}.lo-t small{font-size:13.5px;color:var(--muted);line-height:1.4}
+.lo-go{color:var(--faint);flex:none}.lo-go svg{width:18px;height:18px;display:block;transition:transform .2s var(--ease)}
+.lim-opt:hover .lo-go svg{transform:translateX(3px)}
+.lim-opt.pro{border:0;padding:18px 16px;background:linear-gradient(135deg,#5b3df5 0%,#7b53ff 55%,#ac4dff 100%);color:#fff;box-shadow:0 16px 32px -16px rgba(91,61,245,.75)}
+.lim-opt.pro::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 48%,transparent 62%);transform:translateX(-100%);animation:sheen 3.6s 1s ease-in-out infinite;pointer-events:none}
+.lim-opt.pro .lo-ic{background:rgba(255,255,255,.16);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}.lim-opt.pro small{color:rgba(255,255,255,.82)}.lim-opt.pro .lo-go{color:#fff}
+@keyframes sheen{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}
+.rm-h{font-size:18px;font-weight:800;letter-spacing:-.03em}
+.rm-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--surface)}
+.rm-list .rm-row{padding:12px 14px}
+.chan-ico.sm{width:40px;height:40px;border-radius:13px;font-size:14px;color:#fff;display:grid;place-items:center;flex:none;font-weight:800}.chan-ico.sm svg{width:18px;height:18px}
+.rm-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:10px 8px 4px}
+.rm-ic{width:58px;height:58px;border-radius:19px;display:grid;place-items:center;background:var(--coral-soft);color:var(--coral-ink);margin-bottom:6px;animation:pop .4s var(--ease)}.rm-ic svg{width:26px;height:26px}
+.rm-hero b{font-size:21px;font-weight:800;letter-spacing:-.035em;text-wrap:balance;line-height:1.25}.rm-hero span{color:var(--muted);font-size:14.5px;max-width:34ch;line-height:1.5}
+.rm-link{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:16px;background:var(--sunk)}
+.rm-link code{font-family:var(--mono);font-size:13px;color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--coral) 70%,transparent);overflow-wrap:anywhere}
+.rm-link .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.btn.rm-go{background:var(--coral);border-color:var(--coral);color:#fff}.btn.rm-go:hover{background:color-mix(in srgb,var(--coral) 88%,#000)}
+.rm-ul{margin:6px 0 0;padding-left:18px;color:var(--ink);font-weight:600}
+.lim-done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:28px 12px 18px}
+.ld-ic{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:var(--mint-soft);color:var(--mint-ink);margin-bottom:6px;animation:pop .45s var(--ease)}.ld-ic svg{width:28px;height:28px}
+.lim-done b{font-size:22px;font-weight:800;letter-spacing:-.035em}.lim-done span{color:var(--muted);font-size:14.5px;max-width:34ch}
+.plancard.flash{animation:pcflash 2.2s var(--ease)}
+@keyframes pcflash{0%,100%{box-shadow:0 0 0 0 transparent}15%,65%{box-shadow:0 0 0 5px color-mix(in srgb,var(--brand) 28%,transparent)}}
+/* people: rows read as tappable */
+.prow{position:relative;padding-right:50px}
+.prow-go{position:absolute;right:16px;top:50%;width:28px;height:28px;margin-top:-14px;border-radius:50%;display:grid;place-items:center;color:var(--faint);transition:transform .2s var(--ease),color .2s,background .2s}
+.prow-go svg{width:16px;height:16px}
+.prow:hover .prow-go{color:var(--ink);background:var(--surface);transform:translateX(2px);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.prow:active{background:color-mix(in srgb,var(--brand) 7%,var(--sunk))}
+.prow:focus-visible{outline-offset:-2px}
+@media (max-width:700px){ .prow{padding-right:40px} .prow-go{right:8px} }
+.kv-v{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap;text-align:right;min-width:0}
+.kv.kv-tall{align-items:flex-start}
+.kv-tall>span:first-child{flex:none;max-width:45%}
+.kv-tall .kv-v{flex-direction:column;align-items:flex-end;gap:3px}
+.kv-ln{font-weight:700;overflow-wrap:anywhere}
+.kv-h{font-size:12px;color:var(--faint);font-weight:500;line-height:1.4;max-width:30ch}
+.mkeys{display:flex;flex-direction:column;gap:9px;padding:4px 0 14px}
+.mk-l{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600}
+.mk-l em{font-style:normal;font-size:11.5px;font-weight:800;padding:1px 8px;border-radius:99px;background:var(--mint-soft);color:var(--mint-ink)}
+.mk-c{display:flex;flex-wrap:wrap;gap:6px}
+.mk{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px 0 8px;border-radius:99px;font-size:12.5px;font-weight:700;background:var(--sunk);color:var(--faint);border:1px solid var(--line)}
+.mk svg{width:12px;height:12px;flex:none}
+.mk small{font-family:var(--mono);font-size:10.5px;opacity:.7;font-weight:500}
+.mk.on{background:var(--mint-soft);color:var(--mint-ink);border-color:color-mix(in srgb,var(--mint) 22%,transparent)}
+/* "Left" KPI second line */
+.kpi .ks.ks-old{order:4;margin-top:3px;font-size:12.5px;opacity:.7}
+/* payments: Gatevoo */
+.gv-pill{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px 0 4px;margin-top:8px;border-radius:99px;background:#fff;border:1px solid rgba(11,11,15,.1);box-shadow:0 1px 2px rgba(0,0,0,.05),0 6px 14px -8px rgba(0,0,0,.25);font-size:13px;line-height:1;letter-spacing:-.02em;align-self:flex-start;width:max-content;max-width:100%}
+.gv-m{display:block;width:20px;height:20px;flex:none}.gv-m svg{width:20px;height:20px;display:block}
+.gv-pill b{color:#0b0b0f;font-weight:800}.gv-pill i{font-style:normal;color:#8b8b95;font-weight:700;margin-left:-7px}
+.pm-logo.gv{background:#0b0b0f;padding:0;border:0}.pm-logo.gv img{width:100%;height:100%;padding:0;object-fit:cover}.pm-logo.gv svg,.pm-logo.gv span svg{width:100%!important;height:100%!important;display:block}
+.pm-logo.gv span{display:block;width:100%;height:100%}
+
+/* ---------- product showcase ---------- */
+.sc{position:relative;display:flex;flex-direction:column;gap:16px;margin-top:14px;padding-top:26px;border-top:1px solid var(--line);min-width:0}
+.sc-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.sc-ht{min-width:0}
+.sc-eb{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.sc-h h2{font-size:24px;font-weight:800;letter-spacing:-.04em;margin-top:6px}
+.sc-arrows{display:flex;gap:8px;flex:none}
+.sc-arr{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:transform .15s var(--ease),border-color .15s,box-shadow .2s}
+.sc-arr:hover{border-color:var(--line-2);box-shadow:var(--sh2)}.sc-arr:active{transform:scale(.93)}.sc-arr svg{width:18px;height:18px}
+.sc-track{display:flex;gap:16px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;padding:6px 0 26px;margin:-6px 0 -26px;cursor:grab;-webkit-overflow-scrolling:touch;outline:0}
+.sc-track::-webkit-scrollbar{display:none}
+.sc-track.drag{scroll-snap-type:none;cursor:grabbing;user-select:none;-webkit-user-select:none}
+.sc-track.drag .scc{pointer-events:none}
+.sc-track:focus-visible .scc.sc-vis{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--brand)}
+.scc{flex:0 0 calc((100% - 16px)/2);scroll-snap-align:start;scroll-snap-stop:always;position:relative;display:flex;flex-direction:column;min-height:408px;border-radius:30px;overflow:hidden;isolation:isolate;color:#fff;background:linear-gradient(155deg,var(--c1) 0%,var(--c2) 100%);box-shadow:0 1px 2px rgba(0,0,0,.06),0 22px 40px -26px color-mix(in srgb,var(--c2) 90%,#000);transition:transform .45s var(--ease),box-shadow .45s var(--ease);-webkit-user-select:none;user-select:none}
+.scc::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(110% 70% at 88% -12%,rgba(255,255,255,.30),transparent 55%),radial-gradient(90% 60% at -10% 112%,rgba(0,0,0,.24),transparent 62%)}
+.scc::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);pointer-events:none}
+.scc.ink-dark{color:#17140a}.scc.ink-dark::after{box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+@media (hover:hover){ .scc:hover{transform:translateY(-4px);box-shadow:0 1px 2px rgba(0,0,0,.06),0 30px 50px -26px color-mix(in srgb,var(--c2) 95%,#000)} }
+.scc-scene{position:relative;height:196px;flex:none;overflow:hidden;-webkit-mask:linear-gradient(180deg,#000 82%,transparent);mask:linear-gradient(180deg,#000 82%,transparent)}
+.scc-body{display:flex;flex-direction:column;gap:8px;padding:2px 24px 24px;flex:1;min-height:0}
+.scc-top{display:flex;align-items:center;gap:10px;margin-bottom:6px;min-width:0}
+.scc-logo{width:36px;height:36px;flex:none;border-radius:11px;overflow:hidden;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.28),0 6px 12px -6px rgba(0,0,0,.4)}
+.scc-logo img,.scc-logo svg,.scc-logo span{width:100%;height:100%;display:block}
+.scc-logo.xs{width:18px;height:18px;border-radius:5px;box-shadow:none}
+.scc-nm{display:flex;flex-direction:column;line-height:1.2;min-width:0;flex:1}.scc-nm b{font-size:15px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scc-nm small{font-size:12px;opacity:.72;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scc-badge{margin-left:8px;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:99px;font-style:normal;font-size:12px;font-weight:800;background:rgba(255,255,255,.16);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);white-space:nowrap;flex:none}
+.ink-dark .scc-badge{background:rgba(23,20,10,.08);box-shadow:inset 0 0 0 1px rgba(23,20,10,.1)}
+.scc-badge i{width:7px;height:7px;border-radius:50%;background:#3ddc84;animation:gvpulse 2s infinite}
+.scc h3{font-size:25px;line-height:1.12;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+.scc p{font-size:14.5px;line-height:1.5;opacity:.82;max-width:46ch;text-wrap:pretty}
+.scc-cta{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 20px 0 22px;border-radius:99px;background:#fff;color:#0f0f12;font-weight:800;font-size:14.5px;text-decoration:none;box-shadow:0 10px 22px -12px rgba(0,0,0,.5);transition:transform .2s var(--ease),box-shadow .2s;white-space:nowrap}
+.scc-body>p+.scc-cta,.scc-body>h3+.scc-cta{margin-top:auto}
+.scc-cta svg{width:16px;height:16px;transition:transform .25s var(--ease)}
+.scc-cta:hover{transform:translateY(-1px);box-shadow:0 14px 26px -12px rgba(0,0,0,.55)}.scc-cta:hover svg{transform:translateX(3px)}.scc-cta:active{transform:scale(.97)}
+.ink-dark .scc-cta{background:#17140a;color:#fff}
+.scc.sc-soon .scc-cta{background:rgba(255,255,255,.08);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4)}
+.scc.sc-soon .scc-cta:hover{background:#fff;color:#0f0f12}
+.sc-dots{display:flex;justify-content:center;gap:7px;min-height:8px;margin-top:2px}
+.sc-dots button{position:relative;width:8px;height:8px;border-radius:99px;border:0;padding:0;background:var(--line-2);cursor:pointer;overflow:hidden;transition:width .45s var(--ease),background .3s}
+.sc-dots button:hover{background:var(--faint)}
+.sc-dots button[aria-current]{width:36px;background:color-mix(in srgb,var(--ink) 13%,transparent)}
+.sc-dots button i{position:absolute;inset:0;border-radius:inherit;background:var(--ink);transform:scaleX(0);transform-origin:left}
+.sc-dots button[aria-current] i{transform:scaleX(var(--p,0));transition:transform .1s linear}
+.sc.sc-one .sc-arrows,.sc.sc-one .sc-dots{display:none}
+@media (max-width:1000px){ .scc{flex-basis:calc(100% - 64px)} }
+@media (max-width:640px){
+  .sc{padding-top:22px;gap:14px} .sc-arrows{display:none} .sc-h h2{font-size:21px}
+  .sc-track{gap:12px} .scc{flex-basis:87%;min-height:418px;border-radius:26px} .scc h3{font-size:22.5px} .scc p{font-size:14px}
+  .scc-body{padding:0 20px 20px} .scc-scene{height:188px}
+}
+@media (min-width:1560px){ .scc{flex-basis:calc((100% - 32px)/3)} }
+
+/* scenes: paused until the card is on screen; reduced motion shows a still, finished frame */
+.sn{position:absolute;inset:0;pointer-events:none}
+.sn,.sn *{animation-play-state:paused}
+.sc.sc-live .scc.sc-vis .sn,.sc.sc-live .scc.sc-vis .sn *,.am-sn .sn,.am-sn .sn *{animation-play-state:running}
+.am.am-sn{position:relative;width:100%;height:100%;min-height:170px}
+@keyframes gvpulse{0%{box-shadow:0 0 0 0 rgba(61,220,132,.55)}70%{box-shadow:0 0 0 8px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+
+/* VooSquare affiliates: earnings */
+.sn-aff .af-ring{position:absolute;left:24px;top:24px;width:76px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+.af-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.af-ring circle{fill:none;stroke-width:7;stroke-linecap:round}
+.af-ring .bg{stroke:rgba(255,255,255,.16)}
+.af-ring .fg{stroke:#c6f45a;stroke-dasharray:50 100;filter:drop-shadow(0 0 6px rgba(198,244,90,.6));animation:afring 5s var(--ease) infinite}
+.af-ring b{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1}.af-ring small{font-size:9.5px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+@keyframes afring{0%{stroke-dasharray:0 100}35%,85%{stroke-dasharray:50 100}100%{stroke-dasharray:50 100;opacity:.0}}
+.af-bal{position:absolute;right:22px;top:24px;width:min(calc(100% - 142px),250px);padding:13px 15px 8px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.08));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 14px 30px -18px rgba(0,0,0,.6);z-index:2;display:flex;flex-direction:column}
+.af-bal small{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.75}
+.af-bars{display:flex;align-items:flex-end;gap:5px;height:34px;margin-top:8px}
+.af-bars i{flex:1;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#e3ff9c,#c6f45a);height:calc(28% + var(--i)*13%);transform-origin:bottom;opacity:.9;animation:afbar 5s calc(var(--i)*.12s) var(--ease) infinite}
+@keyframes afbar{0%{transform:scaleY(.15);opacity:.4}30%,85%{transform:none;opacity:.9}100%{transform:none;opacity:.5}}
+.af-line{width:100%;height:36px;margin-top:2px;overflow:visible}
+.af-line path{fill:none;stroke:#c6f45a;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:0;animation:afline 5s var(--ease) infinite;filter:drop-shadow(0 2px 4px rgba(198,244,90,.5))}
+@keyframes afline{0%{stroke-dashoffset:240}45%,100%{stroke-dashoffset:0}}
+.af-toast{position:absolute;left:24px;z-index:3;display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px;border-radius:99px;background:#fff;color:#0d2a1d;font-size:12px;font-weight:700;box-shadow:0 10px 20px -10px rgba(0,0,0,.5);white-space:nowrap}
+.af-toast i{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#e3f7ea;color:#0a7a4b}.af-toast i svg{width:10px;height:10px}
+.af-toast.t1,.af-toast.t2{bottom:30px;opacity:0;animation:aftoast 6s var(--ease) infinite}.af-toast.t2{animation-delay:3s}
+@keyframes aftoast{0%{opacity:0;transform:translateY(10px) scale(.96)}7%,40%{opacity:1;transform:none}47%,100%{opacity:0;transform:translateY(-8px) scale(.98)}}
+.af-coin{position:absolute;bottom:-28px;left:calc(5% + var(--i)*5.5%);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;color:#0a5a38;background:radial-gradient(circle at 35% 30%,#f4ffc9,#c6f45a 55%,#8fcf2a);box-shadow:0 4px 10px -4px rgba(0,0,0,.4),inset 0 -2px 0 rgba(0,0,0,.12);z-index:1;opacity:0;animation:afcoin 4.8s calc(var(--i)*-.8s) linear infinite}
+@keyframes afcoin{0%{opacity:0;transform:translateY(0) rotate(0) scale(.7)}15%{opacity:.9}55%{opacity:.75}75%,100%{opacity:0;transform:translateY(-150px) rotate(200deg) scale(1)}}
+
+/* Spyvoo: scanning ads */
+.sp-live{position:absolute;left:22px;top:20px;display:inline-flex;align-items:center;gap:7px;height:26px;padding:0 11px;border-radius:99px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);font-size:12px;font-weight:700;z-index:3}
+.sp-live i{width:7px;height:7px;border-radius:50%;background:#ff5a5f;box-shadow:0 0 0 0 rgba(255,90,95,.6);animation:sppulse 1.6s infinite}
+@keyframes sppulse{0%{box-shadow:0 0 0 0 rgba(255,90,95,.6)}70%{box-shadow:0 0 0 7px rgba(255,90,95,0)}100%{box-shadow:0 0 0 0 rgba(255,90,95,0)}}
+.sp-cards{position:absolute;left:0;right:0;top:70px;display:flex;justify-content:center;align-items:flex-start;gap:12px;padding:0 18px}
+.sp-ad{position:relative;flex:0 1 128px;min-width:0;display:flex;flex-direction:column;gap:6px;padding:8px 8px 10px;border-radius:15px;background:#fff;box-shadow:0 16px 30px -18px rgba(5,15,70,.9);transition:box-shadow .3s}
+.sp-ad.a0{transform:rotate(-5deg) translateY(10px)}.sp-ad.a2{transform:rotate(5deg) translateY(10px)}.sp-ad.a1{z-index:2;transform:translateY(-2px);animation:spglow 4.4s ease-in-out infinite}
+.sp-th{height:58px;border-radius:10px;background:linear-gradient(135deg,#ff9a8b,#ff6a88 55%,#ff99ac)}
+.a1 .sp-th{background:linear-gradient(135deg,#7f7fd5,#86a8e7 50%,#91eae4)}
+.a2 .sp-th{background:linear-gradient(135deg,#f6d365,#fda085)}
+.sp-l{height:6px;border-radius:99px;background:#e5e9f6;width:88%}.sp-l.s{width:58%}
+.sp-m{display:flex;align-items:flex-end;gap:4px;height:16px;margin-top:2px}
+.sp-m i{flex:1;border-radius:3px;background:#d7defa}.sp-m i:nth-child(1){height:45%}.sp-m i:nth-child(2){height:75%}.sp-m i:nth-child(3){height:55%}
+.a1 .sp-m i{background:#2457ff}.a1 .sp-m i:nth-child(3){height:100%}
+.sp-win{position:absolute;top:-12px;left:50%;transform:translateX(-50%);white-space:nowrap;font-style:normal;font-size:10.5px;font-weight:800;color:#3a2a00;background:#ffd84d;padding:4px 9px;border-radius:99px;box-shadow:0 8px 16px -8px rgba(0,0,0,.5);animation:spwin 4.4s var(--ease) infinite}
+@keyframes spwin{0%,40%{opacity:0;transform:translateX(-50%) translateY(6px) scale(.85)}48%,88%{opacity:1;transform:translateX(-50%) scale(1)}96%,100%{opacity:0;transform:translateX(-50%) scale(.95)}}
+@keyframes spglow{0%,40%{box-shadow:0 16px 30px -18px rgba(5,15,70,.9),0 0 0 0 rgba(255,216,77,0)}48%,88%{box-shadow:0 16px 30px -18px rgba(5,15,70,.9),0 0 0 3px #ffd84d}100%{box-shadow:0 16px 30px -18px rgba(5,15,70,.9),0 0 0 0 rgba(255,216,77,0)}}
+.sp-beam{position:absolute;top:44px;bottom:0;left:0;width:22%;z-index:4;opacity:0;background:linear-gradient(90deg,transparent,rgba(160,200,255,.25) 40%,rgba(255,255,255,.9) 50%,rgba(160,200,255,.25) 60%,transparent);mix-blend-mode:screen;animation:spbeam 4.4s cubic-bezier(.45,.05,.55,.95) infinite}
+@keyframes spbeam{0%{opacity:0;transform:translateX(-100%)}8%{opacity:1}52%{opacity:1}60%,100%{opacity:0;transform:translateX(480%)}}
+
+/* Replyvoo: chat */
+.rv-chat{position:absolute;left:22px;right:22px;top:20px;bottom:10px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:22px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 18px 30px -20px rgba(80,55,0,.7),inset 0 0 0 1px rgba(255,255,255,.7);font-size:13px;color:#17140a}
+.rv-head{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#7a6a3a}.rv-head i{width:6px;height:6px;border-radius:50%;background:#2fbf71}
+.rv-b{display:block;padding:8px 12px;border-radius:16px;line-height:1.35;max-width:85%;font-weight:500}
+.rv-b.in{align-self:flex-start;background:#f1efe8;border-bottom-left-radius:6px;animation:rvin 7s var(--ease) infinite}
+.rv-ow{position:relative;align-self:flex-end;max-width:85%;display:flex;justify-content:flex-end}
+.rv-b.out{max-width:none;background:#17140a;color:#fff;border-bottom-right-radius:6px;animation:rvout 7s var(--ease) infinite}
+.rv-typing{position:absolute;right:0;top:0;height:100%;display:flex;align-items:center;gap:4px;padding:0 13px;border-radius:16px;border-bottom-right-radius:6px;background:#17140a;opacity:0;animation:rvtype 7s var(--ease) infinite}
+.rv-typing i{width:5px;height:5px;border-radius:50%;background:#fff;animation:rvdot 1s ease-in-out infinite}.rv-typing i:nth-child(2){animation-delay:.15s}.rv-typing i:nth-child(3){animation-delay:.3s}
+.rv-paid{align-self:flex-end;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:99px;background:#e3f7ea;color:#0f7a45;font-size:11.5px;font-weight:800;animation:rvpaid 7s var(--ease) infinite}.rv-paid svg{width:12px;height:12px}
+@keyframes rvin{0%,3%{opacity:0;transform:translateY(8px) scale(.96)}9%,90%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes rvtype{0%,12%{opacity:0;transform:scale(.9)}16%,34%{opacity:1;transform:none}38%,100%{opacity:0}}
+@keyframes rvout{0%,36%{opacity:0;transform:translateY(6px) scale(.96)}42%,90%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes rvpaid{0%,52%{opacity:0;transform:translateY(6px) scale(.9)}58%,90%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes rvdot{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-3px);opacity:1}}
+
+/* Castvoo: broadcast */
+.cv-core{position:absolute;left:50%;top:48%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:#fff;color:#2a55e8;display:grid;place-items:center;z-index:3;box-shadow:0 14px 30px -12px rgba(0,10,80,.7),0 0 0 6px rgba(255,255,255,.12)}.cv-core svg{width:25px;height:25px}
+.cv-ring{position:absolute;left:50%;top:48%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7);opacity:calc(.32 - var(--i)*.09);transform:scale(calc(1.8 + var(--i)*.9));animation:cvring 3.3s calc(var(--i)*1.1s) cubic-bezier(.2,.6,.3,1) infinite}
+@keyframes cvring{0%{transform:scale(1);opacity:.75}100%{transform:scale(4.6);opacity:0}}
+.cv-av{position:absolute;left:var(--x);top:var(--y);width:34px;height:34px;margin:-17px 0 0 -17px;z-index:2;animation:cvav 3.3s calc(var(--i)*.3s + .6s) var(--ease) infinite}
+.cv-av i{display:block;width:100%;height:100%;border-radius:50%;background:linear-gradient(145deg,hsl(var(--h) 85% 72%),hsl(var(--h) 70% 52%));box-shadow:0 0 0 2.5px rgba(255,255,255,.85),0 8px 16px -8px rgba(0,0,0,.5)}
+.cv-av em{position:absolute;right:-12px;bottom:-5px;font-style:normal;font-size:9px;font-weight:900;color:#2a55e8;background:#fff;padding:1px 5px;border-radius:99px;box-shadow:0 2px 6px rgba(0,0,0,.2);animation:cvtick 3.3s calc(var(--i)*.3s + .6s) var(--ease) infinite}
+@keyframes cvav{0%,100%{transform:scale(1)}12%{transform:scale(1.14)}24%{transform:scale(1)}}
+@keyframes cvtick{0%,8%{opacity:0;transform:scale(.6)}16%,80%{opacity:1;transform:none}100%{opacity:0}}
+.cv-stat{position:absolute;left:50%;top:14px;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:99px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);font-size:12px;font-weight:600;z-index:3}.cv-stat b{font-weight:800}
+
+/* Vooads: prompt to frames */
+.va-prompt{position:absolute;left:22px;right:22px;top:20px;display:flex;align-items:center;height:36px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.95);color:#17140a;font-size:12.5px;font-weight:600;box-shadow:0 12px 24px -14px rgba(0,0,0,.6);z-index:2;overflow:hidden}
+.va-prompt::before{content:"✦";color:#ef5a2c;margin-right:8px;font-size:13px}
+.va-type{display:inline-block;overflow:hidden;white-space:nowrap;max-width:32ch;border-right:2px solid #ef5a2c;padding-right:2px;animation:vatype 6s steps(32,end) infinite,vacaret .8s step-end infinite}
+@keyframes vatype{0%{max-width:0}40%,100%{max-width:32ch}}
+@keyframes vacaret{50%{border-color:transparent}}
+.va-frames{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;align-items:flex-end;gap:12px;padding:0 16px}
+.va-f{position:relative;flex:none;border-radius:12px;overflow:hidden;background:#141414;box-shadow:0 18px 30px -16px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.08);display:grid;place-items:center;animation:vaf 6s var(--ease) infinite}
+.va-f::before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,#1b1b1b 20%,rgba(239,90,44,.55) 45%,#ffb38f 50%,rgba(239,90,44,.55) 55%,#1b1b1b 80%);background-size:300% 100%;opacity:.55;animation:vashim 3s linear infinite}
+.va-f.f916{width:66px;height:112px}.va-f.f11{width:92px;height:92px;animation-delay:.25s}.va-f.f169{width:124px;height:70px;animation-delay:.5s}
+.va-f b{position:relative;font-size:14px;font-weight:900;color:#fff;letter-spacing:-.02em}
+.va-play{position:relative;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.22);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.va-play::after{content:"";position:absolute;left:9px;top:7px;border-left:8px solid #fff;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.va-pb{position:absolute;left:8px;right:8px;bottom:8px;height:3px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.va-pb i{display:block;height:100%;width:100%;background:#ef5a2c;transform-origin:left;animation:vapb 3s linear infinite}
+@keyframes vashim{0%{background-position:100% 0}100%{background-position:-50% 0}}
+@keyframes vapb{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes vaf{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* Gatevoo: checkout */
+.sn-gv::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:22px 22px;-webkit-mask:radial-gradient(70% 80% at 50% 45%,#000,transparent);mask:radial-gradient(70% 80% at 50% 45%,#000,transparent)}
+.gv-co{position:absolute;left:50%;top:50%;width:min(270px,82%);transform:translate(-50%,-52%);display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px 14px;padding:16px 18px;border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.13),0 24px 40px -20px rgba(0,0,0,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gv-row{display:flex;flex-direction:column;min-width:0}.gv-row small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.6}
+.gv-row b{font-size:23px;font-weight:800;letter-spacing:-.04em;white-space:nowrap}.gv-row em{font-style:normal;font-size:13px;opacity:.6;font-weight:700;letter-spacing:0}
+.gv-coin{position:relative;width:50px;height:50px;transform-style:preserve-3d;animation:gvflip 4.5s cubic-bezier(.6,0,.3,1) infinite}
+.gc{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;font-size:23px;font-weight:900;color:#fff;-webkit-backface-visibility:hidden;backface-visibility:hidden;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 10px 18px -8px rgba(0,0,0,.7)}
+.gc.f{background:radial-gradient(circle at 35% 30%,#4fd1a5,#26a17b 60%,#1a7a5c)}.gc.b{background:radial-gradient(circle at 35% 30%,#ffc46b,#f7931a 60%,#c96f00);transform:rotateY(180deg)}
+@keyframes gvflip{0%,38%{transform:rotateY(0)}50%,88%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+.gv-st{grid-column:1/-1;position:relative;height:30px}
+.gv-st>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:99px;font-size:12.5px;font-weight:700}
+.gv-st .w{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);opacity:0;animation:gvw 6s var(--ease) infinite}
+.gv-st .w i{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;animation:gvspin .8s linear infinite}
+.gv-st .p{background:rgba(61,220,132,.14);color:#3ddc84;box-shadow:inset 0 0 0 1px rgba(61,220,132,.3);animation:gvp 6s var(--ease) infinite}.gv-st .p svg{width:14px;height:14px}
+@keyframes gvw{0%,46%{opacity:1}52%,100%{opacity:0}}
+@keyframes gvp{0%,48%{opacity:0;transform:scale(.96)}54%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes gvspin{to{transform:rotate(360deg)}}
+.gv-dot{position:absolute;right:28px;top:24px;width:9px;height:9px;border-radius:50%;background:#3ddc84;animation:gvpulse 2s infinite}
+.sn-gen i{position:absolute;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.14);left:20%;top:25%;animation:vaf 5s ease-in-out infinite}.sn-gen i:nth-child(2){left:52%;top:40%;width:60px;height:60px;animation-delay:.6s}.sn-gen i:nth-child(3){left:70%;top:14%;width:40px;height:40px;animation-delay:1.2s}
+
+@media (prefers-reduced-motion:reduce){
+  .sn,.sn *{animation:none!important;transition:none!important}
+  .scc,.scc-cta,.lm-up{transition:none}
+  .lm-bar i,.lh-slots i,.lh-plus,.rm-ic,.ld-ic,.ch-lock{animation:none} .lim-opt.pro::after{display:none}
+  .rv-typing,.gv-st .w,.sp-beam,.af-coin{opacity:0!important}
+  .af-toast.t1{opacity:1!important}
+}
+</style>
+<style>
+/* ===== VooSquare Affiliates sheet + nav entry ===== */
+.nav-a.aff-nav .aff-ni{width:20px;height:20px;flex:none;display:block;border-radius:6px;overflow:hidden}.aff-ni svg{width:100%;height:100%;display:block}
+.nav-a.aff-nav .aff-pill{background:#e7f6ee;color:#0a7a4b;white-space:nowrap}
+.nav-a.aff-nav[aria-current] .aff-pill{background:rgba(255,255,255,.2);color:inherit}
+.aff-hl{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;box-shadow:0 6px 14px -8px rgba(10,122,75,.7)}.aff-hl svg{width:100%;height:100%;display:block}
+@media (min-width:701px){
+  .sheet.aff-sheet{left:50%;top:50%;right:auto;bottom:auto;width:min(760px,calc(100vw - 48px));height:min(88vh,920px);border-radius:28px;transform:translate(-50%,-50%);animation:affin .42s var(--ease)}
+  @keyframes affin{from{opacity:0;transform:translate(-50%,-47%) scale(.98)}}
+  .aff-sheet .sheet-b{padding:6px 28px 28px;gap:22px}
+  .aff-sheet .sheet-h{padding:24px 28px 12px}
+}
+.aff-sheet .sheet-b{gap:20px}
+.aff-hero{position:relative;overflow:hidden;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;align-items:center;padding:26px;border-radius:24px;color:#fff;background:linear-gradient(150deg,#0e9f63,#065237);box-shadow:0 24px 40px -28px rgba(6,82,55,.9);animation:rise .55s var(--ease) both}
+.aff-hero::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(90% 80% at 100% 0%,rgba(198,244,90,.28),transparent 60%),radial-gradient(70% 70% at 0% 100%,rgba(0,0,0,.25),transparent 60%)}
+.ah-eb{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;opacity:.85}.ah-eb i{width:7px;height:7px;border-radius:50%;background:#c6f45a;animation:gvpulse 2.2s infinite}
+.aff-hero h3{font-size:30px;line-height:1.08;font-weight:800;letter-spacing:-.045em;margin:8px 0 8px;text-wrap:balance}
+.aff-hero p{font-size:14.5px;line-height:1.5;opacity:.86;max-width:40ch}
+.ah-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.ah-chips em{font-style:normal;font-size:12.5px;font-weight:800;height:28px;display:inline-flex;align-items:center;padding:0 12px;border-radius:99px;background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.ah-chips em:first-child{background:#c6f45a;color:#0b3d27;box-shadow:none}
+.ah-art{position:relative;height:190px;border-radius:18px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);overflow:hidden}
+.ah-link{position:absolute;left:14px;top:14px;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:99px;background:#fff;color:#0a5a38;font-size:12px;font-weight:800;box-shadow:0 8px 16px -8px rgba(0,0,0,.5)}.ah-link svg{width:14px;height:14px}
+.ah-flow{position:absolute;left:30px;top:52px;width:2px;height:40px}
+.ah-flow i{position:absolute;left:-2px;width:6px;height:6px;border-radius:50%;background:#c6f45a;animation:ahflow 1.8s linear infinite}.ah-flow i:nth-child(2){animation-delay:.6s}.ah-flow i:nth-child(3){animation-delay:1.2s}
+@keyframes ahflow{0%{top:0;opacity:0}20%{opacity:1}100%{top:40px;opacity:0}}
+.ah-users{position:absolute;left:14px;top:98px;display:flex}
+.ah-users i{width:28px;height:28px;border-radius:50%;margin-right:-8px;border:2px solid #0b7a4e;background:linear-gradient(145deg,hsl(calc(140 + var(--i)*60) 70% 72%),hsl(calc(140 + var(--i)*60) 60% 52%));animation:ahpop 4.8s calc(var(--i)*.25s) var(--ease) infinite}
+@keyframes ahpop{0%,6%{transform:scale(.4);opacity:0}16%,88%{transform:none;opacity:1}100%{opacity:0}}
+.ah-bars{position:absolute;right:14px;bottom:30px;left:44%;height:110px;display:flex;align-items:flex-end;gap:6px}
+.ah-bars i{flex:1;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#e3ff9c,#c6f45a);height:calc(22% + var(--i)*15%);transform-origin:bottom;animation:afbar 4.8s calc(var(--i)*.14s) var(--ease) infinite}
+.ah-bars em{position:absolute;right:-4px;top:-14px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#0a7a4b;box-shadow:0 6px 14px -6px rgba(0,0,0,.5);animation:ahup 4.8s var(--ease) infinite}.ah-bars em svg{width:14px;height:14px}
+@keyframes ahup{0%,30%{transform:translateY(16px);opacity:0}45%,88%{transform:none;opacity:1}100%{opacity:0}}
+.ah-cap{position:absolute;right:14px;bottom:10px;font-size:11px;font-weight:700;opacity:.75;letter-spacing:.02em}
+.aff-sec h4{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:800;margin:0 0 10px}
+.aff-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;position:relative}
+.aff-steps li{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--surface);animation:affstep .5s calc(.25s + var(--i)*.18s) var(--ease) both}
+@keyframes affstep{from{opacity:0;transform:translateY(10px)}}
+.as-n{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#e7f6ee;color:#0a7a4b;position:relative}.as-n svg{width:18px;height:18px}
+.as-t{display:flex;flex-direction:column;gap:3px}.as-t b{font-size:15px;font-weight:800;letter-spacing:-.02em}.as-t small{font-size:13px;color:var(--muted);line-height:1.45}
+.aff-tools{display:flex;flex-wrap:wrap;gap:8px}
+.aff-tools .at{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 13px 0 5px;border-radius:14px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;animation:affstep .45s calc(.4s + var(--i)*.06s) var(--ease) both}
+.aff-tools .scc-logo{width:30px;height:30px;border-radius:9px;box-shadow:none}
+.aff-tools b{font-weight:750}.aff-tools em{font-style:normal;font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;background:var(--sunk);color:var(--muted)}
+.aff-gets{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.aff-gets li{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:var(--sunk);font-size:14px;font-weight:600}
+.aff-gets li span{width:30px;height:30px;flex:none;border-radius:10px;display:grid;place-items:center;background:var(--surface);color:#0a7a4b;box-shadow:0 1px 2px rgba(0,0,0,.06)}.aff-gets li span svg{width:16px;height:16px}
+.aff-terms{display:flex;align-items:flex-start;gap:8px;margin-top:12px;font-size:12.5px;color:var(--faint);line-height:1.45}.aff-terms svg{width:15px;height:15px;flex:none;margin-top:1px}.aff-terms a{color:var(--muted);font-weight:700;text-underline-offset:3px}
+.aff-diff{font-size:13.5px;color:var(--muted);line-height:1.5;padding:12px 14px;border-radius:14px;border:1px dashed var(--line-2)}.aff-diff b{color:var(--ink)}
+.aff-faq{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--surface)}
+.aff-faq details{border-top:1px solid var(--line)}.aff-faq details:first-child{border-top:0}
+.aff-faq summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;font-weight:750;font-size:14.5px;cursor:pointer}
+.aff-faq summary::-webkit-details-marker{display:none}
+.aff-faq summary svg{width:18px;height:18px;color:var(--faint);transition:transform .25s var(--ease);flex:none}
+.aff-faq details[open] summary svg{transform:rotate(180deg)}
+.aff-faq details p{padding:0 16px 16px;font-size:14px;color:var(--muted);line-height:1.55;animation:up .3s var(--ease)}
+.aff-cta{padding-top:4px}
+.btn.aff-go{background:linear-gradient(135deg,#0e9f63,#0a7a4b);border-color:transparent;box-shadow:0 14px 28px -14px rgba(10,122,75,.8)}
+.btn.aff-go:hover{background:linear-gradient(135deg,#0c8f59,#086a41)}
+.btn.aff-go svg{transition:transform .2s var(--ease)}.btn.aff-go:hover svg{transform:translateX(3px)}
+.scc.sc-affiliate{cursor:pointer}
+@media (max-width:700px){
+  .aff-hero{grid-template-columns:1fr;padding:22px 20px}
+  .aff-hero h3{font-size:26px}
+  .ah-art{height:160px}.ah-bars{height:90px}
+  .aff-steps{grid-template-columns:1fr}.aff-steps li{flex-direction:row;align-items:flex-start;padding:14px}
+  .aff-gets{grid-template-columns:1fr}
+  .aff-sheet .sheet-b{padding-bottom:0}
+  .aff-cta{position:sticky;bottom:0;z-index:3;margin:0 -16px;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,color-mix(in srgb,var(--bg) 0%,transparent),var(--bg) 28%);}
+}
+@media (prefers-reduced-motion:reduce){
+  .aff-hero,.aff-steps li,.aff-tools .at,.aff-faq details p,.sheet.aff-sheet{animation:none!important}
+  .ah-art *{animation:none!important}.ah-flow i{opacity:.8;top:20px}.ah-flow i:nth-child(1){top:0}.ah-flow i:nth-child(3){top:38px}
+  .sc-track{scroll-behavior:auto}
+}
+</style>
 
 <div id="root"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -2574,7 +2964,7 @@ async function api(method, path, body){
   const r = await fetch(path, {method, credentials:'same-origin', headers: body?{'content-type':'application/json'}:{}, body: body?JSON.stringify(body):undefined});
   const j = await r.json().catch(()=>({}));
   if (r.status===401 && !/\/api\/(login|signup|reset|forgot|password|support)/.test(path)) { stopTimers(); renderAuth('login'); throw new Error('Please log in'); }
-  if (!r.ok || j.error){ const e=new Error(j.error || 'Something went wrong. Try again.'); e.data=j; e.status=r.status; throw e; }
+  if (!r.ok || j.error){ const e=new Error(j.error || 'Something went wrong. Try again.'); e.data=j; e.body=j; e.status=r.status; throw e; }
   return j;
 }
 
@@ -2863,13 +3253,16 @@ function openSnippets(id){
   sheet(`<h2>Connect your bot<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
 }
 function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo · sample data</b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
-async function renderSetup(step, fromApp){
+async function renderSetup(step, fromApp, opt){
   stopTimers(); clearInterval(W.poll); closeChat(true);
   W.fromApp = !!fromApp;
-  W.bkind=null; W.bsub=null; W.ext=null; W.jrSeen=false;
+  W.bkind=null; W.bsub=null; W.ext=null; W.jrSeen=false; W.warn=''; W.prevWh='';
   const d = S.chans || await refreshChans();
-  W.bot = d.bots.find(b=>b.status==='active') || null;
-  W.step = step || (W.bot ? 2 : 1);
+  const act = d.bots.filter(b=>b.status==='active');
+  /* adding from the app with bots already connected: ask which bot first (or a new one) instead of reusing the first bot */
+  W.pickBot = !!(opt&&opt.pick) && act.length>0;
+  W.bot = W.pickBot ? null : (act[0] || null);
+  W.step = W.pickBot ? 1 : (step || (W.bot ? 2 : 1));
   $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' Back to dashboard</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
     <div class="setup-body"><div class="prog" id="prog"></div><div id="stp"></div></div></div>`;
   drawStep();
@@ -2883,7 +3276,9 @@ function drawProg(){
 function drawStep(){
   clearInterval(W.poll); drawProg();
   const s=$('#stp'); let h='';
-  if (W.step===1) h = `<div class="step">
+  if (W.step===1 && W.pickBot) h = botPickStep();
+  else if (W.step===1) h = `<div class="step">
+    ${(S.chans&&S.chans.bots.some(b=>b.status==='active'))&&W.fromApp?`<button class="link" style="align-self:flex-start" data-act="bot-pick-back">${I.chevl} ${tt('bp.back','Use a bot I already connected')}</button>`:''}
     <span class="step-ico">${I.bot}</span>
     <h1>Make your tracking bot.</h1><p class="lede">It sits in your channel and gives every visitor their own invite link. Takes about 2 minutes.</p>
     <ol class="howto">
@@ -2893,7 +3288,7 @@ function drawStep(){
       <li><span class="n">4</span><span>Copy the token it sends and paste it below</span></li>
     </ol>
     <form id="tf" class="field"><label for="tok">Bot token</label>
-      <input class="inp mono" id="tok" autocomplete="off" spellcheck="false" placeholder="123456789:AAH4k…" ${DEMO?'value="7712045533:AAHk3vZq_demoTokenForJoinvoo_88xQw"':''}>
+      <input class="inp mono" id="tok" autocomplete="off" spellcheck="false" placeholder="123456789:AAH4k…" ${DEMO?`value="${(S.chans&&S.chans.bots||[]).some(b=>String(b.tg_id)==='7712045533')?'7809914420:AAGq2mWx_demoTokenForJoinvoo_51bTz':'7712045533:AAHk3vZq_demoTokenForJoinvoo_88xQw'}"`:''}>
       <span class="hint">${DEMO?'Demo: a sample token is already filled in.':'For a channel, use a new bot just for tracking. To track an existing bot’s subscribers, paste that bot’s token.'}</span><div id="terr"></div>
       <button class="btn primary lg wide" type="submit" id="tbtn" style="margin-top:8px">Connect bot ${I.arrow}</button></form>
     <a class="btn ghost" href="https://t.me/BotFather" target="_blank" rel="noopener">Open BotFather ${I.ext}</a>
@@ -2914,7 +3309,7 @@ function drawStep(){
     if (!isBot){ W.before=(S.chans&&S.chans.channels.length)||0; W.poll=setInterval(checkArrived,2500); } }
   if (W.step===3 && !W.jrSeen && FEAT('join_requests') && W.channel && W.channel.type!=='bot' && !jrOn(W.channel)){ s.innerHTML=jrStepHtml(); bindJrStep(); window.scrollTo(0,0); return; }
   if (W.step===3){ const c=W.channel||{}; const p=W.plat; h = `<div class="step">
-    <div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>
+    ${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>`}
     <span class="step-ico">${I.target}</span>
     <h1>Tell your ads about every join.</h1><p class="lede">Pick where you run ads. Your ads then learn from real joins, not taps. You can add the others later.</p>
     <div class="plats" style="grid-template-columns:repeat(${PLATS().length},minmax(0,1fr))">${PLATS().map(k=>`<button data-act="plat" data-p="${k}" aria-pressed="${p===k}">${pm(k,1)}${PLAT[k].name}<small>${PLAT[k].sub}</small></button>`).join('')}</div>
@@ -2922,7 +3317,10 @@ function drawStep(){
       <div id="perr"></div><button class="btn primary lg wide" type="submit" id="pbtn">Save and send a test ${I.arrow}</button></form>
     <div class="soon"><span style="display:flex;align-items:center;gap:8px">${pm('google')}Google Ads</span><span>Coming soon</span></div>
     <button class="btn ghost" data-act="skip-meta">Skip, I’ll do this later</button></div>`; }
-  if (W.step===4){ const c=W.channel||{}; h = `<div class="step" style="text-align:center;align-items:center">
+  if (W.step===4 && W.channel && W.channel.locked){ const c=W.channel; h = `<div class="step">${chLockNote(c,true)}
+    <h1>${tt('lim.s4.h','Almost there.')}</h1><p class="lede">${tt('lim.s4.p','Your settings are saved. {t} starts tracking as soon as you upgrade or free a slot. Until then, don’t put its link in an ad.',{t:esc(c.title||'This channel')})}</p>
+    <button class="btn lg wide" data-act="finish">${tt('lim.s4.go','Go to my dashboard')} ${I.arrow}</button></div>`; }
+  else if (W.step===4){ const c=W.channel||{}; h = `<div class="step" style="text-align:center;align-items:center">
     <span class="step-ico" style="color:var(--mint-ink)">${I.sparkles}</span>
     <h1>You’re tracking.</h1><p class="lede">Use this link in your ad, in place of the t.me link. That’s the only change you make.</p>
     <div class="codebox" style="width:100%"><code>${esc(c.tracking_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url||'')}">${I.copy} Copy</button></div>
@@ -2933,13 +3331,13 @@ function drawStep(){
   const pf=$('#pf'); pf && pf.addEventListener('submit', e=>{e.preventDefault(); savePixel();});
   const xf=$('#xf'); xf && xf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#xbtn'); b.disabled=true;
     try { const r=await api('POST','/api/bot-targets/external',{username:$('#xu').value.trim()}); await refreshChans(); W.ext=S.chans.channels.find(c=>c.id===r.channel)||{...r,title:'@'+$('#xu').value.trim().replace(/^@/,'')}; if(!W.ext.hook_start){ W.ext.hook_start=r.hook_start; W.ext.hook_blocked=r.hook_blocked; } drawStep(); toast('Hook ready'); }
-    catch(err){ $('#xerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+    catch(err){ b.disabled=false; if (limitCatch(err)) return; $('#xerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
   const bf=$('#bf'); bf && bf.addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#bbtn'); b.disabled=true;
     const fw=$('#bfw'), fs=$('#bfs'), body={bot_id:W.bot.id,welcome:$('#bw')?$('#bw').value:'',btn_text:$('#bbt')?$('#bbt').value:'',btn_url:$('#bbu')?$('#bbu').value:'',forward_url:fw?fw.value.trim():''};
     if (fs && fs.value.trim()) body.forward_secret=fs.value.trim();
     try { const r=await api('POST','/api/bot-targets',body);
       await refreshChans(); W.channel=S.chans.channels.find(c=>c.id===r.channel)||S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); toast('Bot tracking is on'); }
-    catch(err){ $('#berr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
+    catch(err){ b.disabled=false; if (limitCatch(err)) return; $('#berr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
   window.scrollTo(0,0);
 }
 function botStep(u, pick){
@@ -2982,10 +3380,10 @@ function botStep(u, pick){
 async function connectBot(){
   const b=$('#tbtn'); b.disabled=true; b.innerHTML='<span class="spin"></span> Checking with Telegram';
   try { const r=await api('POST','/api/bots',{token:$('#tok').value}); W.bot=r.bot; W.prevWh=r.previous_webhook||''; W.warn=r.warning||''; await refreshChans(); W.step=2; drawStep(); }
-  catch(e){ $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; b.disabled=false; b.innerHTML='Connect bot '+I.arrow; }
+  catch(e){ b.disabled=false; b.innerHTML='Connect bot '+I.arrow; if (limitCatch(e)) return; $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; }
 }
 async function checkArrived(){
-  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); } } catch{}
+  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); if (W.channel&&W.channel.locked) setTimeout(()=>openLimitSheet({kind:'channels'},{arrived:W.channel}),500); } } catch{}
 }
 async function savePixel(){
   const c=W.channel, b=$('#pbtn'), p=W.plat; b.disabled=true; b.innerHTML='<span class="spin"></span> Saving';
@@ -3037,7 +3435,7 @@ function renderApp(){
   $('#root').innerHTML = `<div class="shell ${S.collapsed?'col':''}" id="shell">
     <aside class="side" id="side" aria-label="Main navigation">
       <div class="side-top">${logo()}<button class="collapse" data-act="collapse" aria-label="Collapse sidebar">${I.chevl}</button></div>
-      <nav class="nav">${NAV.map(([h,ks])=>`<div class="nav-h">${tt('nav.h.'+h.toLowerCase(),h)}</div>${ks.filter(pageOn).map(navA).join('')}`).join('')}</nav>${(()=>{ const h=sisterNav(); return h?`<div class="side-sis">${h}</div>`:''; })()}
+      <nav class="nav">${NAV.map(([h,ks])=>`<div class="nav-h">${tt('nav.h.'+h.toLowerCase(),h)}</div>${ks.filter(pageOn).map(navA).join('')}${h==='Account'?affNav():''}`).join('')}</nav>${(()=>{ const h=sisterNav(); return h?`<div class="side-sis">${h}</div>`:''; })()}
       <div class="side-card" id="sidecard"><div><div class="sl">${tt('credits.title','Credits')}</div><div class="sv num sk" style="height:28px;width:110px;margin-top:4px"></div></div></div>
       <button class="me-row" data-act="account" aria-label="${tt('menu.account','Account menu')}">${meFace(38,true)}<span class="who"><b>${esc(dispName())}<span class="melv" id="melv">${lvMini()}</span></b><small>${esc(me.email||'')}</small></span></button>
     </aside>
@@ -3259,8 +3657,9 @@ async function viewOverview(){
     <div id="sistercard" hidden></div>
     <div id="blognew" hidden></div>
     <section class="card"><div class="card-h"><h2>Top campaigns</h2><button class="link" data-act="nav" data-p="campaigns">All campaigns ${I.arrow}</button></div><div id="topc"><div class="sk" style="height:160px;margin:12px 18px 18px"></div></div></section>
+    ${showcaseHtml()}
   </div>`;
-  drawBlogNew(); drawCountryBanner(); drawSisterCard();
+  drawBlogNew(); drawCountryBanner(); drawSisterCard(); showcaseStart();
   await loadOverview(true);
   if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')) loadOverview(false); });
 }
@@ -3286,7 +3685,7 @@ async function loadOverview(first){
     rate:{v:pctS(T.joins,T.clicks),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
     ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins)} of joins · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
     rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
-    leaves:{v:fmt(T.leaves),raw:T.leaves,d:deltaChip(T.leaves,P.leaves,false,vl),s:`${pctS(T.leaves,T.joins+T.organic)} of all joins`,sp:''},
+    leaves:leftCard(T,P,vl),
   };
   const kp=$('#kpis'), hasSp=FEAT('spend')&&T.spend_cents>0;
   if (kp){ kp.classList.toggle('k8',hasSp); if (hasSp && !$('.kpi[data-k="spend"]')) kp.insertAdjacentHTML('beforeend',`<section class="kpi t-peach" data-k="spend"></section><section class="kpi t-teal" data-k="cpf"></section>`); if(!hasSp) $$('.kpi[data-k="spend"],.kpi[data-k="cpf"]').forEach(x=>x.remove()); }
@@ -3296,7 +3695,7 @@ async function loadOverview(first){
     for (const [k2,l2] of [['spend','Ad spend'],['cpf','Cost per FTD']]){ const el=$(`.kpi[data-k="${k2}"]`), c=cards[k2]; if(el) el.innerHTML=`<span class="kl">${l2}</span><div class="kv-row"><div style="min-width:0"><span class="kn">${c.v}</span></div></div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`; } }
   const fc=$('#fakechip'); if (fc){ const n=T.suspect_clicks||0, fj=T.filtered_joins||0; fc.hidden=!(FEAT('fake_filter')&&(n||fj)); fc.innerHTML=`${I.shield}${fj?tt('fraud.chip2','{c} fake clicks · {j} fake joins filtered',{c:fmt(n),j:fmt(fj)}):tt('fraud.chip','{c} fake clicks filtered',{c:fmt(n)})}`; fc.title=tt('fraud.tip','Bots, data-center clicks, join bursts, deleted accounts and repeat users. Recorded, but never sent to your ad platforms.'); }
   for (const [key] of KPI_DEF){ const c=cards[key], el=$(`.kpi[data-k="${key}"]`); if(!el) continue;
-    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`;
+    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>${c.s2||''}`;
     if (first && !reduced) count(el.querySelector('.kn'), c.raw, c.p?'p':c.m?'m':''); }
   if (T.ftd_locked){ const r=$('.kpi[data-k="rev"]'); if(r){ r.classList.add('locked'); r.innerHTML=`<span class="kl">${tt('kpi.revenue','Revenue')}</span><div class="kv-row"><span class="kn">${I.lock}</span></div><div class="kd"><button class="ks link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></div>`; }
     if (!$('#lockb')){ const k=$('#kpis'); k&&k.insertAdjacentHTML('afterend',`<div id="lockb">${lockBanner(T.ftd)}</div>`); } }
@@ -3311,6 +3710,18 @@ async function loadOverview(first){
   const fe=$('#feed'); if (fe){ fe.innerHTML = feed.rows.length ? feed.rows.map((r,i)=>personRow(r,'f'+i,seen.size&&!seen.has(r.id))).join('') : `<div class="empty"><span class="ei">${I.people}</span><h3>Quiet for now</h3><p>New people show up here the moment they join.</p></div>`;
     S.feed=feed.rows; seen=new Set(feed.rows.map(r=>r.id)); }
   if (topc) drawTopCampaigns(topc.rows);
+}
+/* "Left": people who joined in this range and have since left, as a share of those new joins (never above 100%).
+   Members who were already in the channel before (or before Joinvoo tracked them) are shown apart, as "+N older members".
+   Old servers without leaves_new: all leaves, capped at 100% and labelled "of all joins". */
+const pctCap = (a,b) => b ? Math.min(100,pct(a,b)).toFixed(1).replace(/\.0$/,'')+'%' : '—';
+function leftCard(T,P,vl){
+  const base=(T.joins||0)+(T.organic||0);
+  if (T.leaves_new==null) return {v:fmt(T.leaves),raw:T.leaves||0,d:deltaChip(T.leaves,P.leaves,false,vl),s:`${pctCap(T.leaves,base)} of all joins`,sp:''};
+  const n=T.leaves_new||0, old=T.leaves_old!=null?T.leaves_old:Math.max(0,(T.leaves||0)-n);
+  return {v:fmt(n),raw:n,d:deltaChip(n,P.leaves_new!=null?P.leaves_new:0,false,vl),
+    s:`<span title="${esc(tt('kpi.left.tip','Of the people who joined in this range, how many have since left'))}">${tt('kpi.left.new','{p} of new joins',{p:pctCap(n,base)})}</span>`,
+    s2:old>0?`<span class="ks ks-old" title="${esc(tt('kpi.left.oldtip','Members who joined before this range, or before Joinvoo tracked them, and left in this range'))}">${tt('kpi.left.old','+{n} older members',{n:fmt(old)})}</span>`:'',sp:''};
 }
 function count(el,to,kind){ const t0=performance.now(); const f=n=>{ const p=Math.min(1,(n-t0)/900), e=1-Math.pow(1-p,3), v=to*e; el.textContent=kind==='p'?v.toFixed(1)+'%':kind==='m'?money0(v):fmt(v); if(p<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
 function drawFunnel(T, hasConv, anim){
@@ -3621,7 +4032,14 @@ function tagsFor(r, full){
 function personRow(r,key,isNew){
   const p=r.params||{}, f=ftdOf(r), pl=platOf(r);
   const sub=[r.channel_title,p.utm_campaign||'',r.country?flag(r.country)+' '+r.country:'',ago(r.joined_at)].filter(Boolean).join(' · ');
-  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span></button>`;
+  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
+}
+/* which Meta match keys went with this person's events (more keys = better match quality in Events Manager) */
+function matchKeys(r){
+  const m=r.match; if (!m || !r.capi_status || ['none','no_pixel'].includes(r.capi_status)) return '';
+  const K=[['fbc',tt('pp.mk.fbc','Click ID'),'fbc'],['fbp',tt('pp.mk.fbp','Browser ID'),'fbp'],['ip',tt('pp.mk.ip','IP'),''],['ua',tt('pp.mk.ua','Device'),'']];
+  const n=K.filter(([k])=>m[k]).length;
+  return `<div class="mkeys"><span class="mk-l">${tt('pp.mk','Match keys sent to Meta')}<em>${n}/4</em></span><span class="mk-c">${K.map(([k,l,code])=>`<span class="mk ${m[k]?'on':''}" title="${m[k]?esc(tt('pp.mk.sent','Sent')):esc(tt('pp.mk.not','Not available for this person'))}">${m[k]?I.check:I.x}${esc(l)}${code?`<small>${code}</small>`:''}</span>`).join('')}</span></div>`;
 }
 function openPerson(r){
   if (!r) return; S.person=r;
@@ -3648,13 +4066,15 @@ function openPerson(r){
       <div class="kv"><span>Language</span><span>${esc(r.lang||'—')}</span></div></div>
     ${r.click_id?`<div class="box"><h4>Where they came from</h4>
       <div class="kv"><span>Ad platform</span><span style="display:inline-flex;align-items:center;gap:6px">${pl?pm(pl)+PLAT[pl].name+' ad':'Unknown'}</span></div>
+      ${r.click_code?`<div class="kv"><span>${tt('pp.click','Click ID')}</span><span class="kv-v"><span class="mono">${esc(r.click_code)}</span> <button type="button" class="kbd" data-act="copy" data-v="${esc(r.click_code)}">${tt('common.copy','Copy')}</button></span></div>`:''}
+      ${r.link_name?`<div class="kv kv-tall"><span>${tt('pp.link','Invite link in Telegram')}</span><span class="kv-v"><b class="kv-ln">${esc(r.link_name)}</b><small class="kv-h">${tt('pp.link.h','Find it in Telegram → your channel → Invite links')}</small></span></div>`:''}
       <div class="kv"><span>Country</span><span>${r.country?flag(r.country)+' '+esc(COUNTRY[r.country]||r.country):'—'}</span></div>
       <div class="kv"><span>Device</span><span>${dev}${app}</span></div>
       ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span>${esc(p.utm_campaign)}</span></div>`:''}
       ${p.utm_content?`<div class="kv"><span>Ad</span><span>${esc(p.utm_content)}</span></div>`:''}
       ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}
       <div class="kv"><span>IP address</span><span class="mono">${esc(r.ip||'—')}</span></div></div>
-      <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>`).join('')}</div>`
+      <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>${k==='meta'?matchKeys(r):''}`).join('')}</div>`
     :`<div class="note">This person joined another way, like a shared link or search. There’s no ad click to match, so nothing was sent to your ad platforms.</div>`}`);
   $('#cvf').addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#cvb'); const ev=S.cvEv||'ftd';
     const val=$('#cva')?$('#cva').value.trim().replace(',','.'):'';
@@ -3678,13 +4098,13 @@ async function viewChannels(){
   every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
 }
 function drawChannels(){
-  const d=S.chans, el=$('#cl'); if(!el) return;
-  el.innerHTML = `<div class="chans">${d.channels.map((c,i)=>{ const isB=c.type==='bot';
-    const st=c.status==='active'?'<span class="chip g"><i class="d"></i>Tracking</span>':c.status==='no_rights'?'<span class="chip y"><i class="d"></i>Needs permission</span>':'<span class="chip r"><i class="d"></i>Bot removed</span>';
+  const d=S.chans, el=$('#cl'); if(!el) return; const list=visChans(d);
+  el.innerHTML = `${limitsCard(d)}<div class="chans">${list.map((c,i)=>{ const isB=c.type==='bot';
+    const st=c.locked?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${tt('lim.notrack','Not tracking')}</span>`:c.status==='active'?'<span class="chip g"><i class="d"></i>Tracking</span>':c.status==='no_rights'?'<span class="chip y"><i class="d"></i>Needs permission</span>':'<span class="chip r"><i class="d"></i>Bot removed</span>';
     const prow=p=>{ const on=platOn(c,p); const test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
       return `<div class="prow2">${pm(p)}<b>${PLAT[p].name}</b>${on?`<span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto">${test?'<span class="chip y" title="Test mode is on">Test</span>':''}<button class="chip g" style="cursor:pointer" data-act="plat-open" data-id="${c.id}" data-p="${p}">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${esc(platEvent(c,p))}</button></span>`:`<button class="btn sm" data-act="plat-open" data-id="${c.id}" data-p="${p}">Connect</button>`}</div>`; };
     const pool=c.pool_target?Math.min(100,c.pool/c.pool_target*100):0;
-    return `<article class="card chan"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}</div>
+    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
       <div class="chan-sec"><span class="lbl">Your link for ads</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} Copy</button></div></div>
       <div class="chan-sec" style="gap:4px"><span class="lbl" style="margin-bottom:4px">Ad platforms</span>${PLATS().map(prow).join('')}<div class="prow2" style="opacity:.6">${pm('google')}<b>Google Ads</b><span class="chip o">Coming soon</span></div></div>
       ${isB&&c.external?`<div class="chan-sec"><div class="prow2"><span class="chip v">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} Tracked via your bot (no token)</span></div>
@@ -3697,7 +4117,7 @@ function drawChannels(){
       ${jrCardSection(c)}
       ${backupSection(c)}
       <div class="chan-foot">${isB?(c.external?`<button class="btn sm" data-act="show-code" data-id="${c.id}">${I.bolt} Show code</button>`:`<button class="btn sm" data-act="bot-settings" data-id="${c.id}">${I.bot} Bot settings</button>`):''}${PLATS().filter(p=>platOn(c,p)).map(p=>`<button class="btn sm" data-act="test" data-id="${c.id}" data-p="${p}">Test ${PLAT[p].name}</button>`).join('')}<a class="btn sm ghost" href="${esc(c.tracking_url)}" target="_blank" rel="noopener">${I.ext} Open link</a></div></article>`; }).join('')}
-    <button class="add-card" data-act="add-channel"><span class="ei">${I.plus}</span>${d.channels.length?'Add another channel or bot':'Connect your first channel'}<small class="faint" style="font-weight:500">About 3 minutes</small></button></div>`;
+    <button class="add-card" data-act="add-channel"><span class="ei">${I.plus}</span>${list.length?'Add another channel or bot':'Connect your first channel'}<small class="faint" style="font-weight:500">About 3 minutes</small></button></div>${botsCard(d)}`;
 }
 function openPlatform(id, p){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const on=platOn(c,p);
@@ -3737,7 +4157,7 @@ function manualAdd(){
     <div class="field"><label for="mch">Channel @username or ID</label><input class="inp" id="mch" placeholder="@mychannel"><span class="hint">Private channel? Forward a post from it to @userinfobot to get the ID.</span></div><div id="mmerr"></div><button class="btn primary lg wide" type="submit">Add channel</button></form>`);
   $('#mmf').addEventListener('submit', async e=>{ e.preventDefault();
     try { await api('POST','/api/channels',{bot_id:$('#mb').value,chat:$('#mch').value}); closeSheet(); await refreshChans(); W.channel=S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); }
-    catch(err){ $('#mmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+    catch(err){ if (limitCatch(err)) return; $('#mmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
 }
 
 /* ---------- wallet ---------- */
@@ -3797,7 +4217,7 @@ async function openDeposit(){
 const depHint = a => { const P=PRICE(), base=P.base_cents/100, pj=P.per_join_cents/100; if(!(a>0)) return 'Enter an amount.'; if(!pj) return `$${a} added to your wallet.`; return `$${a} ≈ ${fmt(Math.max(0,(a-base)/pj)+Math.min(P.included,base?a/base*P.included:P.included))} tracked joins on a fresh month, or about ${fmt(a/pj)} extra joins on top of your plan.`; };
 function pricingLine(b){ const P=PRICE(), M=(b&&b.month)||{}, base=M.base_cents??P.base_cents, inc=M.included??P.included, pj=M.per_join_cents??P.per_join_cents, fj=(b&&b.free_joins_gift)||P.free_joins;
   return `${fj?`Your first ${fmt(fj)} tracked joins are free. Then `:''}${centsTxt(base)} a month includes ${fmt(inc)} tracked joins, and ${pj}¢ per extra join. Organic joins and deposit events are always free.`; }
-const isRedirect = m => m && (m.type==='paystack'||m.type==='stripe'||m.type==='flutterwave');
+const isRedirect = m => m && (m.type==='paystack'||m.type==='stripe'||m.type==='flutterwave'||m.type==='gatevoo'||m.type==='custom'||m.brand==='gatevoo');
 function drawDeposit(){
   const D=S.dep, b=S.bill||{}; if(!D) return;
   const m=D.list.find(x=>x.id===D.mid);
@@ -3832,7 +4252,8 @@ async function depPay(btn){
   try {
     if (isRedirect(m) && m.type!=='flutterwave'){
       const r=await api('POST','/api/billing/topup',{method_id:m.id,usd:D.amt,...(D.promo?{promo:D.promo}:{})});
-      if (r.redirect_url){ btn.innerHTML=`<span class="spin"></span> ${tt('dep.opening','Opening {name}…',{name:esc(m.label)})}`; if(DEMO) toast(tt('dep.demo','Demo: skipping the checkout page')); setTimeout(()=>{ location.href=r.redirect_url; }, DEMO?700:0); return; }
+      const go=r.redirect_url||r.url; /* Paystack/Stripe answer redirect_url; Gatevoo and custom gateways answer url */
+      if (go){ btn.innerHTML=`<span class="spin"></span> ${tt('dep.opening','Opening {name}…',{name:esc(m.brand==='gatevoo'||m.type==='gatevoo'?'Gatevoo':m.label)})}`; if(DEMO) toast(tt('dep.demo','Demo: skipping the checkout page')); setTimeout(()=>{ location.href=go; }, DEMO?700:0); return; }
       throw new Error(r.message||tt('dep.nourl','We couldn’t open the payment page. Try again.'));
     }
     const body = isRedirect(m) ? {provider:m.type,amount:D.amt} : m.type==='crypto' ? {provider:'crypto',amount:D.amt} : {provider:'manual',method_id:m.id,amount:D.amt};
@@ -4112,7 +4533,7 @@ document.addEventListener('click', e=>{
     case 'bot-settings': openBotSettings(a.dataset.id); break;
     case 'start-setup': renderSetup(null, true); break;
     case 'test': { a.disabled=true; const p=a.dataset.p||'meta'; api('POST','/api/channels/'+a.dataset.id+'/test'+testQ(p)).then(r=>toast(r.message||'Test sent')).catch(err=>toast(err.message,false)).finally(()=>a.disabled=false); break; }
-    case 'add-channel': closeSheet(); renderSetup(S.chans.bots.some(b=>b.status==='active')?2:1, true); break;
+    case 'add-channel': closeSheet(); closePop(); renderSetup(1, true, {pick:true}); break;
     case 'leave-setup': renderApp(); break;
     case 'addlink': if (DEMO){ e.preventDefault(); toast('In the real app this opens Telegram'); setTimeout(()=>Demo.addChannel(),1600); } break;
     case 'demo-detect': Demo.addChannel(); break;
@@ -4260,7 +4681,7 @@ function jrCardSection(c){
 }
 function jrStepHtml(){
   const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
-  return `<div class="step"><div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>
+  return `<div class="step">${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>`}
     <span class="step-ico">${I.coin}</span><h1>Track deposits too?</h1><p class="lede">Turn on request-to-join with a welcome message. It’s the easiest way to see who deposits, not just who joins.</p>
     ${jrWhy}
     <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields({...c,offer_text:c.offer_text||'Welcome 👋 Thanks for joining! Tap below to get today’s offer.',offer_btn:c.offer_btn||'Get the offer'})}
@@ -5432,13 +5853,15 @@ const PM_LOGO={
   usdt:['#E3F6EF','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#26A17B"/><path d="M7.5 7.3h9v2.3h-3.3v1.3c2.1.1 3.7.6 3.7 1.1s-1.6 1-3.7 1.1v4.1h-2.4v-4.1c-2.1-.1-3.7-.6-3.7-1.1s1.6-1 3.7-1.1V9.6H7.5z" fill="#fff"/></svg>'],
   bank:['#ECF0FC',`<span style="color:#3D5AD6">${BANK_SVG}</span>`]
 };
+const isGv = m => m && (m.type==='gatevoo'||m.brand==='gatevoo');
 function pmLogo(m){
+  if (isGv(m)) return `<span class="pm-logo gv">${m.logo_url?`<img src="${esc(asset(m.logo_url))}" alt="" loading="lazy" onerror="this.nextElementSibling.hidden=false;this.remove()"><span hidden>${GV_MARK}</span>`:GV_MARK}</span>`;
   if (m.logo_url) return `<span class="pm-logo img"><img src="${esc(asset(m.logo_url))}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('img');this.remove()"></span>`;
   const l=(m.label||'').toLowerCase(), k=m.type==='paystack'||/paystack/.test(l)?'paystack':m.type==='stripe'||/stripe/.test(l)?'stripe':/usdt|tether|trc/.test(l)?'usdt':m.type==='manual'&&/bank|transfer|wire|iban/.test(l)?'bank':null;
   if (k) return `<span class="pm-logo" style="background:${PM_LOGO[k][0]}">${PM_LOGO[k][1]}</span>`;
   const [t,bg,fg]=mIcon(m); return `<span class="pm-logo" style="background:${bg};color:${fg}">${t}</span>`;
 }
-const PM_TYPE={paystack:['instant','Instant','g'],stripe:['instant','Instant','g'],flutterwave:['instant','Instant','g'],crypto_manual:['crypto','Crypto','v'],crypto:['crypto','Crypto','v'],manual:['manual','Manual transfer','y']};
+const PM_TYPE={gatevoo:['instant','Instant','g'],custom:['instant','Instant','g'],paystack:['instant','Instant','g'],stripe:['instant','Instant','g'],flutterwave:['instant','Instant','g'],crypto_manual:['crypto','Crypto','v'],crypto:['crypto','Crypto','v'],manual:['manual','Manual transfer','y']};
 const usd0 = v => '$'+fmt(Math.round(v));
 function money3(v,cur){ try{ return new Intl.NumberFormat(I18N.lang==='en'?'en-US':I18N.lang,{style:'currency',currency:cur,currencyDisplay:'narrowSymbol',maximumFractionDigits:v>=1000?0:2}).format(v); }catch{ return fmt(Math.round(v))+' '+cur; } }
 function pmCard(m,o={}){
@@ -5447,7 +5870,7 @@ function pmCard(m,o={}){
   const tag=o.pick?'button':'div';
   return `<${tag} ${o.pick?`type="button" data-act="prov" data-p="${esc(m.id)}" aria-pressed="${!!o.on}"`:''} class="pmx ${o.pick?'pick':''}">${pmLogo(m)}
     <span class="pm-b"><span class="pm-t"><b>${esc(m.label)}</b><span class="chip ${c} pm-ty">${tt('pm.t.'+k,l)}</span></span>
-      ${m.description||m.note?`<small class="pm-d">${esc(m.description||m.note)}</small>`:''}
+      ${m.description||m.note?`<small class="pm-d">${esc(m.description||m.note)}</small>`:''}${isGv(m)?gvPill():''}
       <span class="pm-m"><span>${fee}</span><span>${lim}</span>${m.currency&&m.currency!=='USD'&&m.currency!=='USDT'?`<span>${tt('pm.paidin','Paid in {c}',{c:esc(m.currency)})}</span>`:''}</span></span>
     ${o.pick?'<span class="rad"></span>':''}</${tag}>`;
 }
@@ -5500,7 +5923,8 @@ const sister = () => { if (!FEAT('sister_promo')) return null;
   if (Array.isArray(S.cfg&&S.cfg.apps)){ const a=S.cfg.apps.find(x=>x&&x.id==='replyvoo'&&x.enabled!==false&&x.url&&x.status!=='soon'); return a?{enabled:true,name:a.name||'Replyvoo',url:a.url,tagline:a.tagline||'',promo_code:a.promo_code||a.code||'',offer:a.offer||''}:null; }
   const s=S.cfg&&S.cfg.sister; return s&&s.enabled&&s.url&&s.name?s:null; };
 const sisName = () => esc((sister()||{}).name||'Replyvoo');
-const sisLogo = (size=38) => `<svg class="sis-logo" viewBox="0 0 38 38" width="${size}" height="${size}" aria-hidden="true"><rect width="38" height="38" rx="10" fill="#121110"/><path d="M11.5 10.5h15a3.5 3.5 0 0 1 3.5 3.5v8.5a3.5 3.5 0 0 1-3.5 3.5h-8l-5.5 4.5V26h-1.5A3.5 3.5 0 0 1 8 22.5V14a3.5 3.5 0 0 1 3.5-3.5z" fill="none" stroke="#FFC21A" stroke-width="2.2" stroke-linejoin="round"/><path d="M14.6 18.4l3.1 3.1 5.9-6" fill="none" stroke="#FFC21A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const logoSrc = id => (DEMO?'media/applogos/':'/media/applogos/')+id+'.svg';
+const sisLogo = (size=38) => `<img class="sis-logo" src="${logoSrc('replyvoo')}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
 const sisHead = () => `${tt('sis.h1','Joinvoo brings the leads.')} <em class="serif">${tt('sis.h2','{name} closes them.',{name:sisName()})}</em>`;
 function sisCta(where, big){ const s=sister(); if(!s) return '';
   return `<a class="btn sis-btn ${big?'lg':''}" href="${esc(s.url)}" target="_blank" rel="noopener" data-act="sis-go" data-w="${where}">${tt('sis.try','Try {name} free',{name:sisName()})} ${I.arrow}</a>${s.promo_code?`<span class="sis-code"><small>${tt('sis.code','Code')}</small><b>${esc(s.promo_code)}</b><button class="sis-cp" data-act="copy" data-v="${esc(s.promo_code)}" aria-label="${tt('common.copy','Copy')} ${esc(s.promo_code)}">${I.copy}</button></span>`:''}`; }
@@ -5661,7 +6085,9 @@ const APP_DEF={
   advoo:{color:'#ef5a2c',color2:'#c8401a',ink:'light'},
   affleego:{color:'#14b8a6',color2:'#0f766e',ink:'light'},
   landvoo:{color:'#EEF0F6',color2:'#E2E6F0',ink:'dark'},
-  voosquare:{color:'#0fae6b',color2:'#c6f45a',ink:'dark'}};
+  voosquare:{color:'#0fae6b',color2:'#c6f45a',ink:'dark'},
+  spyvoo:{color:'#2457ff',color2:'#0d2fc4',ink:'light'},
+  gatevoo:{color:'#0b0b0f',color2:'#24242c',ink:'light'}};
 const vooHome = () => (S.cfg&&S.cfg.voo&&S.cfg.voo.home)||'https://voosquare.com';
 const vooRefs = () => { const v=(S.cfg&&S.cfg.voo)||{}, me=S.me||{}; return v.referrals==='voosquare'||me.referrals_mode==='voosquare'||(me.voo&&me.voo.referrals==='voosquare'); };
 function appsAll(){ if (!FEAT('sister_promo')||!Array.isArray(S.cfg&&S.cfg.apps)) return null;
@@ -5670,17 +6096,14 @@ const appsList = () => (appsAll()||[]).filter(a=>a.id!=='voosquare');
 const appsLive = () => appsList().filter(a=>a.status!=='soon'&&a.url);
 const appsOn = () => appsList().length>0;
 const appHub = () => (appsAll()||[]).find(a=>a.id==='voosquare')||null;
+const LOGO_IDS=['joinvoo','replyvoo','castvoo','advoo','affleego','landvoo','gatevoo','voosquare'];
 function appLogo(a,size=40){
   const id=a.id, u='al'+(++lvN);
-  if (a.logo && /^(\/|https?:)/.test(a.logo)) return `<span class="app-logo img" style="width:${size}px;height:${size}px"><img src="${esc(asset(a.logo))}" alt=""></span>`;
-  const k=(a.logo&&APP_DEF[a.logo])?a.logo:id;
+  if (a.logo && /^(\/|https?:)/.test(a.logo)) return `<img class="app-logo" src="${esc(asset(a.logo))}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
+  if (id==='spyvoo') return SPY_MARK.replace('<svg',`<svg class="app-logo" width="${size}" height="${size}"`);
+  const k=(a.logo&&LOGO_IDS.includes(a.logo))?a.logo:id;
   const svg=inner=>`<svg class="app-logo" viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${inner}</svg>`;
-  if (k==='replyvoo') return sisLogo(size).replace('class="sis-logo"','class="sis-logo app-logo"');
-  if (k==='castvoo') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b7bff"/><stop offset="1" stop-color="#2f55e4"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><path d="M25.5 13.6a8.6 8.6 0 1 0 0 12.8" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/><circle cx="27.6" cy="20" r="2.6" fill="#fff"/>`);
-  if (k==='advoo') return svg(`<rect width="40" height="40" rx="11" fill="#1c1917"/><circle cx="13.8" cy="20" r="6.4" fill="#fff"/><circle cx="26.2" cy="20" r="6.4" fill="#fff"/><g class="adv-pup"><circle cx="15.2" cy="20.6" r="2.8" fill="#ef5a2c"/><circle cx="27.6" cy="20.6" r="2.8" fill="#ef5a2c"/></g>`);
-  if (k==='affleego') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><path d="M11 26.5l6.2-6.2 4.3 4.3 7.5-8.1" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M23.5 16.2h5.8V22" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`);
-  if (k==='landvoo') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#5b3df5"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><rect x="10" y="10" width="20" height="20" rx="3.5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M10 15.5h20" stroke="#fff" stroke-width="2.4"/><rect x="14" y="19.5" width="12" height="3.2" rx="1.6" fill="#fff"/><rect x="16.5" y="24.6" width="7" height="2.4" rx="1.2" fill="#c6f45a"/>`);
-  if (k==='voosquare') return svg(`<rect x="4" y="4" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="21.5" y="4" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="4" y="21.5" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="21.5" y="21.5" width="14.5" height="14.5" rx="4.5" fill="#c6f45a"/>`);
+  if (LOGO_IDS.includes(k)) return `<img class="app-logo" src="${logoSrc(k)}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
   return svg(`<rect width="40" height="40" rx="11" fill="${esc(a.color||'#5b3df5')}"/><text x="20" y="26" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" font-family="Plus Jakarta Sans,sans-serif">${esc(String(a.name||'?')[0].toUpperCase())}</text>`);
 }
 /* one small looping animation per app */
@@ -5691,6 +6114,7 @@ function appAnim(a){
   if (k==='advoo') return `<div class="am am-adv" aria-hidden="true"><span class="ad-prompt"><span class="ad-type">${tt('apps.adv.p','A promo for my Telegram channel')}</span></span><div class="ad-frames"><span class="ad-f f916"><i>▶</i></span><span class="ad-f f11"><b>${tt('apps.adv.h','Hook')}</b></span><span class="ad-f f169"><i>▶</i></span></div><span class="ad-sizes">9:16 · 1:1 · 16:9</span></div>`;
   if (k==='affleego') return `<div class="am am-aff" aria-hidden="true">${[['CPA','#FFC21A'],['RevShare','#c6f45a'],['Hybrid','#fff']].map(([c,col],i)=>`<span class="af-card" style="--i:${i}"><span class="af-l"><i></i><i></i></span><em style="--c:${col}">${c}</em></span>`).join('')}</div>`;
   if (k==='landvoo') return `<div class="am am-land" aria-hidden="true"><span class="ld-b nav"></span><span class="ld-b hero"></span><span class="ld-b line"></span><span class="ld-b btn"></span><span class="ld-row"><i></i><i></i><i></i></span></div>`;
+  if (k==='spyvoo'||k==='gatevoo') return `<div class="am am-sn" aria-hidden="true">${scScene({kind:k})}</div>`;
   return `<div class="am am-gen" aria-hidden="true"><i></i><i></i><i></i></div>`;
 }
 const appClick = (id,where) => api('POST','/api/apps/click',{id,where}).catch(()=>{});
@@ -5760,6 +6184,323 @@ document.addEventListener('click', e=>{
     case 'app-x': { const id=a.dataset.id; try{ localStorage.setItem('jv_app_x_'+id,String(Date.now())); }catch{} const sl=a.closest('.ac-slide'); if(sl){ sl.classList.add('gone'); setTimeout(()=>drawAppsCarousel(),260); } break; }
     case 'ac-go': acGo(+a.dataset.v); break;
     case 'ac-step': { const tr=$('#actrack'); if(tr) acGo(Math.round(tr.scrollLeft/tr.clientWidth)+(+a.dataset.v)); break; }
+  }
+});
+
+/* ================= Round 11b: plan limits (channels & bots), remove/disconnect, match keys, product showcase, Gatevoo ================= */
+const DOTS='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg>';
+const TRASH=sv('<path d="M4.5 7h15M10 11v6M14 11v6M6.5 7l.8 11.2a2 2 0 002 1.8h5.4a2 2 0 002-1.8L17.5 7M9.5 7V5a1 1 0 011-1h3a1 1 0 011 1v2"/>');
+const UNPLUG=sv('<path d="M9 4v4M15 4v4M7 8h10v3a5 5 0 01-10 0zM12 16v4M4 4l16 16"/>');
+const GV_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0b0b0f"/><path d="M40.6 23.4A13.2 13.2 0 1 0 44.2 33H32.4" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="14" r="6.4" fill="#0b0b0f"/><circle cx="50" cy="14" r="4.4" fill="#3ddc84"/></svg>';
+const gvPill = () => `<span class="gv-pill" aria-label="Gatevoo"><span class="gv-m">${GV_MARK}</span><b>Gate</b><i>voo</i></span>`;
+const visChans = d => ((d&&d.channels)||[]).filter(c=>!c.removed_by_user);
+const planName = p => p==='pro'?'Pro':'Basic';
+const nNoun = (n,one,many) => `${fmt(n)} ${n===1?one:many}`;
+
+/* ---------- usage meter on Channels ---------- */
+function limitsCard(d){
+  const L=d&&d.limits; if(!L) return '';
+  const ch=L.channels||{}, bt=L.bots||{}, unl=!!L.unlimited||(ch.max==null&&bt.max==null);
+  if (unl) return `<section class="lim-card unl"><div class="lm-top"><span class="lm-ic">${I.sparkles}</span><div class="lm-b"><b>${nNoun(ch.used||0,'channel','channels')} · ${nNoun(bt.used||0,'bot','bots')}</b><small>${L.plan==='pro'?tt('lim.unl.pro','Unlimited on Pro. Add as many as you like.'):tt('lim.unl','Unlimited channels and bots on your account.')}</small></div><span class="chip v lm-chip">${L.plan==='pro'?tt('lim.unlpro','Unlimited on Pro'):tt('lim.unlim','Unlimited')}</span></div></section>`;
+  const plan=planName(L.plan), part=(o,one,many)=>o.max==null?nNoun(o.used||0,one,many):`${fmt(o.used||0)} of ${nNoun(o.max,one,many)}`;
+  const locked=visChans(d).filter(c=>c.locked).length, full=k=>{ const o=k==='c'?ch:bt; return o.max!=null&&(o.used||0)>=o.max; };
+  const sub = locked ? tt('lim.sub.over','{n} over your {p} limit and not tracking. Upgrade, or remove one you don’t use.',{n:nNoun(locked,'channel is','channels are'),p:plan})
+    : full('c')||full('b') ? tt('lim.sub.full','You’ve used every {k} on {p}. Upgrade for unlimited, or remove one to make room.',{k:full('c')&&full('b')?'channel and bot':full('c')?'channel':'bot',p:plan})
+    : tt('lim.sub.ok','Room for {a} and {b} more on {p}.',{a:ch.max==null?'unlimited channels':nNoun(Math.max(0,ch.max-(ch.used||0)),'channel','channels'),b:bt.max==null?'unlimited bots':nNoun(Math.max(0,bt.max-(bt.used||0)),'bot','bots'),p:plan});
+  const meter=(lab,o)=>{ const used=o.used||0, max=o.max, p=max?Math.min(100,used/max*100):100, st=max==null?'':used>max?'over':used>=max?'full':'';
+    return `<div class="lm-m ${st}"><span class="lm-t"><span>${lab}</span><b class="num">${max==null?fmt(used)+' · ∞':`${fmt(used)}<small> / ${fmt(max)}</small>`}</b></span><span class="lm-bar" role="progressbar" aria-label="${esc(lab)}" aria-valuenow="${used}" aria-valuemin="0" ${max!=null?`aria-valuemax="${max}"`:''}><i style="--w:${p}%"></i></span></div>`; };
+  return `<section class="lim-card ${locked?'over':full('c')||full('b')?'full':''}"><div class="lm-top"><span class="lm-ic">${locked?I.lock:I.channels}</span>
+      <div class="lm-b"><b>${part(ch,'channel','channels')} · ${part(bt,'bot','bots')} on ${plan}</b><small>${sub}</small></div>
+      <button class="lm-up" data-act="lim-up">${tt('lim.up','Upgrade to Pro — unlimited')} ${I.arrow}</button></div>
+    <div class="lm-ms">${meter(tt('lim.ch','Channels'),ch)}${meter(tt('lim.bots','Bots'),bt)}</div></section>`;
+}
+function chLockNote(c, setup){
+  const plan=planName(((S.chans&&S.chans.limits)||{}).plan);
+  return `<div class="ch-lock"><span class="cl-ic">${I.lock}</span><div class="cl-b"><b>${setup?tt('lim.added','{t} was added, but isn’t tracking yet — over your {p} limit',{t:esc(c.title||'Your channel'),p:plan}):tt('lim.locked','Over your {p} limit — not tracking',{p:plan})}</b><small>${tt('lim.locked.p','Joins through this link aren’t counted or sent to your ads. Upgrade, or remove another channel, and it starts by itself.')}</small>
+    <span class="cl-a"><button class="btn sm primary" data-act="lim-up">${I.sparkles} ${tt('pro.upgrade','Upgrade to Pro')}</button><button class="btn sm" data-act="lim-open" data-k="channels">${tt('lim.rm1','Remove a channel')}</button></span></div></div>`;
+}
+/* ---------- bots list on Channels ---------- */
+const botChans = (d,b) => visChans(d).filter(c=>(c.bots||[]).includes(b.username)||(c.type==='bot'&&!c.external&&c.title==='@'+b.username));
+const botOnly = (d,b) => botChans(d,b).filter(c=>(c.bots||[]).filter(x=>x!==b.username).length===0);
+function botsCard(d){
+  const bots=((d&&d.bots)||[]).filter(b=>b.status!=='deleted'); if(!bots.length) return '';
+  const L=d.limits, bmax=L&&!L.unlimited&&L.bots?L.bots.max:null;
+  return `<section class="card bots-card"><div class="card-h"><h2>${I.bot} ${tt('bots.title','Your bots')}</h2><span class="sub">${bmax!=null?tt('bots.of','{a} of {b} on {p}',{a:fmt(bots.filter(b=>b.status==='active').length),b:fmt(bmax),p:planName(L.plan)}):tt('bots.n','{n} connected',{n:fmt(bots.length)})}</span></div>
+    <div class="bot-list">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length, ok=b.status==='active';
+      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
+        <button class="btn sm ghost bot-x" data-act="bot-rm" data-id="${b.id}">${UNPLUG}<span>${tt('bots.disc','Disconnect')}</span></button></div>`; }).join('')}</div>
+    <button class="bot-add" data-act="bot-new">${I.plus} ${tt('bots.add','Add a new bot')}</button></section>`;
+}
+/* setup: "Which bot?" first, when bots are already connected */
+function botPickStep(){
+  const d=S.chans||{bots:[],channels:[]}, bots=d.bots.filter(b=>b.status==='active'), L=d.limits, bt=L&&!L.unlimited&&L.bots||null, bfull=bt&&bt.max!=null&&(bt.used||0)>=bt.max;
+  return `<div class="step">
+    <span class="step-ico">${I.bot}</span>
+    <h1>${tt('bp.h','Which bot should track it?')}</h1><p class="lede">${tt('bp.p','Use a bot you already connected, or add a new one. One bot can track many channels.')}</p>
+    <div class="bpick">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length;
+      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
+      <button class="bpk-row bpk-new" data-act="bot-pick-new"><span class="bot-av new">${I.plus}</span><span class="bot-n"><b>${tt('bp.new','Add a new bot')}</b><small>${bfull?tt('bp.new.full','{a} of {b} bots used',{a:fmt(bt.used),b:fmt(bt.max)}):tt('bp.new.p','Paste a token from @BotFather')}</small></span>${bfull?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${planName(L.plan)}</span>`:`<span class="bpk-go">${I.chevr}</span>`}</button></div></div>`;
+}
+/* ---------- 402 limit sheet: never a dead end ---------- */
+function limitCatch(e){ const b=e&&(e.body||e.data); if(!e||e.status!==402||!b||!b.limit) return false; openLimitSheet(b.limit); return true; }
+function openLimitSheet(lim, opt){ S.lim={...(lim||{}), opt:opt||{}, view:'pick'}; drawLimitSheet(); }
+function limNow(k){ const L=(S.chans&&S.chans.limits)||{}; return {o:L[k]||{}, plan:L.plan, price:L.pro_price_usd}; }
+function drawLimitSheet(){
+  const X=S.lim; if(!X) return; const isB=X.kind==='bots', k=isB?'bots':'channels', {o,plan:p0,price}=limNow(k);
+  const used=X.view==='pick'&&X.used!=null?X.used:(o.used??X.used??0), max=X.max??o.max, plan=planName(X.plan||p0), noun=isB?'bots':'channels';
+  const head=`<h2>${isB?tt('lim.bt.h','Bot limit reached'):tt('lim.ch.h','Channel limit reached')}<small>${plan} plan</small></h2>`;
+  if (X.view==='pick'){
+    const slots=max&&max<=8?Array.from({length:max},(_,i)=>`<i style="--d:${i*90}ms">${isB?I.bot:I.channels}</i>`).join(''):'';
+    const arr=X.opt.arrived;
+    sheet(head, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true">${slots}<span class="lh-plus">${I.lock}</span></div>
+        <b>${used>max?tt('lim.overh','You have {a} {n}. {p} allows {b}.',{a:fmt(used),b:fmt(max),n:noun,p:plan}):tt('lim.used','You’ve used {a} of {b} {n} on {p}',{a:fmt(used),b:fmt(max),n:noun,p:plan})}</b>
+        <span>${arr?tt('lim.arrived','{t} was added, but it won’t track until you upgrade or free a slot.',{t:esc(arr.title)}):isB?tt('lim.bt.p','Upgrade for unlimited bots, or disconnect one you don’t use to make room.'):tt('lim.ch.p','Upgrade for unlimited channels, or remove one you don’t use to make room.')}</span></div>
+      <div class="lim-opts">
+        <button class="lim-opt pro" data-act="lim-up"><span class="lo-ic">${I.sparkles}</span><span class="lo-t"><b>${tt('lim.o.up','Upgrade to Pro')}</b><small>${tt('lim.o.up.p','Unlimited channels and bots')}${price?` · $${fmt(price)}/${tt('lim.mo','month')}`:''}</small></span><span class="lo-go">${I.arrow}</span></button>
+        <button class="lim-opt" data-act="lim-list"><span class="lo-ic">${isB?UNPLUG:TRASH}</span><span class="lo-t"><b>${isB?tt('lim.o.bt','Disconnect a bot'):tt('lim.o.ch','Remove a channel')}</b><small>${tt('lim.o.rm.p','Frees a slot right away. Past stats stay.')}</small></span><span class="lo-go">${I.chevr}</span></button></div>
+      <button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+    return; }
+  if (X.view==='list'){
+    const d=S.chans||{bots:[],channels:[]};
+    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
+      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b>${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
+    sheet(head, `<button class="link" style="align-self:flex-start" data-act="lim-back">${I.chevl} ${tt('common.back','Back')}</button>
+      <div><h3 class="rm-h">${isB?tt('lim.bt.pick','Which bot can go?'):tt('lim.ch.pick','Which channel can go?')}</h3><p class="muted" style="font-size:14px;margin-top:4px">${tt('lim.pick.p','Past stats stay in your reports. Only new tracking stops.')}</p></div>
+      <div class="rm-list">${rows||`<div class="note">${tt('lim.none','Nothing to remove.')}</div>`}</div>`);
+    return; }
+  if (X.view==='done'){
+    const now=o.used||0, left=max!=null?max-now:1, dh=`<h2>${isB?tt('rmb.ok','Bot disconnected'):tt('lim.rmd','Channel removed')}<small>${plan} plan</small></h2>`;
+    if (left>0||max==null) sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done','Slot freed')}</b><span>${max!=null?tt('lim.done.p','You’re using {a} of {b} {n} now.',{a:fmt(now),b:fmt(max),n:noun}):''} ${X.opt.arrived?tt('lim.done.arr','{t} starts tracking by itself.',{t:esc(X.opt.arrived.title)}):tt('lim.done.go','Go ahead and add yours.')}</span></div>
+      <button class="btn primary lg wide" data-act="close">${tt('lim.cont','Continue')} ${I.arrow}</button>`);
+    else if (left===0) sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done0','Everything tracks again')}</b><span>${tt('lim.done0.p','You’re at {a} of {b} {n}. To add another one, remove one more or upgrade.',{a:fmt(now),b:fmt(max),n:noun})}</span></div>
+      <button class="btn primary lg wide" data-act="close">${tt('lim.cont','Continue')} ${I.arrow}</button><button class="btn ghost wide" data-act="lim-up">${I.sparkles} ${tt('lim.o.up','Upgrade to Pro')}</button>`);
+    else sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done2','Done. {n} more to go.',{n:fmt(-left)})}</b><span>${tt('lim.done2.p','You have {a} {n} and {p} allows {b}. Remove {c} more, or upgrade so everything tracks.',{a:fmt(now),n:noun,p:plan,b:fmt(max),c:fmt(-left)})}</span></div>
+      <button class="btn primary lg wide" data-act="lim-up">${I.sparkles} ${tt('lim.o.up','Upgrade to Pro')}</button><button class="btn lg wide" data-act="lim-list">${isB?tt('lim.o.bt2','Disconnect another bot'):tt('lim.o.ch2','Remove another channel')}</button><button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+  }
+}
+function goUpgrade(){
+  closeSheet(); closePop(); S.lim=null;
+  if (!$('#shell')){ S.page='wallet'; renderApp(); } else go('wallet');
+  let n=0; const t=setInterval(()=>{ const pc=$('.plancard'); if(pc||++n>50){ clearInterval(t); if(pc){ pc.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'}); pc.classList.add('flash'); setTimeout(()=>pc.classList.remove('flash'),2200); } } },100);
+}
+/* ---------- remove channel / disconnect bot ---------- */
+function openRemoveChannel(id, from){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)); if(!c) return; closePop();
+  sheet(`<h2>${tt('rm.h','Remove channel')}<small>${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
+    ${c.tracking_url?`<div class="rm-link"><span class="lbl">${tt('rm.link','This link stops working')}</span><code>${esc(c.tracking_url)}</code></div>`:''}
+    ${c.type!=='bot'?`<div class="note">${tt('rm.tg','Joinvoo stops making invite links for it. You can remove the bot from the channel’s admins in Telegram too.')}</div>`:''}
+    <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="ch-rm-go" data-id="${c.id}" data-from="${esc(from||'')}">${TRASH} ${tt('rm.go','Remove channel')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
+}
+async function removeChannelGo(btn){
+  const id=btn.dataset.id, from=btn.dataset.from; btn.disabled=true; btn.innerHTML=`<span class="spin"></span> ${tt('rm.doing','Removing')}`;
+  try { await api('DELETE','/api/channels/'+id);
+    await refreshChans().catch(()=>{}); toast(tt('rm.ok','Channel removed. Past stats stay.'));
+    if (from==='lim' && S.lim){ S.lim.view='done'; drawLimitSheet(); } else closeSheet();
+    afterRemove(); }
+  catch(e){ const el=$('#rmerr'); if(el) el.innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; btn.innerHTML=`${TRASH} ${tt('rm.go','Remove channel')}`; }
+}
+/* redraw whatever is under the sheet: the Channels page, or the setup step (bot picker, locked note) */
+function afterRemove(){
+  if ($('#stp') && !$('#shell')){ if (W.channel){ const c=(S.chans.channels||[]).find(x=>x.id===W.channel.id); if(c) W.channel=c; } if (W.step===1&&W.pickBot&&!S.chans.bots.some(b=>b.status==='active')) W.pickBot=false; if (W.bot&&!S.chans.bots.some(b=>b.id===W.bot.id&&b.status==='active')){ W.bot=null; W.pickBot=S.chans.bots.some(b=>b.status==='active'); W.step=1; } drawStep(); }
+  else if (S.page==='channels' && $('#cl')) drawChannels();
+}
+function openRemoveBot(id, from){
+  const d=S.chans||{bots:[],channels:[]}, b=d.bots.find(x=>String(x.id)===String(id)); if(!b) return; closePop();
+  const only=botOnly(d,b);
+  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small>@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
+    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li>${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
+    <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="bot-rm-go" data-id="${b.id}" data-from="${esc(from||'')}">${UNPLUG} ${tt('rmb.go','Disconnect bot')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
+}
+async function removeBotGo(btn){
+  const id=btn.dataset.id, from=btn.dataset.from; btn.disabled=true; btn.innerHTML=`<span class="spin"></span> ${tt('rmb.doing','Disconnecting')}`;
+  try { await api('DELETE','/api/bots/'+id); await refreshChans().catch(()=>{}); toast(tt('rmb.ok','Bot disconnected'));
+    if (from==='lim' && S.lim){ S.lim.view='done'; drawLimitSheet(); } else closeSheet();
+    afterRemove(); }
+  catch(e){ const el=$('#rmerr'); if(el) el.innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; btn.innerHTML=`${UNPLUG} ${tt('rmb.go','Disconnect bot')}`; }
+}
+function chMenu(a){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(a.dataset.id)); if(!c) return;
+  if ($('.pop.chm') && S.chMenuFor===c.id){ closePop(); return; } S.chMenuFor=c.id;
+  const p=openPop(a, `${c.tracking_url?`<button class="pi" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('ch.copy','Copy ad link')}</button>`:''}${c.type==='bot'&&!c.external?`<button class="pi" data-act="bot-settings" data-id="${c.id}">${I.bot} ${tt('ch.botset','Bot settings')}</button>`:''}<hr><button class="pi pi-danger" data-act="ch-rm" data-id="${c.id}">${TRASH} ${tt('ch.rm','Remove channel')}</button>`, 'chm');
+  p.style.width='220px';
+}
+
+/* ---------- product showcase: very bottom of Overview ---------- */
+const SC_ORDER=['affiliate','voosquare','spyvoo','replyvoo','castvoo','advoo','vooads','gatevoo'];
+const SC_DEF={affiliate:{color:'#0e9f63',color2:'#064e33',ink:'light'},spyvoo:{color:'#2457ff',color2:'#0d2fc4',ink:'light'},gatevoo:{color:'#0b0b0f',color2:'#24242c',ink:'light'},replyvoo:{color:'#FFC21A',color2:'#FFE07A',ink:'dark'},castvoo:{color:'#3b6cf6',color2:'#1f3fc9',ink:'light'},advoo:{color:'#ef5a2c',color2:'#b83a14',ink:'light'}};
+const scKind = c => { const k=String(c.id||'').toLowerCase(); return /affil|voosquare/.test(k)?'affiliate':k==='vooads'?'advoo':k; };
+function scCards(){
+  const cfg=S.cfg||{}, sc=cfg.showcase; if (sc && sc.enabled===false) return [];
+  let cards = sc&&Array.isArray(sc.cards)&&sc.cards.length ? sc.cards.filter(c=>c&&c.id&&c.enabled!==false).map(c=>({...c}))
+    : (appsAll()||[]).filter(a=>a.id!=='voosquare'&&a.id!=='joinvoo').map(a=>({id:a.id,name:a.name,headline:a.tagline,tagline:a.headline,url:a.url,color:a.color,color2:a.color2,ink:a.ink,logo_url:a.logo_url||(a.logo&&/^(\/|https?:)/.test(a.logo)?a.logo:(LOGO_IDS.includes(a.logo||a.id)?logoSrc(a.logo||a.id):'')),status:a.status,cta:a.cta,badge:a.badge}));
+  if (!cards.length && !sc) return [];
+  const aff={url:'https://affiliate.voosquare.com',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',cta:'Become an affiliate',...((sc&&sc.affiliate)||{})};
+  const ai=cards.findIndex(c=>scKind(c)==='affiliate');
+  if (ai<0) cards.unshift({id:'affiliate',name:'VooSquare Affiliates',headline:aff.headline,tagline:aff.tagline,url:aff.url,cta:aff.cta,status:'live',badge:'Up to 50%'});
+  else cards[ai]={...cards[ai],url:cards[ai].url||aff.url,cta:cards[ai].cta||aff.cta,headline:cards[ai].headline||aff.headline,tagline:cards[ai].tagline||aff.tagline};
+  if (!(sc&&Array.isArray(sc.cards)&&sc.cards.length)) cards.sort((a,b)=>{ const i=x=>{ const j=SC_ORDER.indexOf(scKind(x)); return j<0?99:j; }; return i(a)-i(b); });
+  return cards.map(c=>{ const d=SC_DEF[scKind(c)]||{}; return {...d,...Object.fromEntries(Object.entries(c).filter(([,v])=>v!==''&&v!=null)),kind:scKind(c)}; });
+}
+const SPY_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2457ff"/><path d="M8 32c5-8 13-13 24-13s19 5 24 13c-5 8-13 13-24 13S13 40 8 32z" fill="#fff"/><circle cx="25" cy="32" r="6.4" fill="#2457ff"/><circle cx="39" cy="32" r="6.4" fill="#2457ff"/><circle cx="27" cy="30" r="2" fill="#fff"/><circle cx="41" cy="30" r="2" fill="#fff"/></svg>';
+const VSQ_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0a7a4b"/><rect x="17" y="17" width="13" height="13" rx="3.6" fill="#fff"/><rect x="34" y="17" width="13" height="13" rx="3.6" fill="#c2e7d6"/><rect x="17" y="34" width="13" height="13" rx="3.6" fill="#c2e7d6"/><rect x="34" y="34" width="13" height="13" rx="3.6" fill="#c6f45a"/></svg>';
+function scLogo(c){
+  const fb = c.kind==='spyvoo'?SPY_MARK:c.kind==='gatevoo'?GV_MARK:c.kind==='affiliate'?VSQ_MARK:LOGO_IDS.includes(c.kind)?`<img src="${logoSrc(c.kind)}" width="40" height="40" alt="">`:`<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="${esc(c.color||'#5b3df5')}"/><text x="20" y="26" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" font-family="Plus Jakarta Sans,sans-serif">${esc(String(c.name||'?')[0].toUpperCase())}</text></svg>`;
+  if (!c.logo_url) return `<span class="scc-logo">${fb}</span>`;
+  return `<span class="scc-logo"><img src="${esc(asset(c.logo_url))}" width="40" height="40" alt="" decoding="async" loading="lazy" onerror="this.nextElementSibling.hidden=false;this.remove()"><span hidden>${fb}</span></span>`;
+}
+function scScene(c){
+  const k=c.kind;
+  if (k==='affiliate') return `<div class="sn sn-aff"><span class="af-ring"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" cx="40" cy="40" r="34" pathLength="100"/></svg><b>∞</b><small>${tt('sc.aff.life','Lifetime')}</small></span>
+      <div class="af-bal"><small>${tt('sc.aff.bal','Monthly commission')}</small><span class="af-bars" aria-hidden="true">${[0,1,2,3,4,5].map(i=>`<i style="--i:${i}"></i>`).join('')}</span><svg class="af-line" viewBox="0 0 160 40" preserveAspectRatio="none"><path d="M0 34 C18 32 24 26 38 27 S60 18 74 20 98 10 112 12 138 4 160 3"/></svg></div>
+      <span class="af-toast t1"><i>${I.up}</i> ${tt('sc.aff.t1','Commission added')}</span><span class="af-toast t2"><i>${I.up}</i> ${tt('sc.aff.t2','New referral')}</span>
+      ${[0,1,2,3,4,5].map(i=>`<span class="af-coin" style="--i:${i}">$</span>`).join('')}</div>`;
+  if (k==='spyvoo') return `<div class="sn sn-spy"><span class="sp-live"><i></i>${tt('sc.spy.scan','Scanning live ads')}</span>
+      <div class="sp-cards">${[0,1,2].map(i=>`<span class="sp-ad a${i}"><span class="sp-th"></span><span class="sp-l"></span><span class="sp-l s"></span><span class="sp-m"><i></i><i></i><i></i></span>${i===1?`<em class="sp-win">🏆 ${tt('sc.spy.win2','Winner')}</em>`:''}</span>`).join('')}</div>
+      <span class="sp-beam"></span></div>`;
+  if (k==='replyvoo') return `<div class="sn sn-rv"><div class="rv-chat"><span class="rv-head"><i></i>${tt('sc.rv.ai','AI Closer · replying')}</span><span class="rv-b in">${tt('sc.rv.q','Is the VIP group still open?')}</span><span class="rv-ow"><span class="rv-typing"><i></i><i></i><i></i></span><span class="rv-b out">${tt('sc.rv.a','Yes 🙌 Here’s your link.')}</span></span><span class="rv-paid">${I.check} ${tt('sc.rv.paid2','Paid')}</span></div></div>`;
+  if (k==='castvoo') return `<div class="sn sn-cv"><span class="cv-core">${I.send}</span>${[0,1,2].map(i=>`<span class="cv-ring" style="--i:${i}"></span>`).join('')}
+      ${[['16%','26%',0],['82%','24%',1],['88%','66%',2],['12%','68%',3],['30%','88%',4]].map(([x,y,i])=>`<span class="cv-av" style="--x:${x};--y:${y};--i:${i};--h:${[205,330,150,35,265][i]}"><i></i><em>✓✓</em></span>`).join('')}
+      <span class="cv-stat">${tt('sc.cv.all','Delivered to every subscriber')} <b>✓✓</b></span></div>`;
+  if (k==='advoo') return `<div class="sn sn-va"><span class="va-prompt"><span class="va-type">${tt('sc.va.p','A promo for my Telegram channel')}</span></span>
+      <div class="va-frames"><span class="va-f f916"><i class="va-play"></i><span class="va-pb"><i></i></span></span><span class="va-f f11"><b>${tt('sc.va.hook','Hook')}</b></span><span class="va-f f169"><i class="va-play"></i></span></div></div>`;
+  if (k==='gatevoo') return `<div class="sn sn-gv"><div class="gv-co"><span class="gv-row"><small>${tt('sc.gv.co','Checkout')}</small><b>USDT <em>or</em> BTC</b></span><span class="gv-coin"><span class="gc f">₮</span><span class="gc b">₿</span></span>
+      <span class="gv-st"><span class="w"><i></i>${tt('sc.gv.wait','Waiting for payment')}</span><span class="p">${I.check} ${tt('sc.gv.paid','Paid · to your wallet')}</span></span></div><span class="gv-dot"></span></div>`;
+  return `<div class="sn sn-gen"><i></i><i></i><i></i></div>`;
+}
+function scCard(c,i,n){
+  const soon=c.status==='soon', url=c.url||(soon?vooHome():'');
+  const cta=c.cta||(soon?tt('apps.wait','Join the waitlist'):tt('apps.more','Learn more'));
+  const badge=soon?tt('apps.soon','Coming soon'):c.badge||'';
+  const aff=c.kind==='affiliate';
+  return `<article class="scc sc-${esc(c.kind)} ink-${c.ink==='dark'?'dark':'light'}${soon?' sc-soon':''}"${aff?' data-act="aff-open" data-w="showcase-card"':''} style="--c1:${esc(c.color||'#5b3df5')};--c2:${esc(c.color2||c.color||'#8f7bff')}" data-i="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} / ${n}: ${esc(c.name||'')}">
+    <div class="scc-scene" aria-hidden="true">${scScene(c)}</div>
+    <div class="scc-body"><div class="scc-top">${scLogo(c)}<span class="scc-nm"><b>${c.kind==='affiliate'?'VooSquare':esc(c.name||'')}</b><small>${c.kind==='affiliate'?tt('sc.aff.prog','Affiliate program'):tt('apps.by','by Zedapex')}</small></span>${badge?`<em class="scc-badge">${soon?'<i></i>':''}${esc(badge)}</em>`:''}</div>
+      <h3>${esc(c.headline||'')}</h3>${c.tagline?`<p>${esc(c.tagline)}</p>`:''}
+      ${aff?`<button type="button" class="scc-cta" data-act="aff-open" data-w="showcase-cta">${esc(cta)} ${I.arrow}</button>`:url?`<a class="scc-cta" href="${esc(url)}" target="_blank" rel="noopener" data-act="sc-cta" data-id="${esc(c.id)}">${esc(cta)} ${I.arrow}</a>`:''}</div></article>`;
+}
+function showcaseHtml(){
+  const cards=scCards(); if(!cards.length) return '';
+  return `<section class="sc" id="showcase" aria-roledescription="carousel" aria-label="${esc(tt('sc.aria','More from VooSquare'))}">
+    <div class="sc-h"><div class="sc-ht"><span class="sc-eb"><span class="scc-logo xs">${VSQ_MARK}</span>${tt('sc.eb','More from VooSquare')}</span><h2>${tt('sc.h','Tools that grow with you')}</h2></div>
+      <div class="sc-arrows"><button class="sc-arr" data-act="sc-step" data-v="-1" aria-label="${tt('apps.prev','Previous')}">${I.chevl}</button><button class="sc-arr" data-act="sc-step" data-v="1" aria-label="${tt('apps.next','Next')}">${I.chevr}</button></div></div>
+    <div class="sc-track" id="sctrack" tabindex="0" aria-live="off">${cards.map((c,i)=>scCard(c,i,cards.length)).join('')}</div>
+    <div class="sc-dots" id="scdots"></div></section>`;
+}
+/* Autoplay: one JS clock per carousel. It always advances (phones included); any touch/drag/hover/wheel only
+   pushes the next move ~6s into the future, so nothing can leave it paused for good. It only waits while the
+   carousel is completely off screen. Reduced motion: slower (~7s), a quick crossfade instead of a long slide,
+   and the scenes stay still. Re-rendering the Overview kills the old clock before a new one starts. */
+let SC_CLOCK=null;
+function showcaseStart(){
+  clearInterval(SC_CLOCK); SC_CLOCK=null;
+  const root=$('#showcase'), tr=$('#sctrack'); if(!root||!tr) return;
+  const cards=[...tr.children], dots=$('#scdots'), PERIOD=reduced?7000:4500, IDLE=6000, TICK=100;
+  let idx=0, nPos=1, elapsed=0, quietUntil=0, visible=true, drag=null, moved=false, busy=false;
+  const step=()=>cards.length>1?cards[1].offsetLeft-cards[0].offsetLeft:tr.clientWidth;
+  const positions=()=>Math.max(1,Math.round((tr.scrollWidth-tr.clientWidth)/Math.max(1,step()))+1);
+  const cur=()=>Math.min(nPos-1,Math.max(0,Math.round(tr.scrollLeft/Math.max(1,step()))));
+  const touched=()=>{ quietUntil=Date.now()+IDLE; elapsed=0; paint(); };
+  function paint(){ const d=dots.children[idx]; if(d) d.style.setProperty('--p',Math.min(1,elapsed/PERIOD).toFixed(3)); }
+  function drawDots(){ nPos=positions(); dots.innerHTML=nPos>1?Array.from({length:nPos},(_,i)=>`<button data-act="sc-go" data-v="${i}" aria-label="${esc(tt('sc.go','Go to slide {n}',{n:i+1}))}" ${i===idx?'aria-current="true"':''}><i></i></button>`).join(''):''; root.classList.toggle('sc-one',nPos<=1); setIdx(Math.min(idx,nPos-1),true); }
+  function setIdx(i,force){ i=Math.max(0,Math.min(nPos-1,i)); if(i===idx&&!force) return; idx=i; elapsed=0; [...dots.children].forEach((b,j)=>{ b.toggleAttribute('aria-current',j===idx); b.style.setProperty('--p',0); }); }
+  function jump(left){ /* crossfade: used for reduced motion and for the wrap back to the first card */
+    if (busy) return; busy=true; const fade=(a,z,ms)=>tr.animate?tr.animate([{opacity:a},{opacity:z}],{duration:ms,easing:'ease-out'}).finished.catch(()=>{}):Promise.resolve();
+    fade(1,.15,140).then(()=>{ tr.style.scrollSnapType='none'; tr.scrollLeft=left; requestAnimationFrame(()=>{ tr.style.scrollSnapType=''; }); return fade(.15,1,220); }).then(()=>{ busy=false; }); }
+  function goTo(i){ if(nPos<1) return; const wrap=i>=nPos||i<0; i=((i%nPos)+nPos)%nPos; const left=i*step();
+    if (reduced||wrap) jump(left); else tr.scrollTo({left,behavior:'smooth'}); setIdx(i,true); }
+  root._go=i=>{ touched(); goTo(i); }; root._step=d=>{ touched(); goTo(cur()+d); };
+  let st=null; tr.addEventListener('scroll',()=>{ clearTimeout(st); st=setTimeout(()=>{ if(!drag&&!busy) setIdx(cur()); },120); },{passive:true});
+  /* any interaction = short pause, never a latch */
+  ['touchstart','touchmove','wheel'].forEach(ev=>tr.addEventListener(ev,touched,{passive:true}));
+  root.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') touched(); },{passive:true});
+  root.addEventListener('pointerdown',touched,{passive:true});
+  tr.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){ e.preventDefault(); root._step(1); } if(e.key==='ArrowLeft'){ e.preventDefault(); root._step(-1); } });
+  /* mouse drag on desktop (touch uses native scroll + snap) */
+  tr.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse'||e.button!==0) return; drag={x:e.clientX,sl:tr.scrollLeft,t:Date.now()}; moved=false; });
+  const onMove=e=>{ if(!drag) return; const dx=e.clientX-drag.x; if(!moved&&Math.abs(dx)>5){ moved=true; tr.classList.add('drag'); } if(moved){ tr.scrollLeft=drag.sl-dx; e.preventDefault(); touched(); } };
+  const onUp=()=>{ if(!drag) return; const was=moved, d0=drag; drag=null; tr.classList.remove('drag'); if(was){ const s=step(), raw=tr.scrollLeft/s, base=d0.sl/s; goTo(raw>base+.15?Math.ceil(raw):raw<base-.15?Math.floor(raw):Math.round(raw)); touched(); } };
+  addEventListener('pointermove',onMove); addEventListener('pointerup',onUp); addEventListener('pointercancel',onUp);
+  tr.addEventListener('click',e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } },true);
+  tr.addEventListener('dragstart',e=>e.preventDefault());
+  /* only "fully off screen" pauses; scenes animate only for the cards in view */
+  const r0=root.getBoundingClientRect(); visible=r0.bottom>0&&r0.top<innerHeight; root.classList.toggle('sc-live',visible);
+  let io1=null, io2=null;
+  if ('IntersectionObserver' in window){
+    io1=new IntersectionObserver(([e])=>{ visible=e.isIntersecting; root.classList.toggle('sc-live',visible); },{threshold:0}); io1.observe(root);
+    io2=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('sc-vis',e.isIntersecting)),{root:tr,threshold:.55}); cards.forEach(c=>io2.observe(c));
+  } else { root.classList.add('sc-live'); cards.forEach(c=>c.classList.add('sc-vis')); }
+  let rt=null; const onR=()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(!root.isConnected) return; const i=idx; drawDots(); tr.scrollLeft=Math.min(i,nPos-1)*step(); },160); };
+  addEventListener('resize',onR);
+  const clock=setInterval(()=>{
+    if (!root.isConnected){ clearInterval(clock); if(SC_CLOCK===clock) SC_CLOCK=null; removeEventListener('resize',onR); removeEventListener('pointermove',onMove); removeEventListener('pointerup',onUp); removeEventListener('pointercancel',onUp); io1&&io1.disconnect(); io2&&io2.disconnect(); return; }
+    if (drag && Date.now()-drag.t>15000){ drag=null; tr.classList.remove('drag'); }
+    if (nPos<=1 || !visible || document.hidden || drag || busy || Date.now()<quietUntil) return;
+    elapsed+=TICK; paint();
+    if (elapsed>=PERIOD) goTo(idx+1);
+  },TICK);
+  SC_CLOCK=clock; root._idx=()=>idx;
+  drawDots();
+}
+
+/* ---------- VooSquare Affiliates: in-app details sheet (opened from the showcase card and the side menu) ---------- */
+const affUrl = () => (S.cfg&&S.cfg.showcase&&S.cfg.showcase.affiliate&&S.cfg.showcase.affiliate.url)||'https://affiliate.voosquare.com';
+const affNav = () => `<button class="nav-a aff-nav" data-act="aff-open" data-w="nav" title="${esc(tt('aff.nav','Earn as an affiliate'))}"><span class="aff-ni">${VSQ_MARK}</span><span>${tt('aff.nav','Earn as an affiliate')}</span><em class="new aff-pill">${tt('aff.pill','Up to 50%')}</em></button>`;
+function affTools(){
+  const seen=new Set(), out=[{id:'joinvoo',kind:'joinvoo',name:'Joinvoo',status:'live'}];
+  for (const c of scCards()) if (c.kind!=='affiliate') out.push(c);
+  for (const a of (appsAll()||[])) if (a.id!=='voosquare'&&a.id!=='affleego'&&a.id!=='landvoo') out.push({id:a.id,kind:a.id,name:a.name,status:a.status,logo_url:a.logo_url||''});
+  return out.filter(c=>{ const k=c.kind==='vooads'?'advoo':c.kind; if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,8);
+}
+function openAffiliate(where){
+  closePop(); closeSheet(); appClick('affiliate',where||'');
+  const url=affUrl(), ext=`href="${esc(url)}" target="_blank" rel="noopener"`;
+  const steps=[[I.user,tt('aff.s1','Join VooSquare Affiliates'),tt('aff.s1.p','Create your partner account. It takes a couple of minutes.')],
+    [I.link,tt('aff.s2','Share your link'),tt('aff.s2.p','One link per tool, with sub IDs so you see which page, ad or post brought each customer.')],
+    [I.coin,tt('aff.s3','Earn monthly, for life'),tt('aff.s3.p','You’re paid every month your customers keep their plan.')]];
+  const gets=[[I.link,tt('aff.g1','Tracking links with sub IDs')],[I.refresh,tt('aff.g2','Postbacks to your tracker')],[I.sparkles,tt('aff.g3','Ready creatives and brand kit')],[I.user,tt('aff.g4','A dedicated manager as you grow')],[I.wallet,tt('aff.g5','Payouts in USDT or to your bank')]];
+  const faq=[[tt('aff.f1','Who can join?'),tt('aff.f1.a','Marketers, media buyers, creators and community owners who can send people to tools for Telegram businesses. You sign up on VooSquare Affiliates, where the terms explain who’s eligible.')],
+    [tt('aff.f2','How am I paid?'),tt('aff.f2.a','Monthly, in USDT or by bank transfer, once your commissions are confirmed. Payout details are in the terms on VooSquare Affiliates.')],
+    [tt('aff.f3','Do I need to be a Joinvoo customer?'),tt('aff.f3.a','No. You can promote Joinvoo and the other Zedapex tools without using them yourself, though knowing the product helps you sell it.')]];
+  sheet(`<span class="aff-hl">${VSQ_MARK}</span><h2>VooSquare Affiliates<small>${tt('aff.sub','Partner program')}</small></h2>`, `
+    <section class="aff-hero"><div class="ah-copy"><span class="ah-eb"><i></i>${tt('aff.eb','Affiliate program')}</span><h3>${tt('aff.h','Earn up to 50% for life')}</h3><p>${tt('aff.p','Promote Joinvoo and every Zedapex tool. Get paid every month your customers stay.')}</p>
+        <span class="ah-chips"><em>${tt('aff.c1','Up to 50%')}</em><em>${tt('aff.c2','Lifetime')}</em></span></div>
+      <div class="ah-art" aria-hidden="true"><span class="ah-link">${I.link}<b>${tt('aff.yourlink','your link')}</b></span><span class="ah-flow"><i></i><i></i><i></i></span>
+        <span class="ah-users">${[0,1,2].map(i=>`<i style="--i:${i}"></i>`).join('')}</span>
+        <span class="ah-bars">${[0,1,2,3,4,5].map(i=>`<i style="--i:${i}"></i>`).join('')}<em>${I.up}</em></span><small class="ah-cap">${tt('aff.monthly','Monthly payouts')}</small></div></section>
+    <section class="aff-sec"><h4>${tt('aff.how','How it works')}</h4><ol class="aff-steps">${steps.map(([ic,t,p],i)=>`<li style="--i:${i}"><span class="as-n">${ic}</span><span class="as-t"><b>${t}</b><small>${p}</small></span></li>`).join('')}</ol></section>
+    <section class="aff-sec"><h4>${tt('aff.what','What you can promote')}</h4><div class="aff-tools">${affTools().map((c,i)=>`<span class="at" style="--i:${i}">${c.kind==='joinvoo'?`<span class="scc-logo"><img src="${logoSrc('joinvoo')}" width="40" height="40" alt=""></span>`:scLogo(c)}<b>${esc(c.kind==='advoo'?'Vooads':c.name||'')}</b>${c.status==='soon'?`<em>${tt('apps.soon2','Soon')}</em>`:''}</span>`).join('')}</div></section>
+    <section class="aff-sec"><h4>${tt('aff.get','What you get')}</h4><ul class="aff-gets">${gets.map(([ic,t])=>`<li><span>${ic}</span>${t}</li>`).join('')}</ul>
+      <p class="aff-terms">${I.shield}<span>${tt('aff.terms','Lifetime, with conditions —')} <a ${ext}>${tt('aff.terms.l','read the full terms on affiliate.voosquare.com')}</a></span></p></section>
+    <p class="aff-diff"><b>${tt('aff.diff.h','Not the same as Referrals.')}</b> ${tt('aff.diff','Referrals (Earn page) reward customers who invite friends; the affiliate program is for marketers and creators.')}</p>
+    <section class="aff-sec"><h4>${tt('aff.faq','Questions')}</h4><div class="aff-faq">${faq.map(([q,a])=>`<details><summary>${q}${I.chev}</summary><p>${a}</p></details>`).join('')}</div></section>
+    <div class="aff-cta"><a class="btn primary lg wide aff-go" ${ext} data-act="aff-go">${tt('aff.go','Start on VooSquare Affiliates')} ${I.arrow}</a></div>`);
+  const sh=$('.sheet'); if (sh) sh.classList.add('aff-sheet');
+}
+
+/* ---------- handlers ---------- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'aff-open': e.preventDefault(); openAffiliate(a.dataset.w); break;
+    case 'aff-go': appClick('affiliate','aff-sheet-cta'); break;
+    case 'bot-pick': { const b=(S.chans.bots||[]).find(x=>String(x.id)===a.dataset.id); if(b){ W.bot=b; W.pickBot=false; W.warn=''; W.prevWh=''; W.mode='channel'; W.step=2; drawStep(); } break; }
+    case 'bot-pick-new': { const L=S.chans&&S.chans.limits, bt=L&&!L.unlimited&&L.bots; if(bt&&bt.max!=null&&(bt.used||0)>=bt.max){ openLimitSheet({kind:'bots',used:bt.used,max:bt.max,plan:L.plan}); break; } W.pickBot=false; W.bot=null; W.step=1; drawStep(); break; }
+    case 'bot-pick-back': W.pickBot=true; W.bot=null; W.step=1; drawStep(); break;
+    case 'bot-new': renderSetup(1, true); break;
+    case 'lim-up': goUpgrade(); break;
+    case 'lim-open': openLimitSheet({kind:a.dataset.k||'channels'}); break;
+    case 'lim-list': if(!S.lim) S.lim={kind:'channels',opt:{}}; S.lim.view='list'; drawLimitSheet(); break;
+    case 'lim-back': if(S.lim){ S.lim.view='pick'; drawLimitSheet(); } break;
+    case 'ch-menu': chMenu(a); break;
+    case 'ch-rm': openRemoveChannel(a.dataset.id, a.dataset.from); break;
+    case 'ch-rm-go': removeChannelGo(a); break;
+    case 'bot-rm': openRemoveBot(a.dataset.id, a.dataset.from); break;
+    case 'bot-rm-go': removeBotGo(a); break;
+    case 'sc-step': { const r=$('#showcase'); if(r&&r._step) r._step(+a.dataset.v); break; }
+    case 'sc-go': { const r=$('#showcase'); if(r&&r._go) r._go(+a.dataset.v); break; }
+    case 'sc-cta': appClick(a.dataset.id,'showcase'); break;
+    case 'copy': case 'bot-settings': if (a.closest('.pop')) setTimeout(closePop,0); break;
+    case 'close': S.lim=null; break;
   }
 });
 
@@ -5901,7 +6642,7 @@ const Demo = (() => {
     return rows.sort((a,b)=>b.created_at-a.created_at).slice(0,limit);
   }
   function tick(){
-    const chs=db.channels.filter(c=>c.live); if(!chs.length) return; const ch=chs[Math.floor(Math.random()*chs.length)], ts=Date.now();
+    const chs=db.channels.filter(c=>c.live&&!c.deleted&&c.status!=='removed'); if(!chs.length) return; const ch=chs[Math.floor(Math.random()*chs.length)], ts=Date.now();
     liveClicks.push({ch:ch.id,ts});
     if (Math.random()<.42){ const p=person({...ch,cc:['US','GB','DE','BR','IN','AE']},0,nid++,true,1); p.id=nid++; p.joined_at=ts; p.click_ts=ts-Math.round(4000+Math.random()*50000); p.capi_status=on(ch,'meta')?'sent':'no_pixel'; p.tt_status=on(ch,'tiktok')?'sent':'none'; p.sc_status=on(ch,'snap')?'sent':'none'; p.convs=[]; live.push(p); }
     else if (Math.random()<.08){ const p=person(ch,0,nid++,false,1); p.id=nid++; p.joined_at=ts; live.push(p); }
@@ -6047,6 +6788,7 @@ const Demo = (() => {
   let country8={code:qc8==='NONE'?null:(/^[A-Z]{2}$/.test(qc8)?qc8:'NG'), changed_at:null};
   const PM8=[
     {id:'pm_paystack',name:'Paystack',type:'paystack',description:'Card, bank transfer or USSD, charged in Naira.',currency:'NGN',fx_rate:1500,fx_example:true,min_usd:10,max_usd:5000,fee_pct:0,countries:{mode:'only',list:['NG','GH','KE','ZA']}},
+    {id:'pm_gatevoo',name:'USDT or Bitcoin',type:'gatevoo',brand:'gatevoo',description:'Secure crypto checkout by Gatevoo',logo_url:'/media/paylogos/gatevoo.svg',currency:'USD',fx_rate:1,min_usd:10,max_usd:50000,fee_pct:0,countries:{mode:'global'}},
     {id:'pm_stripe',name:'Bank card (Stripe)',type:'stripe',description:'Visa, Mastercard, Apple Pay and Google Pay.',currency:'USD',fx_rate:1,min_usd:10,max_usd:10000,fee_pct:3,countries:{mode:'global'}},
     {id:'pm_usdt',name:'USDT (TRC20)',type:'crypto_manual',description:'Tether on the TRON network. Our team confirms it.',currency:'USDT',fx_rate:1,min_usd:20,max_usd:50000,fee_pct:0,network:'TRON (TRC20)',address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',instructions:'Send USDT on the TRC20 network only. Sending another coin or network loses the funds.',countries:{mode:'global'}},
     {id:'pm_bank',name:'Bank transfer',type:'manual',description:'Pay from your bank account. Confirmed within a few hours.',currency:'USD',fx_rate:1,min_usd:50,max_usd:20000,fee_pct:0,instructions:'Use the reference below so we can match your transfer.',fields:[{label:'Bank',value:'Demo Bank'},{label:'Account name',value:'Joinvoo (demo)'},{label:'IBAN',value:'DE00 0000 0000 0000 0000 00'},{label:'SWIFT / BIC',value:'DEMODEXX'}],countries:{mode:'global'}}];
@@ -6312,7 +7054,7 @@ const Demo = (() => {
     throw err('Not found');
   }
   function addChannel(name){
-    const bot=db.bots[db.bots.length-1]; if(!bot) return; const id=50+db.channels.length;
+    const bot=(W.bot&&db.bots.find(b=>b.id===W.bot.id&&b.status!=='deleted'))||db.bots.filter(b=>b.status!=='deleted').pop(); if(!bot) return; const id=50+db.channels.length;
     const c={...blank,id,title:typeof name==='string'&&name?name:'Travel Hacks',type:'channel',status:'active',pool:0,pool_target:200,bots:[bot.username],tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),age:0,base:0,rate:0,cc:['US'],mix:{meta:1},live:true};
     db.channels.push(c);
     const f=setInterval(()=>{ c.pool=Math.min(200,c.pool+11); if(c.pool>=200) clearInterval(f); },600);
@@ -6334,14 +7076,67 @@ const Demo = (() => {
     const apps=qa.get('apps')==='0'?undefined:[
       {id:'replyvoo',name:'Replyvoo',tagline:'Sky-rocket your sales. On autopilot.',headline:'AI Closers answer every chat in seconds, qualify every lead and send the payment link while you sleep.',url:'https://replyvoo.com',color:'#FFC21A',color2:'#FFE48A',ink:'dark',logo:'replyvoo',badge:'New',offer:'30 free chats a month',status:'live',enabled:true},
       {id:'castvoo',name:'Castvoo',tagline:'Turn your Telegram into a sales machine.',headline:'Welcomes every new subscriber, follows up on time and sends each group the message written for them. Broadcasts, drips and AI in one place.',url:'https://castvoo.com',color:'#3b6cf6',color2:'#2f55e4',ink:'light',logo:'castvoo',badge:'New',offer:'7 days free',status:'live',enabled:true},
-      {id:'advoo',name:'Advoo',tagline:'Make ads that print.',headline:'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.',url:'https://advoo.com',color:'#ef5a2c',color2:'#c8401a',ink:'light',logo:'advoo',badge:'',offer:'First ads free',status:'live',enabled:true},
+      {id:'advoo',name:'Vooads',tagline:'Make ads that print.',headline:'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.',url:'https://advoo.com',color:'#ef5a2c',color2:'#c8401a',ink:'light',logo:'advoo',badge:'',offer:'First ads free',status:'live',enabled:true},
       {id:'affleego',name:'Affleego',tagline:'Top affiliate deals in one place.',headline:'Find and join high-paying offers.',url:'https://affleego.com',color:'#14b8a6',color2:'#0f766e',ink:'light',logo:'affleego',badge:'',offer:'',status:'live',enabled:true},
       {id:'landvoo',name:'Landvoo',tagline:'Landing pages that convert.',headline:'Fast pages for your ads, built in minutes.',url:'',color:'#EEF0F6',color2:'#E2E6F0',ink:'dark',logo:'landvoo',badge:'Coming soon',offer:'',status:'soon',enabled:true},
       {id:'voosquare',name:'VooSquare',tagline:'One login for all Zedapex tools',url:'https://voosquare.com',color:'#0fae6b',color2:'#c6f45a',ink:'dark',logo:'voosquare',status:'live',enabled:true}];
     const voo={login:'off',home:'https://voosquare.com',referrals:qa.get('refs')==='voo'?'voosquare':'local'};
     return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',contact:''},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
   }
-  return {handle,addChannel,useSample,reset,config,get sample(){return sample;},pbk:null};
+  /* ---------- Round 11: plan limits, remove channel / disconnect bot, click IDs + match keys, leaves split, showcase ----------
+     Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.
+     ?limits=over puts the sample on 3/3 (two channels show as locked). Upgrading to Pro in the demo lifts both. */
+  const q11=new URLSearchParams(location.search);
+  const lim11=()=>{ const pro=plan6.id==='pro'||q11.get('limits')==='pro'; return {plan:pro?'pro':'basic',unlimited:pro,ch:pro?null:(q11.get('limits')==='over'||!sample?3:6),bt:pro?null:3}; };
+  const liveCh=()=>db.channels.filter(c=>!c.deleted&&c.status!=='removed');
+  const actBots=()=>db.bots.filter(b=>b.status==='active');
+  const limits11=()=>{ const L=lim11(); return {plan:L.plan,unlimited:L.unlimited,channels:{used:liveCh().length,max:L.ch},bots:{used:actBots().length,max:L.bt},pro_price_usd:99,basic_price_usd:30}; };
+  function over11(kind){ const L=lim11(); if(L.unlimited) return null; const used=kind==='bots'?actBots().length:liveCh().length, max=kind==='bots'?L.bt:L.ch;
+    if (max==null||used<max) return null; const e=err(`You’ve used ${used} of ${max} ${kind} on Basic. Upgrade to Pro for unlimited, or remove one.`); e.status=402; e.data=e.body={error:e.message,limit:{kind,used,max,plan:'basic'}}; return e; }
+  const BOTNAMES=['mybrand_track_bot','promo_hub_bot','vip_signals_bot','deals_alert_bot','growth_lab_bot','flash_offers_bot'];
+  function keys11(x){ const k=h('ck',x.id,x.tg_user_id);
+    if (x.click_id){ x.click_code=x.click_code||'c-'+(k>>>8).toString(16).padStart(6,'0').slice(-6); const pl=x.fbclid?'Meta':x.ttclid?'TikTok':x.sccid?'Snapchat':'Ad';
+      x.link_name=x.link_name||`${pl} · ${x.click_code}${x.country?' · '+x.country:''}`; x.match=x.match||{fbc:!!x.fbclid,fbp:k%6!==0,ip:true,ua:k%9!==0}; }
+    else { x.click_code=null; x.link_name=x.link_name||null; x.match=null; } return x; }
+  async function handle11(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname; let m;
+    if (p==='/api/channels'&&method==='GET'){ const r=await handle(method,path,body), L=limits11(), max=L.channels.max; let k=0;
+      r.channels=r.channels.filter(c=>!c.deleted).map(({deleted,...c})=>({...c,locked:c.status!=='removed'&&max!=null&&(k++)>=max}));
+      r.bots=r.bots.filter(b=>b.status!=='deleted').map(b=>({...b,channels:r.channels.filter(c=>c.status!=='removed'&&((c.bots||[]).includes(b.username))).length})); r.limits=L; return r; }
+    if (p==='/api/bots'&&method==='POST'){ const t=String(body&&body.token||'').trim(); if(!/^\d{5,15}:[A-Za-z0-9_-]{30,}$/.test(t)) return handle(method,path,body);
+      const tg=+t.split(':')[0], ex=db.bots.find(b=>b.tg_id===tg&&b.status!=='deleted'); await wait(650); if (ex){ ex.status='active'; return {ok:true,bot:ex}; }
+      const e=over11('bots'); if(e) throw e;
+      const bot={id:Math.max(0,...db.bots.map(b=>b.id))+1,tg_id:tg,username:BOTNAMES.find(n=>!db.bots.some(b=>b.username===n))||('track'+tg%1000+'_bot'),status:'active'}; db.bots.push(bot); return {ok:true,bot}; }
+    if ((m=/^\/api\/bots\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(450); const b=db.bots.find(x=>x.id===+m[1]&&x.status!=='deleted'); if(!b) throw err('Bot not found.');
+      b.status='deleted'; db.channels.forEach(c=>{ if((c.bots||[]).includes(b.username)){ c.bots=c.bots.filter(x=>x!==b.username); if(!c.bots.length&&!c.external) c.status='removed'; } }); return {ok:true}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(450); const c=db.channels.find(x=>x.id===+m[1]&&!x.deleted); if(!c) throw err('Channel not found'); c.deleted=true; c.status='removed'; return {ok:true}; }
+    if (method==='POST'){ let create=false;
+      if (p==='/api/channels') create=true;
+      if (p==='/api/bot-targets'){ const bot=db.bots.find(b=>b.id==(body&&body.bot_id)); create=!bot||!db.channels.some(c=>!c.deleted&&c.type==='bot'&&!c.external&&c.bots[0]===bot.username); }
+      if (p==='/api/bot-targets/external'){ const un='@'+String(body&&body.username||'').trim().replace(/^@/,'').replace(/^https?:\/\/t\.me\//,'').toLowerCase(); create=!db.channels.some(c=>!c.deleted&&c.external&&c.title.toLowerCase()===un); }
+      if (create){ const e=over11('channels'); if(e){ await wait(450); throw e; } } }
+    if (p==='/api/joins'&&method==='GET'){ const r=await handle(method,path,body); (r.rows||[]).forEach(keys11); return r; }
+    if (p==='/api/stats'&&method==='GET'){ const r=await handle(method,path,body), T=r&&r.totals;
+      if (T&&T.leaves!=null&&T.leaves_new==null){ const base=(T.joins||0)+(T.organic||0), n=Math.min(base,Math.round(T.leaves*.027)+(T.leaves&&base?1:0)); T.leaves_new=n; T.leaves_old=Math.max(0,T.leaves-n); } return r; }
+    if (p==='/api/billing/topup'&&body&&body.method_id==='pm_gatevoo'){ const r=await handle(method,path,body); const ref=String(r.redirect_url||'').split('paid=')[1]||''; return {ok:true,url:r.redirect_url,reference:ref}; }
+    return handle(method,path,body);
+  }
+  function config11(){
+    const c=config(); if (!c.apps) return c;
+    c.apps=c.apps.concat([{id:'spyvoo',name:'Spyvoo',tagline:'Spy the winners. Scale your own.',headline:'See the ads working right now in your niche, how long they’ve run and the hooks behind them.',url:'https://spyvoo.com',color:'#2457ff',color2:'#0d2fc4',ink:'light',logo:'',badge:'New',offer:'',status:'live',enabled:true},
+      {id:'gatevoo',name:'Gatevoo',tagline:'Get paid in crypto, straight to your wallet.',headline:'A USDT and Bitcoin checkout for your Telegram business.',url:'https://gatevoo.com',color:'#0b0b0f',color2:'#24242c',ink:'light',logo:'gatevoo',badge:'Coming soon',offer:'',status:'soon',enabled:true}]);
+    c.showcase={enabled:q11.get('showcase')!=='0',
+      affiliate:{url:'https://affiliate.voosquare.com',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',cta:'Become an affiliate'},
+      cards:[
+        {id:'affiliate',name:'VooSquare Affiliates',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',url:'https://affiliate.voosquare.com',color:'#0e9f63',color2:'#064e33',ink:'light',logo_url:'/media/applogos/voosquare.svg',status:'live',cta:'Become an affiliate',badge:'Up to 50%'},
+        {id:'spyvoo',name:'Spyvoo',headline:'Spy the winners. Scale your own.',tagline:'See the ads working right now in your niche, how long they’ve run and the hooks behind them.',url:'https://spyvoo.com',color:'#2457ff',color2:'#0d2fc4',ink:'light',logo_url:'',status:'live',cta:'Start spying',badge:'New'},
+        {id:'replyvoo',name:'Replyvoo',headline:'Sky-rocket your sales. On autopilot.',tagline:'AI Closers answer every chat in seconds and send the payment link while you sleep.',url:'https://replyvoo.com',color:'#FFC21A',color2:'#FFE07A',ink:'dark',logo_url:'/media/applogos/replyvoo.svg',status:'live',cta:'Try it free',badge:'30 free chats'},
+        {id:'castvoo',name:'Castvoo',headline:'Turn your Telegram into a sales machine.',tagline:'Broadcasts, drips and AI follow-ups that reach every subscriber at the right time.',url:'https://castvoo.com',color:'#3b6cf6',color2:'#1f3fc9',ink:'light',logo_url:'/media/applogos/castvoo.svg',status:'live',cta:'Start 7 days free',badge:'New'},
+        {id:'advoo',name:'Vooads',headline:'Make ads that print.',tagline:'One sentence in. Scroll-stopping videos, images and hooks out, in every size.',url:'https://advoo.com',color:'#ef5a2c',color2:'#b83a14',ink:'light',logo_url:'/media/applogos/advoo.svg',status:'live',cta:'Make my first ad',badge:'First ads free'},
+        {id:'gatevoo',name:'Gatevoo',headline:'Get paid in crypto, straight to your wallet.',tagline:'A USDT and Bitcoin checkout for your Telegram business. No middleman holding your money.',url:'https://gatevoo.com',color:'#0b0b0f',color2:'#24242c',ink:'light',logo_url:'/media/paylogos/gatevoo.svg',status:'soon',cta:'Join the waitlist',badge:'Coming soon'}]};
+    return c;
+  }
+  return {handle:handle11,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null};
 })();
 
 boot();

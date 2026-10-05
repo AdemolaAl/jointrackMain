@@ -121,7 +121,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     // ---------- summary API ----------
     const S = (q, key = SK) => fetch(`${B}/api/voosquare/summary${q}`, { headers: key ? { authorization: 'Bearer ' + key } : {} }).then(async (x) => ({ s: x.status, j: await x.json() }));
     assert((await S('?voo_id=voo_u_2', null)).s === 401 && (await S('?voo_id=voo_u_2', 'wrong')).s === 401, 'summary: 401 without the service key');
-    r = await S('?voo_id=nobody'); assert(r.s === 404 && r.j.linked === false && r.j.tool === 'joinvoo', 'summary: unknown voo_id → {linked:false}');
+    r = await S('?voo_id=nobody'); assert(r.s === 200 && r.j.linked === false && r.j.tool === 'joinvoo', 'summary: unknown voo_id → 200 {linked:false}');
     // data for old@x.com: FTD + registration postbacks, ad spend
     await post(OLD, '/api/login', { email: 'old@x.com', password: 'password1' });
     const pbUrl = (await OLD('/api/conversions')).j.postback_url;
@@ -150,7 +150,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     const types = new Set(evs.map((e) => e.type));
     assert(['registration', 'ftd', 'plan_started', 'spend'].every((t) => types.has(t)), `event types sent: ${[...types].join(', ')}`);
     const ftdE = evs.filter((e) => e.type === 'ftd');
-    assert(ftdE.length === 2 && new Set(evs.map((e) => e.event_id)).size === evs.length && evs.every((e) => /^jv_/.test(e.event_id) && e.voo_id === 'voo_u_2' && e.tool === 'joinvoo' && e.occurred_at), 'stable unique event_ids (duplicate postback → no second event)');
+    assert(ftdE.length === 2 && new Set(evs.map((e) => e.event_id)).size === evs.length && evs.filter((e) => e.type !== 'signup').every((e) => /^jv_/.test(e.event_id) && e.voo_id === 'voo_u_2' && e.tool === 'joinvoo' && e.occurred_at) && evs.every((e) => e.voo_id && e.tool === 'joinvoo'), 'stable unique event_ids (duplicate postback → no second event)');
     assert(ftdE.some((e) => e.value === 120 && e.currency === 'USD'), 'deposit events carry the amount');
     const allRaw = MOCK.M.events.map((e) => e.raw).join('');
     assert(!/777000111|777000222|Customer|old@x\.com|new@x\.com/.test(allRaw), 'no end-customer personal data (Telegram ids, names, emails) in events');
@@ -190,7 +190,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
 
     // ---------- Zedapex apps ----------
     c = (await client()('/api/config')).j;
-    assert(c.apps.map((a) => a.id).join() === 'replyvoo,castvoo,advoo,affleego,landvoo', 'apps: seeded catalog in order, without Joinvoo and the VooSquare hub');
+    assert(c.apps.map((a) => a.id).join() === 'replyvoo,castvoo,spyvoo,advoo,affleego,landvoo,gatevoo', 'apps: seeded catalog in order, without Joinvoo and the VooSquare hub');
     const rv = c.apps[0], lv = c.apps.find((a) => a.id === 'landvoo');
     assert(rv.url === 'https://replyvoo.com?utm_source=joinvoo&utm_medium=dashboard&utm_campaign=apps&utm_content=dashboard' && rv.color === '#ffc21a' && rv.ink === 'dark' && rv.offer === '30 free chats a month' && rv.logo_url === '/media/applogos/replyvoo.svg' && rv.headline && rv.tagline, 'apps: brand colours, offer, logo, UTM link');
     assert(lv.status === 'soon' && lv.badge === 'Coming soon' && lv.url === 'https://voosquare.test', 'coming-soon app links to the VooSquare waitlist');
@@ -204,7 +204,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     as = (await ADM('/api/admin/settings')).j;
     assert(as.apps.find((a) => a.id === 'castvoo').clicks === 1 && as.apps.find((a) => a.id === 'advoo').clicks === 30, 'admin sees clicks per app (rate-limited)');
     const edit = as.apps.map(({ logo_url, url_out, clicks, ...a }) => a);
-    const ed2 = [edit[2], edit[0], ...edit.filter((_, i) => i !== 0 && i !== 2)].map((a) => (a.id === 'affleego' ? { ...a, enabled: false } : a.id === 'advoo' ? { ...a, offer: '3 ads free', color: 'red' } : a));
+    const ai = edit.findIndex((a) => a.id === 'advoo'); const ed2 = [edit[ai], edit[0], ...edit.filter((_, i) => i !== 0 && i !== ai)].map((a) => (a.id === 'affleego' ? { ...a, enabled: false } : a.id === 'advoo' ? { ...a, offer: '3 ads free', color: 'red' } : a));
     r = await put(ADM, '/api/admin/settings', { apps: ed2 });
     c = (await client()('/api/config')).j;
     assert(r.s === 200 && c.apps[0].id === 'advoo' && c.apps[0].offer === '3 ads free' && c.apps[0].color === '#5b3df5' && !c.apps.some((a) => a.id === 'affleego'), 'admin reorders, edits, disables (bad colour falls back)');
@@ -220,7 +220,7 @@ async function vooLogin(claims, { returnTo = '/app#credits', f = client(), break
     await put(ADM, '/api/admin/settings', { features: { sister_promo: false } });
     c = (await client()('/api/config')).j; assert(c.apps.length === 0 && (await post(client(), '/api/apps/click', { id: 'castvoo' })).s === 404, 'features.sister_promo off → no apps anywhere');
     await put(ADM, '/api/admin/settings', { features: { sister_promo: true }, apps: null });
-    assert((await client()('/api/config')).j.apps.length === 5, 'apps:null → back to the seeded catalog');
+    assert((await client()('/api/config')).j.apps.length === 7, 'apps:null → back to the seeded catalog');
 
     const html = await (await fetch(B + '/admin')).text();
     assert(html.includes('Zedapex apps') && html.includes('Test discovery') && html.includes('VooSquare'), 'admin page: Zedapex apps editor + VooSquare card');

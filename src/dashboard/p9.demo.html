@@ -137,7 +137,7 @@ const Demo = (() => {
     return rows.sort((a,b)=>b.created_at-a.created_at).slice(0,limit);
   }
   function tick(){
-    const chs=db.channels.filter(c=>c.live); if(!chs.length) return; const ch=chs[Math.floor(Math.random()*chs.length)], ts=Date.now();
+    const chs=db.channels.filter(c=>c.live&&!c.deleted&&c.status!=='removed'); if(!chs.length) return; const ch=chs[Math.floor(Math.random()*chs.length)], ts=Date.now();
     liveClicks.push({ch:ch.id,ts});
     if (Math.random()<.42){ const p=person({...ch,cc:['US','GB','DE','BR','IN','AE']},0,nid++,true,1); p.id=nid++; p.joined_at=ts; p.click_ts=ts-Math.round(4000+Math.random()*50000); p.capi_status=on(ch,'meta')?'sent':'no_pixel'; p.tt_status=on(ch,'tiktok')?'sent':'none'; p.sc_status=on(ch,'snap')?'sent':'none'; p.convs=[]; live.push(p); }
     else if (Math.random()<.08){ const p=person(ch,0,nid++,false,1); p.id=nid++; p.joined_at=ts; live.push(p); }
@@ -283,6 +283,7 @@ const Demo = (() => {
   let country8={code:qc8==='NONE'?null:(/^[A-Z]{2}$/.test(qc8)?qc8:'NG'), changed_at:null};
   const PM8=[
     {id:'pm_paystack',name:'Paystack',type:'paystack',description:'Card, bank transfer or USSD, charged in Naira.',currency:'NGN',fx_rate:1500,fx_example:true,min_usd:10,max_usd:5000,fee_pct:0,countries:{mode:'only',list:['NG','GH','KE','ZA']}},
+    {id:'pm_gatevoo',name:'USDT or Bitcoin',type:'gatevoo',brand:'gatevoo',description:'Secure crypto checkout by Gatevoo',logo_url:'/media/paylogos/gatevoo.svg',currency:'USD',fx_rate:1,min_usd:10,max_usd:50000,fee_pct:0,countries:{mode:'global'}},
     {id:'pm_stripe',name:'Bank card (Stripe)',type:'stripe',description:'Visa, Mastercard, Apple Pay and Google Pay.',currency:'USD',fx_rate:1,min_usd:10,max_usd:10000,fee_pct:3,countries:{mode:'global'}},
     {id:'pm_usdt',name:'USDT (TRC20)',type:'crypto_manual',description:'Tether on the TRON network. Our team confirms it.',currency:'USDT',fx_rate:1,min_usd:20,max_usd:50000,fee_pct:0,network:'TRON (TRC20)',address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',instructions:'Send USDT on the TRC20 network only. Sending another coin or network loses the funds.',countries:{mode:'global'}},
     {id:'pm_bank',name:'Bank transfer',type:'manual',description:'Pay from your bank account. Confirmed within a few hours.',currency:'USD',fx_rate:1,min_usd:50,max_usd:20000,fee_pct:0,instructions:'Use the reference below so we can match your transfer.',fields:[{label:'Bank',value:'Demo Bank'},{label:'Account name',value:'Joinvoo (demo)'},{label:'IBAN',value:'DE00 0000 0000 0000 0000 00'},{label:'SWIFT / BIC',value:'DEMODEXX'}],countries:{mode:'global'}}];
@@ -322,7 +323,7 @@ const Demo = (() => {
   const PLANS={basic:{name:'Basic',base_cents:3000,included:2000,per_join_cents:2,per_ftd_cents:0},pro:{name:'Pro',base_cents:9900,included:5000,per_join_cents:2,per_ftd_cents:0}};
   let joeMsgs=[], joeLeft=30, jid=1, jbState=null;
   function jb13(){ if (jbState) return jbState; const q=qp6.get('joe'), pro=plan6.id==='pro'||q==='deep';
-    jbState={free_left:q==='out'||q==='cap'||q==='broke'?0:2,free_daily:pro?30:10,autopay:q==='cap'||q==='broke',monthly_cap:1000,spent_month_credits:q==='cap'?996:184,est_range:[3,8],deep_allowed:pro,deep_est:[10,40],show_cost:true}; return jbState; }
+    jbState={free_left:q==='out'||q==='cap'||q==='broke'?0:2,free_daily:pro?30:5,autopay:q==='cap'||q==='broke',monthly_cap:1000,spent_month_credits:q==='cap'?996:184,est_range:[3,8],deep_allowed:pro,deep_est:[10,40],show_cost:true}; return jbState; }
   const jbOutText=()=>`You’ve used today’s ${jb13().free_daily} free chats, ${profile.nickname||'Alex'} 😄 Want me to keep going? Paid answers come from your credits — most cost 3–8 credits (≈ $0.03–0.08).`;
   async function jbBalance(){ try{ const b=await handle('GET','/api/billing'); return b.balance_cents; }catch{ return 0; } }
   const REASONS=['burst','deleted_account','repeat_user','fake_click'];
@@ -548,7 +549,7 @@ const Demo = (() => {
     throw err('Not found');
   }
   function addChannel(name){
-    const bot=db.bots[db.bots.length-1]; if(!bot) return; const id=50+db.channels.length;
+    const bot=(W.bot&&db.bots.find(b=>b.id===W.bot.id&&b.status!=='deleted'))||db.bots.filter(b=>b.status!=='deleted').pop(); if(!bot) return; const id=50+db.channels.length;
     const c={...blank,id,title:typeof name==='string'&&name?name:'Travel Hacks',type:'channel',status:'active',pool:0,pool_target:200,bots:[bot.username],tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),age:0,base:0,rate:0,cc:['US'],mix:{meta:1},live:true};
     db.channels.push(c);
     const f=setInterval(()=>{ c.pool=Math.min(200,c.pool+11); if(c.pool>=200) clearInterval(f); },600);
@@ -570,14 +571,67 @@ const Demo = (() => {
     const apps=qa.get('apps')==='0'?undefined:[
       {id:'replyvoo',name:'Replyvoo',tagline:'Sky-rocket your sales. On autopilot.',headline:'AI Closers answer every chat in seconds, qualify every lead and send the payment link while you sleep.',url:'https://replyvoo.com',color:'#FFC21A',color2:'#FFE48A',ink:'dark',logo:'replyvoo',badge:'New',offer:'30 free chats a month',status:'live',enabled:true},
       {id:'castvoo',name:'Castvoo',tagline:'Turn your Telegram into a sales machine.',headline:'Welcomes every new subscriber, follows up on time and sends each group the message written for them. Broadcasts, drips and AI in one place.',url:'https://castvoo.com',color:'#3b6cf6',color2:'#2f55e4',ink:'light',logo:'castvoo',badge:'New',offer:'7 days free',status:'live',enabled:true},
-      {id:'advoo',name:'Advoo',tagline:'Make ads that print.',headline:'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.',url:'https://advoo.com',color:'#ef5a2c',color2:'#c8401a',ink:'light',logo:'advoo',badge:'',offer:'First ads free',status:'live',enabled:true},
+      {id:'advoo',name:'Vooads',tagline:'Make ads that print.',headline:'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.',url:'https://advoo.com',color:'#ef5a2c',color2:'#c8401a',ink:'light',logo:'advoo',badge:'',offer:'First ads free',status:'live',enabled:true},
       {id:'affleego',name:'Affleego',tagline:'Top affiliate deals in one place.',headline:'Find and join high-paying offers.',url:'https://affleego.com',color:'#14b8a6',color2:'#0f766e',ink:'light',logo:'affleego',badge:'',offer:'',status:'live',enabled:true},
       {id:'landvoo',name:'Landvoo',tagline:'Landing pages that convert.',headline:'Fast pages for your ads, built in minutes.',url:'',color:'#EEF0F6',color2:'#E2E6F0',ink:'dark',logo:'landvoo',badge:'Coming soon',offer:'',status:'soon',enabled:true},
       {id:'voosquare',name:'VooSquare',tagline:'One login for all Zedapex tools',url:'https://voosquare.com',color:'#0fae6b',color2:'#c6f45a',ink:'dark',logo:'voosquare',status:'live',enabled:true}];
     const voo={login:'off',home:'https://voosquare.com',referrals:qa.get('refs')==='voo'?'voosquare':'local'};
     return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',contact:''},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
   }
-  return {handle,addChannel,useSample,reset,config,get sample(){return sample;},pbk:null};
+  /* ---------- Round 11: plan limits, remove channel / disconnect bot, click IDs + match keys, leaves split, showcase ----------
+     Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.
+     ?limits=over puts the sample on 3/3 (two channels show as locked). Upgrading to Pro in the demo lifts both. */
+  const q11=new URLSearchParams(location.search);
+  const lim11=()=>{ const pro=plan6.id==='pro'||q11.get('limits')==='pro'; return {plan:pro?'pro':'basic',unlimited:pro,ch:pro?null:(q11.get('limits')==='over'||!sample?3:6),bt:pro?null:3}; };
+  const liveCh=()=>db.channels.filter(c=>!c.deleted&&c.status!=='removed');
+  const actBots=()=>db.bots.filter(b=>b.status==='active');
+  const limits11=()=>{ const L=lim11(); return {plan:L.plan,unlimited:L.unlimited,channels:{used:liveCh().length,max:L.ch},bots:{used:actBots().length,max:L.bt},pro_price_usd:99,basic_price_usd:30}; };
+  function over11(kind){ const L=lim11(); if(L.unlimited) return null; const used=kind==='bots'?actBots().length:liveCh().length, max=kind==='bots'?L.bt:L.ch;
+    if (max==null||used<max) return null; const e=err(`You’ve used ${used} of ${max} ${kind} on Basic. Upgrade to Pro for unlimited, or remove one.`); e.status=402; e.data=e.body={error:e.message,limit:{kind,used,max,plan:'basic'}}; return e; }
+  const BOTNAMES=['mybrand_track_bot','promo_hub_bot','vip_signals_bot','deals_alert_bot','growth_lab_bot','flash_offers_bot'];
+  function keys11(x){ const k=h('ck',x.id,x.tg_user_id);
+    if (x.click_id){ x.click_code=x.click_code||'c-'+(k>>>8).toString(16).padStart(6,'0').slice(-6); const pl=x.fbclid?'Meta':x.ttclid?'TikTok':x.sccid?'Snapchat':'Ad';
+      x.link_name=x.link_name||`${pl} · ${x.click_code}${x.country?' · '+x.country:''}`; x.match=x.match||{fbc:!!x.fbclid,fbp:k%6!==0,ip:true,ua:k%9!==0}; }
+    else { x.click_code=null; x.link_name=x.link_name||null; x.match=null; } return x; }
+  async function handle11(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname; let m;
+    if (p==='/api/channels'&&method==='GET'){ const r=await handle(method,path,body), L=limits11(), max=L.channels.max; let k=0;
+      r.channels=r.channels.filter(c=>!c.deleted).map(({deleted,...c})=>({...c,locked:c.status!=='removed'&&max!=null&&(k++)>=max}));
+      r.bots=r.bots.filter(b=>b.status!=='deleted').map(b=>({...b,channels:r.channels.filter(c=>c.status!=='removed'&&((c.bots||[]).includes(b.username))).length})); r.limits=L; return r; }
+    if (p==='/api/bots'&&method==='POST'){ const t=String(body&&body.token||'').trim(); if(!/^\d{5,15}:[A-Za-z0-9_-]{30,}$/.test(t)) return handle(method,path,body);
+      const tg=+t.split(':')[0], ex=db.bots.find(b=>b.tg_id===tg&&b.status!=='deleted'); await wait(650); if (ex){ ex.status='active'; return {ok:true,bot:ex}; }
+      const e=over11('bots'); if(e) throw e;
+      const bot={id:Math.max(0,...db.bots.map(b=>b.id))+1,tg_id:tg,username:BOTNAMES.find(n=>!db.bots.some(b=>b.username===n))||('track'+tg%1000+'_bot'),status:'active'}; db.bots.push(bot); return {ok:true,bot}; }
+    if ((m=/^\/api\/bots\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(450); const b=db.bots.find(x=>x.id===+m[1]&&x.status!=='deleted'); if(!b) throw err('Bot not found.');
+      b.status='deleted'; db.channels.forEach(c=>{ if((c.bots||[]).includes(b.username)){ c.bots=c.bots.filter(x=>x!==b.username); if(!c.bots.length&&!c.external) c.status='removed'; } }); return {ok:true}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(450); const c=db.channels.find(x=>x.id===+m[1]&&!x.deleted); if(!c) throw err('Channel not found'); c.deleted=true; c.status='removed'; return {ok:true}; }
+    if (method==='POST'){ let create=false;
+      if (p==='/api/channels') create=true;
+      if (p==='/api/bot-targets'){ const bot=db.bots.find(b=>b.id==(body&&body.bot_id)); create=!bot||!db.channels.some(c=>!c.deleted&&c.type==='bot'&&!c.external&&c.bots[0]===bot.username); }
+      if (p==='/api/bot-targets/external'){ const un='@'+String(body&&body.username||'').trim().replace(/^@/,'').replace(/^https?:\/\/t\.me\//,'').toLowerCase(); create=!db.channels.some(c=>!c.deleted&&c.external&&c.title.toLowerCase()===un); }
+      if (create){ const e=over11('channels'); if(e){ await wait(450); throw e; } } }
+    if (p==='/api/joins'&&method==='GET'){ const r=await handle(method,path,body); (r.rows||[]).forEach(keys11); return r; }
+    if (p==='/api/stats'&&method==='GET'){ const r=await handle(method,path,body), T=r&&r.totals;
+      if (T&&T.leaves!=null&&T.leaves_new==null){ const base=(T.joins||0)+(T.organic||0), n=Math.min(base,Math.round(T.leaves*.027)+(T.leaves&&base?1:0)); T.leaves_new=n; T.leaves_old=Math.max(0,T.leaves-n); } return r; }
+    if (p==='/api/billing/topup'&&body&&body.method_id==='pm_gatevoo'){ const r=await handle(method,path,body); const ref=String(r.redirect_url||'').split('paid=')[1]||''; return {ok:true,url:r.redirect_url,reference:ref}; }
+    return handle(method,path,body);
+  }
+  function config11(){
+    const c=config(); if (!c.apps) return c;
+    c.apps=c.apps.concat([{id:'spyvoo',name:'Spyvoo',tagline:'Spy the winners. Scale your own.',headline:'See the ads working right now in your niche, how long they’ve run and the hooks behind them.',url:'https://spyvoo.com',color:'#2457ff',color2:'#0d2fc4',ink:'light',logo:'',badge:'New',offer:'',status:'live',enabled:true},
+      {id:'gatevoo',name:'Gatevoo',tagline:'Get paid in crypto, straight to your wallet.',headline:'A USDT and Bitcoin checkout for your Telegram business.',url:'https://gatevoo.com',color:'#0b0b0f',color2:'#24242c',ink:'light',logo:'gatevoo',badge:'Coming soon',offer:'',status:'soon',enabled:true}]);
+    c.showcase={enabled:q11.get('showcase')!=='0',
+      affiliate:{url:'https://affiliate.voosquare.com',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',cta:'Become an affiliate'},
+      cards:[
+        {id:'affiliate',name:'VooSquare Affiliates',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',url:'https://affiliate.voosquare.com',color:'#0e9f63',color2:'#064e33',ink:'light',logo_url:'/media/applogos/voosquare.svg',status:'live',cta:'Become an affiliate',badge:'Up to 50%'},
+        {id:'spyvoo',name:'Spyvoo',headline:'Spy the winners. Scale your own.',tagline:'See the ads working right now in your niche, how long they’ve run and the hooks behind them.',url:'https://spyvoo.com',color:'#2457ff',color2:'#0d2fc4',ink:'light',logo_url:'',status:'live',cta:'Start spying',badge:'New'},
+        {id:'replyvoo',name:'Replyvoo',headline:'Sky-rocket your sales. On autopilot.',tagline:'AI Closers answer every chat in seconds and send the payment link while you sleep.',url:'https://replyvoo.com',color:'#FFC21A',color2:'#FFE07A',ink:'dark',logo_url:'/media/applogos/replyvoo.svg',status:'live',cta:'Try it free',badge:'30 free chats'},
+        {id:'castvoo',name:'Castvoo',headline:'Turn your Telegram into a sales machine.',tagline:'Broadcasts, drips and AI follow-ups that reach every subscriber at the right time.',url:'https://castvoo.com',color:'#3b6cf6',color2:'#1f3fc9',ink:'light',logo_url:'/media/applogos/castvoo.svg',status:'live',cta:'Start 7 days free',badge:'New'},
+        {id:'advoo',name:'Vooads',headline:'Make ads that print.',tagline:'One sentence in. Scroll-stopping videos, images and hooks out, in every size.',url:'https://advoo.com',color:'#ef5a2c',color2:'#b83a14',ink:'light',logo_url:'/media/applogos/advoo.svg',status:'live',cta:'Make my first ad',badge:'First ads free'},
+        {id:'gatevoo',name:'Gatevoo',headline:'Get paid in crypto, straight to your wallet.',tagline:'A USDT and Bitcoin checkout for your Telegram business. No middleman holding your money.',url:'https://gatevoo.com',color:'#0b0b0f',color2:'#24242c',ink:'light',logo_url:'/media/paylogos/gatevoo.svg',status:'soon',cta:'Join the waitlist',badge:'Coming soon'}]};
+    return c;
+  }
+  return {handle:handle11,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null};
 })();
 
 boot();

@@ -1,0 +1,779 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>window.JP_DEMO=true</script></head><body><script>
+/* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
+(function(){
+  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
+  function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
+  var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
+  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
+  var D={};
+  if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
+  document.documentElement.lang=lang; window.JV_LANG=lang;
+  window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
+  function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
+    a=document.querySelectorAll('[data-i18n-t]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-t')]; el.setAttribute('data-i18n-ok',''); if(v==null) continue;
+      for(var n=el.firstChild;n;n=n.nextSibling){ if(n.nodeType===3&&/[A-Za-z]{2}/.test(n.nodeValue)){ var m=n.nodeValue.match(/^(\s*)[\s\S]*?(\s*)$/); n.nodeValue=m[1]+v+m[2]; break; } } }
+    a=document.querySelectorAll('[data-i18n-ph]:not([data-i18n-ok])');
+    for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n-ph')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.setAttribute('placeholder',v); }
+  }
+  function switcher(){ var boxes=document.querySelectorAll('[data-lsw]:not([data-lsw-ok])'); for(var i=0;i<boxes.length;i++){ (function(box){ box.setAttribute('data-lsw-ok','');
+      var cur=N[lang]; box.innerHTML='<button type="button" class="lsw-b" aria-haspopup="listbox" aria-expanded="false" aria-label="Language: '+cur[1]+'"><span class="lsw-f">'+cur[0]+'</span><span class="lsw-n">'+cur[1]+'</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button><ul class="lsw-m" role="listbox" hidden>'+L.map(function(k){ return '<li role="option" aria-selected="'+(k===lang)+'"><button type="button" data-l="'+k+'"><span class="lsw-f">'+N[k][0]+'</span>'+N[k][1]+(k===lang?'<i>✓</i>':'')+'</button></li>'; }).join('')+'</ul>';
+      var b=box.querySelector('.lsw-b'), m=box.querySelector('.lsw-m');
+      function open(o){ m.hidden=!o; b.setAttribute('aria-expanded',o); }
+      b.onclick=function(e){ e.stopPropagation(); open(m.hidden); };
+      document.addEventListener('click',function(){ open(false); }); document.addEventListener('keydown',function(e){ if(e.key==='Escape') open(false); });
+      m.onclick=function(e){ var t=e.target.closest('button[data-l]'); if(!t) return; var l=t.getAttribute('data-l'); try{ localStorage.setItem('jv_lang',l); }catch(_){}
+        try{ var u=new URL(location.href); u.searchParams.delete('lang'); if(l!=='en'&&!saved&&nav===l){} location.replace(u.pathname+u.search+u.hash); }catch(_){ location.reload(); } };
+    })(boxes[i]); }
+    if(lang!=='en'){ var n=document.querySelectorAll('[data-lnote]'); for(var j=0;j<n.length;j++) n[j].hidden=false; }
+  }
+  window.JVI=function(){ apply(); switcher(); };
+  document.addEventListener('DOMContentLoaded',function(){ apply(); switcher(); });
+})();
+</script>
+<title data-i18n="ekm7hv">Joinvoo Affiliates · Earn up to 50% for life on VooSquare</title>
+<meta name="description" content="Join the VooSquare affiliate program and earn up to 50% for life promoting Joinvoo and every Zedapex tool. Tracking links with sub IDs, postbacks, creatives and a manager. Paid every month your customers stay.">
+<meta name="theme-color" content="#f7f6f2">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --sunk:#f1efe9; --ink:#141413; --muted:#67665f; --faint:#a19f98; --line:#e9e7e1;
+  --accent:#5b3df5; --accent-2:#8f7bff; --lilac:#efebff; --lime:#c8f169;
+  --green:#2e7d57; --mint:#e8f3ec; --blue:#3d5ad6; --sky:#ecf0fc; --gold:#87631a; --cream:#fbf2df; --rose:#c2463f; --blush:#fbeae8;
+  --ink-btn:#141413; --ink-btn-fg:#ffffff; --shadow:0 2px 4px rgba(20,20,18,.03),0 30px 70px -30px rgba(40,20,120,.28);
+  --f:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d0d10; --surface:#16161b; --sunk:#1d1d23; --ink:#f3f2f7; --muted:#a7a6b0; --faint:#6e6d77; --line:#26262e;
+  --accent:#9d8cff; --accent-2:#6f5bff; --lilac:#211b44;
+  --green:#5cc48c; --mint:#142a1e; --blue:#93a6ff; --sky:#19203d; --gold:#e6b866; --cream:#2b2414; --rose:#ff8a80; --blush:#331916;
+  --ink-btn:#f3f2f7; --ink-btn-fg:#141413; --shadow:0 2px 4px rgba(0,0,0,.3),0 30px 70px -30px rgba(0,0,0,.7); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font:700 16px/1.2 var(--f);text-decoration:none;color:var(--ink);transition:transform .2s,box-shadow .2s;white-space:nowrap;cursor:pointer}
+.btn:hover{transform:translateY(-2px)}
+.btn.violet{background:#5b3df5;color:#fff;border-color:#5b3df5;box-shadow:0 14px 34px -12px #5b3df5}
+.btn.dark{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+.btn.lg{padding:18px 30px;font-size:17.5px}
+.btn svg{width:18px;height:18px;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:23px;letter-spacing:-.045em;text-decoration:none;color:inherit}
+.mark{width:38px;height:38px;border-radius:12px;background:#5b3df5;display:grid;place-items:center;box-shadow:0 8px 20px -8px #5b3df5;flex:none}
+.mark svg{width:22px;height:22px}
+.reveal{animation:lift both cubic-bezier(.2,.8,.2,1);animation-timeline:view();animation-range:entry 0% entry 45%}
+@keyframes lift{from{transform:translateY(40px) scale(.97)}}
+.feed{display:flex;flex-direction:column}
+.p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid var(--line)}
+.p:first-child{border-top:0}
+.p.new{animation:drop .6s cubic-bezier(.2,.8,.2,1)}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px}
+.p div{min-width:0}
+.p b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p small{display:block;color:var(--faint);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{padding:5px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
+.tags{display:flex;gap:6px}
+.price-big{font-size:clamp(64px,11vw,110px);font-weight:800;letter-spacing:-.06em;line-height:.9}
+footer.site{padding-block:40px 60px;font-size:15px;color:var(--faint)}
+footer.site .wrap{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer.site b{color:var(--ink)}
+@media (max-width:560px){.p{grid-template-columns:auto minmax(0,1fr);padding:11px 14px}.p .tags{grid-column:2}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ===== Round 2 additions: aliases + helpers shared by home, login, signup, guide, legal (former look stays the base) ===== */
+:root{
+  --brand:#5b3df5; --brand-2:#8f7bff; --brand-ink:#fff; --brand-soft:var(--lilac); --brand-text:#5b3df5;
+  --success:#2e9d6a; --mint-soft:var(--mint); --success-text:var(--green);
+  --amber:#e0a43a; --amber-soft:var(--cream); --amber-text:var(--gold);
+  --coral:#d9534c; --coral-soft:var(--blush); --coral-text:var(--rose);
+  --meta:#0866FF; --tiktok:#FE2C55; --tiktok-2:#25F4EE; --snap:#FFFC00; --telegram:#2AABEE;
+  --r1:12px; --r2:18px; --r3:24px; --r4:32px;
+  --shadow-sm:0 1px 2px rgba(20,20,18,.04),0 6px 16px -10px rgba(40,20,120,.18);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --display:"Bricolage Grotesque","Plus Jakarta Sans",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--brand:#8f7bff;--brand-text:#b3a3ff;--success:#5cc48c;--coral:#ff8a80;--shadow-sm:0 1px 2px rgba(0,0,0,.4)}
+img,svg{max-width:100%}
+p{text-wrap:pretty}
+.mono{font-family:var(--mono)}
+.disp{font-family:var(--display)}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+::selection{background:color-mix(in srgb,#5b3df5 26%,transparent)}
+.btn.sm{padding:10px 18px;font-size:15px}
+.btn.ghost{background:transparent}
+.btn.full{width:100%}
+.btn[disabled]{opacity:.65;cursor:progress;transform:none}
+.kick,.eyebrow{color:var(--brand-text);font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:99px;font-size:12.5px;font-weight:800;background:var(--lilac);color:var(--brand-text);white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:7px}
+.field>label,.field .lrow label{font-weight:700;font-size:14.5px}
+.inp{border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 16px;font:500 16px var(--f);color:var(--ink);width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+.inp::placeholder{color:var(--faint)}
+.inp:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.inp[aria-invalid="true"]{border-color:var(--rose)}
+
+/* language switcher (rendered by the i18n runtime into [data-lsw]) */
+.lsw{position:relative;flex:none}
+.lsw-b{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:700 14px var(--f);cursor:pointer}
+.lsw-b:hover{border-color:color-mix(in srgb,#5b3df5 35%,var(--line))}
+.lsw-b svg{width:14px;height:14px;opacity:.6}
+.lsw-f{font-size:17px;line-height:1}
+.lsw-m{position:absolute;right:0;top:calc(100% + 8px);z-index:80;min-width:190px;margin:0;padding:6px;list-style:none;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 24px 60px -20px rgba(20,12,60,.45)}
+.lsw-m button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;font:600 14.5px var(--f);color:var(--ink);cursor:pointer;text-align:left}
+.lsw-m button:hover{background:var(--sunk)}
+.lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
+.lsw-m i{margin-left:auto;font-style:normal}
+.lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
+@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+
+/* Layout: the affiliate page. Same light, violet Joinvoo site, with VooSquare green as the partner accent.
+   Hero (copy + a live "commission every month" card) → how it works (3 steps on a moving rail) → why Joinvoo converts (dark panel, live event stream)
+   → what you get (4 tiles, each with a small working visual) → lifetime terms → FAQ → close. */
+:root{--voo:#0fae6b;--voo-2:#c6f45a;--voo-soft:color-mix(in srgb,#0fae6b 12%,var(--surface));--voo-text:#0b8a55}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--voo-text:#5fdc9f}}
+:root[data-theme="dark"]{--voo-text:#5fdc9f}
+header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid transparent;transition:border-color .3s}
+header.top.scrolled{border-bottom-color:var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px}
+header.top nav{display:flex;gap:4px;align-items:center}
+header.top nav a.plain{color:var(--muted);text-decoration:none;padding:10px 14px;font-weight:600;font-size:15px;border-radius:99px}
+header.top nav a.plain:hover{color:var(--ink)}
+.navbtn{padding:11px 20px!important;font-size:15px!important}
+.btn.voo{background:var(--ink-btn);color:var(--ink-btn-fg);border-color:var(--ink-btn)}
+.btn .vm{width:20px;height:20px;flex:none}
+.btn:hover .vm{transform:none}
+
+/* hero */
+.hero{position:relative;padding-block:56px 30px;overflow:hidden}
+.mesh{position:absolute;inset:-25% -10% auto;height:860px;pointer-events:none;z-index:0}
+.mesh i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.6;animation:drift 18s ease-in-out infinite}
+.mesh i:nth-child(1){width:540px;height:540px;left:4%;top:8%;background:var(--lilac)}
+.mesh i:nth-child(2){width:440px;height:440px;right:4%;top:0;background:color-mix(in srgb,var(--voo) 22%,transparent);animation-delay:-6s}
+.mesh i:nth-child(3){width:380px;height:380px;left:40%;top:40%;background:var(--mint);animation-delay:-12s}
+@keyframes drift{33%{transform:translate(60px,-40px) scale(1.08)}66%{transform:translate(-40px,30px) scale(.95)}}
+.hgrid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:40px;align-items:center}
+.hcopy{display:flex;flex-direction:column;gap:22px;align-items:flex-start;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:10px;padding:6px 16px 6px 6px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-size:14.5px;color:var(--muted);box-shadow:0 6px 20px -12px rgba(0,0,0,.2);text-decoration:none;max-width:100%}
+.chip .vmk{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--voo-soft);flex:none}
+.chip .vmk svg{width:17px;height:17px}
+.chip b{color:var(--ink)}
+.hcopy h1{font-size:clamp(42px,5.6vw,76px);line-height:.98;letter-spacing:-.055em;max-width:12ch}
+.g{background:linear-gradient(100deg,#5b3df5,#8f7bff 35%,#0fae6b 70%,#5b3df5);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 7s linear infinite;padding-right:.04em}
+@keyframes sheen{to{background-position:-220% 0}}
+.lede{margin:0;color:var(--muted);font-size:clamp(18px,2.3vw,21px);max-width:44ch}
+.lede b{color:var(--ink)}
+.ctas{display:flex;gap:12px;flex-wrap:wrap}
+.checks{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14.5px;font-weight:600;color:var(--muted)}
+.checks span::before{content:"✓";color:var(--green);font-weight:800;margin-right:7px}
+
+/* hero visual: commission every month */
+.pay-wrap{position:relative;display:grid;place-items:center;min-height:560px}
+.ring{position:absolute;width:300px;height:300px;border-radius:50%;border:2px solid color-mix(in srgb,var(--voo) 40%,transparent);animation:ping 3.6s cubic-bezier(.2,.6,.3,1) infinite}
+.ring.r2{animation-delay:1.2s}.ring.r3{animation-delay:2.4s}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.95);opacity:0}}
+.pay{position:relative;z-index:2;width:min(360px,100%);border-radius:32px;padding:22px;color:#F2F1FA;background:#0A0914;box-shadow:0 2px 4px rgba(20,20,18,.04),0 50px 100px -40px rgba(15,174,107,.55),0 30px 70px -30px rgba(91,61,245,.5);overflow:hidden;isolation:isolate;animation:hover 7s ease-in-out infinite}
+.pay::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 55% at 100% 0%,rgba(15,174,107,.42),transparent 70%),radial-gradient(60% 50% at 0% 100%,rgba(106,75,255,.42),transparent 70%)}
+.pay::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.08) 45%,transparent 60%);background-size:250% 100%;animation:shine 5.5s ease-in-out infinite;pointer-events:none}
+@keyframes shine{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+@keyframes hover{50%{transform:translateY(-10px)}}
+.pay-h{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;color:#C9C6DB}
+.pay-h svg{width:24px;height:24px;flex:none}
+.pay-h .lt{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:rgba(198,244,90,.14);color:#d8fb84;font-size:12px;font-weight:800}
+.pay-h .lt i{font-style:normal;font-size:15px;line-height:1}
+.pay-big{margin-top:16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pay-big small{font-size:14px;font-weight:700;color:#A9A5BE}
+.pay-big b{font-size:62px;font-weight:800;letter-spacing:-.06em;line-height:.95;background:linear-gradient(100deg,#fff,#c6f45a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pay-sub{font-size:14px;color:#A9A5BE;margin-top:2px}
+.pay-sub b{color:#fff}
+.tl{position:relative;margin-top:18px;display:flex;flex-direction:column;gap:7px;height:228px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 72%,transparent);mask-image:linear-gradient(180deg,#000 72%,transparent)}
+.tl .mo{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);font-size:13.5px;font-weight:650;color:#E6E3F7;animation:drop .55s cubic-bezier(.2,.8,.2,1)}
+.tl .mo .n{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(15,174,107,.18);color:#7ff0b8;font-size:12px;font-weight:800}
+.tl .mo small{display:block;color:#8D89A8;font-size:11.5px;font-weight:600}
+.tl .mo .ok{font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:99px;background:rgba(15,174,107,.2);color:#7ff0b8;white-space:nowrap}
+.tl .mo.new{border-color:rgba(198,244,90,.45);box-shadow:0 0 0 3px rgba(198,244,90,.08)}
+@keyframes drop{from{opacity:0;transform:translateY(-14px)}}
+.pay-f{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#8D89A8;margin-top:6px}
+.pay-f .bar{flex:1;height:4px;margin:0 10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;position:relative}
+.pay-f .bar i{position:absolute;inset:0;width:40%;border-radius:99px;background:linear-gradient(90deg,transparent,#c6f45a,transparent);animation:run 2.4s linear infinite}
+@keyframes run{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+.float{position:absolute;z-index:3;display:flex;gap:10px;align-items:center;padding:10px 14px 10px 10px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px}
+.float span{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:var(--lilac);font-weight:800;flex:none}
+.float span svg{width:18px;height:18px}
+.float b{display:block;font-size:13.5px;white-space:nowrap}
+.float small{display:block;color:var(--faint);font-size:12px;white-space:nowrap}
+.float code{font:500 11.5px var(--mono);color:var(--brand-text)}
+.f1{left:-6px;top:56%;animation:hover 6s ease-in-out infinite}
+.f2{right:-10px;top:19%;animation:hover 7.5s ease-in-out infinite reverse}
+.f2 span{background:var(--mint);color:var(--green)}
+.illo{position:absolute;right:6px;bottom:4px;font-size:11px;font-weight:600;color:var(--faint)}
+
+/* sections */
+section.blk{padding-block:100px}
+.center{text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+.h2{font-size:clamp(34px,5.4vw,62px);line-height:1;max-width:17ch}
+.h2 span{color:var(--brand-text)}
+.sub{margin:0;color:var(--muted);font-size:clamp(17px,2.2vw,20px);max-width:54ch}
+.sub b{color:var(--ink)}
+
+/* how it works: 3 steps on a rail */
+.rail{position:relative;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:30px;text-align:left}
+.rail::before{content:"";position:absolute;left:12%;right:12%;top:44px;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 14px);z-index:0}
+.rail .dot{position:absolute;top:39px;left:12%;width:12px;height:12px;border-radius:50%;background:var(--voo);box-shadow:0 0 0 6px color-mix(in srgb,var(--voo) 20%,transparent);animation:travel 6s cubic-bezier(.6,0,.4,1) infinite;z-index:1}
+@keyframes travel{0%{left:12%}45%,55%{left:calc(88% - 12px)}100%{left:12%}}
+.stp{position:relative;z-index:2;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:10px;transition:transform .3s,box-shadow .3s}
+.stp:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+.stp .num{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-weight:800;font-size:18px;background:var(--lilac);color:var(--brand-text)}
+.stp:nth-child(3) .num{background:var(--voo-soft);color:var(--voo-text)}
+.stp:nth-child(4) .num{background:var(--ink-btn);color:var(--ink-btn-fg)}
+.stp h3{font-size:22px;letter-spacing:-.035em}
+.stp p{margin:0;color:var(--muted);font-size:15.5px;line-height:1.55}
+.stp .vis{margin-top:auto;padding-top:8px}
+.lnk{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:14px;background:var(--sunk);font:500 12.5px var(--mono);color:var(--muted);overflow:hidden;white-space:nowrap}
+.lnk b{color:var(--brand-text);font-weight:500}
+.lnk .cur{width:2px;height:14px;background:var(--brand-text);animation:bl 1s steps(1) infinite;flex:none}
+@keyframes bl{50%{opacity:0}}
+.mini-acc{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:var(--sunk);font-size:13px;font-weight:700}
+.mini-acc svg{width:22px;height:22px;flex:none}
+.mini-acc em{margin-left:auto;font-style:normal;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-weight:800}
+.mini-months{display:flex;gap:5px;align-items:flex-end;height:46px;padding:0 4px}
+.mini-months i{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--voo),color-mix(in srgb,var(--voo) 50%,#5b3df5));transform-origin:bottom;animation:grow 2.8s cubic-bezier(.2,.8,.2,1) infinite}
+.mini-months i:nth-child(1){height:58%;animation-delay:0s}.mini-months i:nth-child(2){height:66%;animation-delay:.12s}.mini-months i:nth-child(3){height:72%;animation-delay:.24s}.mini-months i:nth-child(4){height:80%;animation-delay:.36s}.mini-months i:nth-child(5){height:88%;animation-delay:.48s}.mini-months i:nth-child(6){height:96%;animation-delay:.6s}
+.mini-months b{font-size:22px;line-height:1;color:var(--voo-text);margin-left:4px;align-self:center}
+@keyframes grow{0%{transform:scaleY(.15);opacity:.4}30%,100%{transform:scaleY(1);opacity:1}}
+
+/* why it converts: dark panel with live event stream */
+.show{position:relative;isolation:isolate;border-radius:32px;overflow:hidden;color:#F2F1FA;background:#0A0914;box-shadow:0 2px 4px rgba(20,20,18,.04),0 50px 100px -40px rgba(91,61,245,.65);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:30px 40px;padding:56px}
+.show::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(55% 60% at 80% 40%,rgba(106,75,255,.5),transparent 70%),radial-gradient(35% 40% at 100% 100%,rgba(15,174,107,.25),transparent 70%)}
+.show::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(60% 70% at 75% 45%,#000,transparent);mask-image:radial-gradient(60% 70% at 75% 45%,#000,transparent)}
+.show-copy{display:flex;flex-direction:column;gap:18px;align-items:flex-start;min-width:0}
+.show-copy .kick{color:#b9adff}
+.show-copy h2{font-size:clamp(32px,4.4vw,52px);line-height:1;color:#fff;max-width:14ch}
+.show-copy h2 span{background:linear-gradient(100deg,#c9bfff,#9fe6ff 50%,#c6f45a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.show-copy p{margin:0;color:#B9B5CC;font-size:17.5px;max-width:42ch}
+.show-copy p b{color:#fff}
+.why{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;width:100%}
+.why li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
+.why li i{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);font-style:normal}
+.why li i svg{width:18px;height:18px}
+.why b{display:block;color:#fff;font-size:16px;letter-spacing:-.01em}
+.why span{display:block;color:#A9A5BE;font-size:14.5px;line-height:1.5}
+.stream{display:flex;flex-direction:column;gap:8px;min-width:0}
+.stream .lb{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8D89A8;display:flex;align-items:center;gap:8px}
+.stream .lb i{width:7px;height:7px;border-radius:50%;background:#5cc48c;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,196,140,.6)}100%{box-shadow:0 0 0 9px rgba(92,196,140,0)}}
+.evs{display:flex;flex-direction:column;gap:8px;height:300px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 75%,transparent);mask-image:linear-gradient(180deg,#000 75%,transparent)}
+.ev{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:14px;font-weight:650;color:#E6E3F7;animation:drop .55s cubic-bezier(.2,.8,.2,1)}
+.ev>i{width:32px;height:32px;border-radius:10px;display:grid;place-items:center}
+.ev>i svg{width:17px;height:17px}
+.ev small{display:block;color:#8D89A8;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev div{min-width:0}
+.ev code{font:500 11.5px var(--mono);color:#C9BFFF;background:rgba(142,119,255,.16);padding:4px 8px;border-radius:8px;white-space:nowrap}
+.ev.ftd code{color:#d8fb84;background:rgba(198,244,90,.14)}
+.pm{background:linear-gradient(160deg,#2E86FF,#0559E3)}
+.pt{background:#0B0B12;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.ps{background:#FFFC00}
+.pg{background:linear-gradient(160deg,#3CC0FF,#1E96D8)}
+
+/* what you get */
+.gets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%;margin-top:28px;text-align:left}
+.get{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:transform .3s,box-shadow .3s;min-width:0}
+.get:hover{transform:translateY(-5px);box-shadow:var(--shadow)}
+.get .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--lilac);color:var(--brand-text)}
+.get .ic svg{width:21px;height:21px}
+.get:nth-child(2) .ic{background:var(--voo-soft);color:var(--voo-text)}
+.get:nth-child(3) .ic{background:var(--cream);color:var(--gold)}
+.get:nth-child(4) .ic{background:var(--sky);color:var(--blue)}
+.get h3{font-size:19px;letter-spacing:-.03em;margin-top:4px}
+.get p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5}
+.get .vis{margin-top:auto;padding-top:10px}
+.subid{font:500 12px var(--mono);padding:9px 11px;border-radius:12px;background:var(--sunk);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.subid b{font-weight:500;color:var(--brand-text);display:inline-block;transition:opacity .3s,transform .3s}
+.subid b.sw{opacity:0;transform:translateY(-4px)}
+.pbk{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.pbk .wire{flex:1;height:2px;background:var(--line);position:relative;overflow:hidden;border-radius:2px}
+.pbk .wire i{position:absolute;top:0;left:0;width:30%;height:100%;background:var(--voo);animation:run 1.8s linear infinite}
+.pbk em{font-style:normal;padding:3px 8px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-size:11.5px}
+.kit{display:flex;gap:6px}
+.kit i{flex:1;height:38px;border-radius:10px;transition:transform .35s}
+.get:hover .kit i:nth-child(odd){transform:translateY(-4px) rotate(-3deg)}.get:hover .kit i:nth-child(even){transform:translateY(3px) rotate(3deg)}
+.mgr{display:flex;align-items:center;gap:8px}
+.mgr .av{width:30px;height:30px;font-size:12px;color:#fff;background:linear-gradient(135deg,#5b3df5,#0fae6b);flex:none}
+.mgr .bub{display:inline-flex;gap:4px;padding:9px 11px;border-radius:14px 14px 14px 4px;background:var(--sunk)}
+.mgr .bub i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:bl 1s infinite}
+.mgr .bub i:nth-child(2){animation-delay:.2s}.mgr .bub i:nth-child(3){animation-delay:.4s}
+
+/* terms band */
+.terms{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px 22px;align-items:center;padding:24px 26px;border-radius:30px;background:linear-gradient(120deg,var(--voo-soft),var(--lilac));border:1px solid var(--line);text-align:left}
+.terms .inf{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--surface);box-shadow:var(--shadow-sm);font-size:34px;font-weight:800;color:var(--voo-text);line-height:1}
+.terms .inf span{display:inline-block;animation:spin8 6s ease-in-out infinite}
+@keyframes spin8{50%{transform:scaleX(-1)}}
+.terms h3{font-size:24px;letter-spacing:-.035em}
+.terms p{margin:4px 0 0;color:var(--muted);font-size:15.5px}
+.terms a.tl2{font-weight:800;color:var(--ink);text-decoration:none;white-space:nowrap;border-bottom:2px solid color-mix(in srgb,var(--voo) 50%,transparent);padding-bottom:1px}
+.terms a.tl2:hover{border-color:var(--voo)}
+.diff{display:flex;align-items:flex-start;gap:10px;margin:16px auto 0;max-width:820px;padding:12px 16px;border-radius:16px;background:var(--surface);border:1px solid var(--line);font-size:14.5px;color:var(--muted);text-align:left}
+.diff i{font-style:normal;flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);font-weight:800;font-size:12.5px;color:var(--ink);margin-top:1px}
+.diff b{color:var(--ink)}
+
+/* faq + cta (same as home) */
+.faq{width:100%;max-width:820px;margin-top:24px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:28px;overflow:hidden}
+.faq details{border-top:1px solid var(--line);padding:0 24px}
+.faq details:first-child{border-top:0}
+.faq summary{cursor:pointer;padding:20px 0;font-weight:700;font-size:17px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";color:var(--faint);font-size:24px;line-height:1;transition:transform .25s;flex:none}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq p{margin:0 0 16px;color:var(--muted)}
+.faq p b{color:var(--ink)}
+.faq a{color:var(--brand-text)}
+.cta{background:#0b0a12;color:#fff;border-radius:40px;padding:80px 26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;position:relative;overflow:hidden}
+.cta h2{font-size:clamp(38px,6.4vw,78px);line-height:.98;max-width:14ch}
+.cta h2 span{background:linear-gradient(100deg,#8f7bff,#c6f45a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cta p{margin:0;opacity:.75;max-width:46ch;font-size:19px}
+.cta .blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.5;animation:drift 14s ease-in-out infinite;pointer-events:none}
+.cta>*:not(.blob){position:relative}
+.cta .btn.lime{background:#c6f45a;color:#0b0a12;border-color:#c6f45a;box-shadow:0 14px 34px -12px rgba(198,244,90,.6)}
+.cta .btn.ghost2{background:transparent;color:#fff;border-color:rgba(255,255,255,.3)}
+.cta .fine2{font-size:13.5px;color:#8D89A8}
+.cta .fine2 a{color:#fff}
+.mcta{display:none}
+footer.site .wrap{align-items:flex-start}
+footer.site .fby{display:flex;flex-direction:column;gap:10px}
+footer.site nav{display:flex;gap:6px 20px;flex-wrap:wrap;max-width:640px;justify-content:flex-end}
+footer.site nav a{color:var(--muted);text-decoration:none;font-weight:600}
+footer.site nav a:hover{color:var(--ink)}
+
+@media (max-width:1080px){.gets{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){
+  header.top nav a.plain{display:none}
+  .hero{padding-block:30px 10px}
+  .hgrid{grid-template-columns:minmax(0,1fr);gap:26px}
+  .pay-wrap{min-height:0;padding:46px 0 50px}
+  .f1{left:-4px;top:auto;bottom:0}.f2{right:-4px;top:0}
+  .illo{bottom:-14px}
+  section.blk{padding-block:72px}
+  .rail{grid-template-columns:minmax(0,1fr);gap:12px}
+  .rail::before{left:44px;right:auto;top:30px;bottom:30px;width:2px;height:auto;background:repeating-linear-gradient(180deg,var(--line) 0 8px,transparent 8px 14px)}
+  .rail .dot{display:none}
+  .show{grid-template-columns:minmax(0,1fr);padding:30px 18px;border-radius:28px}
+  .evs{height:250px}
+  .terms{grid-template-columns:auto minmax(0,1fr);padding:20px}
+  .terms .go{grid-column:1/-1}.terms a.tl2{white-space:normal;overflow-wrap:anywhere}
+  .cta{padding:56px 20px;border-radius:30px}
+  .mcta{display:flex;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;align-items:center;gap:8px;padding:8px;border-radius:22px;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--shadow);transform:translateY(140%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+  .mcta.up{transform:none}
+  .mcta .btn{flex:1;padding:13px 16px;font-size:15px}
+  footer.site{padding-bottom:110px}
+  footer.site nav{justify-content:flex-start}
+}
+@media (max-width:560px){
+  .gets{grid-template-columns:minmax(0,1fr)}
+  .float{padding:8px 11px 8px 8px}.float span{width:30px;height:30px}.float b{font-size:12.5px}.float small{font-size:11px}
+  .pay{padding:18px;border-radius:28px}.pay-big b{font-size:54px}
+  .terms{grid-template-columns:minmax(0,1fr);gap:12px}.terms .inf{width:52px;height:52px;font-size:28px;border-radius:16px}
+  .terms h3{font-size:20px}
+  .faq details{padding:0 18px}
+}
+@media (max-width:420px){
+  header.top .wrap{gap:6px}header.top .logo{font-size:20px;gap:8px}header.top .mark{width:34px;height:34px}
+  .navbtn{padding:10px 14px!important;font-size:14px!important}
+  .hcopy h1{font-size:clamp(38px,11vw,46px)}
+  .chip{font-size:13px;gap:8px;padding-right:12px}
+  .ctas .btn{flex:1 1 100%}
+}
+</style>
+
+<header class="top" id="top"><div class="wrap">
+  <a class="logo" href="index.html" aria-label="Joinvoo home"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a>
+  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="6llf5i" class="plain" href="#why">Why it converts</a><a data-i18n="hfim9n" class="plain" href="#faq">FAQ</a><a data-i18n="yrlwfv" class="plain" href="index.html">Joinvoo</a><div class="lsw" data-lsw></div><a data-i18n="6917zp" class="btn violet navbtn" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Join now</a></nav>
+</div></header>
+
+<main>
+<section class="hero">
+  <div class="mesh" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap hgrid">
+    <div class="hcopy">
+      <a class="chip" href="https://voosquare.com" target="_blank" rel="noopener"><span class="vmk"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#9bd63a"/></svg></span><span data-i18n="1yhyplx">The <b>VooSquare</b> affiliate program</span></a>
+      <h1 data-i18n="8jqsu0">Earn up to <span class="g">50% for life</span> promoting Joinvoo.</h1>
+      <p data-i18n="7s02gq" class="lede">Join the VooSquare affiliate program and get paid <b>every month your customers stay</b> — on Joinvoo and every Zedapex tool.</p>
+      <div class="ctas"><a data-i18n-t="17o7fyk" class="btn violet lg" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Become an affiliate <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a data-i18n="1lrzbkg" class="btn lg" href="#how">How it works</a></div>
+      <div data-i18n="jwbzmh" class="checks"><span>Recurring, for life</span><span>Paid monthly</span><span>Every Zedapex tool</span></div>
+    </div>
+    <div class="pay-wrap" aria-hidden="true">
+      <span class="ring"></span><span class="ring r2"></span><span class="ring r3"></span>
+      <div class="pay">
+        <div class="pay-h"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="h14a8b">One customer you referred</span><span data-i18n-t="1vh11ce" class="lt"><i>∞</i>Lifetime</span></div>
+        <div data-i18n="1vmggcl" class="pay-big"><small>Up to</small><b>50%</b></div>
+        <div data-i18n="1vxdftt" class="pay-sub">of what they pay, <b>every month they stay</b></div>
+        <div class="tl" id="tl"></div>
+        <div class="pay-f"><span data-i18n="ritzwe">Month <b id="mn" style="color:#fff">1</b></span><span class="bar"><i></i></span><span data-i18n="1rzj31j">and counting</span></div>
+      </div>
+      <div class="float f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><div data-i18n="cxww5m"><b>Your link</b><small><code>sub1=</code><code id="fsub">tiktok_ugc</code></small></div></div>
+      <div class="float f2"><span>✓</span><div data-i18n="1p9ybcn"><b>Customer signed up</b><small>Tied to you, for life</small></div></div>
+      <span data-i18n="rbian7" class="illo">Illustration</span>
+    </div>
+  </div>
+</section>
+
+<section class="blk" id="how"><div class="wrap center">
+  <span data-i18n="1lrzbkg" class="kick reveal">How it works</span>
+  <h2 data-i18n="qt5khx" class="h2 reveal">Three steps. <span>Then it pays every month.</span></h2>
+  <p data-i18n="7khegg" class="sub reveal">No contracts to chase and no one-off bounties. Bring a customer once and earn for as long as they stay.</p>
+  <div class="rail" id="rail">
+    <span class="dot" aria-hidden="true"></span>
+    <article class="stp reveal"><span class="num">1</span><h3 data-i18n="yi27dt">Join on VooSquare</h3><p data-i18n="98u3b3">Sign up for the affiliate program with your VooSquare account. One account covers Joinvoo and every Zedapex tool.</p>
+      <div class="vis" aria-hidden="true"><div class="mini-acc"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#9bd63a"/></svg><span data-i18n="1fkzcwq">affiliate.voosquare.com</span><em data-i18n="1j3qly2">Approved</em></div></div></article>
+    <article class="stp reveal"><span class="num">2</span><h3 data-i18n="2bs0q5">Share your link</h3><p data-i18n="1d7u8l4">Put your tracking link in your videos, posts, groups and ads. Add sub IDs to see which piece of content brings customers.</p>
+      <div class="vis" aria-hidden="true"><div class="lnk"><span>joinvoo.com/?aff=<b id="tcode"></b></span><span class="cur"></span></div></div></article>
+    <article class="stp reveal"><span class="num">3</span><h3 data-i18n="shxjah">Earn monthly, for life</h3><p data-i18n="1g08wpy">Every month a customer you brought pays, you earn your share. On Joinvoo and on any other Zedapex tool they use.</p>
+      <div class="vis" aria-hidden="true"><div class="mini-months"><i></i><i></i><i></i><i></i><i></i><i></i><b>∞</b></div></div></article>
+  </div>
+</div></section>
+
+<section class="blk" id="why" style="padding-top:0"><div class="wrap">
+  <div class="show reveal">
+    <div class="show-copy">
+      <span data-i18n="ytsu8b" class="kick">Why Joinvoo converts</span>
+      <h2 data-i18n="1seb31f">Your audience <span>already needs it.</span></h2>
+      <p data-i18n="kl808b">If someone buys ads that send people to Telegram, they’re flying blind without tracking. <b>Joinvoo is the fix they go looking for.</b></p>
+      <ul class="why">
+        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#c9bfff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#c9bfff"/></svg></i><div data-i18n="d7fgl7"><b>Media buyers need it</b><span>Ad platforms count clicks. Buyers pay for real joiners and depositors, so tracking isn’t optional.</span></div></li>
+        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#7ff0b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></i><div data-i18n="1rch24e"><b>Tracks Telegram joins and FTDs</b><span>Every real join to a channel, group or bot, plus first deposits from the buyer’s postback.</span></div></li>
+        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#9fe6ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h12M12 6l6 6-6 6"/></svg></i><div data-i18n="yt06yr"><b>Sends them to Meta, TikTok and Snap</b><span>So their campaigns learn from real people, not noise, and buy more of the users who stay.</span></div></li>
+      </ul>
+    </div>
+    <div class="stream" aria-hidden="true">
+      <div data-i18n-t="gbesk" class="lb"><i></i>What a Joinvoo customer sees</div>
+      <div class="evs" id="evs"></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="blk" id="get" style="padding-top:0"><div class="wrap center">
+  <span data-i18n="120sha0" class="kick reveal">What you get</span>
+  <h2 data-i18n="qqpon9" class="h2 reveal">Everything a serious <span>affiliate expects.</span></h2>
+  <div class="gets">
+    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><h3 data-i18n="zu0hf7">Tracking links with sub IDs</h3><p data-i18n="f1v4f">One link per placement, with sub IDs to split traffic by video, channel or campaign.</p>
+      <div class="vis" aria-hidden="true"><div data-i18n="18qg802" class="subid">?aff=you&amp;sub1=<b id="sub1">tiktok_ugc_3</b></div></div></article>
+    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span><h3 data-i18n="1tb0wvt">Postbacks</h3><p data-i18n="unde6j">Get sign-ups and payments sent to your own tracker, so your numbers live where you work.</p>
+      <div class="vis" aria-hidden="true"><div class="pbk"><span data-i18n="vk6j5c">VooSquare</span><span class="wire"><i></i></span><em data-i18n="7g4eou">Your tracker</em></div></div></article>
+    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span><h3 data-i18n="kctafh">Creatives &amp; brand kit</h3><p data-i18n="1dbcf2u">Logos, screenshots, videos and copy you can use as they are, or remix for your audience.</p>
+      <div class="vis" aria-hidden="true"><div class="kit"><i style="background:#5b3df5"></i><i style="background:#8f7bff"></i><i style="background:#0fae6b"></i><i style="background:#c6f45a"></i><i style="background:#141413"></i></div></div></article>
+    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><h3 data-i18n="mhznzk">Affiliate managers</h3><p data-i18n="tovbts">Real people who help you pick angles, get creatives and grow your volume.</p>
+      <div class="vis" aria-hidden="true"><div class="mgr"><span class="av">VS</span><span class="bub"><i></i><i></i><i></i></span></div></div></article>
+  </div>
+</div></section>
+
+<section class="blk" id="terms" style="padding-top:0"><div class="wrap">
+  <div class="terms reveal">
+    <span class="inf" aria-hidden="true"><span>∞</span></span>
+    <div><h3 data-i18n="2wvwjy">Lifetime, with conditions.</h3><p data-i18n="tl4mc7">Commission keeps coming for as long as your customers stay and the program conditions are met. Rates, payouts and conditions are set out in the terms.</p></div>
+    <div data-i18n="kod4er" class="go"><a class="tl2" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Read the full terms on affiliate.voosquare.com →</a></div>
+  </div>
+  <p class="diff reveal"><i>i</i><span data-i18n="uo8iqq"><b>Different from Joinvoo Referrals:</b> referrals are for customers inviting friends inside Joinvoo; the affiliate program is for marketers and creators.</span></p>
+</div></section>
+
+<section class="blk" id="faq" style="padding-top:0"><div class="wrap center">
+  <span data-i18n="hfim9n" class="kick reveal">FAQ</span>
+  <h2 data-i18n="19tx2md" class="h2 reveal">Questions, answered.</h2>
+  <div class="faq reveal">
+    <details open><summary data-i18n="fek76w">Who can join?</summary><p data-i18n="1c4nmig">Media buyers, creators, educators, agencies and community owners whose audience runs ads or Telegram funnels. You apply on VooSquare, and the program terms say who qualifies.</p></details>
+    <details><summary data-i18n="120iqfk">How much can I earn?</summary><p data-i18n="vqr7c5">Up to <b>50% recurring commission</b> on what the customers you bring pay. Your exact rate depends on the program’s conditions. The current rates are in the terms on <a href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>affiliate.voosquare.com</a>.</p></details>
+    <details><summary data-i18n="9s5p3w">What does “for life” mean?</summary><p data-i18n="1p0qcog">You keep earning <b>every month a customer you referred keeps paying</b>, on Joinvoo and on any other Zedapex tool they use, as long as the program conditions are met.</p></details>
+    <details><summary data-i18n="1ho3vo0">How do you know a customer came from me?</summary><p data-i18n="11iq8eh">Your tracking link remembers the visitor, and the account they create is tied to you when they sign up. Sub IDs show which link or piece of content brought them, and postbacks can send each event to your own tracker.</p></details>
+    <details><summary data-i18n="1ixgk5z">When and how do I get paid?</summary><p data-i18n="1wrew22">Commission is paid monthly. Payout methods, minimums and any holding period are in the program terms on VooSquare.</p></details>
+  </div>
+</div></section>
+
+<section class="blk" id="start" style="padding-top:0"><div class="wrap">
+  <div class="cta reveal"><span class="blob" style="width:320px;height:320px;background:#5b3df5;left:-80px;top:-100px"></span><span class="blob" style="width:260px;height:260px;background:#0fae6b;right:-60px;bottom:-110px;animation-delay:-7s"></span>
+    <h2 data-i18n="17mfv5u">Send buyers to Joinvoo. <span>Get paid every month.</span></h2><p data-i18n="1vshy9g">Earn up to 50% for life on Joinvoo and every Zedapex tool. Joining takes a few minutes on VooSquare.</p>
+    <div class="ctas" style="justify-content:center"><a data-i18n-t="17o7fyk" class="btn lime lg" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Become an affiliate <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a data-i18n="110en2j" class="btn lg ghost2" href="index.html">See what Joinvoo does</a></div>
+    <p data-i18n="19bxn4k" class="fine2">Lifetime, with conditions. <a href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Read the terms</a></p></div>
+</div></section>
+</main>
+<div data-i18n="1z2pxk" class="mcta" id="mcta"><a class="btn violet" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Become an affiliate</a></div>
+<footer class="site"><div class="wrap">
+  <div class="fby"><a class="logo" href="index.html" style="font-size:18px"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a><span data-i18n="ajk1wb">© <span id="yr">2026</span> Joinvoo · By <b>Zedapex</b> company</span></div>
+  <nav aria-label="Footer"><a data-i18n="n0mxf2" href="index.html">Home</a><a data-i18n="jue0h7" href="guide.html">Guide</a><a data-i18n="1jdup01" href="blog/index.html">Blog</a><a data-i18n="1r3xpvp" href="affiliates.html" aria-current="page">Affiliates</a><a data-i18n="154fb2k" href="terms.html">Terms</a><a data-i18n="1th4hrb" href="privacy.html">Privacy</a><a data-i18n="3dw11v" href="referral-terms.html">Referral terms</a><a data-i18n="idklxs" href="login.html">Log in</a><a data-i18n="fr3k4j" href="signup.html">Start free</a></nav>
+<div class="vfoot"><style>
+.vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
+.vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
+.vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
+.vfoot .vpart svg{width:18px;height:18px;flex:none}
+.vfoot .vmore{display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px}.vfoot .vmore>span{margin-right:2px}
+.vfoot .vmore i{font-style:normal;opacity:.5}
+@media (max-width:560px){.vfoot{flex-direction:column;align-items:flex-start;gap:8px}.vfoot .vmore{gap:4px 9px}.vfoot .vmore>span{flex-basis:100%}}
+</style><a class="vpart" href="https://voosquare.com" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="t3vct1">Part of <b>VooSquare</b></span></a><span class="vmore"><span data-i18n="1qnawoj">More from Zedapex:</span><a data-i18n="ymx3wx" href="https://replyvoo.com" target="_blank" rel="noopener">Replyvoo</a><i>·</i><a data-i18n="ie6sla" href="https://castvoo.com" target="_blank" rel="noopener">Castvoo</a><i>·</i><a data-i18n="1r6o4vk" href="https://advoo.com" target="_blank" rel="noopener">Advoo</a><i>·</i><a data-i18n="1hbw4co" href="https://affleego.com" target="_blank" rel="noopener">Affleego</a></span></div>
+</div></footer>
+<!-- Joinvoo website support widget (homepage + guide). Self-contained: styles, markup, script.
+     Talks to /api/support (GET history, POST message) and /api/config (team, reply time, hours, feature switches).
+     Falls back to a demo conversation when the API isn't there (static demo). Classes are prefixed sp- to avoid clashes. -->
+<style>
+.sp-launch{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:58;display:flex;align-items:center;gap:10px;height:58px;padding:0 20px 0 9px;border-radius:99px;border:0;cursor:pointer;background:#5b3df5;color:#fff;font:800 15px var(--f);box-shadow:0 18px 40px -12px rgba(91,61,245,.85),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s cubic-bezier(.2,.8,.2,1),bottom .45s cubic-bezier(.2,.8,.2,1),padding .3s,width .3s}
+.sp-launch:hover{transform:translateY(-2px)}
+.sp-launch .sp-faces{display:flex}
+.sp-launch .sp-faces .sp-av{width:36px;height:36px;border:2.5px solid #5b3df5;margin-left:-12px}
+.sp-launch .sp-faces .sp-av:first-child{margin-left:0}
+.sp-launch .sp-dot{position:absolute;left:34px;top:9px;width:12px;height:12px;border-radius:50%;background:#5cc48c;border:2.5px solid #5b3df5}
+.sp-launch .sp-x{display:none;width:24px;height:24px}
+.sp-launch[aria-expanded="true"]{width:58px;padding:0;justify-content:center}
+.sp-launch[aria-expanded="true"] .sp-faces,.sp-launch[aria-expanded="true"] .sp-lt,.sp-launch[aria-expanded="true"] .sp-dot{display:none}
+.sp-launch[aria-expanded="true"] .sp-x{display:block}
+body.mcta-on .sp-launch{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.sp-av{width:32px;height:32px;border-radius:50%;flex:none;display:block;overflow:hidden;background:var(--lilac)}
+.sp-av svg,.sp-av img{width:100%;height:100%;display:block;object-fit:cover}
+.sp{position:fixed;right:18px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:59;width:min(400px,calc(100vw - 24px));height:min(640px,calc(100dvh - 116px));border-radius:28px;background:var(--bg);border:1px solid var(--line);box-shadow:0 50px 100px -30px rgba(20,12,60,.5),0 0 0 1px rgba(0,0,0,.02);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom right;transform:translateY(16px) scale(.96);opacity:0;visibility:hidden;transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1),visibility .3s}
+.sp.open{opacity:1;visibility:visible;transform:none}
+body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 186px))}
+.sp-hd{position:relative;padding:20px 20px 22px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#8f7bff 0%,#5b3df5 45%,#21136f 100%);flex:none;overflow:hidden}
+.sp-hd::after{content:"";position:absolute;width:260px;height:260px;right:-90px;top:-120px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.sp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.sp-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.03em}
+.sp-brand .mark{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.18);box-shadow:none}.sp-brand .mark svg{width:16px;height:16px}
+.sp-cx{background:rgba(255,255,255,.16);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.sp-cx svg{width:16px;height:16px}
+.sp-team{display:flex;margin-top:18px;position:relative;z-index:1}
+.sp-team .sp-av{width:46px;height:46px;border:3px solid #4b31e0;margin-left:-12px}
+.sp-team .sp-av:first-child{margin-left:0}
+.sp-hd h3{font-size:24px;letter-spacing:-.04em;margin:12px 0 4px;position:relative;z-index:1}
+.sp-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:#dcd6ff;position:relative;z-index:1}
+.sp-meta span{display:inline-flex;align-items:center;gap:6px}
+.sp-meta i{width:8px;height:8px;border-radius:50%;background:#a49bd6}
+.sp-meta i.on{background:#7ee0a6;box-shadow:0 0 0 3px rgba(126,224,166,.3)}
+.sp-meta svg{width:13px;height:13px;opacity:.85}
+.sp-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.sp-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 30px -22px rgba(40,20,120,.35)}
+.sp-card .sp-who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sp-card .sp-who b{display:block;font-size:14px}.sp-card .sp-who small{display:block;font-size:12px;color:var(--faint)}
+.sp-card p{margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}
+.sp-quick{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sp-quick button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 13px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font:700 14px var(--f);color:var(--ink);cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+.sp-quick button:hover{border-color:color-mix(in srgb,#5b3df5 40%,var(--line));background:var(--lilac)}
+.sp-quick button span{color:var(--brand-text)}
+.sp-quick button.sp-person{background:#5b3df5;border-color:#5b3df5;color:#fff}.sp-quick button.sp-person span{color:#fff}
+.sp-guide{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.sp-guide .sp-gi{width:40px;height:40px;border-radius:12px;background:var(--lilac);color:var(--brand-text);display:grid;place-items:center;flex:none}
+.sp-guide .sp-gi svg{width:20px;height:20px}
+.sp-guide b{display:block;font-size:14px}.sp-guide small{display:block;font-size:12.5px;color:var(--muted)}
+.sp-guide em{margin-left:auto;font-style:normal;color:var(--faint);font-weight:800}
+.sp-row{display:flex;gap:8px;align-items:flex-end;max-width:88%;animation:spIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes spIn{from{opacity:0;transform:translateY(8px)}}
+.sp-row.me{align-self:flex-end;flex-direction:row-reverse}
+.sp-row .sp-av{width:28px;height:28px}
+.sp-col{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-name{font-size:11.5px;font-weight:700;color:var(--faint);padding-left:4px}
+.sp-msg{padding:10px 13px;border-radius:18px;font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.sp-row.me .sp-msg{background:#5b3df5;color:#fff;border-color:#5b3df5;border-radius:18px 18px 6px 18px}
+.sp-msg small{display:block;font-size:11px;opacity:.6;margin-top:3px}
+.sp-msg a{color:inherit;font-weight:700}
+.sp-sys{align-self:center;font-size:12px;color:var(--faint);text-align:center;padding:2px 10px;max-width:90%}
+.sp-typing{display:inline-flex;gap:4px;padding:13px 14px}
+.sp-typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:spB 1s infinite}
+.sp-typing i:nth-child(2){animation-delay:.2s}.sp-typing i:nth-child(3){animation-delay:.4s}
+@keyframes spB{50%{opacity:.25;transform:translateY(-2px)}}
+.sp-form{padding:10px 12px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--surface);flex:none}
+.sp-form .inp{padding:11px 14px;font-size:15px;border-radius:14px}
+.sp-crow{display:flex;gap:8px;align-items:flex-end}
+.sp-form textarea{flex:1;resize:none;min-height:46px;max-height:120px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);font:500 15px/1.4 var(--f);color:var(--ink)}
+.sp-form textarea:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.sp-send{width:46px;height:46px;border-radius:16px;border:0;background:#5b3df5;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.sp-send svg{width:18px;height:18px}
+.sp-err{font-size:13px;color:var(--rose);font-weight:600}
+.sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
+.sp-foot a{color:var(--faint)}
+.sp-hide{display:none!important}
+@media (max-width:560px){
+  .sp-launch{height:54px;padding:0 16px 0 8px;font-size:14.5px;right:14px}
+  .sp-launch .sp-faces .sp-av{width:32px;height:32px}
+  .sp-launch .sp-dot{left:30px;top:8px}
+  .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
+  .sp-launch[aria-expanded="true"]{display:none}
+  .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
+  body.mcta-on .sp{bottom:0;height:auto}
+  .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .sp-form{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+}
+@media (min-width:901px){body.mcta-on .sp-launch{bottom:calc(18px + env(safe-area-inset-bottom,0px))}body.mcta-on .sp{bottom:calc(88px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 116px))}}
+@media (prefers-reduced-motion:reduce){.sp,.sp-row{transition:none;animation:none}}
+</style>
+
+<button class="sp-launch" id="spLaunch" type="button" aria-expanded="false" aria-controls="spPanel" aria-label="Chat with Joinvoo support">
+  <span class="sp-faces" id="spLFaces"></span><span class="sp-dot" id="spLDot" hidden></span><span data-i18n="1c036wn" class="sp-lt">Chat with us</span>
+  <svg class="sp-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+</button>
+<section class="sp" id="spPanel" role="dialog" aria-modal="false" aria-labelledby="spTitle">
+  <header class="sp-hd">
+    <div class="sp-top"><span data-i18n-t="9b108k" class="sp-brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo support</span><button class="sp-cx" id="spClose" type="button" aria-label="Close chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="sp-team" id="spTeam"></div>
+    <h3 data-i18n="11gdjbh" id="spTitle">We’re here to help.</h3>
+    <div class="sp-meta"><span><i id="spOn"></i><span data-i18n="1fwx219" id="spOnTxt">Usually replies in a few minutes</span></span><span id="spHours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span></span></span></div>
+  </header>
+  <div class="sp-body" id="spBody" aria-live="polite">
+    <div class="sp-card" id="spWelcome">
+      <div class="sp-who" id="spWho"></div>
+      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <div class="sp-quick" id="spQuick">
+        <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
+        <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>
+        <button data-i18n="bn79q4" type="button" data-q="bot">Setting up my bot <span>→</span></button>
+        <button data-i18n="1eyzih9" type="button" data-q="person" class="sp-person">Talk to a person <span>→</span></button>
+      </div>
+    </div>
+    <a class="sp-card sp-guide" href="guide.html"><span class="sp-gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM8 7h7M8 11h5"/></svg></span><span data-i18n="6err5n"><b>Setup guide</b><small>Bot, channel, pixels and your first test join</small></span><em>→</em></a>
+  </div>
+  <form class="sp-form" id="spForm" novalidate>
+    <div id="spEmailRow" hidden><label data-i18n="423ze" class="sr" for="spEmail">Your email</label><input data-i18n-ph="1pq88gt" class="inp" id="spEmail" type="email" autocomplete="email" placeholder="Your email, so we can reply if you leave"></div>
+    <div class="sp-err" id="spErr" hidden></div>
+    <div class="sp-crow"><label data-i18n="1cam7ic" class="sr" for="spText">Message</label><textarea data-i18n-ph="1g0yvse" id="spText" rows="1" placeholder="Write a message…"></textarea><button class="sp-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>
+    <div data-i18n="14kpqx" class="sp-foot"><span id="spNote">Real people · secure</span><a href="privacy.html">Privacy</a></div>
+  </form>
+</section>
+
+<script>JVI();
+(function(){
+  const $=id=>document.getElementById(id);
+  const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
+  if(!launch||!panel) return;
+  let DEMO=!!window.JP_DEMO || location.protocol==='file:';
+  const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
+  let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
+  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false;
+
+  /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
+  const BG=['#efebff','#e8f3ec','#fbf2df','#ecf0fc','#fbeae8'], SKIN=['#f2c9a5','#d9a27a','#b97a52','#a8714d','#f6d7bf'], HAIR=['#1f1633','#3a2417','#6b3f1f','#0f0f14','#8a5a2b'], SHIRT=['#5b3df5','#2e7d57','#c2463f','#3d5ad6','#87631a'];
+  const hash=s=>{ let h=7; for(const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return h; };
+  function face(name){ const h=hash(name||'?'), bg=BG[h%5], sk=SKIN[(h>>>3)%5], hr=HAIR[(h>>>6)%5], sh=SHIRT[(h>>>9)%5], style=(h>>>12)%3;
+    const top=`<path d="M11.4 19.5c-.6-7.2 3.8-11.3 8.6-11.3s9.2 4.1 8.6 11.3c-1.6-3.6-4.6-5.3-8.6-5.3s-7 1.7-8.6 5.3z" fill="${hr}"/>`;
+    const back=style===1?`<path d="M10.5 20c0-7.5 4.2-11.5 9.5-11.5s9.5 4 9.5 11.5v8.5c0 1.6-1.3 2.5-3 2.5H13.5c-1.7 0-3-.9-3-2.5z" fill="${hr}"/>`:'';
+    const bun=style===2?`<circle cx="20" cy="8.2" r="3.6" fill="${hr}"/>`:'';
+    return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${bg}"/>${back}<path d="M6 42c1-8 7-12 14-12s13 4 14 12z" fill="${sh}"/><rect x="17" y="24" width="6" height="7" rx="3" fill="${sk}"/><circle cx="20" cy="19" r="8.5" fill="${sk}"/>${bun}${top}<circle cx="17" cy="20.5" r="1" fill="#2b1810"/><circle cx="23" cy="20.5" r="1" fill="#2b1810"/><path d="M17.5 23.8q2.5 2 5 0" fill="none" stroke="#7a3b22" stroke-width="1.2" stroke-linecap="round"/></svg>`; }
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function av(p){ const n=(p&&p.name)||'Joinvoo'; return `<span class="sp-av" title="${esc(n)}">${p&&p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy">`:face(n)}</span>`; }
+  function render(){ const t=team.slice(0,3);
+    $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
+    const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
+    $('spHello').textContent=_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
+    $('spOnTxt').textContent=online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
+    $('spOn').classList.toggle('on',online); $('spLDot').hidden=!online;
+    const hh=$('spHours'); hh.querySelector('span').textContent=_t(hours); hh.hidden=!hours; }
+  function applySupport(s){ if(!s) return; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
+  render();
+
+  const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
+  const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+  function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
+    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
+    r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
+    if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
+    body.appendChild(r); scroll(); return r; }
+  function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; body.appendChild(d); scroll(); }
+  function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(r); scroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
+  function showErr(m){ err.textContent=m||''; err.hidden=!m; }
+
+  /* quick starts: instant answers for common questions, then a person if they want one */
+  const GUIDE='guide.html';
+  const ANSWERS={
+    how:[_t('How does tracking work?'),_t('Every click on your Joinvoo tracking link gets its own Telegram invite link (or bot link). When that person joins your channel, group or bot, we know exactly which campaign and ad brought them, and we send the join to Meta, TikTok or Snapchat server-side. Deposits too, if your broker or CRM sends us a postback. Your ads then optimise for real joiners, not clicks.')],
+    price:[_t('Pricing'),_t('Your first 500 tracked joins are free, plus a deposit-tracking trial (7 days or 20 FTDs). Basic is $30 a month with 2,000 tracked joins. Pro is $99 a month with 5,000 joins, deposit tracking, ROAS dashboards, integrations and Joe. Extra joins cost 2 credits ($0.02). Prepaid credits, no contracts.')],
+    bot:[_t('Setting up my bot'),esc(_t('Easiest way: make a new bot in @BotFather, paste its token into Joinvoo, and add it to your channel as an admin with “Invite users via link”. About 10 minutes in total. If your bot already runs somewhere, Joinvoo can pass its messages on, or your bot can ping us on each Start.'))+` <a href="${GUIDE}">${esc(_t('Open the step-by-step guide →'))}</a>`]};
+  const bot={name:'Joinvoo',photo:'',bot:true};
+  async function quick(k){ if(k==='person'){ sys(_t('Write your message below.')+' '+(online?_t('We’re online now.'):_t(replyTime)+'.')); text.focus(); return; }
+    const [q,a]=ANSWERS[k]; msg('me',q,Date.now()); await typing(team[0],700); msg('them',a,Date.now(),{name:team[0].name,photo:team[0].photo},k==='bot');
+    sys(_t('Need more? Write below and a real person will reply.')); }
+  $('spQuick').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) quick(b.dataset.q); });
+
+  async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
+    const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
+  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; applySupport(j); emRow.hidden=!!ticket;
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); }); render(); }
+  async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
+    try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
+  function demo(){ DEMO=true; online=true; emRow.hidden=true; $('spNote').textContent=_t('Demo preview · messages aren’t sent'); render(); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },4000); }
+  function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
+  function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
+    if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
+  launch.onclick=()=>open(!panel.classList.contains('open')); $('spClose').onclick=()=>{ open(false); launch.focus(); };
+  addEventListener('keydown',e=>{ if(e.key==='Escape'&&panel.classList.contains('open')){ open(false); launch.focus(); } });
+  text.addEventListener('input',()=>{ text.style.height='auto'; text.style.height=Math.min(120,text.scrollHeight)+'px'; });
+  text.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+  form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(!t||sending) return; showErr('');
+    if(DEMO){ msg('me',t,Date.now()); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
+      msg('them',_t('Thanks! A real person replies here within minutes during the day. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
+    const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
+    sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
+    try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
+      if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+    catch(x){ b.remove(); text.value=t; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
+    finally{ sending=false; } });
+
+  /* site config: team, reply time, hours, and the support_chat switch */
+  window.JV_CONFIG = window.JV_CONFIG || (DEMO ? Promise.resolve(null) : fetch('/api/config',{credentials:'same-origin'}).then(r=>(r.headers.get('content-type')||'').includes('json')?r.json():null).catch(()=>null));
+  window.JV_CONFIG.then(c=>{ if(!c) return; if(c.features&&c.features.support_chat===false){ launch.classList.add('sp-hide'); panel.classList.add('sp-hide'); return; } applySupport(c.support); });
+})();
+</script>
+
+
+<script>JVI();
+(function(){
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = s => document.querySelector(s);
+  const yr=$('#yr'); if(yr) yr.textContent=new Date().getFullYear();
+  const live = el => { let v=false; if(el) new IntersectionObserver(([e])=>v=e.isIntersecting).observe(el); return ()=>v&&!document.hidden; };
+
+  /* header + sticky mobile CTA */
+  const mcta=$('#mcta');
+  const onScroll=()=>{ $('#top').classList.toggle('scrolled',scrollY>10); mcta.classList.toggle('up',scrollY>innerHeight*.8 && innerHeight+scrollY<document.documentElement.scrollHeight-260); };
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+  /* the affiliate link can be changed in admin (VooSquare → affiliate link); /api/config carries it */
+  (window.JV_CONFIG||Promise.resolve(null)).then(c=>{ const u=c&&((c.showcase&&c.showcase.affiliate&&c.showcase.affiliate.url)||(c.voo&&c.voo.affiliate_url)); if(!u||!/^https:\/\//.test(u)) return;
+    document.querySelectorAll('a[data-aff]').forEach(a=>a.href=u); });
+
+  /* hero: one referred customer, paying month after month */
+  (function(){ const tl=$('#tl'), mn=$('#mn'); if(!tl) return; const vis=live(tl);
+    const PLANS=[_t('Joinvoo Pro'),_t('Joinvoo Basic'),_t('Joinvoo Pro + Replyvoo'),_t('Joinvoo Pro + Castvoo')];
+    let m=0;
+    function add(){ m++; mn.textContent=m; const r=document.createElement('div'); r.className='mo new';
+      r.innerHTML=`<span class="n">${m}</span><div><span>${_t('Commission paid')}</span><small>${PLANS[Math.min(PLANS.length-1,Math.floor((m-1)/3))]}</small></div><span class="ok">✓ ${_t('Month')} ${m}</span>`;
+      tl.querySelectorAll('.mo.new').forEach(x=>x.classList.remove('new')); tl.prepend(r); while(tl.children.length>6) tl.lastElementChild.remove();
+      if(m>=12){ m=0; } }
+    for(let i=0;i<3;i++) add();
+    if(!reduced) setInterval(()=>{ if(vis()) add(); },2200); })();
+
+  /* sub IDs that change: the hero chip, the step link and the tile */
+  (function(){ const SUBS=['tiktok_ugc_3','yt_review','tg_channel','meta_retarget','ig_reel_7','blog_guide'], CODES=['mediabuyer','kemi_ads','growthlab','traffic_ng','your_code'];
+    const a=$('#fsub'), b=$('#sub1'), c=$('#tcode'); let i=0;
+    const swap=(el,v)=>{ if(!el) return; el.classList.add('sw'); setTimeout(()=>{ el.textContent=v; el.classList.remove('sw'); },reduced?0:250); };
+    if(c) c.textContent=CODES[0];
+    if(!reduced) setInterval(()=>{ i++; swap(a,SUBS[i%SUBS.length].split('_').slice(0,2).join('_')); swap(b,SUBS[(i+2)%SUBS.length]); if(c) c.textContent=CODES[i%CODES.length]; },2600); })();
+
+  /* why it converts: what a Joinvoo customer sees, live */
+  (function(){ const box=$('#evs'); if(!box) return; const vis=live(box);
+    const IC={meta:'<i class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M3.5 14c0-4 2-7 4.2-7 4 0 5.6 10 9.3 10 2 0 3.5-2 3.5-4.6S19 7 17 7c-3.7 0-5.3 10-9.3 10-2.2 0-4.2-1.3-4.2-3z"/></svg></i>',
+      tiktok:'<i class="pt"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.6 2.6 2.4 4 5 4.2"/></svg></i>',
+      snap:'<i class="ps"><svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.6"/></svg></i>'};
+    const EV=[['meta',_t('Joined Daily Deals Club'),_t('From ad · Video 3 · sent to Meta'),'Subscribe',0],['tiktok',_t('First deposit'),_t('Matched by postback · sent to TikTok'),'CompletePayment',1],['snap',_t('Started the bot'),_t('From ad · Story · sent to Snapchat'),'SUBSCRIBE',0],['meta',_t('First deposit'),_t('Matched by postback · sent to Meta'),'Purchase',1],['tiktok',_t('Joined the VIP group'),_t('From ad · UGC · sent to TikTok'),'Subscribe',0]];
+    let k=0; const add=()=>{ const [p,t,s,code,ftd]=EV[k++%EV.length]; const r=document.createElement('div'); r.className='ev'+(ftd?' ftd':''); r.innerHTML=`${IC[p]}<div><span>${t}</span><small>${s}</small></div><code>${code}</code>`; box.prepend(r); while(box.children.length>6) box.lastElementChild.remove(); };
+    for(let i=0;i<4;i++) add();
+    if(!reduced) setInterval(()=>{ if(vis()) add(); },2000); })();
+})();
+</script>
+</body></html>

@@ -1,6 +1,6 @@
-# Joinvoo: start here (developer handover, 3 October 2026)
+# Joinvoo: start here (developer handover, 5 October 2026)
 
-This folder is the complete, current Joinvoo: website, dashboard, admin, server, Joe (AI assistant) and tests. Everything from today's work is included and tested (821 automated checks, 0 failures). It replaces any earlier zip.
+This folder is the complete, current Joinvoo: website, dashboard, admin, server, Joe (AI assistant) and tests. Everything from today's work is included and tested (905 automated checks, 0 failures, plus an independent review and an upgrade test on a copy of the previous version). It replaces any earlier zip.
 
 Joinvoo is already live on Railway with real users. This update is safe to deploy on top: the database only gets new tables and columns, sessions and balances stay, and new features stay off until you switch them on.
 
@@ -14,6 +14,7 @@ Joinvoo is already live on Railway with real users. This update is safe to deplo
 | **TRAINING.md** | How Joe works, where his knowledge lives, how to update it, pricing and costs | After deploying |
 | **ARCHITECTURE.md** | How the code is organised, the data model and request flows | When changing code |
 | **README.md** | Short project summary, commands and settings list | Any time |
+| **VOOSQUARE-CONNECT.md** | Exactly what Joinvoo sends to and expects from VooSquare (login, events, affiliates, support) | When connecting VooSquare |
 
 ## Deploy today's update (about 15 minutes)
 
@@ -44,9 +45,13 @@ Joinvoo is already live on Railway with real users. This update is safe to deplo
 
   Check **Joe earnings** after a few weeks.
 - [ ] **Joe's team details.** Fill in the "TEAM (fill this in)" section in `joe/playbooks/about-zedapex-and-team.md`, or add a custom playbook with the same name in Admin → Settings → Joe → Playbooks.
-- [ ] **Zedapex apps.** Admin → Settings → **Zedapex apps**: check each app's link (replyvoo.com, castvoo.com, advoo.com, affleego.com) and rename Advoo to **Vooads** if that's the final name.
+- [ ] **Plan limits.** Admin → Settings → Plans & trial → **Plan limits**. Default: Basic 3 channels + 3 bots, Pro unlimited. Existing customers keep everything they already have.
+- [ ] **Gatevoo (USDT + Bitcoin).** Admin → Settings → Payment methods → **Gatevoo**: paste the API key and webhook secret from Gatevoo (Apps → Connect an app → "Joinvoo"), paste the webhook URL shown into Gatevoo, switch it on, and make one real $10 USDT top-up. Details in UPGRADE.md.
+- [ ] **Custom payment methods (optional).** Admin → Payment methods → Add → **Custom gateway**: logo, text, checkout link or API URL, webhook secret.
+- [ ] **Zedapex apps.** Admin → Settings → **Zedapex apps**: check each app's link (spyvoo.com, replyvoo.com, castvoo.com, vooads.com, affleego.com, gatevoo.com). They feed the swipeable showcase at the bottom of the customer Overview.
 - [ ] **Payments.** Admin → Settings → **Payment methods**: add your Paystack and/or Stripe keys and set which countries see each method.
-- [ ] **VooSquare.** Leave it **Off** until `auth.voosquare.com` exists. UPGRADE.md, section 6, explains how to switch it on later.
+- [ ] **VooSquare (login, affiliates, support).** Leave Login **Off** until VooSquare is live; email + password always keeps working. When ready: UPGRADE.md section 6 (10 minutes), and send VOOSQUARE-CONNECT.md to the VooSquare developer.
+- [ ] **Forgot password needs email.** Reset links are sent by email, so a Resend key must be set (Admin → Settings → Integrations & API keys, or `RESEND_API_KEY`). Check Admin → Emails shows "password_reset" sent after you try it once.
 
 ## Joe's training: what lives where (don't delete these)
 

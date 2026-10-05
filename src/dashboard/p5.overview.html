@@ -107,8 +107,9 @@ async function viewOverview(){
     <div id="sistercard" hidden></div>
     <div id="blognew" hidden></div>
     <section class="card"><div class="card-h"><h2>Top campaigns</h2><button class="link" data-act="nav" data-p="campaigns">All campaigns ${I.arrow}</button></div><div id="topc"><div class="sk" style="height:160px;margin:12px 18px 18px"></div></div></section>
+    ${showcaseHtml()}
   </div>`;
-  drawBlogNew(); drawCountryBanner(); drawSisterCard();
+  drawBlogNew(); drawCountryBanner(); drawSisterCard(); showcaseStart();
   await loadOverview(true);
   if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')) loadOverview(false); });
 }
@@ -134,7 +135,7 @@ async function loadOverview(first){
     rate:{v:pctS(T.joins,T.clicks),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
     ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins)} of joins · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
     rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
-    leaves:{v:fmt(T.leaves),raw:T.leaves,d:deltaChip(T.leaves,P.leaves,false,vl),s:`${pctS(T.leaves,T.joins+T.organic)} of all joins`,sp:''},
+    leaves:leftCard(T,P,vl),
   };
   const kp=$('#kpis'), hasSp=FEAT('spend')&&T.spend_cents>0;
   if (kp){ kp.classList.toggle('k8',hasSp); if (hasSp && !$('.kpi[data-k="spend"]')) kp.insertAdjacentHTML('beforeend',`<section class="kpi t-peach" data-k="spend"></section><section class="kpi t-teal" data-k="cpf"></section>`); if(!hasSp) $$('.kpi[data-k="spend"],.kpi[data-k="cpf"]').forEach(x=>x.remove()); }
@@ -144,7 +145,7 @@ async function loadOverview(first){
     for (const [k2,l2] of [['spend','Ad spend'],['cpf','Cost per FTD']]){ const el=$(`.kpi[data-k="${k2}"]`), c=cards[k2]; if(el) el.innerHTML=`<span class="kl">${l2}</span><div class="kv-row"><div style="min-width:0"><span class="kn">${c.v}</span></div></div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`; } }
   const fc=$('#fakechip'); if (fc){ const n=T.suspect_clicks||0, fj=T.filtered_joins||0; fc.hidden=!(FEAT('fake_filter')&&(n||fj)); fc.innerHTML=`${I.shield}${fj?tt('fraud.chip2','{c} fake clicks · {j} fake joins filtered',{c:fmt(n),j:fmt(fj)}):tt('fraud.chip','{c} fake clicks filtered',{c:fmt(n)})}`; fc.title=tt('fraud.tip','Bots, data-center clicks, join bursts, deleted accounts and repeat users. Recorded, but never sent to your ad platforms.'); }
   for (const [key] of KPI_DEF){ const c=cards[key], el=$(`.kpi[data-k="${key}"]`); if(!el) continue;
-    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`;
+    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>${c.s2||''}`;
     if (first && !reduced) count(el.querySelector('.kn'), c.raw, c.p?'p':c.m?'m':''); }
   if (T.ftd_locked){ const r=$('.kpi[data-k="rev"]'); if(r){ r.classList.add('locked'); r.innerHTML=`<span class="kl">${tt('kpi.revenue','Revenue')}</span><div class="kv-row"><span class="kn">${I.lock}</span></div><div class="kd"><button class="ks link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></div>`; }
     if (!$('#lockb')){ const k=$('#kpis'); k&&k.insertAdjacentHTML('afterend',`<div id="lockb">${lockBanner(T.ftd)}</div>`); } }
@@ -159,6 +160,18 @@ async function loadOverview(first){
   const fe=$('#feed'); if (fe){ fe.innerHTML = feed.rows.length ? feed.rows.map((r,i)=>personRow(r,'f'+i,seen.size&&!seen.has(r.id))).join('') : `<div class="empty"><span class="ei">${I.people}</span><h3>Quiet for now</h3><p>New people show up here the moment they join.</p></div>`;
     S.feed=feed.rows; seen=new Set(feed.rows.map(r=>r.id)); }
   if (topc) drawTopCampaigns(topc.rows);
+}
+/* "Left": people who joined in this range and have since left, as a share of those new joins (never above 100%).
+   Members who were already in the channel before (or before Joinvoo tracked them) are shown apart, as "+N older members".
+   Old servers without leaves_new: all leaves, capped at 100% and labelled "of all joins". */
+const pctCap = (a,b) => b ? Math.min(100,pct(a,b)).toFixed(1).replace(/\.0$/,'')+'%' : '—';
+function leftCard(T,P,vl){
+  const base=(T.joins||0)+(T.organic||0);
+  if (T.leaves_new==null) return {v:fmt(T.leaves),raw:T.leaves||0,d:deltaChip(T.leaves,P.leaves,false,vl),s:`${pctCap(T.leaves,base)} of all joins`,sp:''};
+  const n=T.leaves_new||0, old=T.leaves_old!=null?T.leaves_old:Math.max(0,(T.leaves||0)-n);
+  return {v:fmt(n),raw:n,d:deltaChip(n,P.leaves_new!=null?P.leaves_new:0,false,vl),
+    s:`<span title="${esc(tt('kpi.left.tip','Of the people who joined in this range, how many have since left'))}">${tt('kpi.left.new','{p} of new joins',{p:pctCap(n,base)})}</span>`,
+    s2:old>0?`<span class="ks ks-old" title="${esc(tt('kpi.left.oldtip','Members who joined before this range, or before Joinvoo tracked them, and left in this range'))}">${tt('kpi.left.old','+{n} older members',{n:fmt(old)})}</span>`:'',sp:''};
 }
 function count(el,to,kind){ const t0=performance.now(); const f=n=>{ const p=Math.min(1,(n-t0)/900), e=1-Math.pow(1-p,3), v=to*e; el.textContent=kind==='p'?v.toFixed(1)+'%':kind==='m'?money0(v):fmt(v); if(p<1) requestAnimationFrame(f); }; requestAnimationFrame(f); }
 function drawFunnel(T, hasConv, anim){

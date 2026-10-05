@@ -829,13 +829,15 @@ const PM_LOGO={
   usdt:['#E3F6EF','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#26A17B"/><path d="M7.5 7.3h9v2.3h-3.3v1.3c2.1.1 3.7.6 3.7 1.1s-1.6 1-3.7 1.1v4.1h-2.4v-4.1c-2.1-.1-3.7-.6-3.7-1.1s1.6-1 3.7-1.1V9.6H7.5z" fill="#fff"/></svg>'],
   bank:['#ECF0FC',`<span style="color:#3D5AD6">${BANK_SVG}</span>`]
 };
+const isGv = m => m && (m.type==='gatevoo'||m.brand==='gatevoo');
 function pmLogo(m){
+  if (isGv(m)) return `<span class="pm-logo gv">${m.logo_url?`<img src="${esc(asset(m.logo_url))}" alt="" loading="lazy" onerror="this.nextElementSibling.hidden=false;this.remove()"><span hidden>${GV_MARK}</span>`:GV_MARK}</span>`;
   if (m.logo_url) return `<span class="pm-logo img"><img src="${esc(asset(m.logo_url))}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('img');this.remove()"></span>`;
   const l=(m.label||'').toLowerCase(), k=m.type==='paystack'||/paystack/.test(l)?'paystack':m.type==='stripe'||/stripe/.test(l)?'stripe':/usdt|tether|trc/.test(l)?'usdt':m.type==='manual'&&/bank|transfer|wire|iban/.test(l)?'bank':null;
   if (k) return `<span class="pm-logo" style="background:${PM_LOGO[k][0]}">${PM_LOGO[k][1]}</span>`;
   const [t,bg,fg]=mIcon(m); return `<span class="pm-logo" style="background:${bg};color:${fg}">${t}</span>`;
 }
-const PM_TYPE={paystack:['instant','Instant','g'],stripe:['instant','Instant','g'],flutterwave:['instant','Instant','g'],crypto_manual:['crypto','Crypto','v'],crypto:['crypto','Crypto','v'],manual:['manual','Manual transfer','y']};
+const PM_TYPE={gatevoo:['instant','Instant','g'],custom:['instant','Instant','g'],paystack:['instant','Instant','g'],stripe:['instant','Instant','g'],flutterwave:['instant','Instant','g'],crypto_manual:['crypto','Crypto','v'],crypto:['crypto','Crypto','v'],manual:['manual','Manual transfer','y']};
 const usd0 = v => '$'+fmt(Math.round(v));
 function money3(v,cur){ try{ return new Intl.NumberFormat(I18N.lang==='en'?'en-US':I18N.lang,{style:'currency',currency:cur,currencyDisplay:'narrowSymbol',maximumFractionDigits:v>=1000?0:2}).format(v); }catch{ return fmt(Math.round(v))+' '+cur; } }
 function pmCard(m,o={}){
@@ -844,7 +846,7 @@ function pmCard(m,o={}){
   const tag=o.pick?'button':'div';
   return `<${tag} ${o.pick?`type="button" data-act="prov" data-p="${esc(m.id)}" aria-pressed="${!!o.on}"`:''} class="pmx ${o.pick?'pick':''}">${pmLogo(m)}
     <span class="pm-b"><span class="pm-t"><b>${esc(m.label)}</b><span class="chip ${c} pm-ty">${tt('pm.t.'+k,l)}</span></span>
-      ${m.description||m.note?`<small class="pm-d">${esc(m.description||m.note)}</small>`:''}
+      ${m.description||m.note?`<small class="pm-d">${esc(m.description||m.note)}</small>`:''}${isGv(m)?gvPill():''}
       <span class="pm-m"><span>${fee}</span><span>${lim}</span>${m.currency&&m.currency!=='USD'&&m.currency!=='USDT'?`<span>${tt('pm.paidin','Paid in {c}',{c:esc(m.currency)})}</span>`:''}</span></span>
     ${o.pick?'<span class="rad"></span>':''}</${tag}>`;
 }
@@ -897,7 +899,8 @@ const sister = () => { if (!FEAT('sister_promo')) return null;
   if (Array.isArray(S.cfg&&S.cfg.apps)){ const a=S.cfg.apps.find(x=>x&&x.id==='replyvoo'&&x.enabled!==false&&x.url&&x.status!=='soon'); return a?{enabled:true,name:a.name||'Replyvoo',url:a.url,tagline:a.tagline||'',promo_code:a.promo_code||a.code||'',offer:a.offer||''}:null; }
   const s=S.cfg&&S.cfg.sister; return s&&s.enabled&&s.url&&s.name?s:null; };
 const sisName = () => esc((sister()||{}).name||'Replyvoo');
-const sisLogo = (size=38) => `<svg class="sis-logo" viewBox="0 0 38 38" width="${size}" height="${size}" aria-hidden="true"><rect width="38" height="38" rx="10" fill="#121110"/><path d="M11.5 10.5h15a3.5 3.5 0 0 1 3.5 3.5v8.5a3.5 3.5 0 0 1-3.5 3.5h-8l-5.5 4.5V26h-1.5A3.5 3.5 0 0 1 8 22.5V14a3.5 3.5 0 0 1 3.5-3.5z" fill="none" stroke="#FFC21A" stroke-width="2.2" stroke-linejoin="round"/><path d="M14.6 18.4l3.1 3.1 5.9-6" fill="none" stroke="#FFC21A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const logoSrc = id => (DEMO?'media/applogos/':'/media/applogos/')+id+'.svg';
+const sisLogo = (size=38) => `<img class="sis-logo" src="${logoSrc('replyvoo')}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
 const sisHead = () => `${tt('sis.h1','Joinvoo brings the leads.')} <em class="serif">${tt('sis.h2','{name} closes them.',{name:sisName()})}</em>`;
 function sisCta(where, big){ const s=sister(); if(!s) return '';
   return `<a class="btn sis-btn ${big?'lg':''}" href="${esc(s.url)}" target="_blank" rel="noopener" data-act="sis-go" data-w="${where}">${tt('sis.try','Try {name} free',{name:sisName()})} ${I.arrow}</a>${s.promo_code?`<span class="sis-code"><small>${tt('sis.code','Code')}</small><b>${esc(s.promo_code)}</b><button class="sis-cp" data-act="copy" data-v="${esc(s.promo_code)}" aria-label="${tt('common.copy','Copy')} ${esc(s.promo_code)}">${I.copy}</button></span>`:''}`; }
@@ -1058,7 +1061,9 @@ const APP_DEF={
   advoo:{color:'#ef5a2c',color2:'#c8401a',ink:'light'},
   affleego:{color:'#14b8a6',color2:'#0f766e',ink:'light'},
   landvoo:{color:'#EEF0F6',color2:'#E2E6F0',ink:'dark'},
-  voosquare:{color:'#0fae6b',color2:'#c6f45a',ink:'dark'}};
+  voosquare:{color:'#0fae6b',color2:'#c6f45a',ink:'dark'},
+  spyvoo:{color:'#2457ff',color2:'#0d2fc4',ink:'light'},
+  gatevoo:{color:'#0b0b0f',color2:'#24242c',ink:'light'}};
 const vooHome = () => (S.cfg&&S.cfg.voo&&S.cfg.voo.home)||'https://voosquare.com';
 const vooRefs = () => { const v=(S.cfg&&S.cfg.voo)||{}, me=S.me||{}; return v.referrals==='voosquare'||me.referrals_mode==='voosquare'||(me.voo&&me.voo.referrals==='voosquare'); };
 function appsAll(){ if (!FEAT('sister_promo')||!Array.isArray(S.cfg&&S.cfg.apps)) return null;
@@ -1067,17 +1072,14 @@ const appsList = () => (appsAll()||[]).filter(a=>a.id!=='voosquare');
 const appsLive = () => appsList().filter(a=>a.status!=='soon'&&a.url);
 const appsOn = () => appsList().length>0;
 const appHub = () => (appsAll()||[]).find(a=>a.id==='voosquare')||null;
+const LOGO_IDS=['joinvoo','replyvoo','castvoo','advoo','affleego','landvoo','gatevoo','voosquare'];
 function appLogo(a,size=40){
   const id=a.id, u='al'+(++lvN);
-  if (a.logo && /^(\/|https?:)/.test(a.logo)) return `<span class="app-logo img" style="width:${size}px;height:${size}px"><img src="${esc(asset(a.logo))}" alt=""></span>`;
-  const k=(a.logo&&APP_DEF[a.logo])?a.logo:id;
+  if (a.logo && /^(\/|https?:)/.test(a.logo)) return `<img class="app-logo" src="${esc(asset(a.logo))}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
+  if (id==='spyvoo') return SPY_MARK.replace('<svg',`<svg class="app-logo" width="${size}" height="${size}"`);
+  const k=(a.logo&&LOGO_IDS.includes(a.logo))?a.logo:id;
   const svg=inner=>`<svg class="app-logo" viewBox="0 0 40 40" width="${size}" height="${size}" aria-hidden="true">${inner}</svg>`;
-  if (k==='replyvoo') return sisLogo(size).replace('class="sis-logo"','class="sis-logo app-logo"');
-  if (k==='castvoo') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b7bff"/><stop offset="1" stop-color="#2f55e4"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><path d="M25.5 13.6a8.6 8.6 0 1 0 0 12.8" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/><circle cx="27.6" cy="20" r="2.6" fill="#fff"/>`);
-  if (k==='advoo') return svg(`<rect width="40" height="40" rx="11" fill="#1c1917"/><circle cx="13.8" cy="20" r="6.4" fill="#fff"/><circle cx="26.2" cy="20" r="6.4" fill="#fff"/><g class="adv-pup"><circle cx="15.2" cy="20.6" r="2.8" fill="#ef5a2c"/><circle cx="27.6" cy="20.6" r="2.8" fill="#ef5a2c"/></g>`);
-  if (k==='affleego') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><path d="M11 26.5l6.2-6.2 4.3 4.3 7.5-8.1" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M23.5 16.2h5.8V22" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`);
-  if (k==='landvoo') return svg(`<defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f7bff"/><stop offset="1" stop-color="#5b3df5"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${u})"/><rect x="10" y="10" width="20" height="20" rx="3.5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M10 15.5h20" stroke="#fff" stroke-width="2.4"/><rect x="14" y="19.5" width="12" height="3.2" rx="1.6" fill="#fff"/><rect x="16.5" y="24.6" width="7" height="2.4" rx="1.2" fill="#c6f45a"/>`);
-  if (k==='voosquare') return svg(`<rect x="4" y="4" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="21.5" y="4" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="4" y="21.5" width="14.5" height="14.5" rx="4.5" fill="#0fae6b"/><rect x="21.5" y="21.5" width="14.5" height="14.5" rx="4.5" fill="#c6f45a"/>`);
+  if (LOGO_IDS.includes(k)) return `<img class="app-logo" src="${logoSrc(k)}" width="${size}" height="${size}" alt="" aria-hidden="true" decoding="async">`;
   return svg(`<rect width="40" height="40" rx="11" fill="${esc(a.color||'#5b3df5')}"/><text x="20" y="26" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" font-family="Plus Jakarta Sans,sans-serif">${esc(String(a.name||'?')[0].toUpperCase())}</text>`);
 }
 /* one small looping animation per app */
@@ -1088,6 +1090,7 @@ function appAnim(a){
   if (k==='advoo') return `<div class="am am-adv" aria-hidden="true"><span class="ad-prompt"><span class="ad-type">${tt('apps.adv.p','A promo for my Telegram channel')}</span></span><div class="ad-frames"><span class="ad-f f916"><i>▶</i></span><span class="ad-f f11"><b>${tt('apps.adv.h','Hook')}</b></span><span class="ad-f f169"><i>▶</i></span></div><span class="ad-sizes">9:16 · 1:1 · 16:9</span></div>`;
   if (k==='affleego') return `<div class="am am-aff" aria-hidden="true">${[['CPA','#FFC21A'],['RevShare','#c6f45a'],['Hybrid','#fff']].map(([c,col],i)=>`<span class="af-card" style="--i:${i}"><span class="af-l"><i></i><i></i></span><em style="--c:${col}">${c}</em></span>`).join('')}</div>`;
   if (k==='landvoo') return `<div class="am am-land" aria-hidden="true"><span class="ld-b nav"></span><span class="ld-b hero"></span><span class="ld-b line"></span><span class="ld-b btn"></span><span class="ld-row"><i></i><i></i><i></i></span></div>`;
+  if (k==='spyvoo'||k==='gatevoo') return `<div class="am am-sn" aria-hidden="true">${scScene({kind:k})}</div>`;
   return `<div class="am am-gen" aria-hidden="true"><i></i><i></i><i></i></div>`;
 }
 const appClick = (id,where) => api('POST','/api/apps/click',{id,where}).catch(()=>{});
@@ -1157,5 +1160,322 @@ document.addEventListener('click', e=>{
     case 'app-x': { const id=a.dataset.id; try{ localStorage.setItem('jv_app_x_'+id,String(Date.now())); }catch{} const sl=a.closest('.ac-slide'); if(sl){ sl.classList.add('gone'); setTimeout(()=>drawAppsCarousel(),260); } break; }
     case 'ac-go': acGo(+a.dataset.v); break;
     case 'ac-step': { const tr=$('#actrack'); if(tr) acGo(Math.round(tr.scrollLeft/tr.clientWidth)+(+a.dataset.v)); break; }
+  }
+});
+
+/* ================= Round 11b: plan limits (channels & bots), remove/disconnect, match keys, product showcase, Gatevoo ================= */
+const DOTS='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg>';
+const TRASH=sv('<path d="M4.5 7h15M10 11v6M14 11v6M6.5 7l.8 11.2a2 2 0 002 1.8h5.4a2 2 0 002-1.8L17.5 7M9.5 7V5a1 1 0 011-1h3a1 1 0 011 1v2"/>');
+const UNPLUG=sv('<path d="M9 4v4M15 4v4M7 8h10v3a5 5 0 01-10 0zM12 16v4M4 4l16 16"/>');
+const GV_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0b0b0f"/><path d="M40.6 23.4A13.2 13.2 0 1 0 44.2 33H32.4" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="50" cy="14" r="6.4" fill="#0b0b0f"/><circle cx="50" cy="14" r="4.4" fill="#3ddc84"/></svg>';
+const gvPill = () => `<span class="gv-pill" aria-label="Gatevoo"><span class="gv-m">${GV_MARK}</span><b>Gate</b><i>voo</i></span>`;
+const visChans = d => ((d&&d.channels)||[]).filter(c=>!c.removed_by_user);
+const planName = p => p==='pro'?'Pro':'Basic';
+const nNoun = (n,one,many) => `${fmt(n)} ${n===1?one:many}`;
+
+/* ---------- usage meter on Channels ---------- */
+function limitsCard(d){
+  const L=d&&d.limits; if(!L) return '';
+  const ch=L.channels||{}, bt=L.bots||{}, unl=!!L.unlimited||(ch.max==null&&bt.max==null);
+  if (unl) return `<section class="lim-card unl"><div class="lm-top"><span class="lm-ic">${I.sparkles}</span><div class="lm-b"><b>${nNoun(ch.used||0,'channel','channels')} · ${nNoun(bt.used||0,'bot','bots')}</b><small>${L.plan==='pro'?tt('lim.unl.pro','Unlimited on Pro. Add as many as you like.'):tt('lim.unl','Unlimited channels and bots on your account.')}</small></div><span class="chip v lm-chip">${L.plan==='pro'?tt('lim.unlpro','Unlimited on Pro'):tt('lim.unlim','Unlimited')}</span></div></section>`;
+  const plan=planName(L.plan), part=(o,one,many)=>o.max==null?nNoun(o.used||0,one,many):`${fmt(o.used||0)} of ${nNoun(o.max,one,many)}`;
+  const locked=visChans(d).filter(c=>c.locked).length, full=k=>{ const o=k==='c'?ch:bt; return o.max!=null&&(o.used||0)>=o.max; };
+  const sub = locked ? tt('lim.sub.over','{n} over your {p} limit and not tracking. Upgrade, or remove one you don’t use.',{n:nNoun(locked,'channel is','channels are'),p:plan})
+    : full('c')||full('b') ? tt('lim.sub.full','You’ve used every {k} on {p}. Upgrade for unlimited, or remove one to make room.',{k:full('c')&&full('b')?'channel and bot':full('c')?'channel':'bot',p:plan})
+    : tt('lim.sub.ok','Room for {a} and {b} more on {p}.',{a:ch.max==null?'unlimited channels':nNoun(Math.max(0,ch.max-(ch.used||0)),'channel','channels'),b:bt.max==null?'unlimited bots':nNoun(Math.max(0,bt.max-(bt.used||0)),'bot','bots'),p:plan});
+  const meter=(lab,o)=>{ const used=o.used||0, max=o.max, p=max?Math.min(100,used/max*100):100, st=max==null?'':used>max?'over':used>=max?'full':'';
+    return `<div class="lm-m ${st}"><span class="lm-t"><span>${lab}</span><b class="num">${max==null?fmt(used)+' · ∞':`${fmt(used)}<small> / ${fmt(max)}</small>`}</b></span><span class="lm-bar" role="progressbar" aria-label="${esc(lab)}" aria-valuenow="${used}" aria-valuemin="0" ${max!=null?`aria-valuemax="${max}"`:''}><i style="--w:${p}%"></i></span></div>`; };
+  return `<section class="lim-card ${locked?'over':full('c')||full('b')?'full':''}"><div class="lm-top"><span class="lm-ic">${locked?I.lock:I.channels}</span>
+      <div class="lm-b"><b>${part(ch,'channel','channels')} · ${part(bt,'bot','bots')} on ${plan}</b><small>${sub}</small></div>
+      <button class="lm-up" data-act="lim-up">${tt('lim.up','Upgrade to Pro — unlimited')} ${I.arrow}</button></div>
+    <div class="lm-ms">${meter(tt('lim.ch','Channels'),ch)}${meter(tt('lim.bots','Bots'),bt)}</div></section>`;
+}
+function chLockNote(c, setup){
+  const plan=planName(((S.chans&&S.chans.limits)||{}).plan);
+  return `<div class="ch-lock"><span class="cl-ic">${I.lock}</span><div class="cl-b"><b>${setup?tt('lim.added','{t} was added, but isn’t tracking yet — over your {p} limit',{t:esc(c.title||'Your channel'),p:plan}):tt('lim.locked','Over your {p} limit — not tracking',{p:plan})}</b><small>${tt('lim.locked.p','Joins through this link aren’t counted or sent to your ads. Upgrade, or remove another channel, and it starts by itself.')}</small>
+    <span class="cl-a"><button class="btn sm primary" data-act="lim-up">${I.sparkles} ${tt('pro.upgrade','Upgrade to Pro')}</button><button class="btn sm" data-act="lim-open" data-k="channels">${tt('lim.rm1','Remove a channel')}</button></span></div></div>`;
+}
+/* ---------- bots list on Channels ---------- */
+const botChans = (d,b) => visChans(d).filter(c=>(c.bots||[]).includes(b.username)||(c.type==='bot'&&!c.external&&c.title==='@'+b.username));
+const botOnly = (d,b) => botChans(d,b).filter(c=>(c.bots||[]).filter(x=>x!==b.username).length===0);
+function botsCard(d){
+  const bots=((d&&d.bots)||[]).filter(b=>b.status!=='deleted'); if(!bots.length) return '';
+  const L=d.limits, bmax=L&&!L.unlimited&&L.bots?L.bots.max:null;
+  return `<section class="card bots-card"><div class="card-h"><h2>${I.bot} ${tt('bots.title','Your bots')}</h2><span class="sub">${bmax!=null?tt('bots.of','{a} of {b} on {p}',{a:fmt(bots.filter(b=>b.status==='active').length),b:fmt(bmax),p:planName(L.plan)}):tt('bots.n','{n} connected',{n:fmt(bots.length)})}</span></div>
+    <div class="bot-list">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length, ok=b.status==='active';
+      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
+        <button class="btn sm ghost bot-x" data-act="bot-rm" data-id="${b.id}">${UNPLUG}<span>${tt('bots.disc','Disconnect')}</span></button></div>`; }).join('')}</div>
+    <button class="bot-add" data-act="bot-new">${I.plus} ${tt('bots.add','Add a new bot')}</button></section>`;
+}
+/* setup: "Which bot?" first, when bots are already connected */
+function botPickStep(){
+  const d=S.chans||{bots:[],channels:[]}, bots=d.bots.filter(b=>b.status==='active'), L=d.limits, bt=L&&!L.unlimited&&L.bots||null, bfull=bt&&bt.max!=null&&(bt.used||0)>=bt.max;
+  return `<div class="step">
+    <span class="step-ico">${I.bot}</span>
+    <h1>${tt('bp.h','Which bot should track it?')}</h1><p class="lede">${tt('bp.p','Use a bot you already connected, or add a new one. One bot can track many channels.')}</p>
+    <div class="bpick">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length;
+      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
+      <button class="bpk-row bpk-new" data-act="bot-pick-new"><span class="bot-av new">${I.plus}</span><span class="bot-n"><b>${tt('bp.new','Add a new bot')}</b><small>${bfull?tt('bp.new.full','{a} of {b} bots used',{a:fmt(bt.used),b:fmt(bt.max)}):tt('bp.new.p','Paste a token from @BotFather')}</small></span>${bfull?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${planName(L.plan)}</span>`:`<span class="bpk-go">${I.chevr}</span>`}</button></div></div>`;
+}
+/* ---------- 402 limit sheet: never a dead end ---------- */
+function limitCatch(e){ const b=e&&(e.body||e.data); if(!e||e.status!==402||!b||!b.limit) return false; openLimitSheet(b.limit); return true; }
+function openLimitSheet(lim, opt){ S.lim={...(lim||{}), opt:opt||{}, view:'pick'}; drawLimitSheet(); }
+function limNow(k){ const L=(S.chans&&S.chans.limits)||{}; return {o:L[k]||{}, plan:L.plan, price:L.pro_price_usd}; }
+function drawLimitSheet(){
+  const X=S.lim; if(!X) return; const isB=X.kind==='bots', k=isB?'bots':'channels', {o,plan:p0,price}=limNow(k);
+  const used=X.view==='pick'&&X.used!=null?X.used:(o.used??X.used??0), max=X.max??o.max, plan=planName(X.plan||p0), noun=isB?'bots':'channels';
+  const head=`<h2>${isB?tt('lim.bt.h','Bot limit reached'):tt('lim.ch.h','Channel limit reached')}<small>${plan} plan</small></h2>`;
+  if (X.view==='pick'){
+    const slots=max&&max<=8?Array.from({length:max},(_,i)=>`<i style="--d:${i*90}ms">${isB?I.bot:I.channels}</i>`).join(''):'';
+    const arr=X.opt.arrived;
+    sheet(head, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true">${slots}<span class="lh-plus">${I.lock}</span></div>
+        <b>${used>max?tt('lim.overh','You have {a} {n}. {p} allows {b}.',{a:fmt(used),b:fmt(max),n:noun,p:plan}):tt('lim.used','You’ve used {a} of {b} {n} on {p}',{a:fmt(used),b:fmt(max),n:noun,p:plan})}</b>
+        <span>${arr?tt('lim.arrived','{t} was added, but it won’t track until you upgrade or free a slot.',{t:esc(arr.title)}):isB?tt('lim.bt.p','Upgrade for unlimited bots, or disconnect one you don’t use to make room.'):tt('lim.ch.p','Upgrade for unlimited channels, or remove one you don’t use to make room.')}</span></div>
+      <div class="lim-opts">
+        <button class="lim-opt pro" data-act="lim-up"><span class="lo-ic">${I.sparkles}</span><span class="lo-t"><b>${tt('lim.o.up','Upgrade to Pro')}</b><small>${tt('lim.o.up.p','Unlimited channels and bots')}${price?` · $${fmt(price)}/${tt('lim.mo','month')}`:''}</small></span><span class="lo-go">${I.arrow}</span></button>
+        <button class="lim-opt" data-act="lim-list"><span class="lo-ic">${isB?UNPLUG:TRASH}</span><span class="lo-t"><b>${isB?tt('lim.o.bt','Disconnect a bot'):tt('lim.o.ch','Remove a channel')}</b><small>${tt('lim.o.rm.p','Frees a slot right away. Past stats stay.')}</small></span><span class="lo-go">${I.chevr}</span></button></div>
+      <button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+    return; }
+  if (X.view==='list'){
+    const d=S.chans||{bots:[],channels:[]};
+    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
+      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b>${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
+    sheet(head, `<button class="link" style="align-self:flex-start" data-act="lim-back">${I.chevl} ${tt('common.back','Back')}</button>
+      <div><h3 class="rm-h">${isB?tt('lim.bt.pick','Which bot can go?'):tt('lim.ch.pick','Which channel can go?')}</h3><p class="muted" style="font-size:14px;margin-top:4px">${tt('lim.pick.p','Past stats stay in your reports. Only new tracking stops.')}</p></div>
+      <div class="rm-list">${rows||`<div class="note">${tt('lim.none','Nothing to remove.')}</div>`}</div>`);
+    return; }
+  if (X.view==='done'){
+    const now=o.used||0, left=max!=null?max-now:1, dh=`<h2>${isB?tt('rmb.ok','Bot disconnected'):tt('lim.rmd','Channel removed')}<small>${plan} plan</small></h2>`;
+    if (left>0||max==null) sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done','Slot freed')}</b><span>${max!=null?tt('lim.done.p','You’re using {a} of {b} {n} now.',{a:fmt(now),b:fmt(max),n:noun}):''} ${X.opt.arrived?tt('lim.done.arr','{t} starts tracking by itself.',{t:esc(X.opt.arrived.title)}):tt('lim.done.go','Go ahead and add yours.')}</span></div>
+      <button class="btn primary lg wide" data-act="close">${tt('lim.cont','Continue')} ${I.arrow}</button>`);
+    else if (left===0) sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done0','Everything tracks again')}</b><span>${tt('lim.done0.p','You’re at {a} of {b} {n}. To add another one, remove one more or upgrade.',{a:fmt(now),b:fmt(max),n:noun})}</span></div>
+      <button class="btn primary lg wide" data-act="close">${tt('lim.cont','Continue')} ${I.arrow}</button><button class="btn ghost wide" data-act="lim-up">${I.sparkles} ${tt('lim.o.up','Upgrade to Pro')}</button>`);
+    else sheet(dh, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${tt('lim.done2','Done. {n} more to go.',{n:fmt(-left)})}</b><span>${tt('lim.done2.p','You have {a} {n} and {p} allows {b}. Remove {c} more, or upgrade so everything tracks.',{a:fmt(now),n:noun,p:plan,b:fmt(max),c:fmt(-left)})}</span></div>
+      <button class="btn primary lg wide" data-act="lim-up">${I.sparkles} ${tt('lim.o.up','Upgrade to Pro')}</button><button class="btn lg wide" data-act="lim-list">${isB?tt('lim.o.bt2','Disconnect another bot'):tt('lim.o.ch2','Remove another channel')}</button><button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+  }
+}
+function goUpgrade(){
+  closeSheet(); closePop(); S.lim=null;
+  if (!$('#shell')){ S.page='wallet'; renderApp(); } else go('wallet');
+  let n=0; const t=setInterval(()=>{ const pc=$('.plancard'); if(pc||++n>50){ clearInterval(t); if(pc){ pc.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'}); pc.classList.add('flash'); setTimeout(()=>pc.classList.remove('flash'),2200); } } },100);
+}
+/* ---------- remove channel / disconnect bot ---------- */
+function openRemoveChannel(id, from){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)); if(!c) return; closePop();
+  sheet(`<h2>${tt('rm.h','Remove channel')}<small>${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
+    ${c.tracking_url?`<div class="rm-link"><span class="lbl">${tt('rm.link','This link stops working')}</span><code>${esc(c.tracking_url)}</code></div>`:''}
+    ${c.type!=='bot'?`<div class="note">${tt('rm.tg','Joinvoo stops making invite links for it. You can remove the bot from the channel’s admins in Telegram too.')}</div>`:''}
+    <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="ch-rm-go" data-id="${c.id}" data-from="${esc(from||'')}">${TRASH} ${tt('rm.go','Remove channel')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
+}
+async function removeChannelGo(btn){
+  const id=btn.dataset.id, from=btn.dataset.from; btn.disabled=true; btn.innerHTML=`<span class="spin"></span> ${tt('rm.doing','Removing')}`;
+  try { await api('DELETE','/api/channels/'+id);
+    await refreshChans().catch(()=>{}); toast(tt('rm.ok','Channel removed. Past stats stay.'));
+    if (from==='lim' && S.lim){ S.lim.view='done'; drawLimitSheet(); } else closeSheet();
+    afterRemove(); }
+  catch(e){ const el=$('#rmerr'); if(el) el.innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; btn.innerHTML=`${TRASH} ${tt('rm.go','Remove channel')}`; }
+}
+/* redraw whatever is under the sheet: the Channels page, or the setup step (bot picker, locked note) */
+function afterRemove(){
+  if ($('#stp') && !$('#shell')){ if (W.channel){ const c=(S.chans.channels||[]).find(x=>x.id===W.channel.id); if(c) W.channel=c; } if (W.step===1&&W.pickBot&&!S.chans.bots.some(b=>b.status==='active')) W.pickBot=false; if (W.bot&&!S.chans.bots.some(b=>b.id===W.bot.id&&b.status==='active')){ W.bot=null; W.pickBot=S.chans.bots.some(b=>b.status==='active'); W.step=1; } drawStep(); }
+  else if (S.page==='channels' && $('#cl')) drawChannels();
+}
+function openRemoveBot(id, from){
+  const d=S.chans||{bots:[],channels:[]}, b=d.bots.find(x=>String(x.id)===String(id)); if(!b) return; closePop();
+  const only=botOnly(d,b);
+  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small>@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
+    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li>${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
+    <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="bot-rm-go" data-id="${b.id}" data-from="${esc(from||'')}">${UNPLUG} ${tt('rmb.go','Disconnect bot')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
+}
+async function removeBotGo(btn){
+  const id=btn.dataset.id, from=btn.dataset.from; btn.disabled=true; btn.innerHTML=`<span class="spin"></span> ${tt('rmb.doing','Disconnecting')}`;
+  try { await api('DELETE','/api/bots/'+id); await refreshChans().catch(()=>{}); toast(tt('rmb.ok','Bot disconnected'));
+    if (from==='lim' && S.lim){ S.lim.view='done'; drawLimitSheet(); } else closeSheet();
+    afterRemove(); }
+  catch(e){ const el=$('#rmerr'); if(el) el.innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; btn.innerHTML=`${UNPLUG} ${tt('rmb.go','Disconnect bot')}`; }
+}
+function chMenu(a){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(a.dataset.id)); if(!c) return;
+  if ($('.pop.chm') && S.chMenuFor===c.id){ closePop(); return; } S.chMenuFor=c.id;
+  const p=openPop(a, `${c.tracking_url?`<button class="pi" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('ch.copy','Copy ad link')}</button>`:''}${c.type==='bot'&&!c.external?`<button class="pi" data-act="bot-settings" data-id="${c.id}">${I.bot} ${tt('ch.botset','Bot settings')}</button>`:''}<hr><button class="pi pi-danger" data-act="ch-rm" data-id="${c.id}">${TRASH} ${tt('ch.rm','Remove channel')}</button>`, 'chm');
+  p.style.width='220px';
+}
+
+/* ---------- product showcase: very bottom of Overview ---------- */
+const SC_ORDER=['affiliate','voosquare','spyvoo','replyvoo','castvoo','advoo','vooads','gatevoo'];
+const SC_DEF={affiliate:{color:'#0e9f63',color2:'#064e33',ink:'light'},spyvoo:{color:'#2457ff',color2:'#0d2fc4',ink:'light'},gatevoo:{color:'#0b0b0f',color2:'#24242c',ink:'light'},replyvoo:{color:'#FFC21A',color2:'#FFE07A',ink:'dark'},castvoo:{color:'#3b6cf6',color2:'#1f3fc9',ink:'light'},advoo:{color:'#ef5a2c',color2:'#b83a14',ink:'light'}};
+const scKind = c => { const k=String(c.id||'').toLowerCase(); return /affil|voosquare/.test(k)?'affiliate':k==='vooads'?'advoo':k; };
+function scCards(){
+  const cfg=S.cfg||{}, sc=cfg.showcase; if (sc && sc.enabled===false) return [];
+  let cards = sc&&Array.isArray(sc.cards)&&sc.cards.length ? sc.cards.filter(c=>c&&c.id&&c.enabled!==false).map(c=>({...c}))
+    : (appsAll()||[]).filter(a=>a.id!=='voosquare'&&a.id!=='joinvoo').map(a=>({id:a.id,name:a.name,headline:a.tagline,tagline:a.headline,url:a.url,color:a.color,color2:a.color2,ink:a.ink,logo_url:a.logo_url||(a.logo&&/^(\/|https?:)/.test(a.logo)?a.logo:(LOGO_IDS.includes(a.logo||a.id)?logoSrc(a.logo||a.id):'')),status:a.status,cta:a.cta,badge:a.badge}));
+  if (!cards.length && !sc) return [];
+  const aff={url:'https://affiliate.voosquare.com',headline:'Earn up to 50% for life',tagline:'Promote Joinvoo and every VooSquare tool. Get paid every month your referrals stay.',cta:'Become an affiliate',...((sc&&sc.affiliate)||{})};
+  const ai=cards.findIndex(c=>scKind(c)==='affiliate');
+  if (ai<0) cards.unshift({id:'affiliate',name:'VooSquare Affiliates',headline:aff.headline,tagline:aff.tagline,url:aff.url,cta:aff.cta,status:'live',badge:'Up to 50%'});
+  else cards[ai]={...cards[ai],url:cards[ai].url||aff.url,cta:cards[ai].cta||aff.cta,headline:cards[ai].headline||aff.headline,tagline:cards[ai].tagline||aff.tagline};
+  if (!(sc&&Array.isArray(sc.cards)&&sc.cards.length)) cards.sort((a,b)=>{ const i=x=>{ const j=SC_ORDER.indexOf(scKind(x)); return j<0?99:j; }; return i(a)-i(b); });
+  return cards.map(c=>{ const d=SC_DEF[scKind(c)]||{}; return {...d,...Object.fromEntries(Object.entries(c).filter(([,v])=>v!==''&&v!=null)),kind:scKind(c)}; });
+}
+const SPY_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2457ff"/><path d="M8 32c5-8 13-13 24-13s19 5 24 13c-5 8-13 13-24 13S13 40 8 32z" fill="#fff"/><circle cx="25" cy="32" r="6.4" fill="#2457ff"/><circle cx="39" cy="32" r="6.4" fill="#2457ff"/><circle cx="27" cy="30" r="2" fill="#fff"/><circle cx="41" cy="30" r="2" fill="#fff"/></svg>';
+const VSQ_MARK='<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#0a7a4b"/><rect x="17" y="17" width="13" height="13" rx="3.6" fill="#fff"/><rect x="34" y="17" width="13" height="13" rx="3.6" fill="#c2e7d6"/><rect x="17" y="34" width="13" height="13" rx="3.6" fill="#c2e7d6"/><rect x="34" y="34" width="13" height="13" rx="3.6" fill="#c6f45a"/></svg>';
+function scLogo(c){
+  const fb = c.kind==='spyvoo'?SPY_MARK:c.kind==='gatevoo'?GV_MARK:c.kind==='affiliate'?VSQ_MARK:LOGO_IDS.includes(c.kind)?`<img src="${logoSrc(c.kind)}" width="40" height="40" alt="">`:`<svg viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="${esc(c.color||'#5b3df5')}"/><text x="20" y="26" text-anchor="middle" font-size="17" font-weight="800" fill="#fff" font-family="Plus Jakarta Sans,sans-serif">${esc(String(c.name||'?')[0].toUpperCase())}</text></svg>`;
+  if (!c.logo_url) return `<span class="scc-logo">${fb}</span>`;
+  return `<span class="scc-logo"><img src="${esc(asset(c.logo_url))}" width="40" height="40" alt="" decoding="async" loading="lazy" onerror="this.nextElementSibling.hidden=false;this.remove()"><span hidden>${fb}</span></span>`;
+}
+function scScene(c){
+  const k=c.kind;
+  if (k==='affiliate') return `<div class="sn sn-aff"><span class="af-ring"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" cx="40" cy="40" r="34" pathLength="100"/></svg><b>∞</b><small>${tt('sc.aff.life','Lifetime')}</small></span>
+      <div class="af-bal"><small>${tt('sc.aff.bal','Monthly commission')}</small><span class="af-bars" aria-hidden="true">${[0,1,2,3,4,5].map(i=>`<i style="--i:${i}"></i>`).join('')}</span><svg class="af-line" viewBox="0 0 160 40" preserveAspectRatio="none"><path d="M0 34 C18 32 24 26 38 27 S60 18 74 20 98 10 112 12 138 4 160 3"/></svg></div>
+      <span class="af-toast t1"><i>${I.up}</i> ${tt('sc.aff.t1','Commission added')}</span><span class="af-toast t2"><i>${I.up}</i> ${tt('sc.aff.t2','New referral')}</span>
+      ${[0,1,2,3,4,5].map(i=>`<span class="af-coin" style="--i:${i}">$</span>`).join('')}</div>`;
+  if (k==='spyvoo') return `<div class="sn sn-spy"><span class="sp-live"><i></i>${tt('sc.spy.scan','Scanning live ads')}</span>
+      <div class="sp-cards">${[0,1,2].map(i=>`<span class="sp-ad a${i}"><span class="sp-th"></span><span class="sp-l"></span><span class="sp-l s"></span><span class="sp-m"><i></i><i></i><i></i></span>${i===1?`<em class="sp-win">🏆 ${tt('sc.spy.win2','Winner')}</em>`:''}</span>`).join('')}</div>
+      <span class="sp-beam"></span></div>`;
+  if (k==='replyvoo') return `<div class="sn sn-rv"><div class="rv-chat"><span class="rv-head"><i></i>${tt('sc.rv.ai','AI Closer · replying')}</span><span class="rv-b in">${tt('sc.rv.q','Is the VIP group still open?')}</span><span class="rv-ow"><span class="rv-typing"><i></i><i></i><i></i></span><span class="rv-b out">${tt('sc.rv.a','Yes 🙌 Here’s your link.')}</span></span><span class="rv-paid">${I.check} ${tt('sc.rv.paid2','Paid')}</span></div></div>`;
+  if (k==='castvoo') return `<div class="sn sn-cv"><span class="cv-core">${I.send}</span>${[0,1,2].map(i=>`<span class="cv-ring" style="--i:${i}"></span>`).join('')}
+      ${[['16%','26%',0],['82%','24%',1],['88%','66%',2],['12%','68%',3],['30%','88%',4]].map(([x,y,i])=>`<span class="cv-av" style="--x:${x};--y:${y};--i:${i};--h:${[205,330,150,35,265][i]}"><i></i><em>✓✓</em></span>`).join('')}
+      <span class="cv-stat">${tt('sc.cv.all','Delivered to every subscriber')} <b>✓✓</b></span></div>`;
+  if (k==='advoo') return `<div class="sn sn-va"><span class="va-prompt"><span class="va-type">${tt('sc.va.p','A promo for my Telegram channel')}</span></span>
+      <div class="va-frames"><span class="va-f f916"><i class="va-play"></i><span class="va-pb"><i></i></span></span><span class="va-f f11"><b>${tt('sc.va.hook','Hook')}</b></span><span class="va-f f169"><i class="va-play"></i></span></div></div>`;
+  if (k==='gatevoo') return `<div class="sn sn-gv"><div class="gv-co"><span class="gv-row"><small>${tt('sc.gv.co','Checkout')}</small><b>USDT <em>or</em> BTC</b></span><span class="gv-coin"><span class="gc f">₮</span><span class="gc b">₿</span></span>
+      <span class="gv-st"><span class="w"><i></i>${tt('sc.gv.wait','Waiting for payment')}</span><span class="p">${I.check} ${tt('sc.gv.paid','Paid · to your wallet')}</span></span></div><span class="gv-dot"></span></div>`;
+  return `<div class="sn sn-gen"><i></i><i></i><i></i></div>`;
+}
+function scCard(c,i,n){
+  const soon=c.status==='soon', url=c.url||(soon?vooHome():'');
+  const cta=c.cta||(soon?tt('apps.wait','Join the waitlist'):tt('apps.more','Learn more'));
+  const badge=soon?tt('apps.soon','Coming soon'):c.badge||'';
+  const aff=c.kind==='affiliate';
+  return `<article class="scc sc-${esc(c.kind)} ink-${c.ink==='dark'?'dark':'light'}${soon?' sc-soon':''}"${aff?' data-act="aff-open" data-w="showcase-card"':''} style="--c1:${esc(c.color||'#5b3df5')};--c2:${esc(c.color2||c.color||'#8f7bff')}" data-i="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} / ${n}: ${esc(c.name||'')}">
+    <div class="scc-scene" aria-hidden="true">${scScene(c)}</div>
+    <div class="scc-body"><div class="scc-top">${scLogo(c)}<span class="scc-nm"><b>${c.kind==='affiliate'?'VooSquare':esc(c.name||'')}</b><small>${c.kind==='affiliate'?tt('sc.aff.prog','Affiliate program'):tt('apps.by','by Zedapex')}</small></span>${badge?`<em class="scc-badge">${soon?'<i></i>':''}${esc(badge)}</em>`:''}</div>
+      <h3>${esc(c.headline||'')}</h3>${c.tagline?`<p>${esc(c.tagline)}</p>`:''}
+      ${aff?`<button type="button" class="scc-cta" data-act="aff-open" data-w="showcase-cta">${esc(cta)} ${I.arrow}</button>`:url?`<a class="scc-cta" href="${esc(url)}" target="_blank" rel="noopener" data-act="sc-cta" data-id="${esc(c.id)}">${esc(cta)} ${I.arrow}</a>`:''}</div></article>`;
+}
+function showcaseHtml(){
+  const cards=scCards(); if(!cards.length) return '';
+  return `<section class="sc" id="showcase" aria-roledescription="carousel" aria-label="${esc(tt('sc.aria','More from VooSquare'))}">
+    <div class="sc-h"><div class="sc-ht"><span class="sc-eb"><span class="scc-logo xs">${VSQ_MARK}</span>${tt('sc.eb','More from VooSquare')}</span><h2>${tt('sc.h','Tools that grow with you')}</h2></div>
+      <div class="sc-arrows"><button class="sc-arr" data-act="sc-step" data-v="-1" aria-label="${tt('apps.prev','Previous')}">${I.chevl}</button><button class="sc-arr" data-act="sc-step" data-v="1" aria-label="${tt('apps.next','Next')}">${I.chevr}</button></div></div>
+    <div class="sc-track" id="sctrack" tabindex="0" aria-live="off">${cards.map((c,i)=>scCard(c,i,cards.length)).join('')}</div>
+    <div class="sc-dots" id="scdots"></div></section>`;
+}
+/* Autoplay: one JS clock per carousel. It always advances (phones included); any touch/drag/hover/wheel only
+   pushes the next move ~6s into the future, so nothing can leave it paused for good. It only waits while the
+   carousel is completely off screen. Reduced motion: slower (~7s), a quick crossfade instead of a long slide,
+   and the scenes stay still. Re-rendering the Overview kills the old clock before a new one starts. */
+let SC_CLOCK=null;
+function showcaseStart(){
+  clearInterval(SC_CLOCK); SC_CLOCK=null;
+  const root=$('#showcase'), tr=$('#sctrack'); if(!root||!tr) return;
+  const cards=[...tr.children], dots=$('#scdots'), PERIOD=reduced?7000:4500, IDLE=6000, TICK=100;
+  let idx=0, nPos=1, elapsed=0, quietUntil=0, visible=true, drag=null, moved=false, busy=false;
+  const step=()=>cards.length>1?cards[1].offsetLeft-cards[0].offsetLeft:tr.clientWidth;
+  const positions=()=>Math.max(1,Math.round((tr.scrollWidth-tr.clientWidth)/Math.max(1,step()))+1);
+  const cur=()=>Math.min(nPos-1,Math.max(0,Math.round(tr.scrollLeft/Math.max(1,step()))));
+  const touched=()=>{ quietUntil=Date.now()+IDLE; elapsed=0; paint(); };
+  function paint(){ const d=dots.children[idx]; if(d) d.style.setProperty('--p',Math.min(1,elapsed/PERIOD).toFixed(3)); }
+  function drawDots(){ nPos=positions(); dots.innerHTML=nPos>1?Array.from({length:nPos},(_,i)=>`<button data-act="sc-go" data-v="${i}" aria-label="${esc(tt('sc.go','Go to slide {n}',{n:i+1}))}" ${i===idx?'aria-current="true"':''}><i></i></button>`).join(''):''; root.classList.toggle('sc-one',nPos<=1); setIdx(Math.min(idx,nPos-1),true); }
+  function setIdx(i,force){ i=Math.max(0,Math.min(nPos-1,i)); if(i===idx&&!force) return; idx=i; elapsed=0; [...dots.children].forEach((b,j)=>{ b.toggleAttribute('aria-current',j===idx); b.style.setProperty('--p',0); }); }
+  function jump(left){ /* crossfade: used for reduced motion and for the wrap back to the first card */
+    if (busy) return; busy=true; const fade=(a,z,ms)=>tr.animate?tr.animate([{opacity:a},{opacity:z}],{duration:ms,easing:'ease-out'}).finished.catch(()=>{}):Promise.resolve();
+    fade(1,.15,140).then(()=>{ tr.style.scrollSnapType='none'; tr.scrollLeft=left; requestAnimationFrame(()=>{ tr.style.scrollSnapType=''; }); return fade(.15,1,220); }).then(()=>{ busy=false; }); }
+  function goTo(i){ if(nPos<1) return; const wrap=i>=nPos||i<0; i=((i%nPos)+nPos)%nPos; const left=i*step();
+    if (reduced||wrap) jump(left); else tr.scrollTo({left,behavior:'smooth'}); setIdx(i,true); }
+  root._go=i=>{ touched(); goTo(i); }; root._step=d=>{ touched(); goTo(cur()+d); };
+  let st=null; tr.addEventListener('scroll',()=>{ clearTimeout(st); st=setTimeout(()=>{ if(!drag&&!busy) setIdx(cur()); },120); },{passive:true});
+  /* any interaction = short pause, never a latch */
+  ['touchstart','touchmove','wheel'].forEach(ev=>tr.addEventListener(ev,touched,{passive:true}));
+  root.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse') touched(); },{passive:true});
+  root.addEventListener('pointerdown',touched,{passive:true});
+  tr.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){ e.preventDefault(); root._step(1); } if(e.key==='ArrowLeft'){ e.preventDefault(); root._step(-1); } });
+  /* mouse drag on desktop (touch uses native scroll + snap) */
+  tr.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse'||e.button!==0) return; drag={x:e.clientX,sl:tr.scrollLeft,t:Date.now()}; moved=false; });
+  const onMove=e=>{ if(!drag) return; const dx=e.clientX-drag.x; if(!moved&&Math.abs(dx)>5){ moved=true; tr.classList.add('drag'); } if(moved){ tr.scrollLeft=drag.sl-dx; e.preventDefault(); touched(); } };
+  const onUp=()=>{ if(!drag) return; const was=moved, d0=drag; drag=null; tr.classList.remove('drag'); if(was){ const s=step(), raw=tr.scrollLeft/s, base=d0.sl/s; goTo(raw>base+.15?Math.ceil(raw):raw<base-.15?Math.floor(raw):Math.round(raw)); touched(); } };
+  addEventListener('pointermove',onMove); addEventListener('pointerup',onUp); addEventListener('pointercancel',onUp);
+  tr.addEventListener('click',e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; } },true);
+  tr.addEventListener('dragstart',e=>e.preventDefault());
+  /* only "fully off screen" pauses; scenes animate only for the cards in view */
+  const r0=root.getBoundingClientRect(); visible=r0.bottom>0&&r0.top<innerHeight; root.classList.toggle('sc-live',visible);
+  let io1=null, io2=null;
+  if ('IntersectionObserver' in window){
+    io1=new IntersectionObserver(([e])=>{ visible=e.isIntersecting; root.classList.toggle('sc-live',visible); },{threshold:0}); io1.observe(root);
+    io2=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('sc-vis',e.isIntersecting)),{root:tr,threshold:.55}); cards.forEach(c=>io2.observe(c));
+  } else { root.classList.add('sc-live'); cards.forEach(c=>c.classList.add('sc-vis')); }
+  let rt=null; const onR=()=>{ clearTimeout(rt); rt=setTimeout(()=>{ if(!root.isConnected) return; const i=idx; drawDots(); tr.scrollLeft=Math.min(i,nPos-1)*step(); },160); };
+  addEventListener('resize',onR);
+  const clock=setInterval(()=>{
+    if (!root.isConnected){ clearInterval(clock); if(SC_CLOCK===clock) SC_CLOCK=null; removeEventListener('resize',onR); removeEventListener('pointermove',onMove); removeEventListener('pointerup',onUp); removeEventListener('pointercancel',onUp); io1&&io1.disconnect(); io2&&io2.disconnect(); return; }
+    if (drag && Date.now()-drag.t>15000){ drag=null; tr.classList.remove('drag'); }
+    if (nPos<=1 || !visible || document.hidden || drag || busy || Date.now()<quietUntil) return;
+    elapsed+=TICK; paint();
+    if (elapsed>=PERIOD) goTo(idx+1);
+  },TICK);
+  SC_CLOCK=clock; root._idx=()=>idx;
+  drawDots();
+}
+
+/* ---------- VooSquare Affiliates: in-app details sheet (opened from the showcase card and the side menu) ---------- */
+const affUrl = () => (S.cfg&&S.cfg.showcase&&S.cfg.showcase.affiliate&&S.cfg.showcase.affiliate.url)||'https://affiliate.voosquare.com';
+const affNav = () => `<button class="nav-a aff-nav" data-act="aff-open" data-w="nav" title="${esc(tt('aff.nav','Earn as an affiliate'))}"><span class="aff-ni">${VSQ_MARK}</span><span>${tt('aff.nav','Earn as an affiliate')}</span><em class="new aff-pill">${tt('aff.pill','Up to 50%')}</em></button>`;
+function affTools(){
+  const seen=new Set(), out=[{id:'joinvoo',kind:'joinvoo',name:'Joinvoo',status:'live'}];
+  for (const c of scCards()) if (c.kind!=='affiliate') out.push(c);
+  for (const a of (appsAll()||[])) if (a.id!=='voosquare'&&a.id!=='affleego'&&a.id!=='landvoo') out.push({id:a.id,kind:a.id,name:a.name,status:a.status,logo_url:a.logo_url||''});
+  return out.filter(c=>{ const k=c.kind==='vooads'?'advoo':c.kind; if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,8);
+}
+function openAffiliate(where){
+  closePop(); closeSheet(); appClick('affiliate',where||'');
+  const url=affUrl(), ext=`href="${esc(url)}" target="_blank" rel="noopener"`;
+  const steps=[[I.user,tt('aff.s1','Join VooSquare Affiliates'),tt('aff.s1.p','Create your partner account. It takes a couple of minutes.')],
+    [I.link,tt('aff.s2','Share your link'),tt('aff.s2.p','One link per tool, with sub IDs so you see which page, ad or post brought each customer.')],
+    [I.coin,tt('aff.s3','Earn monthly, for life'),tt('aff.s3.p','You’re paid every month your customers keep their plan.')]];
+  const gets=[[I.link,tt('aff.g1','Tracking links with sub IDs')],[I.refresh,tt('aff.g2','Postbacks to your tracker')],[I.sparkles,tt('aff.g3','Ready creatives and brand kit')],[I.user,tt('aff.g4','A dedicated manager as you grow')],[I.wallet,tt('aff.g5','Payouts in USDT or to your bank')]];
+  const faq=[[tt('aff.f1','Who can join?'),tt('aff.f1.a','Marketers, media buyers, creators and community owners who can send people to tools for Telegram businesses. You sign up on VooSquare Affiliates, where the terms explain who’s eligible.')],
+    [tt('aff.f2','How am I paid?'),tt('aff.f2.a','Monthly, in USDT or by bank transfer, once your commissions are confirmed. Payout details are in the terms on VooSquare Affiliates.')],
+    [tt('aff.f3','Do I need to be a Joinvoo customer?'),tt('aff.f3.a','No. You can promote Joinvoo and the other Zedapex tools without using them yourself, though knowing the product helps you sell it.')]];
+  sheet(`<span class="aff-hl">${VSQ_MARK}</span><h2>VooSquare Affiliates<small>${tt('aff.sub','Partner program')}</small></h2>`, `
+    <section class="aff-hero"><div class="ah-copy"><span class="ah-eb"><i></i>${tt('aff.eb','Affiliate program')}</span><h3>${tt('aff.h','Earn up to 50% for life')}</h3><p>${tt('aff.p','Promote Joinvoo and every Zedapex tool. Get paid every month your customers stay.')}</p>
+        <span class="ah-chips"><em>${tt('aff.c1','Up to 50%')}</em><em>${tt('aff.c2','Lifetime')}</em></span></div>
+      <div class="ah-art" aria-hidden="true"><span class="ah-link">${I.link}<b>${tt('aff.yourlink','your link')}</b></span><span class="ah-flow"><i></i><i></i><i></i></span>
+        <span class="ah-users">${[0,1,2].map(i=>`<i style="--i:${i}"></i>`).join('')}</span>
+        <span class="ah-bars">${[0,1,2,3,4,5].map(i=>`<i style="--i:${i}"></i>`).join('')}<em>${I.up}</em></span><small class="ah-cap">${tt('aff.monthly','Monthly payouts')}</small></div></section>
+    <section class="aff-sec"><h4>${tt('aff.how','How it works')}</h4><ol class="aff-steps">${steps.map(([ic,t,p],i)=>`<li style="--i:${i}"><span class="as-n">${ic}</span><span class="as-t"><b>${t}</b><small>${p}</small></span></li>`).join('')}</ol></section>
+    <section class="aff-sec"><h4>${tt('aff.what','What you can promote')}</h4><div class="aff-tools">${affTools().map((c,i)=>`<span class="at" style="--i:${i}">${c.kind==='joinvoo'?`<span class="scc-logo"><img src="${logoSrc('joinvoo')}" width="40" height="40" alt=""></span>`:scLogo(c)}<b>${esc(c.kind==='advoo'?'Vooads':c.name||'')}</b>${c.status==='soon'?`<em>${tt('apps.soon2','Soon')}</em>`:''}</span>`).join('')}</div></section>
+    <section class="aff-sec"><h4>${tt('aff.get','What you get')}</h4><ul class="aff-gets">${gets.map(([ic,t])=>`<li><span>${ic}</span>${t}</li>`).join('')}</ul>
+      <p class="aff-terms">${I.shield}<span>${tt('aff.terms','Lifetime, with conditions —')} <a ${ext}>${tt('aff.terms.l','read the full terms on affiliate.voosquare.com')}</a></span></p></section>
+    <p class="aff-diff"><b>${tt('aff.diff.h','Not the same as Referrals.')}</b> ${tt('aff.diff','Referrals (Earn page) reward customers who invite friends; the affiliate program is for marketers and creators.')}</p>
+    <section class="aff-sec"><h4>${tt('aff.faq','Questions')}</h4><div class="aff-faq">${faq.map(([q,a])=>`<details><summary>${q}${I.chev}</summary><p>${a}</p></details>`).join('')}</div></section>
+    <div class="aff-cta"><a class="btn primary lg wide aff-go" ${ext} data-act="aff-go">${tt('aff.go','Start on VooSquare Affiliates')} ${I.arrow}</a></div>`);
+  const sh=$('.sheet'); if (sh) sh.classList.add('aff-sheet');
+}
+
+/* ---------- handlers ---------- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'aff-open': e.preventDefault(); openAffiliate(a.dataset.w); break;
+    case 'aff-go': appClick('affiliate','aff-sheet-cta'); break;
+    case 'bot-pick': { const b=(S.chans.bots||[]).find(x=>String(x.id)===a.dataset.id); if(b){ W.bot=b; W.pickBot=false; W.warn=''; W.prevWh=''; W.mode='channel'; W.step=2; drawStep(); } break; }
+    case 'bot-pick-new': { const L=S.chans&&S.chans.limits, bt=L&&!L.unlimited&&L.bots; if(bt&&bt.max!=null&&(bt.used||0)>=bt.max){ openLimitSheet({kind:'bots',used:bt.used,max:bt.max,plan:L.plan}); break; } W.pickBot=false; W.bot=null; W.step=1; drawStep(); break; }
+    case 'bot-pick-back': W.pickBot=true; W.bot=null; W.step=1; drawStep(); break;
+    case 'bot-new': renderSetup(1, true); break;
+    case 'lim-up': goUpgrade(); break;
+    case 'lim-open': openLimitSheet({kind:a.dataset.k||'channels'}); break;
+    case 'lim-list': if(!S.lim) S.lim={kind:'channels',opt:{}}; S.lim.view='list'; drawLimitSheet(); break;
+    case 'lim-back': if(S.lim){ S.lim.view='pick'; drawLimitSheet(); } break;
+    case 'ch-menu': chMenu(a); break;
+    case 'ch-rm': openRemoveChannel(a.dataset.id, a.dataset.from); break;
+    case 'ch-rm-go': removeChannelGo(a); break;
+    case 'bot-rm': openRemoveBot(a.dataset.id, a.dataset.from); break;
+    case 'bot-rm-go': removeBotGo(a); break;
+    case 'sc-step': { const r=$('#showcase'); if(r&&r._step) r._step(+a.dataset.v); break; }
+    case 'sc-go': { const r=$('#showcase'); if(r&&r._go) r._go(+a.dataset.v); break; }
+    case 'sc-cta': appClick(a.dataset.id,'showcase'); break;
+    case 'copy': case 'bot-settings': if (a.closest('.pop')) setTimeout(closePop,0); break;
+    case 'close': S.lim=null; break;
   }
 });

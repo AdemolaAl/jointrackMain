@@ -458,7 +458,9 @@ window.JVVoo=(function(){
         .then(function(c){ cb(norm(c&&c.voo&&c.voo.login)); }).catch(function(){ cb('off'); });
     },
     block: function(withOr){
-      return '<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
+      var E={unavailable:'Can’t reach VooSquare right now. Try again in a minute, or log in with your email.',link:'This email already has a Joinvoo account that isn’t confirmed yet. Log in with your email and password (or reset it), then use VooSquare next time.',suspended:'This account is suspended. Contact support.',no_email:'Your VooSquare account has no email yet. Add one in VooSquare, then try again.',off:'VooSquare login is switched off right now. Log in with your email.'};
+      var err=q.voo_error?'<p class="vonly-note" role="alert" style="color:#b42318;font-weight:700;margin:0 0 10px">'+_t(E[q.voo_error]||'VooSquare sign-in didn’t finish. Please try again.')+'</p>':'';
+      return err+'<div class="vbox"><p class="vline"><i></i>'+_t('One login for all Zedapex tools')+'</p><a class="vbtn" href="/auth/voosquare?return_to=/app'+(/\/signup/.test(location.pathname)?'&signup=1':'')+'">'+MARK+'<span>'+_t('Continue with VooSquare')+'</span>'+ARR+'</a></div>'+(withOr?'<div class="vor">'+_t('or')+'</div>':'');
     }
   };
 })();
@@ -538,7 +540,7 @@ window.JVVoo=(function(){
       try{
         let m=_t('If that email has an account, a reset link is on its way. Check spam too.');
         if(!DEMO){ const r=await fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:v})});
-          const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Couldn’t send the email. Try again.')); m=j.message||m; }
+          const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Couldn’t send the email. Try again.')); m=j.message||m; if(j.no_email){ document.body.classList.add('sp-show'); setTimeout(()=>{ const l=document.querySelector('.sp-launch'); if(l&&l.getAttribute('aria-expanded')!=='true') l.click(); },600); } }
         else { await new Promise(r=>setTimeout(r,700)); m+=' '+_t('(Demo: no email was sent.)'); }
         show('ok',icOk,m); go.innerHTML=_t('Sent')+' ✓';
         setTimeout(()=>{ go.disabled=false; go.innerHTML=_t('Send again')+' '+arrow; },20000);
@@ -552,4 +554,214 @@ window.JVVoo=(function(){
   if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP); }).catch(()=>{});
 })();
 </script>
+
+<style>/* login: chat stays out of the way, it appears only when we need it (e.g. reset emails are not available) */body:not(.sp-show) .sp-launch{display:none!important}</style>
+<!-- Joinvoo website support widget (homepage + guide). Self-contained: styles, markup, script.
+     Talks to /api/support (GET history, POST message) and /api/config (team, reply time, hours, feature switches).
+     Falls back to a demo conversation when the API isn't there (static demo). Classes are prefixed sp- to avoid clashes. -->
+<style>
+.sp-launch{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:58;display:flex;align-items:center;gap:10px;height:58px;padding:0 20px 0 9px;border-radius:99px;border:0;cursor:pointer;background:#5b3df5;color:#fff;font:800 15px var(--f);box-shadow:0 18px 40px -12px rgba(91,61,245,.85),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s cubic-bezier(.2,.8,.2,1),bottom .45s cubic-bezier(.2,.8,.2,1),padding .3s,width .3s}
+.sp-launch:hover{transform:translateY(-2px)}
+.sp-launch .sp-faces{display:flex}
+.sp-launch .sp-faces .sp-av{width:36px;height:36px;border:2.5px solid #5b3df5;margin-left:-12px}
+.sp-launch .sp-faces .sp-av:first-child{margin-left:0}
+.sp-launch .sp-dot{position:absolute;left:34px;top:9px;width:12px;height:12px;border-radius:50%;background:#5cc48c;border:2.5px solid #5b3df5}
+.sp-launch .sp-x{display:none;width:24px;height:24px}
+.sp-launch[aria-expanded="true"]{width:58px;padding:0;justify-content:center}
+.sp-launch[aria-expanded="true"] .sp-faces,.sp-launch[aria-expanded="true"] .sp-lt,.sp-launch[aria-expanded="true"] .sp-dot{display:none}
+.sp-launch[aria-expanded="true"] .sp-x{display:block}
+body.mcta-on .sp-launch{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.sp-av{width:32px;height:32px;border-radius:50%;flex:none;display:block;overflow:hidden;background:var(--lilac)}
+.sp-av svg,.sp-av img{width:100%;height:100%;display:block;object-fit:cover}
+.sp{position:fixed;right:18px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:59;width:min(400px,calc(100vw - 24px));height:min(640px,calc(100dvh - 116px));border-radius:28px;background:var(--bg);border:1px solid var(--line);box-shadow:0 50px 100px -30px rgba(20,12,60,.5),0 0 0 1px rgba(0,0,0,.02);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom right;transform:translateY(16px) scale(.96);opacity:0;visibility:hidden;transition:opacity .3s,transform .35s cubic-bezier(.2,.8,.2,1),visibility .3s}
+.sp.open{opacity:1;visibility:visible;transform:none}
+body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 186px))}
+.sp-hd{position:relative;padding:20px 20px 22px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#8f7bff 0%,#5b3df5 45%,#21136f 100%);flex:none;overflow:hidden}
+.sp-hd::after{content:"";position:absolute;width:260px;height:260px;right:-90px;top:-120px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.sp-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:1}
+.sp-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.03em}
+.sp-brand .mark{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.18);box-shadow:none}.sp-brand .mark svg{width:16px;height:16px}
+.sp-cx{background:rgba(255,255,255,.16);border:0;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:grid;place-items:center;flex:none}
+.sp-cx svg{width:16px;height:16px}
+.sp-team{display:flex;margin-top:18px;position:relative;z-index:1}
+.sp-team .sp-av{width:46px;height:46px;border:3px solid #4b31e0;margin-left:-12px}
+.sp-team .sp-av:first-child{margin-left:0}
+.sp-hd h3{font-size:24px;letter-spacing:-.04em;margin:12px 0 4px;position:relative;z-index:1}
+.sp-meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:#dcd6ff;position:relative;z-index:1}
+.sp-meta span{display:inline-flex;align-items:center;gap:6px}
+.sp-meta i{width:8px;height:8px;border-radius:50%;background:#a49bd6}
+.sp-meta i.on{background:#7ee0a6;box-shadow:0 0 0 3px rgba(126,224,166,.3)}
+.sp-meta svg{width:13px;height:13px;opacity:.85}
+.sp-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.sp-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 10px 30px -22px rgba(40,20,120,.35)}
+.sp-card .sp-who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.sp-card .sp-who b{display:block;font-size:14px}.sp-card .sp-who small{display:block;font-size:12px;color:var(--faint)}
+.sp-card p{margin:0;font-size:14.5px;line-height:1.5;color:var(--ink)}
+.sp-quick{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.sp-quick button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 13px;border-radius:14px;border:1px solid var(--line);background:var(--bg);font:700 14px var(--f);color:var(--ink);cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+.sp-quick button:hover{border-color:color-mix(in srgb,#5b3df5 40%,var(--line));background:var(--lilac)}
+.sp-quick button span{color:var(--brand-text)}
+.sp-quick button.sp-person{background:#5b3df5;border-color:#5b3df5;color:#fff}.sp-quick button.sp-person span{color:#fff}
+.sp-guide{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.sp-guide .sp-gi{width:40px;height:40px;border-radius:12px;background:var(--lilac);color:var(--brand-text);display:grid;place-items:center;flex:none}
+.sp-guide .sp-gi svg{width:20px;height:20px}
+.sp-guide b{display:block;font-size:14px}.sp-guide small{display:block;font-size:12.5px;color:var(--muted)}
+.sp-guide em{margin-left:auto;font-style:normal;color:var(--faint);font-weight:800}
+.sp-row{display:flex;gap:8px;align-items:flex-end;max-width:88%;animation:spIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes spIn{from{opacity:0;transform:translateY(8px)}}
+.sp-row.me{align-self:flex-end;flex-direction:row-reverse}
+.sp-row .sp-av{width:28px;height:28px}
+.sp-col{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-name{font-size:11.5px;font-weight:700;color:var(--faint);padding-left:4px}
+.sp-msg{padding:10px 13px;border-radius:18px;font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.sp-row.me .sp-msg{background:#5b3df5;color:#fff;border-color:#5b3df5;border-radius:18px 18px 6px 18px}
+.sp-msg small{display:block;font-size:11px;opacity:.6;margin-top:3px}
+.sp-msg a{color:inherit;font-weight:700}
+.sp-sys{align-self:center;font-size:12px;color:var(--faint);text-align:center;padding:2px 10px;max-width:90%}
+.sp-typing{display:inline-flex;gap:4px;padding:13px 14px}
+.sp-typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:spB 1s infinite}
+.sp-typing i:nth-child(2){animation-delay:.2s}.sp-typing i:nth-child(3){animation-delay:.4s}
+@keyframes spB{50%{opacity:.25;transform:translateY(-2px)}}
+.sp-form{padding:10px 12px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--surface);flex:none}
+.sp-form .inp{padding:11px 14px;font-size:15px;border-radius:14px}
+.sp-crow{display:flex;gap:8px;align-items:flex-end}
+.sp-form textarea{flex:1;resize:none;min-height:46px;max-height:120px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--line);background:var(--bg);font:500 15px/1.4 var(--f);color:var(--ink)}
+.sp-form textarea:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
+.sp-send{width:46px;height:46px;border-radius:16px;border:0;background:#5b3df5;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.sp-send svg{width:18px;height:18px}
+.sp-err{font-size:13px;color:var(--rose);font-weight:600}
+.sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
+.sp-foot a{color:var(--faint)}
+.sp-hide{display:none!important}
+@media (max-width:560px){
+  .sp-launch{height:54px;padding:0 16px 0 8px;font-size:14.5px;right:14px}
+  .sp-launch .sp-faces .sp-av{width:32px;height:32px}
+  .sp-launch .sp-dot{left:30px;top:8px}
+  .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
+  .sp-launch[aria-expanded="true"]{display:none}
+  .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
+  body.mcta-on .sp{bottom:0;height:auto}
+  .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .sp-form{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+}
+@media (min-width:901px){body.mcta-on .sp-launch{bottom:calc(18px + env(safe-area-inset-bottom,0px))}body.mcta-on .sp{bottom:calc(88px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 116px))}}
+@media (prefers-reduced-motion:reduce){.sp,.sp-row{transition:none;animation:none}}
+</style>
+
+<button class="sp-launch" id="spLaunch" type="button" aria-expanded="false" aria-controls="spPanel" aria-label="Chat with Joinvoo support">
+  <span class="sp-faces" id="spLFaces"></span><span class="sp-dot" id="spLDot" hidden></span><span data-i18n="1c036wn" class="sp-lt">Chat with us</span>
+  <svg class="sp-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+</button>
+<section class="sp" id="spPanel" role="dialog" aria-modal="false" aria-labelledby="spTitle">
+  <header class="sp-hd">
+    <div class="sp-top"><span data-i18n-t="9b108k" class="sp-brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo support</span><button class="sp-cx" id="spClose" type="button" aria-label="Close chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="sp-team" id="spTeam"></div>
+    <h3 data-i18n="11gdjbh" id="spTitle">We’re here to help.</h3>
+    <div class="sp-meta"><span><i id="spOn"></i><span data-i18n="1fwx219" id="spOnTxt">Usually replies in a few minutes</span></span><span id="spHours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span></span></span></div>
+  </header>
+  <div class="sp-body" id="spBody" aria-live="polite">
+    <div class="sp-card" id="spWelcome">
+      <div class="sp-who" id="spWho"></div>
+      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <div class="sp-quick" id="spQuick">
+        <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
+        <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>
+        <button data-i18n="bn79q4" type="button" data-q="bot">Setting up my bot <span>→</span></button>
+        <button data-i18n="1eyzih9" type="button" data-q="person" class="sp-person">Talk to a person <span>→</span></button>
+      </div>
+    </div>
+    <a class="sp-card sp-guide" href="guide.html"><span class="sp-gi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM8 7h7M8 11h5"/></svg></span><span data-i18n="6err5n"><b>Setup guide</b><small>Bot, channel, pixels and your first test join</small></span><em>→</em></a>
+  </div>
+  <form class="sp-form" id="spForm" novalidate>
+    <div id="spEmailRow" hidden><label data-i18n="423ze" class="sr" for="spEmail">Your email</label><input data-i18n-ph="1pq88gt" class="inp" id="spEmail" type="email" autocomplete="email" placeholder="Your email, so we can reply if you leave"></div>
+    <div class="sp-err" id="spErr" hidden></div>
+    <div class="sp-crow"><label data-i18n="1cam7ic" class="sr" for="spText">Message</label><textarea data-i18n-ph="1g0yvse" id="spText" rows="1" placeholder="Write a message…"></textarea><button class="sp-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>
+    <div data-i18n="14kpqx" class="sp-foot"><span id="spNote">Real people · secure</span><a href="privacy.html">Privacy</a></div>
+  </form>
+</section>
+
+<script>JVI();
+(function(){
+  const $=id=>document.getElementById(id);
+  const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
+  if(!launch||!panel) return;
+  let DEMO=!!window.JP_DEMO || location.protocol==='file:';
+  const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
+  let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
+  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false;
+
+  /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
+  const BG=['#efebff','#e8f3ec','#fbf2df','#ecf0fc','#fbeae8'], SKIN=['#f2c9a5','#d9a27a','#b97a52','#a8714d','#f6d7bf'], HAIR=['#1f1633','#3a2417','#6b3f1f','#0f0f14','#8a5a2b'], SHIRT=['#5b3df5','#2e7d57','#c2463f','#3d5ad6','#87631a'];
+  const hash=s=>{ let h=7; for(const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return h; };
+  function face(name){ const h=hash(name||'?'), bg=BG[h%5], sk=SKIN[(h>>>3)%5], hr=HAIR[(h>>>6)%5], sh=SHIRT[(h>>>9)%5], style=(h>>>12)%3;
+    const top=`<path d="M11.4 19.5c-.6-7.2 3.8-11.3 8.6-11.3s9.2 4.1 8.6 11.3c-1.6-3.6-4.6-5.3-8.6-5.3s-7 1.7-8.6 5.3z" fill="${hr}"/>`;
+    const back=style===1?`<path d="M10.5 20c0-7.5 4.2-11.5 9.5-11.5s9.5 4 9.5 11.5v8.5c0 1.6-1.3 2.5-3 2.5H13.5c-1.7 0-3-.9-3-2.5z" fill="${hr}"/>`:'';
+    const bun=style===2?`<circle cx="20" cy="8.2" r="3.6" fill="${hr}"/>`:'';
+    return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${bg}"/>${back}<path d="M6 42c1-8 7-12 14-12s13 4 14 12z" fill="${sh}"/><rect x="17" y="24" width="6" height="7" rx="3" fill="${sk}"/><circle cx="20" cy="19" r="8.5" fill="${sk}"/>${bun}${top}<circle cx="17" cy="20.5" r="1" fill="#2b1810"/><circle cx="23" cy="20.5" r="1" fill="#2b1810"/><path d="M17.5 23.8q2.5 2 5 0" fill="none" stroke="#7a3b22" stroke-width="1.2" stroke-linecap="round"/></svg>`; }
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function av(p){ const n=(p&&p.name)||'Joinvoo'; return `<span class="sp-av" title="${esc(n)}">${p&&p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy">`:face(n)}</span>`; }
+  function render(){ const t=team.slice(0,3);
+    $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
+    const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
+    $('spHello').textContent=_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
+    $('spOnTxt').textContent=online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
+    $('spOn').classList.toggle('on',online); $('spLDot').hidden=!online;
+    const hh=$('spHours'); hh.querySelector('span').textContent=_t(hours); hh.hidden=!hours; }
+  function applySupport(s){ if(!s) return; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
+  render();
+
+  const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
+  const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+  function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
+    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
+    r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
+    if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
+    body.appendChild(r); scroll(); return r; }
+  function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; body.appendChild(d); scroll(); }
+  function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(r); scroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
+  function showErr(m){ err.textContent=m||''; err.hidden=!m; }
+
+  /* quick starts: instant answers for common questions, then a person if they want one */
+  const GUIDE='guide.html';
+  const ANSWERS={
+    how:[_t('How does tracking work?'),_t('Every click on your Joinvoo tracking link gets its own Telegram invite link (or bot link). When that person joins your channel, group or bot, we know exactly which campaign and ad brought them, and we send the join to Meta, TikTok or Snapchat server-side. Deposits too, if your broker or CRM sends us a postback. Your ads then optimise for real joiners, not clicks.')],
+    price:[_t('Pricing'),_t('Your first 500 tracked joins are free, plus a deposit-tracking trial (7 days or 20 FTDs). Basic is $30 a month with 2,000 tracked joins. Pro is $99 a month with 5,000 joins, deposit tracking, ROAS dashboards, integrations and Joe. Extra joins cost 2 credits ($0.02). Prepaid credits, no contracts.')],
+    bot:[_t('Setting up my bot'),esc(_t('Easiest way: make a new bot in @BotFather, paste its token into Joinvoo, and add it to your channel as an admin with “Invite users via link”. About 10 minutes in total. If your bot already runs somewhere, Joinvoo can pass its messages on, or your bot can ping us on each Start.'))+` <a href="${GUIDE}">${esc(_t('Open the step-by-step guide →'))}</a>`]};
+  const bot={name:'Joinvoo',photo:'',bot:true};
+  async function quick(k){ if(k==='person'){ sys(_t('Write your message below.')+' '+(online?_t('We’re online now.'):_t(replyTime)+'.')); text.focus(); return; }
+    const [q,a]=ANSWERS[k]; msg('me',q,Date.now()); await typing(team[0],700); msg('them',a,Date.now(),{name:team[0].name,photo:team[0].photo},k==='bot');
+    sys(_t('Need more? Write below and a real person will reply.')); }
+  $('spQuick').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) quick(b.dataset.q); });
+
+  async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
+    const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
+  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; applySupport(j); emRow.hidden=!!ticket;
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); }); render(); }
+  async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
+    try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
+  function demo(){ DEMO=true; online=true; emRow.hidden=true; $('spNote').textContent=_t('Demo preview · messages aren’t sent'); render(); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },4000); }
+  function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
+  function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
+    if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
+  launch.onclick=()=>open(!panel.classList.contains('open')); $('spClose').onclick=()=>{ open(false); launch.focus(); };
+  addEventListener('keydown',e=>{ if(e.key==='Escape'&&panel.classList.contains('open')){ open(false); launch.focus(); } });
+  text.addEventListener('input',()=>{ text.style.height='auto'; text.style.height=Math.min(120,text.scrollHeight)+'px'; });
+  text.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+  form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(!t||sending) return; showErr('');
+    if(DEMO){ msg('me',t,Date.now()); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
+      msg('them',_t('Thanks! A real person replies here within minutes during the day. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
+    const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
+    sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
+    try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
+      if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+    catch(x){ b.remove(); text.value=t; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
+    finally{ sending=false; } });
+
+  /* site config: team, reply time, hours, and the support_chat switch */
+  window.JV_CONFIG = window.JV_CONFIG || (DEMO ? Promise.resolve(null) : fetch('/api/config',{credentials:'same-origin'}).then(r=>(r.headers.get('content-type')||'').includes('json')?r.json():null).catch(()=>null));
+  window.JV_CONFIG.then(c=>{ if(!c) return; if(c.features&&c.features.support_chat===false){ launch.classList.add('sp-hide'); panel.classList.add('sp-hide'); return; } applySupport(c.support); });
+})();
+</script>
+
 </body></html>

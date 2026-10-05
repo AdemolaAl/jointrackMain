@@ -12,6 +12,7 @@ http.createServer((req,res)=>{let b='';req.on('data',c=>b+=c);req.on('end',()=>{
     if(meth==='deleteWebhook') return res.end(JSON.stringify({ok:true,result:true}));
     if(meth==='createChatInviteLink'){state.links++;if(j.creates_join_request){state.reqLinks=(state.reqLinks||0)+1;if(j.member_limit)return res.end(JSON.stringify({ok:false,error_code:400,description:"Bad Request: can't combine member_limit with creates_join_request"}));}
       return res.end(JSON.stringify({ok:true,result:{invite_link:'https://t.me/+L'+state.links+'x'+Math.random().toString(36).slice(2,8),creator:{id},member_limit:j.member_limit,creates_join_request:!!j.creates_join_request,name:j.name}}));}
+    if(meth==='editChatInviteLink'){state.edits=(state.edits||[]).concat([j]);if(state.editFail)return res.end(JSON.stringify({ok:false,error_code:429,description:'Too Many Requests: retry after 5',parameters:{retry_after:5}}));return res.end(JSON.stringify({ok:true,result:{invite_link:j.invite_link,name:j.name,member_limit:j.member_limit,creates_join_request:!!j.creates_join_request}}));}
     if(meth==='approveChatJoinRequest'){state.approvals=(state.approvals||[]).concat([j]);return res.end(JSON.stringify({ok:true,result:true}));}
     if(meth==='declineChatJoinRequest'){return res.end(JSON.stringify({ok:true,result:true}));}
     return res.end(JSON.stringify({ok:false,error_code:400,description:'unknown'}));}

@@ -155,7 +155,14 @@ function tagsFor(r, full){
 function personRow(r,key,isNew){
   const p=r.params||{}, f=ftdOf(r), pl=platOf(r);
   const sub=[r.channel_title,p.utm_campaign||'',r.country?flag(r.country)+' '+r.country:'',ago(r.joined_at)].filter(Boolean).join(' · ');
-  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span></button>`;
+  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
+}
+/* which Meta match keys went with this person's events (more keys = better match quality in Events Manager) */
+function matchKeys(r){
+  const m=r.match; if (!m || !r.capi_status || ['none','no_pixel'].includes(r.capi_status)) return '';
+  const K=[['fbc',tt('pp.mk.fbc','Click ID'),'fbc'],['fbp',tt('pp.mk.fbp','Browser ID'),'fbp'],['ip',tt('pp.mk.ip','IP'),''],['ua',tt('pp.mk.ua','Device'),'']];
+  const n=K.filter(([k])=>m[k]).length;
+  return `<div class="mkeys"><span class="mk-l">${tt('pp.mk','Match keys sent to Meta')}<em>${n}/4</em></span><span class="mk-c">${K.map(([k,l,code])=>`<span class="mk ${m[k]?'on':''}" title="${m[k]?esc(tt('pp.mk.sent','Sent')):esc(tt('pp.mk.not','Not available for this person'))}">${m[k]?I.check:I.x}${esc(l)}${code?`<small>${code}</small>`:''}</span>`).join('')}</span></div>`;
 }
 function openPerson(r){
   if (!r) return; S.person=r;
@@ -182,13 +189,15 @@ function openPerson(r){
       <div class="kv"><span>Language</span><span>${esc(r.lang||'—')}</span></div></div>
     ${r.click_id?`<div class="box"><h4>Where they came from</h4>
       <div class="kv"><span>Ad platform</span><span style="display:inline-flex;align-items:center;gap:6px">${pl?pm(pl)+PLAT[pl].name+' ad':'Unknown'}</span></div>
+      ${r.click_code?`<div class="kv"><span>${tt('pp.click','Click ID')}</span><span class="kv-v"><span class="mono">${esc(r.click_code)}</span> <button type="button" class="kbd" data-act="copy" data-v="${esc(r.click_code)}">${tt('common.copy','Copy')}</button></span></div>`:''}
+      ${r.link_name?`<div class="kv kv-tall"><span>${tt('pp.link','Invite link in Telegram')}</span><span class="kv-v"><b class="kv-ln">${esc(r.link_name)}</b><small class="kv-h">${tt('pp.link.h','Find it in Telegram → your channel → Invite links')}</small></span></div>`:''}
       <div class="kv"><span>Country</span><span>${r.country?flag(r.country)+' '+esc(COUNTRY[r.country]||r.country):'—'}</span></div>
       <div class="kv"><span>Device</span><span>${dev}${app}</span></div>
       ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span>${esc(p.utm_campaign)}</span></div>`:''}
       ${p.utm_content?`<div class="kv"><span>Ad</span><span>${esc(p.utm_content)}</span></div>`:''}
       ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}
       <div class="kv"><span>IP address</span><span class="mono">${esc(r.ip||'—')}</span></div></div>
-      <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>`).join('')}</div>`
+      <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>${k==='meta'?matchKeys(r):''}`).join('')}</div>`
     :`<div class="note">This person joined another way, like a shared link or search. There’s no ad click to match, so nothing was sent to your ad platforms.</div>`}`);
   $('#cvf').addEventListener('submit', async e=>{ e.preventDefault(); const b=$('#cvb'); const ev=S.cvEv||'ftd';
     const val=$('#cva')?$('#cva').value.trim().replace(',','.'):'';

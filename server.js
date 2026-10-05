@@ -177,6 +177,13 @@ for (const sql of [
     cache_read_tokens INTEGER DEFAULT 0, out_tokens INTEGER DEFAULT 0, cost_micros INTEGER DEFAULT 0, credits INTEGER DEFAULT 0, kind TEXT, deep INTEGER DEFAULT 0, guard INTEGER DEFAULT 0, error TEXT)`,
   `CREATE INDEX IF NOT EXISTS joe_answers_u ON joe_answers(user_id, day)`, `CREATE INDEX IF NOT EXISTS joe_answers_at ON joe_answers(at)`,
   `CREATE TABLE IF NOT EXISTS user_notes(id INTEGER PRIMARY KEY, user_id INTEGER, kind TEXT, level TEXT, title TEXT, body TEXT, created_at INTEGER)`, `CREATE INDEX IF NOT EXISTS user_notes_u ON user_notes(user_id, created_at)`,
+  // round 11: plan limits, named invite links, VooSquare affiliates + support bridge
+  `ALTER TABLE channels ADD COLUMN locked INTEGER DEFAULT 0`, `ALTER TABLE channels ADD COLUMN removed_by_user INTEGER DEFAULT 0`, `ALTER TABLE links ADD COLUMN name TEXT`,
+  `ALTER TABLE users ADD COLUMN aff_code TEXT`, `ALTER TABLE users ADD COLUMN aff_sub TEXT`, `ALTER TABLE users ADD COLUMN aff_at INTEGER`,
+  `ALTER TABLE tickets ADD COLUMN source TEXT`, `ALTER TABLE tickets ADD COLUMN voo_ticket TEXT`,
+  `ALTER TABLE ticket_msgs ADD COLUMN source TEXT`, `ALTER TABLE ticket_msgs ADD COLUMN ext_id TEXT`, `ALTER TABLE ticket_msgs ADD COLUMN agent_name TEXT`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS ticket_msgs_ext ON ticket_msgs(ext_id) WHERE ext_id IS NOT NULL`,
+  `CREATE TABLE IF NOT EXISTS voo_support_out(id INTEGER PRIMARY KEY, msg_id INTEGER UNIQUE, ticket_id INTEGER, attempts INTEGER DEFAULT 0, next_at INTEGER, sent_at INTEGER, last_error TEXT, created_at INTEGER, failed INTEGER DEFAULT 0)`,
 ]) { try { db.exec(sql); } catch { /* already there */ } }
 const Q = (sql) => { const s = db.prepare(sql); return { get: (...a) => s.get(...a), all: (...a) => s.all(...a), run: (...a) => s.run(...a) }; };
 
@@ -216,6 +223,11 @@ const SETTING_DEFS = {
   'feature.credits_bonus': { def: () => envBool('FEATURE_CREDITS_BONUS', true), v: bool },
   'feature.ranks': { def: () => envBool('FEATURE_RANKS', true), v: bool },
   'feature.enterprise': { def: () => envBool('FEATURE_ENTERPRISE', true), v: bool },
+  'feature.link_names': { def: () => envBool('FEATURE_LINK_NAMES', true), v: bool },
+  'limits': { def: () => ({ basic: { channels: envNum('BASIC_MAX_CHANNELS', 3), bots: envNum('BASIC_MAX_BOTS', 3) }, pro: { channels: envNum('PRO_MAX_CHANNELS', 0), bots: envNum('PRO_MAX_BOTS', 0) } }),
+    v: (x) => { if (!x || typeof x !== 'object') throw new Error('Send the Basic and Pro limits.'); const n = int(0, 100000);
+      const g = (o, name) => { if (!o || typeof o !== 'object') throw new Error(`Add the ${name} limits.`); return { channels: n(o.channels), bots: n(o.bots) }; };
+      return { basic: g(x.basic, 'Basic'), pro: g(x.pro, 'Pro') }; } },
   'credit.bonus_tiers': { def: () => DEFAULT_BONUS, v: (a) => {
     if (!Array.isArray(a) || a.length > 10) throw new Error('Up to 10 bonus tiers.');
     return a.map((t) => ({ min_cents: int(100, 1e9)(t.min_cents), bonus_pct: Math.round(Number(t.bonus_pct) * 10) / 10 })).map((t) => { if (!(t.bonus_pct >= 0 && t.bonus_pct <= 100)) throw new Error('Bonus must be between 0% and 100%.'); return t; })
@@ -307,14 +319,17 @@ const SETTING_DEFS = {
   'sister.clicks': { def: () => 0, v: int(0, 1e12) },
   // ----- round 11: VooSquare (one login for all Zedapex tools) — everything off until configured -----
   'voo.login_mode': { def: () => (['both', 'only'].includes(env.VOO_LOGIN_MODE) ? env.VOO_LOGIN_MODE : 'off'), v: (x) => (['off', 'both', 'only'].includes(x) ? x : (() => { throw new Error('Login mode is off, both or only.'); })()) },
-  'voo.issuer': { def: () => (env.VOO_ISSUER || '').replace(/\/$/, ''), v: (x) => { x = str(200)(x).replace(/\/$/, ''); if (x && !/^https?:\/\/[^\s/]+/.test(x)) throw new Error('The issuer is a URL like https://auth.voosquare.com'); return x; } },
+  'voo.issuer': { def: () => (env.VOO_ISSUER || '').replace(/\/$/, ''), v: (x) => { x = str(200)(x).replace(/\/$/, ''); if (x && !/^https?:\/\/[^\s/]+/.test(x)) throw new Error('The VooSquare address is a URL like https://voosquare.com'); return x; } },
   'voo.client_id': { def: () => env.VOO_CLIENT_ID || '', v: str(200) },
   'voo.client_secret': { def: () => env.VOO_CLIENT_SECRET || '', v: str(300), secret: true },
   'voo.redirect_uri': { def: () => env.VOO_REDIRECT_URI || '', v: (x) => { x = str(300)(x); if (x && !/^https?:\/\//.test(x)) throw new Error('The callback URL must start with https://'); return x; } },
   'voo.service_key': { def: () => env.VOO_SERVICE_KEY || '', v: str(300), secret: true },
   'voo.webhook_secret': { def: () => env.VOO_WEBHOOK_SECRET || '', v: str(300), secret: true },
-  'voo.events_url': { def: () => env.VOO_EVENTS_URL || 'https://api.voosquare.com/v1/events', v: (x) => { x = str(300)(x); if (x && !/^https?:\/\//.test(x)) throw new Error('The events URL must start with https://'); return x || 'https://api.voosquare.com/v1/events'; } },
+  'voo.events_url': { def: () => env.VOO_EVENTS_URL || '', v: (x) => { x = str(300)(x); if (x && !/^https?:\/\//.test(x)) throw new Error('The events URL must start with https://'); return x; } },
   'voo.home': { def: () => (env.VOO_HOME || 'https://voosquare.com').replace(/\/$/, ''), v: (x) => { x = str(200)(x).replace(/\/$/, ''); if (x && !/^https?:\/\//.test(x)) throw new Error('VooSquare home must start with https://'); return x || 'https://voosquare.com'; } },
+  'voo.api_key': { def: () => env.VOO_API_KEY || '', v: str(300), secret: true },
+  'voo.support_bridge': { def: () => envBool('VOO_SUPPORT_BRIDGE', false), v: bool },
+  'voo.affiliate_url': { def: () => env.VOO_AFFILIATE_URL || 'https://affiliate.voosquare.com', v: (x) => { x = str(300)(x); if (x && !/^https:\/\/[^\s]+$/.test(x)) throw new Error('The affiliate link must start with https://'); return x || 'https://affiliate.voosquare.com'; } },
   'voo.referrals': { def: () => (env.VOO_REFERRALS === 'voosquare' ? 'voosquare' : 'local'), v: (x) => (x === 'voosquare' ? 'voosquare' : 'local') },
   // ----- round 11: Zedapex apps catalog (cross-promotion); `sister` above stays for older dashboards -----
   'apps': { def: () => DEFAULT_APPS.map((a) => ({ ...a })), v: (a) => appsValidate(a) },
@@ -352,7 +367,7 @@ function setSetting(key, value) {
 }
 const feature = (k) => (k === 'alerts' && !ALERT_BOT_TOKEN ? false : !!setting('feature.' + k));
 const FEATURE_KEYS = ['signup', 'referrals', 'tiktok', 'snapchat', 'support_chat', 'ftd', 'bot_no_token', 'withdrawals',
-  'integrations', 'join_requests', 'spend', 'fake_filter', 'alerts', 'credits_bonus', 'ranks', 'enterprise', 'joe', 'sister_promo'];
+  'integrations', 'join_requests', 'spend', 'fake_filter', 'alerts', 'credits_bonus', 'ranks', 'enterprise', 'joe', 'sister_promo', 'link_names'];
 const features = () => Object.fromEntries(FEATURE_KEYS.map((k) => [k, feature(k)]));
 /** Live values. Read these at the moment of use; they change when an admin saves Settings. */
 const C = {
@@ -382,13 +397,15 @@ function sisterPublic() {
   return { enabled: true, name: x.name, url: sisterUrl(x), tagline: x.tagline, promo_code: x.promo_code || '' };
 }
 /* ---------- Zedapex apps catalog ---------- */
-const APP_LOGOS = ['replyvoo', 'castvoo', 'advoo', 'affleego', 'landvoo', 'voosquare', 'joinvoo'];
+const APP_LOGOS = ['replyvoo', 'castvoo', 'advoo', 'affleego', 'landvoo', 'voosquare', 'joinvoo', 'spyvoo', 'gatevoo'];
 const DEFAULT_APPS = [
   { id: 'replyvoo', name: 'Replyvoo', headline: 'Sky-rocket your sales. On autopilot.', tagline: 'AI Closers answer every chat in seconds, qualify every lead and send the payment link while you sleep.', url: 'https://replyvoo.com', color: '#FFC21A', color2: '#FFD65C', ink: 'dark', logo: 'replyvoo', badge: '', offer: '30 free chats a month', status: 'live', enabled: true, utm: true },
   { id: 'castvoo', name: 'Castvoo', headline: 'Turn your Telegram into a sales machine.', tagline: 'Welcomes every new subscriber, follows up on time and sends each group the message written for them. Broadcasts, drips and AI in one place.', url: 'https://castvoo.com', color: '#3b6cf6', color2: '#2f55e4', ink: 'light', logo: 'castvoo', badge: '', offer: '7 days free', status: 'live', enabled: true, utm: true },
-  { id: 'advoo', name: 'Advoo', headline: 'Make ads that print.', tagline: 'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.', url: 'https://advoo.com', color: '#ef5a2c', color2: '#1d1714', ink: 'light', logo: 'advoo', badge: '', offer: 'First ads free', status: 'live', enabled: true, utm: true },
+  { id: 'spyvoo', name: 'Spyvoo', headline: 'Spy the winners. Scale your own.', tagline: 'Search live Facebook and Instagram ads from every country, see which ones have run for months and why they work.', url: 'https://spyvoo.com', color: '#2f5bff', color2: '#5b7cff', ink: 'light', logo: 'spyvoo', badge: '', offer: 'Start free', status: 'live', enabled: true, utm: true },
+  { id: 'advoo', name: 'Vooads', headline: 'Make ads that print.', tagline: 'Turns one sentence into scroll-stopping videos, images and hooks in every size, in your buyer’s language, checked against Meta’s rules before you spend.', url: 'https://vooads.com', color: '#ef5a2c', color2: '#1d1714', ink: 'light', logo: 'advoo', badge: '', offer: 'First ads free', status: 'live', enabled: true, utm: true },
   { id: 'affleego', name: 'Affleego', headline: 'Top affiliate deals in one place.', tagline: 'Find and join high-paying offers.', url: 'https://affleego.com', color: '#0f9d8a', color2: '#12b886', ink: 'light', logo: 'affleego', badge: '', offer: '', status: 'live', enabled: true, utm: true },
   { id: 'landvoo', name: 'Landvoo', headline: 'Landing pages that convert.', tagline: 'Fast pages for your ads, built in minutes.', url: '', color: '#7c5cff', color2: '#5b3df5', ink: 'light', logo: 'landvoo', badge: 'Coming soon', offer: '', status: 'soon', enabled: true, utm: true },
+  { id: 'gatevoo', name: 'Gatevoo', headline: 'Crypto checkout for your offers.', tagline: 'Take USDT and Bitcoin straight to your own wallet. Confirmed automatically.', url: 'https://gatevoo.com', color: '#111111', color2: '#3ddc84', ink: 'light', logo: 'gatevoo', badge: 'Coming soon', offer: '', status: 'soon', enabled: true, utm: true },
   { id: 'voosquare', name: 'VooSquare', headline: 'One login for all Zedapex tools.', tagline: 'Your account, billing and referrals for every Zedapex app in one place.', url: 'https://voosquare.com', color: '#0fae6b', color2: '#c6f45a', ink: 'light', logo: 'voosquare', badge: '', offer: '', status: 'live', enabled: true, utm: true },
 ];
 const HUB_ID = 'voosquare', SELF_ID = 'joinvoo';
@@ -414,7 +431,8 @@ function appsValidate(a) {
 }
 const appLogoUrl = (a) => (!a.logo ? '' : APP_LOGOS.includes(a.logo) ? `/media/applogos/${a.logo}.svg` : a.logo);
 function appUrl(a, where = 'dashboard') {
-  if (a.status === 'soon' || !a.url) return setting('voo.home'); // coming soon → the waitlist on VooSquare
+  if (!a.url) return setting('voo.home'); // coming soon without its own site → the waitlist on VooSquare
+  if (a.status === 'soon') return a.url;     // coming soon with its own waitlist page (Gatevoo)
   if (!a.utm || /[?&]utm_source=/.test(a.url)) return a.url;
   const [base, hash] = a.url.split('#');
   return base + (base.includes('?') ? '&' : '?') + `utm_source=joinvoo&utm_medium=dashboard&utm_campaign=apps&utm_content=${encodeURIComponent(String(where || 'dashboard').replace(/[^\w-]/g, '').slice(0, 30) || 'dashboard')}` + (hash !== undefined ? '#' + hash : '');
@@ -424,6 +442,18 @@ const appPublic = (a, where) => ({ id: a.id, name: a.name, headline: a.headline,
 function appsPublic() {
   if (!feature('sister_promo')) return [];
   return (setting('apps') || []).filter((a) => a.enabled && a.id !== SELF_ID && a.id !== HUB_ID).map((a) => appPublic(a));
+}
+/** Bottom-of-dashboard showcase: the VooSquare affiliate program first, then the other Zedapex tools. */
+function showcasePublic() {
+  if (!feature('sister_promo')) return { enabled: false, affiliate: null, cards: [] };
+  const aff = { url: setting('voo.affiliate_url'), headline: 'Earn up to 50% for life', tagline: 'Promote Joinvoo and every Zedapex tool on VooSquare. Get paid every month your customers stay.', cta: 'Become an affiliate' };
+  const apps = (setting('apps') || []).filter((a) => a.enabled && a.id !== SELF_ID && a.id !== HUB_ID);
+  const order = ['spyvoo', 'replyvoo', 'castvoo', 'advoo', 'gatevoo'];
+  const list = [...order.map((id) => apps.find((a) => a.id === id)).filter(Boolean), ...apps.filter((a) => !order.includes(a.id))];
+  const hub = (setting('apps') || []).find((a) => a.id === HUB_ID) || DEFAULT_APPS.find((a) => a.id === HUB_ID);
+  return { enabled: true, affiliate: aff,
+    cards: [{ id: 'affiliate', name: 'VooSquare Affiliates', headline: aff.headline, tagline: aff.tagline, url: aff.url, color: hub.color, color2: hub.color2, ink: 'light', logo_url: appLogoUrl(hub), status: 'live', cta: aff.cta, badge: 'Up to 50%' },
+      ...list.map((a) => ({ ...appPublic(a, 'showcase'), cta: a.status === 'soon' ? 'Join the waitlist' : `Try ${a.name}` }))] };
 }
 function vooPublic() {
   const hub = (setting('apps') || []).find((a) => a.id === HUB_ID) || DEFAULT_APPS.find((a) => a.id === HUB_ID);
@@ -447,7 +477,7 @@ function publicConfig() {
     brand: { company: C.COMPANY, support_email: setting('brand.support_email') },
     pricing: { base_cents: C.PRICE_BASE_CENTS, included: C.PRICE_INCLUDED, per_join_cents: C.PRICE_PER_CENTS, free_joins: C.FREE_JOINS },
     plans: plansDef(), trial: { days: setting('trial.days'), ftd_limit: setting('trial.ftd_limit'), starts: setting('trial.starts') },
-    levels: setting('levels').map((l) => ({ id: l.id, name: l.name, from: l.from })), langs: LANGS, sister: sisterPublic(), apps: appsPublic(), voo: vooPublic() };
+    levels: setting('levels').map((l) => ({ id: l.id, name: l.name, from: l.from })), langs: LANGS, sister: sisterPublic(), apps: appsPublic(), voo: vooPublic(), showcase: showcasePublic(), limits: setting('limits') };
 }
 /** Who answered: the team member whose email matches the admin who replied; otherwise that admin's first name. */
 function agentFor(email) {
@@ -457,7 +487,10 @@ function agentFor(email) {
   const u = Q(`SELECT name FROM users WHERE email=?`).get(email);
   return { name: (u && u.name ? u.name.split(' ')[0] : '') || 'Joinvoo team', photo: '', role: 'Support' };
 }
-const withAgents = (msgs) => msgs.map((x) => { const { agent_email, ...rest } = x; return x.from_admin ? { ...rest, agent: agentFor(agent_email) || { name: 'Joinvoo team', photo: '', role: '' } } : rest; });
+const withAgents = (msgs) => msgs.map((x) => { const { agent_email, agent_name, source, ...rest } = x;
+  if (!x.from_admin) return rest;
+  if (source === 'voosquare') return { ...rest, source, agent: { name: agent_name || 'Zedapex support', photo: '', role: 'VooSquare', source: 'voosquare', voosquare: true } };
+  return { ...rest, agent: agentFor(agent_email) || { name: 'Joinvoo team', photo: '', role: '' } }; });
 
 // ---------- affiliate integrations (postback presets per program) ----------
 // Templates use {postback} for the account's own postback URL. Tags in {braces} are the program's macros, filled in by the program.
@@ -702,10 +735,11 @@ function setUserCountry(uid, code, by) {
   return true;
 }
 const countryLockedUntil = (u) => (u.country_changed_at && u.country_changed_at + COUNTRY_LOCK_MS > now() ? u.country_changed_at + COUNTRY_LOCK_MS : null);
-const PM_TYPES = ['paystack', 'stripe', 'flutterwave', 'manual', 'crypto_manual'];
+const PM_TYPES = ['paystack', 'stripe', 'flutterwave', 'manual', 'crypto_manual', 'gatevoo', 'custom'];
+const HOSTED_TYPES = new Set(['paystack', 'stripe', 'gatevoo', 'custom']); // redirect the customer to a checkout page
 const MANUAL_TYPES = new Set(['manual', 'crypto_manual']);
 const PM_SECRET_KEYS = ['secret_key', 'webhook_secret'];
-const BUILTIN_PAYLOGOS = ['paystack', 'stripe', 'card', 'bank', 'usdt', 'btc', 'crypto', 'mobile', 'flutterwave'];
+const BUILTIN_PAYLOGOS = ['paystack', 'stripe', 'card', 'bank', 'usdt', 'btc', 'crypto', 'mobile', 'flutterwave', 'gatevoo'];
 const pmJson = (v, d) => { try { return v ? (typeof v === 'string' ? JSON.parse(v) : v) : d; } catch { return d; } };
 function pmCountries(m) {
   const c = pmJson(m.countries, null);
@@ -713,11 +747,14 @@ function pmCountries(m) {
 }
 const pmConfig = (m) => pmJson(m.config, {}) || {};
 /** Gateway secret: the method's own key, or (for the original "paystack" method) the key saved in Settings / env. */
-function pmSecret(m) { const c = pmConfig(m); if (m.type === 'paystack') return c.secret_key || (m.id === 'paystack' ? C.PAYSTACK_SECRET : ''); if (m.type === 'stripe') return c.secret_key || ''; return ''; }
-const pmCurrency = (m) => (m.currency ? String(m.currency).toUpperCase() : m.type === 'paystack' ? C.PAYSTACK_CURRENCY : m.type === 'flutterwave' ? C.FLW_CURRENCY : 'USD');
+function pmSecret(m) { const c = pmConfig(m); if (m.type === 'paystack') return c.secret_key || (m.id === 'paystack' ? C.PAYSTACK_SECRET : ''); if (m.type === 'stripe' || m.type === 'gatevoo' || m.type === 'custom') return c.secret_key || ''; return ''; }
+const gatevooBase = (m) => String(pmConfig(m).base_url || env.GATEVOO_URL || 'https://gatevoo.com').replace(/\/+$/, '');
+const pmCurrency = (m) => (m.type === 'gatevoo' ? 'USD' : m.currency ? String(m.currency).toUpperCase() : m.type === 'paystack' ? C.PAYSTACK_CURRENCY : m.type === 'flutterwave' ? C.FLW_CURRENCY : 'USD');
 /** Units of the method's currency per $1 (admin-set; NGN falls back to the Pricing page rate). */
-const pmFx = (m) => (m.fx_rate > 0 ? m.fx_rate : pmCurrency(m) === 'NGN' ? C.NGN_PER_USD : 1);
-const pmConfigured = (m) => (m.type === 'paystack' || m.type === 'stripe' ? !!pmSecret(m) : m.type === 'flutterwave' ? !!C.FLW_SECRET : true);
+const pmFx = (m) => (m.type === 'gatevoo' ? 1 : m.fx_rate > 0 ? m.fx_rate : pmCurrency(m) === 'NGN' ? C.NGN_PER_USD : 1);
+const pmConfigured = (m) => (m.type === 'paystack' || m.type === 'stripe' ? !!pmSecret(m) : m.type === 'flutterwave' ? !!C.FLW_SECRET
+  : m.type === 'gatevoo' ? !!pmSecret(m) && !!pmConfig(m).webhook_secret
+  : m.type === 'custom' ? !!(pmConfig(m).checkout_url || pmConfig(m).create_url) && !!pmConfig(m).webhook_secret : true);
 const pmAllowed = (m, country) => { const c = pmCountries(m); if (c.mode === 'global') return true; if (!country) return false; return c.mode === 'only' ? c.list.includes(country) : !c.list.includes(country); };
 /** all=true: every method (admin). Otherwise enabled + configured ones; with a country argument (even null), only those allowed there. */
 function payMethods(all, country) {
@@ -727,14 +764,15 @@ function payMethods(all, country) {
 }
 function pmLogoUrl(m) {
   if (m.logo && /^\/media\/paylogos\/[\w.-]+(\?v=\d+)?$/.test(m.logo)) return m.logo;
-  const id = BUILTIN_PAYLOGOS.includes(m.logo) ? m.logo : m.type === 'crypto_manual' ? (/btc/i.test(m.currency || '') ? 'btc' : 'usdt') : m.type === 'manual' ? (/usdt/i.test(m.currency || '') ? 'usdt' : /btc/i.test(m.currency || '') ? 'btc' : 'bank') : m.type;
+  const id = BUILTIN_PAYLOGOS.includes(m.logo) ? m.logo : m.type === 'gatevoo' ? 'gatevoo' : m.type === 'custom' ? 'card' : m.type === 'crypto_manual' ? (/btc/i.test(m.currency || '') ? 'btc' : 'usdt') : m.type === 'manual' ? (/usdt/i.test(m.currency || '') ? 'usdt' : /btc/i.test(m.currency || '') ? 'btc' : 'bank') : m.type;
   return BUILTIN_PAYLOGOS.includes(id) ? `/media/paylogos/${id}.svg` : '/media/paylogos/card.svg';
 }
 /** What a customer sees (no secrets). */
 const pmPublic = (m) => {
   const cfg = pmConfig(m);
   const o = { id: m.id, type: m.type, label: m.label, name: m.label, note: m.note || '', description: m.note || '', enabled: !!m.enabled, logo_url: pmLogoUrl(m),
-    currency: pmCurrency(m), fx_rate: pmFx(m), min_usd: m.min_usd || Math.max(1, C.MIN_DEPOSIT_CENTS / 100), max_usd: m.max_usd || 10000, fee_pct: m.fee_pct || 0 };
+    currency: pmCurrency(m), fx_rate: pmFx(m), min_usd: m.min_usd || Math.max(1, C.MIN_DEPOSIT_CENTS / 100), max_usd: m.max_usd || 10000, fee_pct: m.fee_pct || 0,
+    hosted: HOSTED_TYPES.has(m.type), brand: m.type === 'gatevoo' ? 'gatevoo' : undefined };
   if (MANUAL_TYPES.has(m.type)) Object.assign(o, { currency: m.currency || '', address: m.address || cfg.address || '', instructions: m.instructions || '', explorer: m.explorer || '',
     fields: Array.isArray(cfg.fields) ? cfg.fields : [], network: cfg.network || '' });
   return o;
@@ -764,6 +802,30 @@ if (!setting('pay.seeded.v8', false)) {
     ins.run('crypto_usdt', 'crypto_manual', 'USDT (TRC20)', 'Send USDT on the Tron network', 'USDT', null, 'Send only USDT on the TRC20 (Tron) network. Other tokens or networks are lost.', 'https://tronscan.org/#/transaction/{tx}', 12, Date.now(), JSON.stringify({ mode: 'global', list: [] }), 'usdt', 1, JSON.stringify({ network: 'TRC20', address: '' }));
   Q(`UPDATE pay_methods SET countries=? WHERE countries IS NULL`).run(JSON.stringify({ mode: 'global', list: [] }));
   Q(`INSERT OR REPLACE INTO settings(key,value,updated_at) VALUES('pay.seeded.v8','true',?)`).run(Date.now()); settingsCache = null;
+}
+
+// Round 11: Gatevoo (USDT + Bitcoin, confirmed automatically). Added switched off unless GATEVOO_API_KEY + GATEVOO_WEBHOOK_SECRET are set.
+if (!setting('pay.seeded.v11', false)) {
+  if (!Q(`SELECT 1 FROM pay_methods WHERE type='gatevoo' LIMIT 1`).get()) {
+    const cfg = { base_url: (env.GATEVOO_URL || 'https://gatevoo.com').replace(/\/+$/, '') };
+    if (env.GATEVOO_API_KEY) cfg.secret_key = env.GATEVOO_API_KEY; if (env.GATEVOO_WEBHOOK_SECRET) cfg.webhook_secret = env.GATEVOO_WEBHOOK_SECRET;
+    Q(`INSERT OR IGNORE INTO pay_methods(id,type,label,note,currency,enabled,sort,created_at,countries,logo,fx_rate,config) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run('gatevoo', 'gatevoo', 'USDT or Bitcoin', 'Secure crypto checkout by Gatevoo', 'USD', cfg.secret_key && cfg.webhook_secret ? 1 : 0, 4, Date.now(), JSON.stringify({ mode: 'global', list: [] }), 'gatevoo', 1, JSON.stringify(cfg));
+  }
+  Q(`INSERT OR REPLACE INTO settings(key,value,updated_at) VALUES('pay.seeded.v11','true',?)`).run(Date.now()); settingsCache = null;
+}
+// Round 11: add Spyvoo + Gatevoo to a saved apps list and rename Advoo → Vooads (only if it still has the old name/link). Nothing else is touched.
+if (!setting('apps.seeded.v11', false)) {
+  const saved = Q(`SELECT value FROM settings WHERE key='apps'`).get();
+  if (saved) {
+    try {
+      let list = JSON.parse(saved.value) || [];
+      list = list.map((a) => (a && a.id === 'advoo' && a.name === 'Advoo' ? { ...a, name: 'Vooads', url: /^https?:\/\/(www\.)?advoo\.com\/?$/.test(a.url || '') ? 'https://vooads.com' : a.url } : a));
+      for (const id of ['spyvoo', 'gatevoo']) if (!list.some((a) => a && a.id === id)) { const d = DEFAULT_APPS.find((a) => a.id === id); const at = list.findIndex((a) => a && a.id === 'voosquare'); list.splice(at < 0 ? list.length : at, 0, { ...d }); }
+      Q(`UPDATE settings SET value=?, updated_at=? WHERE key='apps'`).run(JSON.stringify(appsValidate(list)), Date.now());
+    } catch (e) { console.log('apps upgrade skipped:', e.message); }
+  }
+  Q(`INSERT OR REPLACE INTO settings(key,value,updated_at) VALUES('apps.seeded.v11','true',?)`).run(Date.now()); settingsCache = null;
 }
 
 // ---------- helpers ----------
@@ -1488,11 +1550,16 @@ function attachBot(bot, chat, member) {
   if (isAdmin) {
     const canInvite = member.status === 'creator' || member.can_invite_users !== false ? 1 : 0;
     if (!ch) {
-      Q(`INSERT INTO channels(owner_id,bot_id,chat_id,title,type,username,slug,status,created_at) VALUES(?,?,?,?,?,?,?,?,?)`)
-        .run(bot.owner_id, bot.id, chat.id, chat.title || '', chat.type, chat.username || null, rid(5), 'active', now());
+      const over = !!limitHit(bot.owner_id, 'channels');
+      Q(`INSERT INTO channels(owner_id,bot_id,chat_id,title,type,username,slug,status,created_at,locked) VALUES(?,?,?,?,?,?,?,?,?,?)`)
+        .run(bot.owner_id, bot.id, chat.id, chat.title || '', chat.type, chat.username || null, rid(5), 'active', now(), over ? 1 : 0);
+      if (over) { const L = limitsFor(bot.owner_id); inboxAdd(bot.owner_id, { kind: 'account', title: 'Channel added, not tracking yet', body: `“${String(chat.title || 'Your channel').slice(0, 60)}” is over your ${L.plan_name} limit of ${L.channels.max} channels. Upgrade to Pro or remove a channel and it starts tracking by itself.`, tag: 'limit' }); }
       ch = Q(`SELECT * FROM channels WHERE owner_id=? AND chat_id=?`).get(bot.owner_id, chat.id);
       log('channel connected', ch.id, chat.title);
     } else {
+      // Only a channel the customer removed themselves counts as "new" again; a bot that left and came back (fixing admin rights) keeps its slot.
+      if (ch.status === 'removed' && ch.removed_by_user && !ch.locked && limitHit(bot.owner_id, 'channels')) Q(`UPDATE channels SET locked=1 WHERE id=?`).run(ch.id);
+      if (ch.removed_by_user) Q(`UPDATE channels SET removed_by_user=0 WHERE id=?`).run(ch.id);
       Q(`UPDATE channels SET title=?, username=? WHERE id=?`).run(chat.title || ch.title, chat.username || null, ch.id);
     }
     Q(`INSERT INTO channel_bots(channel_id,bot_id,can_invite) VALUES(?,?,?) ON CONFLICT(channel_id,bot_id) DO UPDATE SET can_invite=excluded.can_invite`)
@@ -1548,7 +1615,7 @@ async function fillPools() {
     const rows = Q(`SELECT cb.channel_id, cb.bot_id, ch.chat_id, ch.fallback_link, ch.join_mode, b.token, b.cooldown_until,
         (SELECT COUNT(*) FROM links l WHERE l.channel_id=ch.id AND l.status='pool' AND l.req=(CASE WHEN ch.join_mode='request' AND ${reqOn} THEN 1 ELSE 0 END)) AS pool
       FROM channel_bots cb JOIN channels ch ON ch.id=cb.channel_id JOIN bots b ON b.id=cb.bot_id
-      WHERE ch.status='active' AND cb.can_invite=1 AND b.status='active'`).all();
+      WHERE ch.status='active' AND COALESCE(ch.locked,0)=0 AND cb.can_invite=1 AND b.status='active'`).all();
     rows.sort((a, b) => a.pool - b.pool);
     const busy = new Set(); const jobs = []; const t = now();
     for (const r of rows) {
@@ -2071,7 +2138,7 @@ setInterval(() => { const t = Date.now(); for (const [k, v] of goHits) if (t - v
 async function onClick(req, res, ch) {
   const body = await readJson(req, 8 * 1024);
   const fallback = ch.fallback_link || (ch.username ? `https://t.me/${ch.username}` : '');
-  if (ch.status !== 'active') return send(res, 200, { url: fallback });
+  if (ch.status !== 'active' || ch.locked) return send(res, 200, { url: fallback });
   // One visitor hammering the link (or a script) shouldn't drain the invite-link pool.
   let hits = 1;
   { const k = clientIp(req) + '|' + ch.slug, t = now(), h = goHits.get(k);
@@ -2109,8 +2176,47 @@ async function onClick(req, res, ch) {
   }
   if (!link) return send(res, 200, { url: fallback });
   Q(`UPDATE clicks SET link_id=? WHERE id=?`).run(link.id, clickId);
+  queueLinkName(link.id, clickId);
   send(res, 200, { url: link.url }, { 'set-cookie': cookie('jp_' + ch.slug, `${clickId}.${hmac(clickId)}`, RECYCLE_MIN * 60) });
 }
+
+// ---------- invite link names: "Meta · c-0a3f9 · NG", visible in Telegram → channel → Invite links ----------
+const clickCode = (id) => (id ? 'c-' + Number(id).toString(36).padStart(5, '0') : null);
+const clickFromCode = (s) => { const m = /^c-?([0-9a-z]{1,12})$/i.exec(String(s || '').trim()); return m ? parseInt(m[1], 36) || null : null; };
+const platName = (c) => (c.fbclid ? 'Meta' : c.ttclid ? 'TikTok' : c.sccid ? 'Snap' : 'Direct');
+function linkNameFor(c) { return `${platName(c)} · ${clickCode(c.id)}${c.country ? ' · ' + c.country : ''}`.slice(0, 32); }
+const nameQueue = []; const renameAt = new Map(), renameCool = new Map();
+function queueLinkName(linkId, clickId) {
+  if (!feature('link_names')) return;
+  if (nameQueue.length > 5000) nameQueue.shift();
+  nameQueue.push({ linkId, clickId, at: now() });
+}
+let renameBusy = false;
+/** Gentle and best-effort: a label only, so it never competes with making new links (separate pacing, its own back-off, never marks the bot as cooling down). */
+async function renameTick() {
+  if (renameBusy || !nameQueue.length) return; renameBusy = true;
+  try {
+    const t = now(), keep = [], jobs = [];
+    let scanned = 0;
+    while (nameQueue.length && scanned++ < 300) {
+      const it = nameQueue.shift();
+      if (t - it.at > 15 * 60000) continue; // stale: they have joined (or not) long ago
+      const r = Q(`SELECT l.id, l.url, l.req, l.name, l.status, l.bot_id, b.token, b.status AS bst, b.cooldown_until, ch.chat_id FROM links l JOIN bots b ON b.id=l.bot_id JOIN channels ch ON ch.id=l.channel_id WHERE l.id=?`).get(it.linkId);
+      if (!r || r.name || r.bst !== 'active' || !r.token) continue;
+      if (r.cooldown_until > t || (renameCool.get(r.bot_id) || 0) > t || t - (renameAt.get(r.bot_id) || 0) < Math.max(1000, LINK_INTERVAL_MS) || jobs.some((j) => j.bot === r.bot_id)) { keep.push(it); continue; }
+      const c = Q(`SELECT id, fbclid, ttclid, sccid, country FROM clicks WHERE id=?`).get(it.clickId); if (!c) continue;
+      const name = linkNameFor(c); renameAt.set(r.bot_id, t);
+      jobs.push({ bot: r.bot_id, p: tg(r.token, 'editChatInviteLink', { chat_id: r.chat_id, invite_link: r.url, name, ...(r.req ? { creates_join_request: true } : { member_limit: 1 }) }).then((res) => {
+        if (res.ok) Q(`UPDATE links SET name=? WHERE id=?`).run(name, r.id);
+        else if (res.error_code === 429) { renameCool.set(r.bot_id, now() + (((res.parameters && res.parameters.retry_after) || 30) + 30) * 1000); keep.push(it); }
+      }) });
+      if (jobs.length >= 20) break;
+    }
+    await Promise.all(jobs.map((j) => j.p));
+    nameQueue.unshift(...keep);
+  } catch (e) { log('link names', e.message); } finally { renameBusy = false; }
+}
+setInterval(renameTick, +env.RENAME_TICK_MS || 1000).unref();
 
 // ---------- API ----------
 function parseRange(qs) {
@@ -2161,6 +2267,9 @@ function stats(user, qs) {
     const dd = days.get(d) || { day: d, clicks: 0, joins: 0 }; days.set(d, dd);
     if (c.ftd) dd.ftd = c.ftd; if (c.sales) dd.sales = c.sales; if (c.rev) dd.revenue_cents = c.rev;
   }
+  { const la = [user.id, from, to]; if (channel) la.push(channel);
+    totals.leaves_new = cnt(`SELECT COUNT(*) FROM joins WHERE owner_id=? AND joined_at>=? AND joined_at<? AND left_at IS NOT NULL AND left_at<?${channel ? ' AND channel_id=?' : ''}`, la[0], la[1], la[2], la[2], ...la.slice(3));
+    totals.leaves_old = Math.max(0, totals.leaves - totals.leaves_new); }
   const ct = convTotals(user.id, from, to, channel);
   Object.assign(totals, { ftd: ct.ftd, reg: ct.reg, dep: ct.dep, sales: ct.sales, qualified: ct.qualified, rejected: ct.rejected, revenue_cents: ct.revenue_cents });
   const [d0, d1] = rangeDays(qs);
@@ -2200,17 +2309,19 @@ function joinsQuery(user, qs, limit, offset) {
   if (type === 'filtered') where += ' AND j.suspect=1';
   const q = (qs.get('q') || '').trim().replace(/^@/, '');
   if (q) {
-    where += ` AND (j.username LIKE ? OR j.first_name LIKE ? OR j.last_name LIKE ? OR CAST(j.tg_user_id AS TEXT)=?)`;
-    args.push(`%${q}%`, `%${q}%`, `%${q}%`, q);
+    const cc = /^c-[0-9a-z]+$/i.test(q) ? clickFromCode(q) : null;
+    where += ` AND (j.username LIKE ? OR j.first_name LIKE ? OR j.last_name LIKE ? OR CAST(j.tg_user_id AS TEXT)=?${cc ? ' OR j.click_id=?' : ''})`;
+    args.push(`%${q}%`, `%${q}%`, `%${q}%`, q, ...(cc ? [cc] : []));
   }
   const total = Q(`SELECT COUNT(*) n FROM joins j WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<?${where}`).get(...args).n;
-  const rows = Q(`SELECT j.*, ch.title AS channel_title, c.ts AS click_ts, c.country, c.fbclid, c.fbc, c.fbp, c.ttclid, c.sccid, c.ip, c.ua, c.params, c.page_url,
+  const rows = Q(`SELECT j.*, ch.title AS channel_title, c.ts AS click_ts, c.country, c.fbclid, c.fbc, c.fbp, c.ttclid, c.sccid, c.ip, c.ua, c.params, c.page_url, lk.name AS link_name, lk.url AS link_url,
       (SELECT json_group_array(json_object('event',v.event,'value_cents',v.value_cents,'currency',v.currency,'at',v.created_at,'source',v.source)) FROM conversions v WHERE v.join_id=j.id) AS convs
-    FROM joins j JOIN channels ch ON ch.id=j.channel_id LEFT JOIN clicks c ON c.id=j.click_id
+    FROM joins j JOIN channels ch ON ch.id=j.channel_id LEFT JOIN clicks c ON c.id=j.click_id LEFT JOIN links lk ON lk.id=c.link_id
     WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<?${where} ORDER BY j.joined_at DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
   const locked = isLocked(user.id);
   return { total, locked, rows: rows.map((r) => { const convs = r.convs ? JSON.parse(r.convs) : [];
-    return { ...r, suspect: r.suspect || 0, suspect_reason: r.suspect_reason || null, params: r.params ? JSON.parse(r.params) : {}, convs: locked ? convs.map((c) => ({ ...c, value_cents: null, locked: true })) : convs }; }) };
+    return { ...r, suspect: r.suspect || 0, suspect_reason: r.suspect_reason || null, params: r.params ? JSON.parse(r.params) : {}, convs: locked ? convs.map((c) => ({ ...c, value_cents: null, locked: true })) : convs,
+      click_code: clickCode(r.click_id), link_name: r.link_name || (r.click_id && r.link_url ? 'joinvoo' : null), match: r.click_id ? { fbc: !!r.fbc, fbp: !!r.fbp, ip: !!r.ip, ua: !!r.ua } : null }; }) };
 }
 
 /** Local calendar keys in the viewer's time zone (tz = minutes, like getTimezoneOffset). */
@@ -2467,15 +2578,49 @@ function conversionsView(user, qs) {
   };
 }
 
+// ---------- plan limits (channels + bots) ----------
+const cnt = (sql, ...a) => Object.values(Q(sql).get(...a) || { n: 0 })[0] || 0;
+/** Limits for one user. max null = unlimited. Limits only apply when ADDING: nothing a customer already has is ever taken away. */
+function limitsFor(uid) {
+  const u = Q(`SELECT id, email, verified_at FROM users WHERE id=?`).get(uid);
+  const plan = userPlan(uid), L = setting('limits') || {};
+  const proish = !BILLING || (u && isAdmin(u)) || plan === 'pro' || trialInfo(uid).status === 'active';
+  const lim = (proish ? L.pro : L.basic) || {}, mx = (v) => (Number(v) > 0 ? Number(v) : null);
+  const used = { channels: cnt(`SELECT COUNT(*) FROM channels WHERE owner_id=? AND status<>'removed' AND COALESCE(locked,0)=0`, uid), bots: cnt(`SELECT COUNT(*) FROM bots WHERE owner_id=? AND status='active'`, uid) };
+  const P = plansDef();
+  return { plan: proish ? 'pro' : 'basic', plan_name: proish ? P.pro.name : P.basic.name, unlimited: !mx(lim.channels) && !mx(lim.bots),
+    channels: { used: used.channels, max: mx(lim.channels) }, bots: { used: used.bots, max: mx(lim.bots) },
+    pro_price_usd: Math.round((P.pro.base_cents || 0) / 100), basic_price_usd: Math.round((P.basic.base_cents || 0) / 100) };
+}
+/** null when there is room; otherwise the 402 body. */
+function limitHit(uid, kind) {
+  const L = limitsFor(uid), x = L[kind];
+  if (!x.max || x.used < x.max) return null;
+  const what = kind === 'bots' ? (x.max === 1 ? 'bot' : 'bots') : (x.max === 1 ? 'channel' : 'channels');
+  return { error: `You’ve used ${x.used} of ${x.max} ${what} on ${L.plan_name}. Upgrade to Pro for unlimited channels and bots, or remove one to make room.`,
+    limit: { kind, used: x.used, max: x.max, plan: L.plan } };
+}
+/** Locked channels (added over the limit) start tracking by themselves once there is room again. */
+function unlockChannels(uid) {
+  const locked = Q(`SELECT id FROM channels WHERE owner_id=? AND COALESCE(locked,0)=1 AND status<>'removed' ORDER BY id`).all(uid);
+  if (!locked.length) return;
+  let moved = 0;
+  for (const c of locked) { if (limitHit(uid, 'channels')) break; Q(`UPDATE channels SET locked=0 WHERE id=?`).run(c.id); moved++; }
+  if (moved) { log('channels unlocked', uid, moved); setImmediate(() => fillPools()); }
+}
+
 function channelsView(user) {
-  const bots = Q(`SELECT id, tg_id, username, status, created_at, prev_webhook, health FROM bots WHERE owner_id=? AND status<>'deleted' ORDER BY id`).all(user.id);
+  unlockChannels(user.id);
+  const bots = Q(`SELECT b.id, b.tg_id, b.username, b.status, b.created_at, b.prev_webhook, b.health,
+      (SELECT COUNT(DISTINCT c.id) FROM channels c LEFT JOIN channel_bots cb ON cb.channel_id=c.id WHERE c.owner_id=b.owner_id AND c.status<>'removed' AND (cb.bot_id=b.id OR c.bot_id=b.id)) AS channels
+    FROM bots b WHERE b.owner_id=? AND b.status<>'deleted' ORDER BY b.id`).all(user.id);
   const channels = Q(`SELECT c.*, (SELECT COUNT(*) FROM links l WHERE l.channel_id=c.id AND l.status='pool') AS pool,
       (SELECT group_concat(b.username) FROM channel_bots cb JOIN bots b ON b.id=cb.bot_id WHERE cb.channel_id=c.id AND b.status='active') AS bot_names
-    FROM channels c WHERE c.owner_id=? ORDER BY c.id`).all(user.id);
+    FROM channels c WHERE c.owner_id=? AND NOT (c.status='removed' AND COALESCE(c.removed_by_user,0)=1) ORDER BY c.id`).all(user.id);
   return {
-    bots,
+    bots, limits: limitsFor(user.id),
     channels: channels.map((c) => ({
-      id: c.id, title: c.title, type: c.type, username: c.username, status: c.status, pool: c.pool, pool_target: POOL_SIZE,
+      id: c.id, title: c.title, type: c.type, username: c.username, status: c.status, locked: !!c.locked && c.status !== 'removed', pool: c.pool, pool_target: POOL_SIZE,
       bots: c.bot_names ? c.bot_names.split(',') : (c.type === 'bot' && c.username ? [c.username] : []), tracking_url: `${linkBase()}/c/${c.slug}`,
       welcome: c.welcome || '', btn_text: c.btn_text || '', btn_url: c.btn_url || '', forward_url: c.forward_url || '', has_forward_secret: !!c.forward_secret,
       external: !!c.ext, hook_start: c.ext ? `${BASE_URL}/hook/${pbKey(user.id)}/start` : '', hook_blocked: c.ext ? `${BASE_URL}/hook/${pbKey(user.id)}/blocked` : '',
@@ -2497,6 +2642,7 @@ async function connectBot(user, token) {
   const other = Q(`SELECT owner_id FROM bots WHERE tg_id=? AND status<>'deleted' AND owner_id<>?`).get(me.result.id, user.id);
   if (other) return { error: 'This bot is already connected to another Joinvoo account.' };
   let bot = Q(`SELECT * FROM bots WHERE tg_id=? AND owner_id=?`).get(me.result.id, user.id);
+  if (!bot || bot.status === 'deleted') { const lh = limitHit(user.id, 'bots'); if (lh) return lh; } // a bot they still have (even with a revoked token) is never blocked
   const secret = rid(24);
   if (bot) Q(`UPDATE bots SET token=?, secret=?, username=?, status='active', cooldown_until=0 WHERE id=?`).run(token, secret, me.result.username, bot.id);
   else Q(`INSERT INTO bots(owner_id,tg_id,username,token,secret,created_at) VALUES(?,?,?,?,?,?)`).run(user.id, me.result.id, me.result.username, token, secret, now());
@@ -2514,6 +2660,10 @@ async function connectBot(user, token) {
     return { error: 'Telegram would not accept our webhook: ' + (wh.description || '') + (SECURE ? '' : ' (BASE_URL must be a public https address)') };
   }
   for (const r of Q(`SELECT channel_id FROM channel_bots WHERE bot_id=?`).all(bot.id)) recomputeChannel(r.channel_id);
+  { // channels that came back because the customer reconnected a bot they had disconnected: they count as new, so the plan limit applies again
+    const back = Q(`SELECT id FROM channels WHERE owner_id=? AND COALESCE(removed_by_user,0)=1 AND status<>'removed' ORDER BY id`).all(user.id);
+    if (back.length) { Q(`UPDATE channels SET locked=1, removed_by_user=0 WHERE id IN (${back.map(() => '?').join(',')})`).run(...back.map((x) => x.id)); unlockChannels(user.id); }
+  }
   log('bot connected', me.result.username, 'owner', user.id, prev ? 'replaced webhook ' + prev : '');
   return { ok: true, bot: { id: bot.id, username: bot.username || me.result.username }, previous_webhook: prev,
     warning: prev ? `This bot was already connected to another server (${prev}). A bot can only talk to one server. To track its subscribers, keep that address in “My bot already runs on its own server” so it keeps working. For a channel or group, use a new bot made just for Joinvoo.` : '' };
@@ -2527,6 +2677,7 @@ async function addChannelManually(user, body) {
   if (/^[A-Za-z]\w{3,}$/.test(chat)) chat = '@' + chat;
   const c = await tg(bot.token, 'getChat', { chat_id: chat });
   if (!c.ok) return { error: 'Telegram can’t find that channel for @' + bot.username + '. Make sure the bot is an admin there.' };
+  { const ex = Q(`SELECT status FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, c.result.id); if (!ex || ex.status === 'removed') { const lh = limitHit(user.id, 'channels'); if (lh) return lh; } }
   const m = await tg(bot.token, 'getChatMember', { chat_id: c.result.id, user_id: bot.tg_id });
   if (!m.ok || !['administrator', 'creator'].includes(m.result.status)) return { error: '@' + bot.username + ' is not an admin in that channel yet.' };
   const ch = attachBot(bot, c.result, m.result);
@@ -3478,6 +3629,8 @@ async function api(req, res, url, user) {
     const ps = Object.entries(pc.set || {}).filter(([k]) => ['nickname', 'gender', 'avatar', 'lang', 'tz'].includes(k));
     if (ps.length) Q(`UPDATE users SET ${ps.map(([k]) => k + '=?').join(', ')} WHERE id=?`).run(...ps.map(([, v]) => v), uid);
     setUserCountry(uid, country, 'signup');
+    affAttach(req, uid, b.aff || null);
+    vooEvent(uid, 'signup', 'jv_signup_' + uid, 'New Joinvoo account');
     // With email set up, the welcome credit arrives when they confirm their inbox. Without it, straight away.
     if (!resendKey()) grantWelcome(uid);
     sendTemplate(email, 'welcome', welcomeData(String(b.name || '').trim(), uid), { userId: uid });
@@ -3514,6 +3667,8 @@ async function api(req, res, url, user) {
       Q(`INSERT INTO resets(token_hash,user_id,expires_at) VALUES(?,?,?)`).run(sha256(token), u.id, now() + 3600000);
       sendTemplate(u.email, 'password_reset', { url: `${BASE_URL}/app?reset=${token}` }, { userId: u.id });
     }
+    if (!resendKey()) { log('forgot password: no email provider set (RESEND_API_KEY), reset email not sent for', email);
+      return send(res, 200, { ok: true, no_email: true, message: 'We can’t email reset links right now. Tap the chat button on this page and our team will reset your password for you.' }); }
     return send(res, 200, { ok: true, message: 'If that email has an account, a reset link is on its way. Check spam too.' });
   }
   if (p === '/api/reset' && m === 'POST') {
@@ -3534,10 +3689,50 @@ async function api(req, res, url, user) {
   if (p === '/api/support') return feature('support_chat') ? supportApi(req, res, url, user) : send(res, 403, { error: 'Live chat is switched off right now.', off: true });
   if (p === '/api/config') return send(res, 200, publicConfig());
   if (p === '/api/voosquare/summary') {
-    const key = setting('voo.service_key'), got = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    if (!key || !safeEq(got, key)) return send(res, 401, { error: 'unauthorized' });
+    if (!vooAuthOk(req)) return send(res, 401, { error: 'unauthorized' });
     const r = vooSummary(qs.get('voo_id'), qs.get('period') || '7d');
-    return send(res, r.linked ? 200 : 404, r);
+    return send(res, 200, r);
+  }
+  if (p.startsWith('/api/voosquare/support/')) {
+    if (!vooAuthOk(req)) return send(res, 401, { error: 'unauthorized' });
+    if (p === '/api/voosquare/support/webhook' && m === 'POST') {
+      const b = await readJson(req, 64 * 1024);
+      if (b.type && b.type !== 'support.reply') return send(res, 200, { ok: true, ignored: true });
+      const r = vooSupportReply(b); return send(res, r.status || 200, r);
+    }
+    const tview = (t) => ({ ref: 'jv-' + t.id, subject: 'Joinvoo support chat', status: t.status === 'closed' ? 'solved' : 'open', priority: 'normal', box_id: 'general', source: 'joinvoo',
+      customer: { name: t.uname || t.name || null, email: t.uemail || t.email || null, voo_id: t.voo_id || null }, last_message: t.last_body ? String(t.last_body).slice(0, 200) : '', unread: t.unread_admin || 0,
+      updated_at: new Date(t.last_at || t.created_at).toISOString(), created_at: new Date(t.created_at).toISOString(), url: `${BASE_URL}/admin#support` });
+    const TSEL = `SELECT t.*, u.email AS uemail, u.name AS uname, u.voo_id, (SELECT body FROM ticket_msgs WHERE ticket_id=t.id ORDER BY id DESC LIMIT 1) AS last_body FROM tickets t LEFT JOIN users u ON u.id=t.user_id`;
+    if (p === '/api/voosquare/support/boxes' && m === 'GET') return send(res, 200, { boxes: [{ id: 'general', name: 'General', open: cnt(`SELECT COUNT(*) FROM tickets WHERE status='open'`) }] });
+    if (p === '/api/voosquare/support/tickets' && m === 'GET') {
+      const st = qs.get('status'), q = String(qs.get('q') || '').trim().slice(0, 80), a = []; let w = ' WHERE 1=1';
+      if (st === 'solved' || st === 'closed') w += " AND t.status='closed'"; else if (st !== 'all') w += " AND t.status='open'";
+      if (qs.get('view') === 'unassigned') w += ' AND t.assigned_to IS NULL';
+      if (q) { w += ' AND (COALESCE(u.email,t.email) LIKE ? OR COALESCE(u.name,t.name) LIKE ?)'; a.push(`%${q}%`, `%${q}%`); }
+      return send(res, 200, { tickets: Q(`${TSEL}${w} ORDER BY t.last_at DESC LIMIT 200`).all(...a).map(tview) });
+    }
+    let tm;
+    if ((tm = /^\/api\/voosquare\/support\/tickets\/jv-(\d+)(\/reply|\/update)?$/.exec(p))) {
+      const t = Q(`${TSEL} WHERE t.id=?`).get(+tm[1]); if (!t) return send(res, 404, { error: 'not found' });
+      if (!tm[2] && m === 'GET') {
+        const msgs = Q(`SELECT id, from_admin, body, created_at, agent_email, agent_name, source FROM ticket_msgs WHERE ticket_id=? ORDER BY id LIMIT 500`).all(t.id);
+        return send(res, 200, { ticket: tview(t), messages: msgs.map((x) => ({ id: x.id, from: x.from_admin ? 'agent' : 'customer', body: x.body, created_at: new Date(x.created_at).toISOString(),
+          agent: x.from_admin ? (x.source === 'voosquare' ? x.agent_name || 'Zedapex support' : (agentFor(x.agent_email) || { name: 'Joinvoo team' }).name) : null, source: x.source || 'joinvoo' })) });
+      }
+      const b = await readJson(req, 32 * 1024);
+      if (tm[2] === '/reply' && m === 'POST') {
+        if (b.note) return send(res, 200, { ok: true, note: true }); // internal notes stay in VooSquare
+        const staff = b.voo_id ? Q(`SELECT name, email FROM users WHERE voo_id=?`).get(String(b.voo_id)) : null;
+        const r = vooSupportReply({ external_ref: 'joinvoo-' + t.id, body: b.text || b.body, agent: b.agent || (staff && (staff.name || staff.email)) || 'Zedapex support', message_id: b.message_id || rid(10) });
+        return send(res, r.status || 200, r);
+      }
+      if (tm[2] === '/update' && m === 'POST') {
+        if (b.status) Q(`UPDATE tickets SET status=? WHERE id=?`).run(['solved', 'closed'].includes(String(b.status)) ? 'closed' : 'open', t.id);
+        return send(res, 200, { ok: true });
+      }
+    }
+    return send(res, 404, { error: 'not found' });
   }
   if (p === '/api/apps/click' && m === 'POST') {
     const b = await readJson(req), id = String(b.id || ''), a = (setting('apps') || []).find((x) => x.id === id && x.enabled);
@@ -3705,7 +3900,7 @@ async function api(req, res, url, user) {
     return send(res, 200, lines.join('\n'), { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="joinvoo-joins.csv"' });
   }
   if (p === '/api/channels' && m === 'GET') return send(res, 200, channelsView(user));
-  if (p === '/api/bots' && m === 'POST') { const r = await connectBot(user, (await readJson(req)).token); return send(res, r.error ? 400 : 200, r); }
+  if (p === '/api/bots' && m === 'POST') { const r = await connectBot(user, (await readJson(req)).token); return send(res, r.limit ? 402 : r.error ? 400 : 200, r); }
   let mm;
   if ((mm = /^\/api\/bots\/(\d+)$/.exec(p)) && m === 'DELETE') {
     const bot = Q(`SELECT * FROM bots WHERE id=? AND owner_id=?`).get(+mm[1], user.id);
@@ -3713,13 +3908,16 @@ async function api(req, res, url, user) {
     await tg(bot.token, 'deleteWebhook');
     Q(`UPDATE bots SET status='deleted', token=NULL WHERE id=?`).run(bot.id);
     Q(`UPDATE links SET status='dead' WHERE bot_id=? AND status IN ('pool','assigned')`).run(bot.id);
-    for (const r of Q(`SELECT channel_id FROM channel_bots WHERE bot_id=?`).all(bot.id)) recomputeChannel(r.channel_id);
+    for (const r of Q(`SELECT channel_id FROM channel_bots WHERE bot_id=?`).all(bot.id)) { recomputeChannel(r.channel_id); Q(`UPDATE channels SET removed_by_user=1, locked=0 WHERE id=? AND status='removed'`).run(r.channel_id); }
+    Q(`UPDATE channels SET removed_by_user=1, locked=0 WHERE owner_id=? AND bot_id=? AND type='bot' AND status='removed'`).run(user.id, bot.id);
+    unlockChannels(user.id);
     return send(res, 200, { ok: true });
   }
   if (p === '/api/bot-targets' && m === 'POST') {
     const b = await readJson(req);
     const bot = Q(`SELECT * FROM bots WHERE id=? AND owner_id=? AND status='active'`).get(+b.bot_id, user.id);
     if (!bot) return send(res, 400, { error: 'Connect the bot first.' });
+    { const ex = Q(`SELECT status, locked FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, bot.tg_id); if (!ex || ex.status === 'removed') { const lh = limitHit(user.id, 'channels'); if (lh) return send(res, 402, lh); } }
     const fw = String(b.forward_url || '').trim();
     if (fw && !publicHttpsUrl(fw)) return send(res, 400, { error: 'The forwarding address must be a public https:// address.' });
     const fsec = String(b.forward_secret ?? '').trim();
@@ -3731,7 +3929,7 @@ async function api(req, res, url, user) {
       Q(`INSERT INTO channels(owner_id,bot_id,chat_id,title,type,username,slug,status,created_at,welcome,btn_text,btn_url,forward_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(user.id, bot.id, bot.tg_id, '@' + bot.username, 'bot', bot.username, rid(5), 'active', now(), welcome, bt, bu, fw || null);
     } else {
-      Q(`UPDATE channels SET status='active', welcome=?, btn_text=?, btn_url=?, forward_url=? WHERE id=?`).run(welcome, bt, bu, fw || null, ch.id);
+      Q(`UPDATE channels SET status='active', removed_by_user=0, welcome=?, btn_text=?, btn_url=?, forward_url=? WHERE id=?`).run(welcome, bt, bu, fw || null, ch.id);
     }
     ch = Q(`SELECT id FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, bot.tg_id);
     if (b.forward_secret !== undefined) Q(`UPDATE channels SET forward_secret=? WHERE id=?`).run(fsec || null, ch.id);
@@ -3746,15 +3944,16 @@ async function api(req, res, url, user) {
     const taken = Q(`SELECT 1 FROM channels WHERE type='bot' AND lower(username)=? AND owner_id<>? AND status='active'`).get(un.toLowerCase(), user.id);
     if (taken) return send(res, 400, { error: 'This bot is already tracked by another Joinvoo account.' });
     let ch = Q(`SELECT * FROM channels WHERE owner_id=? AND type='bot' AND lower(username)=?`).get(user.id, un.toLowerCase());
+    if (!ch || ch.status === 'removed') { const lh = limitHit(user.id, 'channels'); if (lh) return send(res, 402, lh); }
     if (!ch) {
       Q(`INSERT INTO channels(owner_id,bot_id,chat_id,title,type,username,slug,status,created_at,ext) VALUES(?,?,?,?,?,?,?,?,?,1)`)
         .run(user.id, null, -(1e15 + crypto.randomInt(1e9)), '@' + un, 'bot', un, rid(5), 'active', now());
       ch = Q(`SELECT * FROM channels WHERE owner_id=? AND type='bot' AND lower(username)=?`).get(user.id, un.toLowerCase());
-    } else Q(`UPDATE channels SET status='active' WHERE id=?`).run(ch.id);
+    } else Q(`UPDATE channels SET status='active', removed_by_user=0 WHERE id=?`).run(ch.id);
     const k = pbKey(user.id);
     return send(res, 200, { ok: true, channel: ch.id, hook_start: `${BASE_URL}/hook/${k}/start`, hook_blocked: `${BASE_URL}/hook/${k}/blocked` });
   }
-  if (p === '/api/channels' && m === 'POST') { const r = await addChannelManually(user, await readJson(req)); return send(res, r.error ? 400 : 200, r); }
+  if (p === '/api/channels' && m === 'POST') { const r = await addChannelManually(user, await readJson(req)); return send(res, r.limit ? 402 : r.error ? 400 : 200, r); }
   if ((mm = /^\/api\/channels\/(\d+)(\/test)?$/.exec(p))) {
     const ch = Q(`SELECT * FROM channels WHERE id=? AND owner_id=?`).get(+mm[1], user.id);
     if (!ch) return send(res, 404, { error: 'Channel not found.' });
@@ -3813,7 +4012,7 @@ async function api(req, res, url, user) {
       return send(res, 200, { ok: true });
     }
     if (m === 'DELETE') {
-      Q(`UPDATE channels SET status='removed' WHERE id=?`).run(ch.id);
+      Q(`UPDATE channels SET status='removed', locked=0, removed_by_user=1 WHERE id=?`).run(ch.id);
       Q(`DELETE FROM channel_bots WHERE channel_id=?`).run(ch.id);
       Q(`UPDATE links SET status='dead' WHERE channel_id=? AND status IN ('pool','assigned')`).run(ch.id);
       return send(res, 200, { ok: true });
@@ -3979,7 +4178,7 @@ function gatewayAmount(meth, cents) {
 /** Start a hosted checkout (Paystack or Stripe) for `cents` of credit. Returns {ok, url, reference} or {error}. */
 async function gatewayStart(user, meth, cents, callback) {
   const ref = 'pz_' + rid(10), key = pmSecret(meth), amt = gatewayAmount(meth, cents);
-  if (!key) return { error: 'This payment method isn’t ready yet. Pick another way to pay.' };
+  if (!key && meth.type !== 'custom') return { error: 'This payment method isn’t ready yet. Pick another way to pay.' };
   const back = (callback || `${BASE_URL}/app#credits?paid=`) + ref;
   if (meth.type === 'paystack') {
     const r = await fetch(PAYSTACK_API + '/transaction/initialize', { method: 'POST', signal: AbortSignal.timeout(20000), headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' },
@@ -3999,7 +4198,73 @@ async function gatewayStart(user, meth, cents, callback) {
     Q(`INSERT INTO deposits(user_id,provider,reference,amount_cents,local_amount,currency,created_at,method_id,label,gateway_ref) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(user.id, 'stripe', ref, cents, amt.unit, amt.currency, now(), meth.id, meth.label || 'Card', r.id);
     return { ok: true, url: r.url, redirect_url: r.url, reference: ref };
   }
+  if (meth.type === 'gatevoo') {
+    const usd = Math.round(cents * (1 + amt.fee_pct / 100)) / 100;
+    let r, st = 0;
+    try {
+      const x = await fetch(gatevooBase(meth) + '/api/v1/invoices', { method: 'POST', signal: AbortSignal.timeout(20000),
+        headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json', 'idempotency-key': ref },
+        body: JSON.stringify({ amount_usd: usd, order_id: ref, reference: ref, amount: { value: usd.toFixed(2), currency: 'USD' }, customer_name: user.name || user.email, customer: { email: user.email, name: user.name || '' },
+          description: `${cents.toLocaleString('en-US')} Joinvoo credits`, redirect_url: back, success_url: back, cancel_url: `${BASE_URL}/app#credits?cancelled=${ref}`, webhook_url: pmWebhook(meth), metadata: { user_id: user.id, reference: ref, method_id: meth.id } }) });
+      st = x.status; r = await x.json().catch(() => ({}));
+    } catch (e) { r = { error: { message: e.message } }; }
+    const url = r && (r.checkout_url || r.url || (r.data && r.data.checkout_url));
+    const id = r && (r.id || (r.data && r.data.id));
+    if (!url || !id || !/^https?:\/\//.test(url)) return { error: 'Gatevoo: ' + ((r && r.error && (r.error.message || r.error)) || (st ? 'HTTP ' + st : 'could not start the checkout')) };
+    Q(`INSERT INTO deposits(user_id,provider,reference,amount_cents,local_amount,currency,created_at,method_id,label,gateway_ref) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(user.id, 'gatevoo', ref, cents, Math.round(usd * 100), 'USD', now(), meth.id, meth.label || 'USDT or Bitcoin', String(id));
+    return { ok: true, url, redirect_url: url, reference: ref };
+  }
+  if (meth.type === 'custom') {
+    const c = pmConfig(meth), major = ZERO_DECIMAL.has(amt.currency) ? String(amt.unit) : (amt.unit / 100).toFixed(2);
+    let url = '';
+    if (c.create_url) {
+      let r = {};
+      try {
+        r = await fetch(c.create_url, { method: 'POST', signal: AbortSignal.timeout(20000), headers: { 'content-type': 'application/json', ...(key ? { authorization: 'Bearer ' + key } : {}) },
+          body: JSON.stringify({ reference: ref, amount: major, currency: amt.currency, email: user.email, description: `${cents.toLocaleString('en-US')} Joinvoo credits`, return_url: back, cancel_url: `${BASE_URL}/app#credits?cancelled=${ref}`, webhook_url: pmWebhook(meth) }) }).then((x) => x.json());
+      } catch (e) { r = { error: e.message }; }
+      url = (r && (r.url || r.checkout_url || r.payment_url || r.link || (r.data && (r.data.url || r.data.checkout_url || r.data.link)))) || '';
+      if (!/^https:\/\//.test(url)) return { error: `${meth.label}: ${(r && (r.message || (r.error && (r.error.message || r.error)))) || 'could not start payment'}` };
+    } else if (c.checkout_url) {
+      const enc = encodeURIComponent;
+      url = c.checkout_url.replaceAll('{amount}', enc(major)).replaceAll('{currency}', enc(amt.currency)).replaceAll('{reference}', enc(ref)).replaceAll('{email}', enc(user.email)).replaceAll('{return_url}', enc(back));
+    } else return { error: 'This payment method isn’t ready yet. Pick another way to pay.' };
+    Q(`INSERT INTO deposits(user_id,provider,reference,amount_cents,local_amount,currency,created_at,method_id,label) VALUES(?,?,?,?,?,?,?,?,?)`).run(user.id, 'custom', ref, cents, amt.unit, amt.currency, now(), meth.id, meth.label || 'Payment');
+    return { ok: true, url, redirect_url: url, reference: ref };
+  }
   return { error: 'Pick a way to pay.' };
+}
+/** Gatevoo invoice (read back from Gatevoo, never trusted from the webhook body alone). */
+async function gatevooInvoice(meth, id) {
+  const r = await fetch(gatevooBase(meth) + '/api/v1/invoices/' + encodeURIComponent(id), { headers: { authorization: 'Bearer ' + pmSecret(meth) }, signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error('Gatevoo HTTP ' + r.status);
+  const j = await r.json(); return j && j.data && !j.id ? j.data : j;
+}
+/** Credit a Gatevoo deposit if the invoice is paid, for this order, for at least the amount we asked. */
+async function gatevooConfirm(meth, d, invId) {
+  const inv = await gatevooInvoice(meth, invId || d.gateway_ref);
+  const order = inv.order_id || inv.reference || (inv.metadata && inv.metadata.reference);
+  const paidUsd = Number(inv.amount_usd ?? inv.paid_usd ?? (inv.amount && inv.amount.value) ?? 0);
+  if (inv.status !== 'paid' || order !== d.reference) return false;
+  if (!(Math.round(paidUsd * 100) >= d.local_amount)) { log('gatevoo amount mismatch', d.reference, paidUsd); return false; }
+  const txid = inv.txid || (inv.payment && inv.payment.tx_hash) || String(inv.id || invId);
+  return markDepositPaid(d.reference, String(txid).slice(0, 200));
+}
+/** Gatevoo signature: X-Gatevoo-Timestamp + X-Gatevoo-Signature (hex), or one header "t=<unix>,v1=<hex>". HMAC-SHA256(secret, "<t>.<raw>"), max 5 minutes old. */
+function gatevooSigOk(req, raw, secret) {
+  if (!secret) return false;
+  const h = String(req.headers['x-gatevoo-signature'] || '');
+  let t = req.headers['x-gatevoo-timestamp'], sigs = [h];
+  if (/t=\d+/.test(h)) { const parts = h.split(',').map((x) => x.trim().split('=')); t = (parts.find((x) => x[0] === 't') || [])[1]; sigs = parts.filter((x) => x[0] === 'v1').map((x) => x[1]); }
+  if (!/^\d+$/.test(String(t || '')) || Math.abs(Date.now() / 1000 - +t) > 300) return false;
+  const want = crypto.createHmac('sha256', secret).update(`${t}.${raw}`).digest('hex');
+  return sigs.some((s) => safeEq(String(s || '').replace(/^sha256=/, ''), want));
+}
+/** Custom gateway: X-Signature (or X-Webhook-Signature) = hex HMAC-SHA256(secret, raw body), optional "sha256=" prefix. */
+function customSigOk(req, raw, secret) {
+  if (!secret) return false;
+  const h = String(req.headers['x-signature'] || req.headers['x-webhook-signature'] || '').replace(/^sha256=/, '').trim();
+  return !!h && safeEq(h.toLowerCase(), crypto.createHmac('sha256', secret).update(raw).digest('hex'));
 }
 /** Top-up limits of a method in cents: its own min/max when set, else the global minimum and $10,000. */
 function pmLimits(meth) {
@@ -4024,6 +4289,11 @@ async function startDeposit(user, b) {
   const ref = 'pz_' + rid(10);
   const callback = `${BASE_URL}/app#billing`;
   const pm = (type) => (byId && byId.type === type ? byId : b.method_id ? null : avail.find((x) => x.type === type));
+  if (b.provider === 'gatevoo' || b.provider === 'custom') {
+    const meth = pm(b.provider);
+    if (!meth) return { error: 'That payment method isn’t available right now. Pick another way to pay.' };
+    return gatewayStart(user, meth, cents, b.topup ? null : callback + '?ref=');
+  }
   if (b.provider === 'paystack' || b.provider === 'stripe') {
     const meth = pm(b.provider);
     if (!meth) return { error: `${b.provider === 'stripe' ? 'Card payments are' : 'Paystack is'} not available right now. Pick another way to pay.` };
@@ -4084,6 +4354,8 @@ async function verifyDeposit(user, ref) {
     } else if (d.provider === 'stripe' && meth && d.gateway_ref) {
       const r = await fetch(STRIPE_API + '/v1/checkout/sessions/' + encodeURIComponent(d.gateway_ref), { headers: { authorization: 'Bearer ' + pmSecret(meth) }, signal: AbortSignal.timeout(20000) }).then((x) => x.json());
       if (r.payment_status === 'paid' && (r.client_reference_id || (r.metadata || {}).reference) === d.reference) gatewayPaid(d.reference, { amount: r.amount_total, currency: r.currency, txid: String(r.payment_intent || r.id), provider: 'stripe' });
+    } else if (d.provider === 'gatevoo' && meth && d.gateway_ref) {
+      await gatevooConfirm(meth, d);
     } else if (d.provider === 'flutterwave') {
       const r = await fetch(FLW_API + '/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(d.reference), { headers: { authorization: 'Bearer ' + C.FLW_SECRET }, signal: AbortSignal.timeout(20000) }).then((x) => x.json());
       if (r.data && r.data.status === 'successful' && Math.round(r.data.amount * 100) >= d.local_amount && r.data.currency === d.currency) markDepositPaid(d.reference, String(r.data.id));
@@ -4124,7 +4396,7 @@ async function supportApi(req, res, url, user) {
     const after = +url.searchParams.get('after') || 0;
     if (t.unread_user) Q(`UPDATE tickets SET unread_user=0 WHERE id=?`).run(t.id);
     return send(res, 200, { ticket: { id: t.id, status: t.status, email: t.email }, online, ...extra,
-      messages: withAgents(Q(`SELECT id, from_admin, body, created_at, agent_email FROM ticket_msgs WHERE ticket_id=? AND id>? ORDER BY id LIMIT 200`).all(t.id, after)) }, headers);
+      messages: withAgents(Q(`SELECT id, from_admin, body, created_at, agent_email, agent_name, source FROM ticket_msgs WHERE ticket_id=? AND id>? ORDER BY id LIMIT 200`).all(t.id, after)) }, headers);
   }
   if (m === 'POST') {
     const b = await readJson(req, 16 * 1024);
@@ -4139,6 +4411,7 @@ async function supportApi(req, res, url, user) {
     }
     const r = Q(`INSERT INTO ticket_msgs(ticket_id,from_admin,body,created_at) VALUES(?,0,?,?)`).run(t.id, body, now());
     Q(`UPDATE tickets SET status='open', last_at=?, unread_admin=unread_admin+1 WHERE id=?`).run(now(), t.id);
+    vooSupportQueue(t.id, Number(r.lastInsertRowid));
     if (SUPPORT_TG_BOT_TOKEN && SUPPORT_TG_CHAT_ID) {
       tg(SUPPORT_TG_BOT_TOKEN, 'sendMessage', { chat_id: SUPPORT_TG_CHAT_ID, text: `💬 Joinvoo support · ${t.email || 'visitor'}\n\n${body.slice(0, 1500)}\n\nReply: ${BASE_URL}/admin#support`, disable_web_page_preview: true });
     }
@@ -4359,7 +4632,9 @@ function adminSettings() {
     apps: (setting('apps') || []).map((a) => ({ ...a, logo_url: appLogoUrl(a), url_out: appUrl(a), clicks: (setting('apps.clicks') || {})[a.id] || 0 })), builtin_app_logos: APP_LOGOS,
     voo: { login_mode: setting('voo.login_mode'), active: vooLoginOn(), issuer: setting('voo.issuer'), client_id: setting('voo.client_id'), client_secret: mask(setting('voo.client_secret')), redirect_uri: setting('voo.redirect_uri'),
       callback_url: vooRedirect(), service_key: mask(setting('voo.service_key')), webhook_secret: mask(setting('voo.webhook_secret')), events_url: setting('voo.events_url'), home: setting('voo.home'), referrals: setting('voo.referrals'),
-      summary_url: `${BASE_URL}/api/voosquare/summary`, outbox: vooOutboxStats() },
+      summary_url: `${BASE_URL}/api/voosquare/summary`, outbox: vooOutboxStats(), api_key: mask(setting('voo.api_key')), support_bridge: !!setting('voo.support_bridge'),
+      support_webhook_url: `${BASE_URL}/api/voosquare/support/webhook`, affiliate_url: setting('voo.affiliate_url'), support_out: vooSupportStats() },
+    limits: setting('limits'),
     keys: { anthropic_key: mask(joeKey()), anthropic_set: !!joeKey(), anthropic_from_env: !!env.ANTHROPIC_API_KEY && !changed.has('joe.api_key'),
       openai_key: mask(setting('joe.openai_key')), openai_set: !!setting('joe.openai_key'), openai_from_env: !!env.OPENAI_API_KEY && !changed.has('joe.openai_key'), openai_base: setting('joe.openai_base'),
       resend_key: mask(resendKey()), resend_set: !!resendKey(), resend_from_env: !!RESEND_ENV_KEY && !changed.has('email.resend_key') },
@@ -4406,7 +4681,7 @@ function topupsByRank(since) {
 }
 /** Masked copy of a method's config: secrets show as ••••last4 (sending that back keeps the saved value). */
 function pmConfigMasked(m) { const c = { ...pmConfig(m) }; for (const k of PM_SECRET_KEYS) if (c[k]) c[k] = '••••' + String(c[k]).slice(-4); return c; }
-const pmWebhook = (m) => (m.type === 'paystack' ? `${BASE_URL}/webhooks/paystack/${m.id}` : m.type === 'stripe' ? `${BASE_URL}/webhooks/stripe/${m.id}` : m.type === 'flutterwave' ? `${BASE_URL}/webhooks/flutterwave` : null);
+const pmWebhook = (m) => (['paystack', 'stripe', 'gatevoo', 'custom'].includes(m.type) ? `${BASE_URL}/webhooks/${m.type}/${m.id}` : m.type === 'flutterwave' ? `${BASE_URL}/webhooks/flutterwave` : null);
 function adminPm(m) {
   return { ...pmPublic(m), sort: m.sort, configured: pmConfigured(m), live: !!m.enabled && pmConfigured(m), countries: pmCountries(m), logo: m.logo || '', config: pmConfigMasked(m),
     fx_rate: pmFx(m), min_usd: m.min_usd || null, max_usd: m.max_usd || null, fee_pct: m.fee_pct || 0, webhook_url: pmWebhook(m),
@@ -4450,8 +4725,24 @@ function pmValidate(type, b, prev = null) {
   if (type === 'paystack' && cfg.secret_key && !/^sk_(test|live)_\w{8,}$/.test(cfg.secret_key)) return { error: 'A Paystack secret key starts with sk_live_ or sk_test_.' };
   if (type === 'stripe' && cfg.secret_key && !/^(sk|rk)_(test|live)_\w{8,}$/.test(cfg.secret_key)) return { error: 'A Stripe secret key starts with sk_live_ or sk_test_ (or a restricted rk_ key).' };
   if (type === 'stripe' && cfg.webhook_secret && !/^whsec_\w{8,}$/.test(cfg.webhook_secret)) return { error: 'The Stripe webhook signing secret starts with whsec_.' };
-  if (type === 'paystack' || type === 'stripe') {
-    out.currency = t(b.currency ?? (prev && prev.currency) ?? (type === 'stripe' ? 'USD' : ''), 3).toUpperCase() || null;
+  if (type === 'gatevoo') {
+    cfg.base_url = t(inc.base_url ?? old.base_url ?? 'https://gatevoo.com', 200).replace(/\/+$/, '') || 'https://gatevoo.com';
+    if (!/^https?:\/\/[^\s/]+(\/[^\s]*)?$/.test(cfg.base_url)) return { error: 'The Gatevoo address looks like https://gatevoo.com' };
+    cfg.secret_key = keep('secret_key', inc.secret_key); cfg.webhook_secret = keep('webhook_secret', inc.webhook_secret);
+    out.currency = 'USD'; out.fx_rate = 1;
+  }
+  if (type === 'custom') {
+    const u = (v) => t(v, 500);
+    cfg.create_url = u(inc.create_url ?? old.create_url); cfg.checkout_url = u(inc.checkout_url ?? old.checkout_url);
+    cfg.secret_key = keep('secret_key', inc.secret_key); cfg.webhook_secret = keep('webhook_secret', inc.webhook_secret);
+    if (cfg.create_url && !/^https:\/\/[^\s]+$/.test(cfg.create_url)) return { error: 'The API create URL must start with https://' };
+    if (cfg.checkout_url && !/^https:\/\/[^\s]+$/.test(cfg.checkout_url)) return { error: 'The checkout link must start with https://' };
+    const on = b.enabled === undefined ? (prev ? !!prev.enabled : false) : !!b.enabled;
+    if (on && !cfg.create_url && !cfg.checkout_url) return { error: 'Add a checkout link (or an API create URL) so customers have somewhere to pay.' };
+    if (on && !cfg.webhook_secret) return { error: 'Add a webhook secret so payments can be confirmed safely.' };
+  }
+  if (type === 'paystack' || type === 'stripe' || type === 'custom') {
+    out.currency = t(b.currency ?? (prev && prev.currency) ?? (type === 'stripe' || type === 'custom' ? 'USD' : ''), 3).toUpperCase() || null;
     if (out.currency && !/^[A-Z]{3}$/.test(out.currency)) return { error: 'Currency is a 3-letter code like USD or NGN.' };
   }
   if (MANUAL_TYPES.has(type)) {
@@ -4714,8 +5005,10 @@ async function adminApi(req, res, url, admin, st) {
     const token = rid(24);
     Q(`DELETE FROM resets WHERE user_id=?`).run(u.id);
     Q(`INSERT INTO resets(token_hash,user_id,expires_at) VALUES(?,?,?)`).run(sha256(token), u.id, now() + 3600000);
-    sendTemplate(u.email, 'password_reset', { url: `${BASE_URL}/app?reset=${token}` }, { userId: u.id });
+    const link = `${BASE_URL}/app?reset=${token}`;
+    sendTemplate(u.email, 'password_reset', { url: link }, { userId: u.id });
     audit(req, st, 'users.reset_password', 'user:' + u.id, { email: u.email });
+    if (!resendKey()) return send(res, 200, { ok: true, link, no_email: true, message: `Email isn’t set up, so nothing was sent. Send this link to ${u.email} yourself (it works for 1 hour).` });
     return send(res, 200, { ok: true, message: `Reset link sent to ${u.email}. It works for 1 hour.` });
   }
   if ((mm = /^\/api\/admin\/support\/(\d+)\/assign$/.exec(p)) && m === 'POST') {
@@ -4965,7 +5258,7 @@ async function adminApi(req, res, url, admin, st) {
       Q(`UPDATE tickets SET unread_admin=0 WHERE id=?`).run(t.id);
       const u = t.user_id ? Q(`SELECT id, email, name, balance_cents, created_at, last_seen, status, free_joins FROM users WHERE id=?`).get(t.user_id) : null;
       return send(res, 200, { ticket: { ...t, assignee: t.assigned_to ? agentFor(t.assigned_to) : null, meta: (() => { try { return t.meta ? JSON.parse(t.meta) : null; } catch { return null; } })() }, user: u, context: u ? customerContext(u) : null,
-        messages: withAgents(Q(`SELECT id, from_admin, body, created_at, agent_email FROM ticket_msgs WHERE ticket_id=? AND id>? ORDER BY id`).all(t.id, +qs.get('after') || 0)) });
+        messages: withAgents(Q(`SELECT id, from_admin, body, created_at, agent_email, agent_name, source FROM ticket_msgs WHERE ticket_id=? AND id>? ORDER BY id`).all(t.id, +qs.get('after') || 0)) });
     }
     if (m === 'POST' && mm[2] === '/close') { Q(`UPDATE tickets SET status='closed', unread_admin=0 WHERE id=?`).run(t.id); return send(res, 200, { ok: true }); }
     if (m === 'POST' && mm[2] === '/reopen') { Q(`UPDATE tickets SET status='open' WHERE id=?`).run(t.id); return send(res, 200, { ok: true }); }
@@ -5044,12 +5337,12 @@ async function adminApi(req, res, url, admin, st) {
       keys: (k) => ({ anthropic_key: 'joe.api_key', resend_key: 'email.resend_key', openai_key: 'joe.openai_key', openai_base: 'joe.openai_base' }[k]),
       links: (k) => ({ domain: 'link.domain', backups: 'link.backups' }[k]),
       voo: (k) => ({ login_mode: 'voo.login_mode', issuer: 'voo.issuer', client_id: 'voo.client_id', client_secret: 'voo.client_secret', redirect_uri: 'voo.redirect_uri', service_key: 'voo.service_key',
-        webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals' }[k]),
+        webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals', api_key: 'voo.api_key', support_bridge: 'voo.support_bridge', affiliate_url: 'voo.affiliate_url' }[k]),
       payments: (k) => ({ paystack_secret: 'pay.paystack_secret', paystack_currency: 'pay.paystack_currency', flw_secret: 'pay.flw_secret', flw_webhook_hash: 'pay.flw_webhook_hash', flw_currency: 'pay.flw_currency' }[k]) };
     // each group needs its own permission (Finance can save payment keys, Marketing the sister card and Joe's knowledge…)
     const needs = new Set();
     for (const [g, vals] of Object.entries(b)) {
-      if (g === 'sister' || g === 'plans' || g === 'apps') { needs.add(settingsPerm(g)); continue; }
+      if (g === 'sister' || g === 'plans' || g === 'apps' || g === 'limits') { needs.add(settingsPerm(g)); continue; }
       if (!map[g]) continue;
       for (const k of Object.keys(vals && typeof vals === 'object' ? vals : {})) needs.add(settingsPerm(g, k));
     }
@@ -5066,6 +5359,8 @@ async function adminApi(req, res, url, admin, st) {
     }
     if (b.sister === null) changes.push(['sister', null]);
     else if (b.sister && typeof b.sister === 'object') { const { live, url_out, clicks, reset_clicks, ...rest } = b.sister; changes.push(['sister', { ...setting('sister'), ...rest }]); if (reset_clicks) changes.push(['sister.clicks', 0]); }
+    if (b.limits === null) changes.push(['limits', null]);
+    else if (b.limits && typeof b.limits === 'object') { const cur = setting('limits'); changes.push(['limits', { basic: { ...cur.basic, ...(b.limits.basic || {}) }, pro: { ...cur.pro, ...(b.limits.pro || {}) } }]); }
     if (b.plans === null) changes.push(['plans', null]);
     else if (b.plans && typeof b.plans === 'object') {
       const cur = plansDef(), nb = { ...cur.basic, ...(b.plans.basic || {}) }, np = { ...cur.pro, ...(b.plans.pro || {}) };
@@ -5101,7 +5396,7 @@ async function adminApi(req, res, url, admin, st) {
   if (p === '/api/admin/pay-methods' && m === 'POST') {
     const b = await readJson(req, 32 * 1024);
     const type = String(b.type || '');
-    if (!PM_TYPES.includes(type)) return send(res, 400, { error: 'Pick a type: Paystack, Stripe, manual or crypto.' });
+    if (!PM_TYPES.includes(type)) return send(res, 400, { error: 'Pick a type: Paystack, Stripe, Gatevoo, custom gateway, manual or crypto.' });
     const slug = String(b.name || b.label || '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 10) || 'pay';
     let id = MANUAL_TYPES.has(type) ? 'm_' + slug : Q(`SELECT 1 FROM pay_methods WHERE id=?`).get(type) ? type + '_' + slug : type;
     if (type === 'flutterwave' && Q(`SELECT 1 FROM pay_methods WHERE type='flutterwave'`).get()) return send(res, 400, { error: 'Flutterwave is already in your list. Edit it instead.' });
@@ -5366,7 +5661,11 @@ async function vooDiscovery(force) {
   const iss = setting('voo.issuer'); if (!iss) throw new Error('No VooSquare issuer set.');
   const hit = discoCache.get(iss);
   if (hit && !force && Date.now() - hit.at < 3600e3) return hit.doc;
-  const r = await fetch(`${iss}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(8000) });
+  let r; try { r = await fetch(`${iss}/.well-known/openid-configuration`, { signal: AbortSignal.timeout(8000) }); } catch { throw new Error('Could not reach VooSquare.'); }
+  if (r.status === 404) { // VooSquare's own OAuth 2.0 (no discovery document): fixed endpoints, HS256 id_token signed with the client secret
+    const doc = { native: true, issuer: iss, authorization_endpoint: `${iss}/oauth/authorize`, token_endpoint: `${iss}/oauth/token`, userinfo_endpoint: `${iss}/oauth/userinfo`, end_session_endpoint: `${iss}/oauth/logout`, token_endpoint_auth_methods_supported: ['client_secret_post'] };
+    discoCache.set(iss, { at: Date.now(), doc }); return doc;
+  }
   if (!r.ok) throw new Error(`Discovery failed (HTTP ${r.status}).`);
   const doc = await r.json();
   if (!doc.authorization_endpoint || !doc.token_endpoint || !doc.jwks_uri) throw new Error('Discovery is missing authorization, token or jwks endpoints.');
@@ -5402,6 +5701,34 @@ async function vooVerifyIdToken(tok, nonce, doc) {
   if (!c.sub) throw new Error('no_sub');
   return c;
 }
+/** VooSquare's own OAuth: the token reply carries {access_token, id_token (HS256, client secret), user}. Verify the id_token when present,
+ * otherwise read the user from /oauth/userinfo with the access token (server to server over TLS). */
+async function vooNativeClaims(tok, nonce, doc) {
+  let c = null;
+  if (tok.id_token) {
+    const parts = String(tok.id_token).split('.'); if (parts.length !== 3) throw new Error('bad_token');
+    let h; try { h = JSON.parse(Buffer.from(parts[0], 'base64url')); c = JSON.parse(Buffer.from(parts[1], 'base64url')); } catch { throw new Error('bad_token'); }
+    if (h.alg === 'HS256') {
+      const want = crypto.createHmac('sha256', setting('voo.client_secret')).update(parts[0] + '.' + parts[1]).digest('base64url');
+      if (!safeEq(parts[2], want)) throw new Error('bad_signature');
+    } else c = await vooVerifyIdToken(tok.id_token, nonce, { ...doc, jwks_uri: doc.jwks_uri || `${doc.issuer}/.well-known/jwks.json` });
+    const t = Math.floor(Date.now() / 1000), cid = setting('voo.client_id');
+    if (c.aud && !(Array.isArray(c.aud) ? c.aud.includes(cid) : c.aud === cid)) throw new Error('bad_aud');
+    if (c.exp && !(c.exp > t - 60)) throw new Error('expired');
+    if (c.nonce && nonce && !safeEq(c.nonce, nonce)) throw new Error('bad_nonce');
+  }
+  let u = tok.user && typeof tok.user === 'object' ? tok.user : null;
+  if (!u && tok.access_token) {
+    const r = await fetch(doc.userinfo_endpoint, { headers: { authorization: 'Bearer ' + tok.access_token, accept: 'application/json' }, signal: AbortSignal.timeout(10000) });
+    if (r.ok) { const j = await r.json().catch(() => null); u = j && (j.user || j); }
+  }
+  const src = { ...(c || {}), ...(u || {}) };
+  const sub = src.voo_id || src.sub || src.id;
+  if (!sub) throw new Error('no_sub');
+  if (c && c.sub && u && (u.voo_id || u.sub) && String(c.sub) !== String(u.voo_id || u.sub)) throw new Error('bad_token');
+  // VooSquare signs people in with an emailed 6-digit code, so its email is verified unless it says otherwise.
+  return { ...src, sub: String(sub), email: src.email, email_verified: src.email_verified !== false, voo_ref: src.voo_ref || src.ref || null };
+}
 /** Only paths on this site: "/app", "/app#credits"… never "//evil.com", "/\\evil.com" or "https://…". */
 const safeReturn = (r) => { r = String(r || ''); return /^\/(?![\/\\])[^\s\\]*$/.test(r) && !/^\/[^?#]*:/.test(r) ? r.slice(0, 300) : '/app'; };
 const signBlob = (o) => { const v = b64u(JSON.stringify(o)); return v + '.' + crypto.createHmac('sha256', APP_SECRET).update('voo:' + v).digest('base64url'); };
@@ -5414,6 +5741,8 @@ async function vooStart(req, res, url) {
   const ret = safeReturn(url.searchParams.get('return_to'));
   const q = new URLSearchParams({ response_type: 'code', client_id: setting('voo.client_id'), redirect_uri: vooRedirect(), scope: 'openid email profile', state, nonce,
     code_challenge: b64u(crypto.createHash('sha256').update(verifier).digest()), code_challenge_method: 'S256' });
+  if (url.searchParams.get('signup') === '1' || url.searchParams.get('prompt') === 'signup') q.set('prompt', 'signup');
+  { const a = affRead(req); if (a) { q.set('ref', a.code); q.set('aff', a.code); if (a.sub) q.set('sub1', a.sub); } }
   return send(res, 302, '', { location: `${doc.authorization_endpoint}${doc.authorization_endpoint.includes('?') ? '&' : '?'}${q}`, 'set-cookie': oidcCookie(signBlob({ state, nonce, verifier, ret, exp: Date.now() + 600000 }), 600) });
 }
 async function vooCallback(req, res, url) {
@@ -5429,13 +5758,19 @@ async function vooCallback(req, res, url) {
     doc = await vooDiscovery();
     const form = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: vooRedirect(), code_verifier: ck.verifier, client_id: setting('voo.client_id') });
     const headers = { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' };
-    const methods = doc.token_endpoint_auth_methods_supported || ['client_secret_basic'];
+    if (doc.native) form.set('client_secret', setting('voo.client_secret'));
+    const methods = doc.native ? ['client_secret_post'] : doc.token_endpoint_auth_methods_supported || ['client_secret_basic'];
     if (methods.includes('client_secret_post') && !methods.includes('client_secret_basic')) form.set('client_secret', setting('voo.client_secret'));
     else headers.authorization = 'Basic ' + Buffer.from(encodeURIComponent(setting('voo.client_id')) + ':' + encodeURIComponent(setting('voo.client_secret'))).toString('base64');
     const r = await fetch(doc.token_endpoint, { method: 'POST', headers, body: form.toString(), signal: AbortSignal.timeout(10000) });
     tok = await r.json().catch(() => ({}));
-    if (!r.ok || !tok.id_token) return fail('token', `token endpoint HTTP ${r.status} ${tok.error || ''}`);
-    claims = await vooVerifyIdToken(tok.id_token, ck.nonce, doc);
+    if (doc.native) {
+      if (!r.ok || (!tok.user && !tok.id_token && !tok.access_token)) return fail('token', `token endpoint HTTP ${r.status} ${tok.error || ''}`);
+      claims = await vooNativeClaims(tok, ck.nonce, doc);
+    } else {
+      if (!r.ok || !tok.id_token) return fail('token', `token endpoint HTTP ${r.status} ${tok.error || ''}`);
+      claims = await vooVerifyIdToken(tok.id_token, ck.nonce, doc);
+    }
   } catch (e) { return fail(['bad_signature', 'bad_iss', 'bad_aud', 'bad_nonce', 'expired', 'bad_alg', 'unknown_key', 'bad_token', 'no_sub', 'bad_iat'].includes(e.message) ? 'token' : 'unavailable', e.message); }
   const vooId = String(claims.sub).slice(0, 200), email = String(claims.email || '').trim().toLowerCase();
   let u = Q(`SELECT id, email, status FROM users WHERE voo_id=?`).get(vooId);
@@ -5444,6 +5779,7 @@ async function vooCallback(req, res, url) {
     const local = Q(`SELECT id, email, status, verified_at, voo_id FROM users WHERE email=?`).get(email);
     if (local) {
       // One-time link: same email, confirmed on both sides, not linked to another VooSquare account yet.
+      // Both sides must have confirmed the email: an unconfirmed local account could have been opened by someone else with this address (pre-account takeover).
       if (!local.verified_at || claims.email_verified !== true || local.voo_id) return fail('link', `cannot link ${email}: local verified=${!!local.verified_at} token verified=${claims.email_verified} already=${!!local.voo_id}`);
       Q(`UPDATE users SET voo_id=? WHERE id=? AND voo_id IS NULL`).run(vooId, local.id);
       audit(req, null, 'users.voo_link', 'user:' + local.id, { email, voo_id: vooId });
@@ -5455,6 +5791,8 @@ async function vooCallback(req, res, url) {
       const r = Q(`INSERT INTO users(email,pass,created_at,ref_code,name,canon,verified_at,voo_id,referred_by_voo,country) VALUES(?,?,?,?,?,?,?,?,?,?)`)
         .run(email, hashPass(rid(24)), now(), newRefCode(), name, canonicalEmail(email), now(), vooId, ref, country);
       const uid = Number(r.lastInsertRowid);
+      affAttach(req, uid, claims.voo_aff || claims.aff || null);
+      vooEvent(uid, 'signup', 'jv_signup_' + uid, 'New Joinvoo account');
       if (country) Q(`UPDATE users SET country_history=? WHERE id=?`).run(JSON.stringify([{ from: null, to: country, at: now(), by: 'voosquare' }]), uid);
       grantWelcome(uid);
       if (setting('trial.starts') === 'signup') checkTrial(uid);
@@ -5463,7 +5801,7 @@ async function vooCallback(req, res, url) {
   }
   if (u.status === 'suspended') return fail('suspended');
   const token = rid(24);
-  Q(`INSERT INTO sessions(token,user_id,expires_at,via,id_token) VALUES(?,?,?,?,?)`).run(token, u.id, now() + 30 * 864e5, 'voosquare', String(tok.id_token).slice(0, 4000));
+  Q(`INSERT INTO sessions(token,user_id,expires_at,via,id_token) VALUES(?,?,?,?,?)`).run(token, u.id, now() + 30 * 864e5, 'voosquare', String(tok.id_token || '').slice(0, 4000) || null);
   res.writeHead(302, { location: ck.ret || '/app', 'cache-control': 'no-store', 'set-cookie': [cookie('jp_session', token, 30 * 86400), oidcCookie('', 0)] });
   return res.end();
 }
@@ -5471,13 +5809,16 @@ async function vooCallback(req, res, url) {
 async function vooLogoutUrl(sess) {
   if (!sess || sess.via !== 'voosquare' || !setting('voo.issuer')) return null;
   try { const doc = await vooDiscovery(); if (!doc.end_session_endpoint) return null;
-    const q = new URLSearchParams({ post_logout_redirect_uri: BASE_URL, client_id: setting('voo.client_id') }); if (sess.id_token) q.set('id_token_hint', sess.id_token);
+    const q = new URLSearchParams({ post_logout_redirect_uri: BASE_URL, redirect_uri: BASE_URL, client_id: setting('voo.client_id') }); if (sess.id_token) q.set('id_token_hint', sess.id_token);
     return `${doc.end_session_endpoint}${doc.end_session_endpoint.includes('?') ? '&' : '?'}${q}`; } catch { return null; }
 }
 /** Admin "Test discovery": fetch discovery + JWKS fresh and report what was found. */
 async function vooTest() {
   try {
-    const doc = await vooDiscovery(true), keys = await vooJwks(doc.jwks_uri, true);
+    const doc = await vooDiscovery(true);
+    if (doc.native) return { ok: true, native: true, message: 'VooSquare login found (VooSquare OAuth: /oauth/authorize and /oauth/token). Logout supported.', issuer: doc.issuer,
+      endpoints: { authorization: doc.authorization_endpoint, token: doc.token_endpoint, userinfo: doc.userinfo_endpoint, end_session: doc.end_session_endpoint } };
+    const keys = await vooJwks(doc.jwks_uri, true);
     return { ok: true, message: `Discovery OK: ${keys.length} signing ${keys.length === 1 ? 'key' : 'keys'}${doc.end_session_endpoint ? ', logout supported' : ''}.`, issuer: doc.issuer || setting('voo.issuer'),
       endpoints: { authorization: doc.authorization_endpoint, token: doc.token_endpoint, jwks: doc.jwks_uri, end_session: doc.end_session_endpoint || null } };
   } catch (e) { return { ok: false, error: e.message || 'Could not reach VooSquare.' }; }
@@ -5507,11 +5848,97 @@ function vooSummary(vooId, period) {
 
 // ----- events outbox → VooSquare (HMAC-signed batches; never end-customer personal data) -----
 /** Queue one event for a Joinvoo user linked to VooSquare. event_id is stable, so a retry or a second call is a no-op. */
+// ----- VooSquare affiliates: ?aff=CODE (also ?voo_aff=, ?via=, /a/CODE) is remembered for 90 days and tied to the account at sign-up, for life -----
+const AFF_RE = /^[A-Za-z0-9_-]{2,40}$/;
+function affCapture(req, url) {
+  const code = url.searchParams.get('aff') || url.searchParams.get('voo_aff') || '';
+  if (!AFF_RE.test(code)) return null;
+  const have = cookies(req).jv_aff; if (have && have.split('|')[0] === code) return null; // first affiliate keeps the visitor while the cookie lives
+  if (have) return null;
+  const sub = String(url.searchParams.get('sub1') || url.searchParams.get('sub') || '').replace(/[^\w.:-]/g, '').slice(0, 60);
+  return `jv_aff=${encodeURIComponent(code + (sub ? '|' + sub : ''))}; Path=/; Max-Age=${90 * 86400}; SameSite=Lax${SECURE ? '; Secure' : ''}`;
+}
+function affRead(req) {
+  const v = cookies(req).jv_aff; if (!v) return null;
+  const [code, sub] = decodeURIComponent(v).split('|');
+  return AFF_RE.test(code || '') ? { code, sub: sub || null } : null;
+}
+/** Save the affiliate on a NEW account only (never moves an existing customer to another affiliate). */
+function affAttach(req, uid, fromClaims) {
+  const a = fromClaims && AFF_RE.test(String(fromClaims)) ? { code: String(fromClaims), sub: null } : affRead(req);
+  if (!a) return;
+  Q(`UPDATE users SET aff_code=?, aff_sub=?, aff_at=? WHERE id=? AND aff_code IS NULL`).run(a.code, a.sub, now(), uid);
+  log('affiliate signup', uid, a.code);
+}
+/** Server-to-server calls from VooSquare: Authorization: Bearer <VOO_API_KEY> (or the older service key). */
+function vooAuthOk(req) {
+  const got = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  return !!got && [setting('voo.api_key'), setting('voo.service_key')].some((k) => k && safeEq(got, k));
+}
+// ----- support bridge: customer messages are copied to the VooSquare HQ inbox; replies made there come back into the same chat -----
+const vooBase = () => setting('voo.issuer') || '';
+function vooSupportQueue(ticketId, msgId) {
+  try { if (!setting('voo.support_bridge') || !vooApiKey() || !vooBase()) return;
+    Q(`INSERT OR IGNORE INTO voo_support_out(msg_id,ticket_id,attempts,next_at,created_at) VALUES(?,?,0,?,?)`).run(msgId, ticketId, now(), now()); } catch (e) { log('voo support queue', e.message); }
+}
+let vsBusy = false, vsLast = { at: null, error: null, sent: 0 };
+async function vooSupportFlush() {
+  if (vsBusy) return; vsBusy = true;
+  try {
+    if (!setting('voo.support_bridge') || !vooApiKey() || !vooBase()) return;
+    Q(`UPDATE voo_support_out SET failed=1 WHERE sent_at IS NULL AND COALESCE(failed,0)=0 AND created_at<?`).run(now() - 24 * 3600e3);
+    const rows = Q(`SELECT o.id, o.attempts, m.body, m.created_at, t.id AS tid, t.email, t.name, t.user_id, t.voo_ticket, u.email AS uemail, u.name AS uname, u.voo_id
+      FROM voo_support_out o JOIN ticket_msgs m ON m.id=o.msg_id JOIN tickets t ON t.id=o.ticket_id LEFT JOIN users u ON u.id=t.user_id
+      WHERE o.sent_at IS NULL AND COALESCE(o.failed,0)=0 AND o.next_at<=? ORDER BY o.id LIMIT 20`).all(now());
+    for (const r of rows) {
+      let err = null;
+      try {
+        const x = await fetch(vooBase() + '/api/v1/support/messages', { method: 'POST', signal: AbortSignal.timeout(10000), headers: { authorization: 'Bearer ' + vooApiKey(), 'content-type': 'application/json', 'user-agent': 'Joinvoo/support' },
+          body: JSON.stringify({ email: r.uemail || r.email || '', name: r.uname || r.name || '', subject: 'Joinvoo support chat', body: r.body, external_ref: 'joinvoo-' + r.tid, ...(r.voo_id ? { voo_id: r.voo_id } : {}), product: 'joinvoo' }) });
+        const j = await x.json().catch(() => ({}));
+        if (!x.ok) err = 'HTTP ' + x.status; else if (j && (j.ticket_id || j.id)) Q(`UPDATE tickets SET voo_ticket=? WHERE id=? AND voo_ticket IS NULL`).run(String(j.ticket_id || j.id), r.tid);
+      } catch (e) { err = e.message || 'network error'; }
+      if (!err) { Q(`UPDATE voo_support_out SET sent_at=?, last_error=NULL WHERE id=?`).run(now(), r.id); vsLast = { at: now(), error: null, sent: vsLast.sent + 1 }; }
+      else { Q(`UPDATE voo_support_out SET attempts=attempts+1, next_at=?, last_error=? WHERE id=?`).run(now() + Math.min(6 * 3600e3, Math.max(100, +env.VOO_BACKOFF_MS || 15000) * 2 ** Math.min(r.attempts, 12)), err, r.id); vsLast = { ...vsLast, error: err, error_at: now() }; log('voo support: send failed', err); break; }
+    }
+  } catch (e) { log('voo support flush', e.message); } finally { vsBusy = false; }
+}
+setInterval(vooSupportFlush, +env.VOO_OUTBOX_MS || 15000).unref();
+function vooSupportStats() {
+  const n = (sql, ...a) => cnt(sql, ...a);
+  return { enabled: !!setting('voo.support_bridge') && !!vooApiKey() && !!vooBase(), pending: n(`SELECT COUNT(*) FROM voo_support_out WHERE sent_at IS NULL AND COALESCE(failed,0)=0`),
+    failed: n(`SELECT COUNT(*) FROM voo_support_out WHERE COALESCE(failed,0)=1`), sent: n(`SELECT COUNT(*) FROM voo_support_out WHERE sent_at IS NOT NULL`), last_error: vsLast.error, last_sent_at: vsLast.at };
+}
+/** A reply typed in VooSquare HQ lands in the customer's Joinvoo chat (and their email when they're away). */
+function vooSupportReply(b) {
+  const ref = String(b.external_ref || ''), m = /^joinvoo-(\d+)$/.exec(ref);
+  const t = m ? Q(`SELECT * FROM tickets WHERE id=?`).get(+m[1]) : b.ticket_id != null ? Q(`SELECT * FROM tickets WHERE voo_ticket=?`).get(String(b.ticket_id)) : null;
+  if (!t) return { error: 'Unknown conversation.', status: 404 };
+  const body = String(b.body || b.text || '').trim().slice(0, 4000); if (!body) return { error: 'Empty reply.', status: 400 };
+  const ext = 'voo:' + (b.message_id || b.id || crypto.createHash('sha256').update(String(b.ticket_id || '') + '|' + (b.created_at || '') + '|' + body).digest('hex').slice(0, 24));
+  const agent = String(b.agent || b.agent_name || 'Zedapex support').slice(0, 60);
+  const ins = Q(`INSERT OR IGNORE INTO ticket_msgs(ticket_id,from_admin,body,created_at,source,ext_id,agent_name) VALUES(?,1,?,?,'voosquare',?,?)`).run(t.id, body, now(), ext, agent);
+  if (!ins.changes) return { ok: true, duplicate: true };
+  Q(`UPDATE tickets SET last_at=?, unread_user=unread_user+1, unread_admin=0, status='open', source=COALESCE(source,'voosquare'), voo_ticket=COALESCE(voo_ticket,?) WHERE id=?`).run(now(), b.ticket_id != null ? String(b.ticket_id) : null, t.id);
+  const u = t.user_id ? Q(`SELECT email, last_seen FROM users WHERE id=?`).get(t.user_id) : null, to = u ? u.email : t.email;
+  if (to && (!u || !u.last_seen || u.last_seen < now() - 5 * 60000)) sendTemplate(to, 'support_reply', { body, agent: { name: agent, photo: '', role: '' }, user: !!u }, { userId: t.user_id || null, ref: 'ticket:' + t.id });
+  return { ok: true };
+}
+/** Where events go: the admin's events URL, else <VooSquare address>/api/v1/events. */
+const vooEventsUrl = () => setting('voo.events_url') || (setting('voo.issuer') ? setting('voo.issuer') + '/api/v1/events' : '');
+/** The key VooSquare gave Joinvoo (Admin → Products → Joinvoo → API key). Older setups only had the service key. */
+const vooApiKey = () => setting('voo.api_key') || setting('voo.service_key');
+const vooEventsOn = () => !!(setting('voo.webhook_secret') || setting('voo.api_key')) && !!vooEventsUrl();
+const AFF_EVENT_TYPES = new Set(['signup', 'spend', 'plan_started', 'plan_cancelled']);
 function vooEvent(uid, type, eventId, label, extra = {}) {
   try {
-    if (!setting('voo.webhook_secret')) return;
-    const u = Q(`SELECT voo_id FROM users WHERE id=?`).get(uid); if (!u || !u.voo_id) return;
-    const body = { event_id: eventId, type, tool: 'joinvoo', voo_id: u.voo_id, occurred_at: new Date().toISOString(), label: String(label || '').slice(0, 120), ...extra };
+    if (!vooEventsOn()) return;
+    const u = Q(`SELECT voo_id, aff_code, aff_sub FROM users WHERE id=?`).get(uid); if (!u) return;
+    // Not linked to VooSquare: only affiliate-attributed accounts send their sign-up and money events, keyed by an anonymous customer_ref.
+    if (!u.voo_id && !(u.aff_code && AFF_EVENT_TYPES.has(type))) return;
+    const body = { event_id: eventId, type, tool: 'joinvoo', ...(u.voo_id ? { voo_id: u.voo_id } : {}), customer_ref: 'jv_' + crypto.createHmac('sha256', APP_SECRET).update('cref:' + uid).digest('hex').slice(0, 20),
+      ...(u.aff_code ? { aff_code: u.aff_code, ...(u.aff_sub ? { aff_sub: u.aff_sub } : {}) } : {}), occurred_at: new Date().toISOString(), label: String(label || '').slice(0, 120), ...extra,
+      ...(extra.value != null ? { value_usd: extra.value } : {}) };
     Q(`INSERT OR IGNORE INTO voo_outbox(event_id,body,attempts,next_at,created_at) VALUES(?,?,0,?,?)`).run(eventId, JSON.stringify(body), now(), now());
   } catch (e) { log('voo event', e.message); }
 }
@@ -5520,15 +5947,18 @@ let vooBusy = false, vooLast = { at: null, error: null, sent: 0 };
 async function vooFlush() {
   if (vooBusy) return; vooBusy = true;
   try {
-    const secret = setting('voo.webhook_secret'), url = setting('voo.events_url');
-    if (!secret || !url) return;
+    const secret = setting('voo.webhook_secret'), url = vooEventsUrl(), key = setting('voo.api_key');
+    if (!(secret || key) || !url) return;
     Q(`UPDATE voo_outbox SET failed=1 WHERE sent_at IS NULL AND COALESCE(failed,0)=0 AND created_at<?`).run(now() - 24 * 3600e3); // give up after a day
     const rows = Q(`SELECT id, body, attempts FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0 AND next_at<=? ORDER BY id LIMIT 100`).all(now());
     if (!rows.length) return;
     const raw = '{"events":[' + rows.map((r) => r.body).join(',') + ']}';
     let err = null;
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', 'x-voo-signature': crypto.createHmac('sha256', secret).update(raw).digest('hex'), 'user-agent': 'Joinvoo/voo-events' }, body: raw, signal: AbortSignal.timeout(10000) });
+      const hd = { 'content-type': 'application/json', 'user-agent': 'Joinvoo/voo-events' };
+      if (secret) hd['x-voo-signature'] = crypto.createHmac('sha256', secret).update(raw).digest('hex');
+      if (key) hd.authorization = 'Bearer ' + key;
+      const r = await fetch(url, { method: 'POST', headers: hd, body: raw, signal: AbortSignal.timeout(10000) });
       if (!r.ok) err = `HTTP ${r.status}`;
     } catch (e) { err = e.message || 'network error'; }
     if (!err) { const ids = rows.map((r) => r.id); Q(`UPDATE voo_outbox SET sent_at=?, last_error=NULL WHERE id IN (${ids.map(() => '?').join(',')})`).run(now(), ...ids); vooLast = { at: now(), error: null, sent: vooLast.sent + ids.length }; }
@@ -5537,7 +5967,7 @@ async function vooFlush() {
 }
 function vooOutboxStats() {
   const one = (sql, ...a) => Object.values(Q(sql).get(...a))[0] || 0;
-  return { enabled: !!setting('voo.webhook_secret'), pending: one(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`), failed: one(`SELECT COUNT(*) FROM voo_outbox WHERE COALESCE(failed,0)=1`),
+  return { enabled: vooEventsOn(), url: vooEventsUrl(), pending: one(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`), failed: one(`SELECT COUNT(*) FROM voo_outbox WHERE COALESCE(failed,0)=1`),
     sent_24h: one(`SELECT COUNT(*) FROM voo_outbox WHERE sent_at>?`, now() - 864e5), oldest_pending_at: one(`SELECT MIN(created_at) FROM voo_outbox WHERE sent_at IS NULL AND COALESCE(failed,0)=0`) || null,
     last_error: (Q(`SELECT last_error FROM voo_outbox WHERE last_error IS NOT NULL ORDER BY id DESC LIMIT 1`).get() || {}).last_error || null, last_sent_at: one(`SELECT MAX(sent_at) FROM voo_outbox`) || null };
 }
@@ -5582,6 +6012,33 @@ const server = http.createServer(async (req, res) => {
         } catch (e) { log('stripe webhook', e.message); }
       }
       return send(res, 200, 'ok');
+    }
+    if ((mm = /^\/webhooks\/(gatevoo|custom)\/([\w-]{2,40})$/.exec(p)) && req.method === 'POST') {
+      const raw = await readBody(req, 512 * 1024).catch(() => '');
+      const meth = Q(`SELECT * FROM pay_methods WHERE id=? AND type=?`).get(mm[2], mm[1]);
+      if (!meth) return send(res, 404, 'unknown method');
+      const secret = pmConfig(meth).webhook_secret;
+      let ev; try { ev = JSON.parse(raw); } catch { return send(res, 400, 'bad json'); }
+      if (!ev || typeof ev !== 'object') return send(res, 400, 'bad json');
+      if (mm[1] === 'gatevoo') {
+        if (!gatevooSigOk(req, raw, secret)) return send(res, 401, 'bad signature');
+        const data = (ev && ev.data) || {}, type = String((ev && ev.type) || req.headers['x-gatevoo-event'] || '');
+        if (type === 'ping' || type === 'test' || /test/.test(type)) return send(res, 200, { ok: true });
+        if (type !== 'invoice.paid' && data.status !== 'paid') return send(res, 200, { ok: true, ignored: true });
+        const ref = data.order_id || data.reference || (data.metadata && data.metadata.reference);
+        const d = ref && Q(`SELECT * FROM deposits WHERE reference=? AND provider='gatevoo'`).get(String(ref));
+        if (!d) return send(res, 200, { ok: true, unknown: true });
+        try { await gatevooConfirm(meth, d, data.id || d.gateway_ref); } catch (e) { log('gatevoo confirm', e.message); return send(res, 502, 'try again'); }
+        return send(res, 200, { ok: true });
+      }
+      if (!customSigOk(req, raw, secret)) return send(res, 401, 'bad signature');
+      const st = String(ev.status || ev.event || '').toLowerCase();
+      if (!['paid', 'success', 'successful', 'completed', 'succeeded', 'payment.paid'].includes(st)) return send(res, 200, { ok: true, ignored: true });
+      const d = Q(`SELECT * FROM deposits WHERE reference=? AND provider='custom'`).get(String(ev.reference || ''));
+      if (!d) return send(res, 200, { ok: true, unknown: true });
+      const major = Number(String(ev.amount ?? '').replace(',', '.')), unit = ZERO_DECIMAL.has(String(ev.currency || d.currency).toUpperCase()) ? Math.round(major) : Math.round(major * 100);
+      gatewayPaid(d.reference, { amount: unit, currency: ev.currency || d.currency, txid: String(ev.txid || ev.transaction_id || ev.id || '').slice(0, 200) || null, provider: 'custom', methodId: meth.id });
+      return send(res, 200, { ok: true });
     }
     if (p === '/webhooks/flutterwave' && req.method === 'POST') {
       const raw = await readBody(req, 512 * 1024).catch(() => '');
@@ -5639,12 +6096,20 @@ const server = http.createServer(async (req, res) => {
       if (req.method !== 'GET' && req.headers.origin) { try { if (new URL(req.headers.origin).host !== req.headers.host) return send(res, 403, { error: 'Cross-site request blocked.' }); } catch { return send(res, 403, { error: 'Bad origin.' }); } }
       return await api(req, res, url, currentUser(req));
     }
+    if ((mm = /^\/a\/([A-Za-z0-9_-]{2,40})$/.exec(p))) { // short affiliate link: joinvoo.com/a/CODE
+      const ac = affCapture(req, new URL(BASE_URL + '/?aff=' + encodeURIComponent(mm[1]) + (url.searchParams.get('sub1') ? '&sub1=' + encodeURIComponent(url.searchParams.get('sub1')) : '')));
+      return send(res, 302, '', { location: '/', ...(ac ? { 'set-cookie': ac } : {}) });
+    }
+    if (req.method === 'GET' && url.search && /[?&](aff|voo_aff)=/.test(url.search)) { // remember the affiliate, then show the clean address (never cached with a cookie)
+      const ac = affCapture(req, url), clean = new URL(url.href); for (const k of ['aff', 'voo_aff', 'sub1', 'sub']) clean.searchParams.delete(k);
+      return send(res, 302, '', { location: '/' + clean.pathname.replace(/^[\/\\]+/, '') + (clean.search || '') + (clean.hash || ''), 'cache-control': 'no-store', ...(ac ? { 'set-cookie': ac } : {}) });
+    }
     if (p === '/') return send(res, 200, page('home.html'), { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
     if (p === '/login') return send(res, 200, page('login.html'), { 'content-type': 'text/html; charset=utf-8' });
     if (p === '/signup') return send(res, 200, page('signup.html'), { 'content-type': 'text/html; charset=utf-8' });
     if (p === '/app') return send(res, 200, page('app.html'), { 'content-type': 'text/html; charset=utf-8' });
     if (p === '/admin') return send(res, 200, page('admin.html'), { 'content-type': 'text/html; charset=utf-8' });
-    if ((mm = /^\/(guide|terms|privacy|refunds|acceptable-use|cookies|referral-terms)$/.exec(p))) return send(res, 200, page(mm[1] + '.html'), { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
+    if ((mm = /^\/(guide|terms|privacy|refunds|acceptable-use|cookies|referral-terms|affiliates)$/.exec(p))) return send(res, 200, page(mm[1] + '.html'), { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
     if ((mm = /^\/media\/logos\/([\w-]+\.(png|jpg|webp))$/.exec(p))) { // affiliate program logos uploaded in /admin
       const f = [path.join(LOGO_DIR, mm[1]), path.join(PUBLIC, 'media', 'logos', mm[1])].find((x) => fs.existsSync(x));
       if (!f) return send(res, 404, 'Not found', { 'content-type': 'text/plain' });
