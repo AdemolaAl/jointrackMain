@@ -5702,7 +5702,7 @@ function startSession(res, userId, email) {
 // ---------- VooSquare: Voo ID login, affiliate hand-off, money events, support (the Voo Connect kit, see VOOSQUARE-CONNECT.md) ----------
 // The kit is in ./voo-connect (copied unchanged from VooSquare's sdk/voo-connect); lib/voo.js builds it from the settings below.
 // Everything is off until a VooSquare address is set (VOO_BASE or Admin → Settings → Integrations → VooSquare).
-const VC = require('./voo-connect');
+const VC = require('./lib/voo-connect');
 const VOO_SIGNAL_SECRET = env.VOO_SIGNAL_SECRET || crypto.createHmac('sha256', APP_SECRET).update('voo-signals').digest('hex');
 const vooRedirect = () => setting('voo.redirect_uri') || `${BASE_URL}/auth/voosquare/callback`;
 /** The key VooSquare gave Joinvoo (Admin → Products → Joinvoo → API key). Older setups only had the service key. */
