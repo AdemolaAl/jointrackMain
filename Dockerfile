@@ -4,6 +4,8 @@ COPY package.json server.js ./
 COPY public ./public
 COPY joe ./joe
 COPY scripts ./scripts
+COPY lib ./lib
+COPY voo-connect ./voo-connect
 ENV NODE_ENV=production DATA_DIR=/data PORT=3000
 # Railway: attach a volume at /data in the dashboard (Docker VOLUME is not used there)
 EXPOSE 3000
