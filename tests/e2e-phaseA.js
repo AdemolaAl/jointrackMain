@@ -1,6 +1,7 @@
 // Phase A: sales/qualified/rejected, integrations, join-request mode, period compare + funnel + cohorts, spend/ROAS,
 // fake-click filter, bonus credits + ranks + promo codes, custom pricing, sales leads, alerts without a bot token.
 const B = 'http://localhost:3999';
+const postbackOrigin = process.env.LINK_BASE_URL ? new URL(process.env.LINK_BASE_URL).origin : B;
 const fs = require('fs');
 const assert = (c, m) => { if (!c) { console.log('FAIL:', m); process.exitCode = 1; } else console.log('ok  ', m); };
 function client() {
@@ -67,7 +68,9 @@ const today = new Date().toISOString().slice(0, 10), yday = new Date(Date.now() 
   assert(joins.total === 1 && joins.rows[0].click_id && joins.rows[0].tg_user_id === 555, 'join recorded once against the click (approval + member update not double counted)');
 
   // ---- conversions: ftd, sale, qualified, rejected with network attribution
-  const pb = new URL((await U('/api/conversions')).j.postback_url).pathname;
+  const postbackUrl = new URL((await U('/api/conversions')).j.postback_url);
+  assert(postbackUrl.origin === postbackOrigin, 'postback URL uses LINK_BASE_URL');
+  const pb = postbackUrl.pathname;
   const pbf = (q) => fetch(B + pb + '?' + q).then((x) => x.json());
   r = await pbf('sub1=555&status=ftd&payout=100&txid=F1&net=1win');
   assert(r.event === 'ftd' && r.matched, 'FTD postback from 1win');
@@ -92,6 +95,7 @@ const today = new Date().toISOString().slice(0, 10), yday = new Date(Date.now() 
   let it = (await U('/api/integrations')).j;
   const one = it.items.find((x) => x.id === '1win');
   assert(it.items.length >= 13 && one && one.postback_template.startsWith(it.postback_base) && /net=1win/.test(one.postback_template) && Array.isArray(one.setup_steps) && one.setup_steps.length && one.verified === false, 'integrations list with ready postback templates');
+  assert(new URL(it.postback_base).origin === postbackOrigin, 'integration postback templates use LINK_BASE_URL');
   assert(['kingfin', 'affstore', 'pocketoption', 'olymptrade', 'binomo', 'quotex', 'exness', '1xbet', 'melbet', 'keitaro', 'binom', 'custom'].every((id) => it.items.some((x) => x.id === id)), 'all seeded programs present');
   assert(one.events_30d >= 3, 'network events counted per account (' + one.events_30d + ')');
   r = await post(U, '/api/integrations/1win/connect');

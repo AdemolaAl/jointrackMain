@@ -553,7 +553,7 @@ function integrationRow(r) {
     docs_url: r.docs_url || '', events: (() => { try { return JSON.parse(r.events || '[]'); } catch { return []; } })(), setup_steps: (() => { try { return JSON.parse(r.setup_steps || '[]'); } catch { return []; } })(), sort: r.sort };
 }
 function integrationsFor(user) {
-  const base = `${BASE_URL}/pb/${pbKey(user.id)}`;
+  const base = `${linkBase()}/pb/${pbKey(user.id)}`;
   const mine = new Map(Q(`SELECT * FROM user_integrations WHERE user_id=?`).all(user.id).map((x) => [x.integration_id, x]));
   const counts = new Map(Q(`SELECT network, COUNT(*) n FROM conversions WHERE owner_id=? AND network IS NOT NULL AND created_at>? GROUP BY network`).all(user.id, now() - 30 * 864e5).map((x) => [x.network, x.n]));
   return { postback_base: base, items: Q(`SELECT * FROM integrations ORDER BY sort, name`).all().map((r) => { const it = integrationRow(r), u = mine.get(r.id);
@@ -2605,10 +2605,10 @@ function cohorts(user, qs) {
 function conversionsView(user, qs) {
   const limit = Math.min(200, +qs.get('limit') || 50);
   // Basic after the trial: deposits are still matched and sent to the ad platforms; only the list of who/which ad is hidden.
-  if (isLocked(user.id)) return { postback_url: `${BASE_URL}/pb/${pbKey(user.id)}`, locked: true, rows: [],
+  if (isLocked(user.id)) return { postback_url: `${linkBase()}/pb/${pbKey(user.id)}`, locked: true, rows: [],
     locked_count: Q(`SELECT COUNT(*) n FROM conversions WHERE owner_id=? AND matched=1 AND event IN ('ftd','dep','sale')`).get(user.id).n };
   return {
-    postback_url: `${BASE_URL}/pb/${pbKey(user.id)}`,
+    postback_url: `${linkBase()}/pb/${pbKey(user.id)}`,
     rows: Q(`SELECT v.id, v.event, v.value_cents, v.currency, v.txid, v.source, v.matched, v.created_at, v.meta_status, v.tt_status, v.sc_status, v.error, v.tg_user_id,
         COALESCE(v.rejected,0) AS rejected, v.network, j.first_name, j.last_name, j.username, j.click_id, ch.title AS channel_title FROM conversions v LEFT JOIN joins j ON j.id=v.join_id LEFT JOIN channels ch ON ch.id=v.channel_id
       WHERE v.owner_id=? ORDER BY v.id DESC LIMIT ?`).all(user.id, limit),
@@ -3911,7 +3911,7 @@ async function api(req, res, url, user) {
   if (p === '/api/compare') return send(res, 200, compare(user, qs));
   if (p === '/api/breakdown') return send(res, 200, breakdown(user, qs));
   if (p === '/api/conversions' && m === 'GET') return send(res, 200, conversionsView(user, qs));
-  if (p === '/api/conversions/rotate' && m === 'POST') { Q(`UPDATE users SET pb_key=NULL WHERE id=?`).run(user.id); return send(res, 200, { ok: true, postback_url: `${BASE_URL}/pb/${pbKey(user.id)}` }); }
+  if (p === '/api/conversions/rotate' && m === 'POST') { Q(`UPDATE users SET pb_key=NULL WHERE id=?`).run(user.id); return send(res, 200, { ok: true, postback_url: `${linkBase()}/pb/${pbKey(user.id)}` }); }
   if ((mm0 = /^\/api\/joins\/(\d+)\/convert$/.exec(p)) && m === 'POST') {
     if (!feature('ftd')) return send(res, 403, { error: 'Deposit tracking is switched off right now.', off: true });
     const b = await readJson(req);
@@ -4696,7 +4696,7 @@ function promoValidate(b, isNew) {
 function adminIntegrations() {
   const users = new Map(Q(`SELECT integration_id, COUNT(*) n FROM user_integrations WHERE connected_at IS NOT NULL GROUP BY integration_id`).all().map((x) => [x.integration_id, x.n]));
   const ev = new Map(Q(`SELECT network, COUNT(*) n FROM conversions WHERE network IS NOT NULL AND created_at>? GROUP BY network`).all(now() - 30 * 864e5).map((x) => [x.network, x.n]));
-  return { items: Q(`SELECT * FROM integrations ORDER BY sort, name`).all().map((r) => ({ ...integrationRow(r), users: users.get(r.id) || 0, events_30d: ev.get(r.id) || 0 })), postback_example: `${BASE_URL}/pb/<key>` };
+  return { items: Q(`SELECT * FROM integrations ORDER BY sort, name`).all().map((r) => ({ ...integrationRow(r), users: users.get(r.id) || 0, events_30d: ev.get(r.id) || 0 })), postback_example: `${linkBase()}/pb/<key>` };
 }
 function integrationValidate(b) {
   const t = (v, n) => String(v ?? '').trim().slice(0, n);
