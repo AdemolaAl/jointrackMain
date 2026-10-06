@@ -2225,8 +2225,9 @@ function wireLimits() {
 function r17Card() {
   const R = S.set.round17; if (!R) return '';
   const N = (k, label, suf, min, max) => `<label class="fld"><span>${label}</span><span class="inp s"><input name="${k}" type="number" inputmode="numeric" min="${min}" max="${max}" step="1" value="${esc(R[k])}">${suf ? `<span class="suf">${suf}</span>` : ''}</span></label>`;
-  return `<form class="acard" id="r17f"><div class="sec-h"><div><h2>Team seats, ban protection &amp; dead links</h2><p>Team seats: how many people Pro and Basic include, and the price of each extra seat (charged monthly from the wallet). Ban protection: how many refused invite links in a row mark a channel lost. Dead-link warning: when a link with steady clicks goes quiet.</p></div></div>
+  return `<form class="acard" id="r17f"><div class="sec-h"><div><h2>Team seats, ban protection &amp; dead links</h2><p>Team seats: how many people Pro and Basic include, and the price of each extra seat (charged monthly from the wallet). Setup helpers: how many each account gets free on any plan (they hold no seat). Ban protection: how many refused invite links in a row mark a channel lost. Dead-link warning: when a link with steady clicks goes quiet.</p></div></div>
     <div class="fgrid three">${N('pro_included', 'Pro seats included', 'people', 0, 1000)}${N('basic_included', 'Basic seats included', 'people', 0, 1000)}${N('seat_cents', 'Extra seat / month', 'credits', 0, 1000000)}</div>
+    ${R.helper_free !== undefined ? `<div class="fgrid three">${N('helper_free', 'Free Setup helpers (every plan)', 'people', 0, 100)}</div>` : ''}
     <div class="fgrid three">${N('ban_fail_streak', 'Lost after refusals in a row', '', 1, 50)}${N('deadlink_quiet_hours', 'Quiet for', 'hours', 1, 12)}${N('deadlink_min_hourly', 'Usual clicks at least', '/ hour', 1, 1000000)}</div>
     <div class="fgrid three">${N('deadlink_days', 'Compared with the same hours of', 'days', 1, 14)}${N('deadlink_drop_pct', 'Quiet means below', '% of usual', 0, 90)}</div>
     <div class="fgrid three"><label class="fld"><span>Meta app ID (ad spend sync)</span><input name="meta_app_id" inputmode="numeric" value="${esc(R.meta_app_id || '')}" placeholder="Waiting for Meta approval"></label>
@@ -2240,6 +2241,7 @@ function wireR17() {
   f.onsubmit = async (e) => { e.preventDefault(); const btn = e.submitter; if (btn) btn.disabled = true;
     const n = (k) => Math.max(0, Math.round(+f[k].value || 0)), b = {};
     for (const k of ['pro_included', 'basic_included', 'seat_cents', 'ban_fail_streak', 'deadlink_quiet_hours', 'deadlink_min_hourly', 'deadlink_days', 'deadlink_drop_pct']) b[k] = n(k);
+    if (f.helper_free) b.helper_free = n('helper_free');
     b.meta_app_id = f.meta_app_id.value.trim(); b.meta_app_secret = f.meta_app_secret.value;
     try { await saveSet({ round17: b }, 'Saved'); sPlans(); } catch (err) { toast(err.message); if (btn) btn.disabled = false; } };
 }

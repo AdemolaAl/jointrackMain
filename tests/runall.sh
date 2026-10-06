@@ -8,6 +8,7 @@
 # on :4700; e2e-vooconnect.js runs a fake VooSquare (OAuth, events, support: tests/oidcmock.js) on :4410 for the Voo Connect kit;
 # e2e-round16.js fakes Cloudflare for SaaS on :4800 (CF_API_BASE) and answers DNS from tests/.run/dns.json (DOMAIN_DNS_MOCK).
 # e2e-round17.js tests team seats and roles; e2e-round17b.js fakes Meta's Graph API on :4900 (META_GRAPH, META_DIALOG) and writes synthetic hourly clicks into the test database;
+# e2e-round18.js tests the free Setup helper role, "access ends on" and GET /api/managed (writes synthetic hourly rows and conversions into the test database);
 # e2e-round17c.js (QA regressions) also fakes Meta on :4900 and briefly writes public/media/tutorials/zz-qa-test.mp3 (removed at the end).
 # Nothing touches the internet.
 #
@@ -17,7 +18,7 @@
 # Output: every ok/FAIL line, then a total. Exit code 1 if anything failed. Logs: tests/.run/
 T="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(dirname "$T")"; RUN="$T/.run"
 mkdir -p "$RUN"; cd "$ROOT" || exit 1
-SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js e2e-round15.js e2e-round16.js e2e-round16b.js e2e-round17.js e2e-round17b.js e2e-round17c.js)
+SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js e2e-round15.js e2e-round16.js e2e-round16b.js e2e-round17.js e2e-round17b.js e2e-round17c.js e2e-round18.js e2e-round18b.js)
 
 busy() { node -e "const s=require('net').connect($1,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"; }
 for port in 3999 4200 4300 4400 4410 4500 4600 4700 4800 4900; do if busy $port; then echo "Port $port is already in use. Stop whatever is listening there and run again."; exit 2; fi; done
@@ -48,6 +49,8 @@ for t in "${SUITES[@]}"; do
     e2e-round16.js) rm -f "$RUN/dns.json"; extra=(CF_API_BASE=http://localhost:4800/client/v4 DOMAIN_DNS_MOCK="$RUN/dns.json" DOMAIN_CHECK_MS=2000 POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
     e2e-round16b.js) rm -f "$RUN/dns.json"; extra=(EDGE_SECRET=edge-secret-16b CF_API_BASE=http://localhost:4800/client/v4 DOMAIN_DNS_MOCK="$RUN/dns.json" DOMAIN_CHECK_MS=2000 DOMAIN_CLAIM_HOLD_MS=1500 POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
     e2e-round17.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
+    e2e-round18.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
+    e2e-round18b.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
     e2e-round17b.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30 BAN_JOB_MS=300 BAN_FAIL_STREAK=3 META_APP_ID=1234567890 META_APP_SECRET=meta_test_secret META_GRAPH=http://localhost:4900/v21.0 META_DIALOG=http://localhost:4900/dialog/oauth) ;;
     e2e-round17c.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30 META_APP_ID=1234567890 META_APP_SECRET=meta_test_secret META_GRAPH=http://localhost:4900/v21.0 META_DIALOG=http://localhost:4900/dialog/oauth) ;;
     e2e-round8.js) extra=(PAYSTACK_API_BASE=http://localhost:4300 STRIPE_API_BASE=http://localhost:4300) ;;

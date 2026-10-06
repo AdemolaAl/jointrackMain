@@ -1,11 +1,11 @@
 # Tutorial voice-overs
 
-Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tutorial player (More › Help & tutorials, every "Watch how" button, and `/app?tutorial=t1` … `t9`) plays `/media/tutorials/<id>.mp3` when it exists and syncs the animation and captions to the audio's length. When a file is missing it plays on a timer (about 150 words a minute) with captions only and a small "Captions" badge, never an error.
+Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tutorial player (More › Help & tutorials, every "Watch how" button, and `/app?tutorial=t1` … `t10`) plays `/media/tutorials/<id>.mp3` when it exists and syncs the animation and captions to the audio's length. When a file is missing it plays on a timer (about 150 words a minute) with captions only and a small "Captions" badge, never an error.
 
 - Format: MP3, mono or stereo, 44.1 kHz, about 30–40 seconds each. Keep a short pause between sentences; the scenes change on each sentence.
 - Read the text exactly as written (the scenes are timed by the words of each sentence). If you change a sentence, change it in `docs/tutorials.json` and in `TUT` in `src/dashboard/p8f.tutorials.html` too.
 - After adding files, rebuild the demo (`bash src/dashboard/make.sh`) so `dist/media/tutorials/` gets them as well.
-- **Server:** `server.js` serves `/media/tutorials/*.mp3` (audio/mpeg, with range support), so files dropped here play on the live site after a deploy. They're voiced by ElevenLabs (voice “Jacob L.”, American) in the owner's ElevenLabs flow “Joinvoo tutorials voiceover (international)”: download one take per tutorial and save it with the name below.
+- **Server:** `server.js` serves `/media/tutorials/*.mp3` (audio/mpeg, with range support), so files dropped here play on the live site after a deploy. **All 11 files are included** (American male narrator, made with the open Kokoro voice model, Apache-2.0). To swap any of them for an ElevenLabs take later, just save the new MP3 here under the same name. Note: `home.mp3` is timed to the 30-second homepage animation, and its lines are slightly shortened to fit each scene.
 
 | File | Tutorial | Where it opens | Words |
 |---|---|---|---|
@@ -18,6 +18,7 @@ Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tuto
 | `t7.mp3` | Connect your own bot's Start | bot channel Settings > Connect your bot's Start | 67 |
 | `t8.mp3` | Add your team | More > Team | 59 |
 | `t9.mp3` | Read your results | Results | 76 |
+| `t10.mp3` | Invite a setup helper | More > Team | 78 |
 | `home.mp3` | Website explainer | Joinvoo homepage (website, not the dashboard) | — |
 
 ## Scripts
@@ -57,6 +58,12 @@ Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tuto
 ### t9.mp3 — Read your results
 
 > Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report.
+
+### t10.mp3 — Invite a setup helper
+
+> Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time.
+
+Not recorded yet (round 18): record it with the same voice (“Jacob L.”, American) in the same ElevenLabs flow, save one take as `t10.mp3`. Until then the tutorial plays with captions only.
 
 ### home.mp3 — Website explainer
 

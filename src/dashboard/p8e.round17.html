@@ -24,7 +24,7 @@ const centsOr = (v,d='—') => v==null||!isFinite(v)?d:money(v);
 function setRole(){
   const ws=(S.me&&S.me.workspace)||R17.ws; if (ws) R17.ws=ws;
   R17.role=(ws&&ws.current&&ws.current.role)||(S.chans&&S.chans.team_role)||'owner';
-  const r=document.documentElement; ['owner','manager','buyer'].forEach(k=>r.classList.toggle('role-'+k, R17.role===k));
+  const r=document.documentElement; ['owner','manager','buyer','helper'].forEach(k=>r.classList.toggle('role-'+k, R17.role===k||(k==='manager'&&R17.role==='helper'))); /* a Setup helper gets the manager's view */
 }
 
 /* ---------- pages + navigation ---------- */
@@ -87,7 +87,7 @@ function wsChip(){
 }
 function wsPop(a){
   const ws=R17.ws||{}, cur=ws.current||{};
-  const p=openPop(a, `<div class="ph2">${tt('ws.h','Workspace')}</div>${(ws.workspaces||[]).map(w=>`<button class="pi" data-act="ws-go" data-id="${w.owner_id}" aria-pressed="${w.owner_id===cur.owner_id}">${w.own?I.user:I.team}<span class="ws-l"><b>${w.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(w.name||'Team')})}</b><small>${w.own?tt('ws.owner','Owner'):esc(w.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))}${w.status==='paused'?' · '+tt('ws.paused','paused'):''}</small></span>${w.owner_id===cur.owner_id?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}`,'wsp');
+  const p=openPop(a, `<div class="ph2">${tt('ws.h','Workspace')}</div>${(ws.workspaces||[]).map(w=>`<button class="pi" data-act="ws-go" data-id="${w.owner_id}" aria-pressed="${w.owner_id===cur.owner_id}">${w.own?I.user:I.team}<span class="ws-l"><b>${w.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(w.name||'Team')})}</b><small>${w.own?tt('ws.owner','Owner'):esc(ROLE_T(w.role))}${w.status==='paused'?' · '+tt('ws.paused','paused'):''}</small></span>${w.owner_id===cur.owner_id?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}`,'wsp');
   p.style.width='260px';
 }
 async function wsGo(id){
@@ -109,12 +109,12 @@ function viewMore(){
   const me=S.me||{}, ws=R17.ws, cur=(ws&&ws.current)||{}, own=isOwner();
   const row=(act,p,ic,t,sub,extra='')=>`<button class="mrow17" data-act="${act}" ${p?`data-p="${p}"`:''}><span class="mr-ic">${ic}</span><span class="mr-t"><b>${t}</b><small>${sub}</small></span>${extra}<span class="mr-go">${I.chevr}</span></button>`;
   const grp=(h,rows)=>{ const r=rows.filter(Boolean).join(''); return r?`<section class="mgrp"><h2>${h}</h2><div class="card mlist">${r}</div></section>`:''; };
-  $('#view').innerHTML=`<div class="view more17"><div class="ph"><div><h1>${tt('nav.more','More')}</h1><p>${own?tt('more.p','Your team, reports, billing and help, all in one place.'):tt('more.p2','You’re working in {n}’s team as {r}.',{n:esc(cur.name||''),r:esc(cur.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))})}</p></div></div>
+  $('#view').innerHTML=`<div class="view more17"><div class="ph"><div><h1>${tt('nav.more','More')}</h1><p>${own?tt('more.p','Your team, reports, billing and help, all in one place.'):tt('more.p2','You’re working in {n}’s team as {r}.',{n:esc(cur.name||''),r:esc(ROLE_T(cur.role))})}</p></div></div>
     ${ws&&ws.workspaces&&ws.workspaces.length>1?`<button class="card ws-card" data-act="ws-pop"><span class="mr-ic">${I.swap}</span><span class="mr-t"><b>${cur.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(cur.name||'')})}</b><small>${tt('ws.tap','Tap to switch workspace')}</small></span><span class="mr-go">${I.chev}</span></button>`:''}
     ${grp(tt('more.g.work','Work'),[
       own&&row('nav','team',I.team,tt('more.team','Team'),tt('more.team.s','Invite media buyers and managers')),
-      row('nav','report',I.report,tt('more.report','Daily report'),tt('more.report.s','Yesterday’s numbers in Telegram every morning')),
-      own&&row('alerts','',I.bolt,tt('menu.alerts','Telegram alerts'),tt('more.alerts.s','Get pinged when something needs you')),
+      row('nav','report',I.report,tt('more.report','Daily report'),(FEAT('alerts')?tt('more.report.s','Yesterday’s numbers in Telegram every morning'):tt('more.report.s2','Morning summary + instant alerts in Telegram'))),
+      own&&FEAT('alerts')&&row('alerts','',I.bolt,tt('menu.alerts','Telegram alerts'),tt('more.alerts.s','Get pinged when something needs you')),
       row('ib-prefs','',I.bell,tt('menu.notif','Notifications'),tt('more.notif.s','Choose what lands in your inbox')),
     ])}
     ${grp(tt('more.g.money','Money'),[
@@ -317,7 +317,7 @@ async function viewLeaderboard(){
   const mj=Math.max(1,...rows.map(x=>x.joins||0));
   el.innerHTML=`<div class="card-h"><h2>${tt('lb.h','Your buyers side by side')}</h2><span class="sub">${tt('lb.s','Cheapest deposits first')}</span></div>
     ${rows.length?`<div class="lb-l">${rows.map((x,i)=>`<div class="lb-r${x===best?' top':''}"><span class="lb-av" style="${avStyle(x.user_id||i)}">${esc(((x.name||x.email||'?')[0]||'?').toUpperCase())}</span>
-      <span class="lb-n"><b>${esc(x.name||x.email)}</b>${x===best?`<em class="lb-best">${I.sparkles}${tt('lb.best','Cheapest deposits')}</em>`:''}<small>${esc(x.role==='owner'?tt('ws.owner','Owner'):x.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))} · ${nNoun(x.channels||0,'channel','channels')}</small><span class="lb-bar"><i style="width:${(x.joins||0)/mj*100}%"></i></span></span>
+      <span class="lb-n"><b>${esc(x.name||x.email)}</b>${x===best?`<em class="lb-best">${I.sparkles}${tt('lb.best','Cheapest deposits')}</em>`:''}<small>${esc(ROLE_T(x.role))} · ${nNoun(x.channels||0,'channel','channels')}</small><span class="lb-bar"><i style="width:${(x.joins||0)/mj*100}%"></i></span></span>
       <span class="lb-k"><small>${tt('lb.j','Joins')}</small><b class="num">${fmt(x.joins)}</b></span><span class="lb-k"><small>${tt('lb.d','Deposits')}</small><b class="num">${x.ftds==null?'—':fmt(x.ftds)}</b></span><span class="lb-k"><small>${tt('lb.c','Per deposit')}</small><b class="num">${centsOr(x.cost_per_ftd_cents)}</b></span></div>`).join('')}</div>`
     :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('lb.e','No team yet')}</h3><p>${tt('lb.e.p','Invite your media buyers and compare them here.')}</p>${isOwner()?`<button class="btn sm primary" data-act="nav" data-p="team">${tt('lb.inv','Invite your team')}</button>`:''}</div>`}
     ${r.locked?`<p class="hint" style="padding:0 18px 16px">${tt('lb.locked','Deposits and cost per deposit are a Pro detail.')}</p>`:''}`;
@@ -416,7 +416,7 @@ function utmCard17(c){
   const ps=['meta'].concat(FEAT('tiktok')?['tiktok']:[]).concat(FEAT('snapchat')?['snap']:[]);
   const on=ps.filter(p=>platOn(c,p)); const cur=(S.utmP&&S.utmP[c.id]&&ps.includes(S.utmP[c.id]))?S.utmP[c.id]:(on[0]||'meta');
   const hl=s=>esc(s).replace(/(\{\{[^}]+\}\}|__[A-Z_]+__)/g,'<b>$1</b>');
-  return `<div class="utmc"><div class="utmc-h"><span class="utmc-t">${tt('utm.tags','Campaign tags')}</span><span class="utmc-ps" role="tablist">${ps.map(p=>`<button type="button" class="utmc-p${p===cur?' on':''}" data-act="utm-p" data-id="${c.id}" data-p="${p}" aria-selected="${p===cur}" title="${PLAT[p].name}">${pm(p)}</button>`).join('')}</span></div>
+  return `<div class="utmc"><div class="utmc-h"><span class="utmc-t">${tt('utm.tags','Campaign tags')}</span><span class="utmc-ps" role="tablist">${ps.map(p=>`<button type="button" class="utmc-p${p===cur?' on':''}" data-act="utm-p" data-id="${c.id}" data-p="${p}" aria-selected="${p===cur}" title="${PLAT[p].name}">${pm(p)}<span>${p==='snap'?'Snap':PLAT[p].name}</span></button>`).join('')}</span></div>
     <div class="codebox utmc-b"><code>${hl(UTM17[cur])}</code><button class="btn sm" data-act="copy" data-v="${esc(UTM17[cur].slice(1))}">${I.copy} ${tt('common.copy','Copy')}</button></div>
     <small class="utmc-n">${tt('utm.where','Paste in your ad’s “URL parameters” field, or copy the full link with tags:')} <button type="button" class="link" data-act="copy" data-v="${esc(c.tracking_url+UTM17[cur])}">${tt('utm.full2','Copy link + tags')}</button></small></div>`;
 }
@@ -511,7 +511,7 @@ async function switchBack(a){
 }
 
 /* ---------- Team (owner) ---------- */
-const ROLE_T = r => r==='manager'?tt('team.r.m','Manager'):r==='buyer'?tt('team.r.b','Media buyer'):tt('ws.owner','Owner');
+function ROLE_T(r){ return r==='manager'?tt('team.r.m','Manager'):r==='buyer'?tt('team.r.b','Media buyer'):r==='helper'?tt('team.r.h','Setup helper'):tt('ws.owner','Owner'); }
 const ST_T = {invited:['y','Invited'],expired:['r','Invite expired'],active:['g','Active'],paused:['o','Paused']};
 async function viewTeam(){
   S.redraw=[];
@@ -529,7 +529,7 @@ function drawTeam(){
     <section class="card"><div class="card-h"><h2>${tt('team.people','People')}</h2><span class="sub">${nNoun(ms.length,'person','people')}</span></div>
     ${ms.length?`<div class="tm-l">${ms.map(m=>{ const [cc,lb]=ST_T[m.status]||['o',m.status]; const chs=(m.channel_ids||[]).map(id=>(r.channels||[]).find(c=>c.id===id)).filter(Boolean);
       return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b>${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>esc(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
-        <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
+        <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':m.role==='helper'?'g':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
       :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('team.e','Just you for now')}</h3><p>${tt('team.e.p','Invite a media buyer and compare results side by side.')}</p><button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>`}</section>
     ${ms.some(m=>m.status==='active')?`<button class="card row17" data-act="nav" data-p="leaderboard"><span class="mr-ic">${I.results}</span><span class="mr-t"><b>${tt('team.lb','Compare your buyers')}</b><small>${tt('team.lb.p','Joins, deposits and cost per deposit, per person')}</small></span><span class="mr-go">${I.chevr}</span></button>`:''}`;
 }
@@ -575,7 +575,7 @@ function tmRemove(id){
 /* ---------- Daily report in Telegram ---------- */
 async function viewReport(){
   S.redraw=[];
-  $('#view').innerHTML=`<div class="view rep17"><div class="ph"><div><h1>${tt('more.report','Daily report')}</h1><p>${tt('rep.p','Yesterday’s joins, deposits and costs, sent to your Telegram every morning.')}</p></div></div><div id="rp"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
+  $('#view').innerHTML=`<div class="view rep17"><div class="ph"><div><h1>${tt('more.report','Daily report')}</h1><p>${tt('rep.p','Yesterday’s joins, deposits and costs, sent to your Telegram every morning.')} ${tt('rep.p2','Urgent alerts, like a blocked link or a lost channel, come to the same chat right away.')}</p></div></div><div id="rp"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
   let r; try { r=await api('GET','/api/report-settings'); } catch(e){ const el=$('#rp'); if(el) el.innerHTML=`<div class="card"><div class="empty"><h3>${esc(e.message)}</h3></div></div>`; return; }
   R17.rep=r; if (S.page!=='report') return; drawReport(); repPreview();
 }
@@ -637,7 +637,7 @@ ibNav = function(u){ const m=/^#tab:(channels\/[\w/-]+|spend)$/.exec(u||''); if 
 addEventListener('hashchange',()=>{ if ($('#shell')) deepLink(location.hash.slice(1)); });
 async function teamAsk(tk){
   let i; try { i=await api('GET','/api/team/invite-info?token='+encodeURIComponent(tk)); } catch(e){ toast(e.status===410?tt('team.exp','That team invite expired. Ask for a new one.'):tt('team.inv0','That team invite link isn’t valid.'),false); return; }
-  sheet(`<h2>${tt('team.join.h','Join {n}’s team?',{n:esc(i.owner_name||i.owner_email)})}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${tt('team.join.b','You’ll join as {r}',{r:esc(i.role_name||ROLE_T(i.role))})}</b><span>${i.role==='buyer'?tt('team.join.pb','You’ll see the channels {n} gives you. Your own account stays as it is.',{n:esc(i.owner_name||'')}):tt('team.join.pm','You’ll see all of {n}’s channels and results. Your own account stays as it is.',{n:esc(i.owner_name||'')})}</span></div>
+  sheet(`<h2>${tt('team.join.h','Join {n}’s team?',{n:esc(i.owner_name||i.owner_email)})}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${tt('team.join.b','You’ll join as {r}',{r:esc(i.role_name||ROLE_T(i.role))})}</b><span>${i.role==='helper'?tt('team.join.ph','You’ll set up {n}’s bots, channels and ads. You won’t see their billing. Your own account stays as it is.',{n:esc(i.owner_name||'')}):i.role==='buyer'?tt('team.join.pb','You’ll see the channels {n} gives you. Your own account stays as it is.',{n:esc(i.owner_name||'')}):tt('team.join.pm','You’ll see all of {n}’s channels and results. Your own account stays as it is.',{n:esc(i.owner_name||'')})}</span></div>
     <div id="tjerr"></div><button class="btn primary lg wide" data-act="team-accept" data-v="${esc(tk)}">${tt('team.join.go','Join the team')} ${I.arrow}</button><button class="btn ghost wide" data-act="close">${tt('team.join.no','Not now')}</button>`);
 }
 async function teamAccept(a){
@@ -668,7 +668,7 @@ viewHelp = function(){
   viewHelp0();
   const v=$('#view .view'); if(!v) return;
   const ph=v.querySelector('.ph'); if (ph){ const e=ph.querySelector('.eyebrow'); if(e) e.remove(); const h=ph.querySelector('h1'); if(h) h.textContent=tt('help.h','Help & tutorials'); const p=ph.querySelector('p'); if(p) p.textContent=tt('help.p','Short videos for every step. Real people in chat when you need them.'); }
-  ph && ph.insertAdjacentHTML('afterend', `<section class="tut-sec"><div class="card-h tut-h"><h2>${tt('tut.h','Video tutorials')}</h2><span class="sub">${tt('tut.n','{n} short videos',{n:TUT.length})}</span></div><div class="tut-grid">${TUT.map(t=>`<button class="tut-card" data-act="tut" data-v="${t.id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(t.id)}</span><span class="tut-play">${I.play}</span><em>${tutLen(t.id)}</em></span><span class="tut-t"><b>${esc(tt('tut.'+t.id,t.title))}</b><small>${esc(t.where)}</small></span></button>`).join('')}</div></section>`);
+  ph && ph.insertAdjacentHTML('afterend', tutHelpSec()); /* the same cards as the Tutorials page (p8f) */
 };
 
 /* ---------- handlers ---------- */

@@ -741,11 +741,49 @@ body.xp-open{overflow:hidden}
 html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
 @media (max-width:560px){body.mcta-on:has(#spLaunch) .mcta,body.mcta-on .mcta:has(~ .sp-launch){right:74px}}
 @media (prefers-reduced-motion:reduce){.sc{transition:none}}
+/* tutorials: grid on desktop, swipe row on phones; CSS-only thumbnails */
+#tutorials{scroll-margin-top:76px}
+.tus{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;width:100%;margin-top:22px;text-align:left}
+.tu{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink);text-decoration:none;overflow:hidden;transition:transform .3s,box-shadow .3s,border-color .3s}
+.tu:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:color-mix(in srgb,#5b3df5 30%,var(--line))}
+.tu:focus-visible{outline:3px solid color-mix(in srgb,#5b3df5 55%,transparent);outline-offset:2px}
+.tu-th{position:relative;display:block;aspect-ratio:16/11;overflow:hidden;background:radial-gradient(120% 90% at 20% 10%,#7c61ff 0%,#3a22c9 55%,#1b1340 100%)}
+.tu-th::after{content:"";position:absolute;inset:0;background:radial-gradient(70% 50% at 80% 0%,rgba(255,255,255,.18),transparent 70%);pointer-events:none}
+.tu-ph{position:absolute;left:50%;top:16%;width:44%;height:100%;transform:translateX(-50%);border-radius:14px 14px 0 0;background:#f6f5fb;box-shadow:0 0 0 4px #0d0b1c,0 18px 30px -10px rgba(0,0,0,.6);padding:16px 8px 0;display:flex;flex-direction:column;gap:6px;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.tu:hover .tu-ph{transform:translateX(-50%) translateY(-4px)}
+.tu-ph .tb{position:absolute;left:50%;top:5px;width:28%;height:5px;border-radius:9px;background:#0d0b1c;transform:translateX(-50%)}
+.tu-ph i{display:block;flex:none}
+.tu-ph .b{width:72%;height:10px;border-radius:7px;background:#e4e1f3}.tu-ph .b.me{align-self:flex-end;background:#cfc6ff}.tu-ph .b.s{width:48%}
+.tu-ph .r{height:10px;border-radius:5px;background:#ebe9f4;position:relative}.tu-ph .r u{position:absolute;right:3px;top:2px;width:12px;height:6px;border-radius:9px;background:#cfcbe0}.tu-ph .r.on u{background:#2e9d6a}
+.tu-ph .ln{height:6px;width:80%;border-radius:4px;background:#dcd9ea}.tu-ph .ln.s{width:52%}
+.tu-ph .bars{display:flex;align-items:flex-end;gap:4%;height:36px;margin-top:2px}.tu-ph .bars b{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(#8f7bff,#5b3df5)}
+.tu-ph .pill{height:14px;width:62%;border-radius:9px}.tu-ph .pill.g{background:#d9efe2;box-shadow:inset 3px 0 0 #2e9d6a}
+.tu-ph .hx{height:30px;border-radius:8px;background:linear-gradient(135deg,#ffb38a,#e0609a)}
+.tu-ph .cx{height:12px;border-radius:7px;background:#5b3df5;margin-top:2px}
+.tu-ph .row{height:14px;border-radius:6px;background:#fff;box-shadow:0 0 0 1px #e6e3f2}
+.tu-ph .av{height:14px;border-radius:7px;background:#fff;box-shadow:0 0 0 1px #e6e3f2;position:relative}.tu-ph .av::before{content:"";position:absolute;left:3px;top:3px;width:8px;height:8px;border-radius:50%;background:#8f7bff}
+.tu-pl{position:absolute;left:10px;bottom:10px;width:36px;height:36px;border-radius:50%;background:#fff;color:#1b1340;display:grid;place-items:center;box-shadow:0 8px 20px -6px rgba(0,0,0,.5);transition:transform .25s}
+.tu-pl svg{width:14px;height:14px;margin-left:2px}.tu:hover .tu-pl{transform:scale(1.08)}
+.tu-th em{position:absolute;right:9px;bottom:12px;font-style:normal;font-size:11.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tu-n{position:absolute;left:10px;top:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.92);color:#1b1340;font-size:11.5px;font-weight:800;display:grid;place-items:center}
+.tu-tx{display:flex;flex-direction:column;gap:3px;padding:12px 14px 15px}
+.tu-tx small{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--brand-text)}
+.tu-tx b{font-size:15px;line-height:1.25;letter-spacing:-.01em}
+.tu-all{margin-top:6px}
+@media (max-width:1080px){.tus{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:900px){
+  .tus{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:20px;width:calc(100% + 40px);margin-inline:-20px;padding:2px 20px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  .tus::-webkit-scrollbar{display:none}
+  .tu{flex:0 0 clamp(168px,46vw,220px);scroll-snap-align:start;border-radius:20px}
+  .tu:hover{transform:none}
+  .tu-tx{padding:10px 12px 13px}.tu-tx b{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){.tu,.tu-ph,.tu-pl{transition:none}}
 </style>
 
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="index.html" aria-label="Joinvoo home"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a>
-  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="1e656gd" class="plain" href="#pricing">Pricing</a><a data-i18n="1f8350a" class="plain" href="guide.html">Help</a><a data-i18n="1jdup01" class="plain" href="blog/index.html">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="plain login" href="login.html">Log in</a><a data-i18n="fr3k4j" class="btn violet navbtn" href="signup.html">Start free</a></nav>
+  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="vadd2s" class="plain" href="#tutorials">Tutorials</a><a data-i18n="1e656gd" class="plain" href="#pricing">Pricing</a><a data-i18n="1f8350a" class="plain" href="guide.html">Help</a><a data-i18n="1jdup01" class="plain" href="blog/index.html">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="plain login" href="login.html">Log in</a><a data-i18n="fr3k4j" class="btn violet navbtn" href="signup.html">Start free</a></nav>
 </div></header>
 
 <main>
@@ -843,6 +881,14 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
       </div></div></div>
       <h3 data-i18n="1g7piae">See every join and deposit</h3><p data-i18n="abflc9">Each one is matched to the exact ad and sent back to Meta for you, so your campaigns learn who really converts.</p></article>
   </div>
+</div></section>
+
+<section class="blk" id="tutorials" style="padding-top:0" aria-labelledby="tuT"><div class="wrap center">
+  <span data-i18n="vadd2s" class="kick reveal">Tutorials</span>
+  <h2 data-i18n="1jn3pm3" class="h2 reveal" id="tuT">Learn Joinvoo in <span>30-second videos.</span></h2>
+  <p data-i18n="1wenp3k" class="sub reveal">Watch each step inside the live demo. Start with the first three.</p>
+  <div class="tus"><a class="tu" href="app.html?tutorial=t1"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-chat"><i class="tb"></i><i class="b"></i><i class="b me"></i><i class="b"></i><i class="b me s"></i></span><span class="tu-n">1</span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>36s</em></span><span data-i18n="16ewyyp" class="tu-tx"><small>Get started</small><b>Create your tracking bot</b></span><span class="sr">, 36s</span></a><a class="tu" href="app.html?tutorial=t2"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-tog"><i class="tb"></i><i class="r"><u></u></i><i class="r"><u></u></i><i class="r on"><u></u></i><i class="r"><u></u></i></span><span class="tu-n">2</span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>35s</em></span><span data-i18n="7br2q8" class="tu-tx"><small>Get started</small><b>Add your bot to your channel</b></span><span class="sr">, 35s</span></a><a class="tu" href="app.html?tutorial=t3"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-chart"><i class="tb"></i><i class="ln"></i><i class="ln s"></i><span class="bars"><b style="height:40%"></b><b style="height:62%"></b><b style="height:48%"></b><b style="height:80%"></b><b style="height:70%"></b></span></span><span class="tu-n">3</span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>33s</em></span><span data-i18n="rlsgh3" class="tu-tx"><small>Get started</small><b>Connect Meta</b></span><span class="sr">, 33s</span></a><a class="tu" href="app.html?tutorial=t4"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-dep"><i class="tb"></i><i class="ln"></i><i class="pill g"></i><i class="ln s"></i><i class="ln"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>36s</em></span><span data-i18n="lk6j9v" class="tu-tx"><small>Track deposits</small><b>Track deposits with request-to-join</b></span><span class="sr">, 36s</span></a><a class="tu" href="app.html?tutorial=t5"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-web"><i class="tb"></i><i class="hx"></i><i class="ln"></i><i class="cx"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>31s</em></span><span data-i18n="1safh47" class="tu-tx"><small>Grow</small><b>Send people from your own website</b></span><span class="sr">, 31s</span></a><a class="tu" href="app.html?tutorial=t6"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-list"><i class="tb"></i><i class="ln"></i><i class="row"></i><i class="row"></i><i class="cx"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>34s</em></span><span data-i18n="fodww2" class="tu-tx"><small>Grow</small><b>Use your own domain</b></span><span class="sr">, 34s</span></a><a class="tu" href="app.html?tutorial=t7"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-chat"><i class="tb"></i><i class="b"></i><i class="b me"></i><i class="b"></i><i class="b me s"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>31s</em></span><span data-i18n="exb1m6" class="tu-tx"><small>Grow</small><b>Connect your own bot’s Start</b></span><span class="sr">, 31s</span></a><a class="tu" href="app.html?tutorial=t8"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-team"><i class="tb"></i><i class="av"></i><i class="av"></i><i class="av"></i><i class="cx"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>28s</em></span><span data-i18n="1qw8wdd" class="tu-tx"><small>Team</small><b>Add your team</b></span><span class="sr">, 28s</span></a><a class="tu" href="app.html?tutorial=t10"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-team"><i class="tb"></i><i class="av"></i><i class="av"></i><i class="av"></i><i class="cx"></i></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>36s</em></span><span data-i18n="w3ywpn" class="tu-tx"><small>Team</small><b>Invite a setup helper</b></span><span class="sr">, 36s</span></a><a class="tu" href="app.html?tutorial=t9"><span class="tu-th" aria-hidden="true"><span class="tu-ph k-chart"><i class="tb"></i><i class="ln"></i><i class="ln s"></i><span class="bars"><b style="height:40%"></b><b style="height:62%"></b><b style="height:48%"></b><b style="height:80%"></b><b style="height:70%"></b></span></span><span class="tu-pl"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/></svg></span><em>35s</em></span><span data-i18n="l0md1g" class="tu-tx"><small>Read results</small><b>Read your results</b></span><span class="sr">, 35s</span></a></div>
+  <a data-i18n="qg5scf" class="demo-l tu-all" href="guide.html#tutorials">See all tutorials <span class="ar">→</span></a>
 </div></section>
 
 <section class="blk" id="why" style="padding-top:0"><div class="wrap center">

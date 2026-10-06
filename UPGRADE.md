@@ -2,9 +2,38 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
+## Round 18 — Setup helper + Accounts I manage (6 October 2026)
+
+**Nothing changes for existing users.** One column is added (`team_members.expires_at`, empty for everyone) and one setting (`team.helper_free`, default 1). Existing owners, managers, media buyers, seats, billing, tracking, links and every other feature behave exactly as before; nobody is charged anything new. The API is in `docs/round18-api.md`.
+
+### What changed
+- **Setup helper (`role: "helper"`)** — for the marketer or freelancer who sets up a customer's tracking without their password. Same rights as a Manager (the manager allow-list is reused, not copied): every channel and result, set up and edit bots, channels, ad platforms, link domain per channel, request-to-join, website snippets, backups and spend. Never billing, wallet, credits, withdrawals, referrals/affiliate payouts, team, API keys/postback key, a bot's forward URL or account deletion (403).
+  - **Free on every plan** (Basic, Pro and the trial): `team.helper_free` helpers per account (default 1) hold no seat, are never charged and are never paused by a downgrade or an unpaid month. A second helper on Basic gets 402 with a clear message; on Pro it takes a normal seat (counted and charged like a manager seat).
+  - Same invite flow as other roles (`POST /api/team/invite {email, role:"helper"}`, `/join-team/<token>`). The owner can remove the helper any time (immediate). Audit log entries as for other roles.
+- **"Access ends on"** (`expires_at`) for any member, set on the invite or later. When it passes, access is revoked by itself (checked on every request, and by a job every minute). Shown in the Team list.
+- **Accounts I manage** (`#accounts`, `GET /api/managed`) for anyone on 2+ teams or a helper on at least one: one card per account (name, role, joins today, joins 7 days, deposits 7 days) with alerts (lost channel, dead link, setup not finished, tracking paused for billing), each limited to what that role may see; media buyers only their channels; never billing amounts. Tap a card to switch to that account. Search when there are more than 6. Entry points: More, the top of the workspace switcher ("All accounts"), and the landing page after login for people with no channels of their own and 2+ accounts to manage.
+- **Guide:** Team page explainer card ("Get help setting up — without sharing your password"), roles in one line each, a "Watch how" button for the new tutorial **t10 "Invite a setup helper"**; invite sheet with Setup helper first (marked Free) and role descriptions; when email isn't set up, the invite link with **Send it on WhatsApp** and **Share on Telegram** buttons; a welcome card on the helper's Overview. Website Help page: new FAQ entry "Get help setting up, without sharing your password".
+- **Demo:** `dist/app.html?role=helper` opens as a freelancer helping five client accounts (lands on Accounts I manage; opening a client shows the welcome card).
+
+### New settings / environment variables (all optional)
+| Variable | Admin setting | Default |
+|---|---|---|
+| `TEAM_HELPER_FREE` | Settings → Plans & trial → Team seats… → *Free Setup helpers (every plan)* | 1 |
+| `TEAM_EXPIRE_MS` | — (tests only) | 60000 (1 minute) |
+
+The admin job runner also accepts `{"job":"team_expire"}`.
+
+### New / changed endpoints
+- `POST /api/team/invite`: `role` may be `helper`; optional `expires_at`. `PATCH /api/team/:id`: `role: "helper"`, `expires_at` (or `null`).
+- `GET /api/team`: `seats.helper_free`, `seats.helpers_free_used`, `members[].expires_at`, `members[].free` (helpers), a `helper` entry at the end of `roles`, log action `team.expire`.
+- `GET /api/managed` (new). `GET /api/workspace`: `workspaces[].expires_at` when set; ended memberships are no longer listed.
+
+### Voice-over to record
+`public/media/tutorials/t10.mp3` (script in `public/media/tutorials/README.md` and `docs/tutorials.json`), same voice as t1–t9. Until it's there, t10 plays with captions only.
+
 ## Tutorial voiceovers (6 October 2026)
 
-The 9 in-app video tutorials play `public/media/tutorials/t1.mp3` … `t9.mp3` when present (captions-only until then; never an error).
+The in-app video tutorials play `public/media/tutorials/t1.mp3` … `t10.mp3` when present (captions-only until then; never an error).
 The voiceovers are already recorded in the owner's ElevenLabs account (flow “Joinvoo tutorials voiceover (international)”, voice “Jacob L.” (American), 4 takes each):
 download one take per tutorial, name it `t1.mp3` … `t9.mp3` in the order of `docs/tutorials.json`, put them in `public/media/tutorials/`, run
 `bash src/dashboard/make.sh && python3 build/build.py`, and deploy. `server.js` now serves `/media/tutorials/*.mp3` (range requests, path-safe).
@@ -522,3 +551,8 @@ Nothing here is needed for Joinvoo to work. Do it when VooSquare is live. Full r
    affiliate commissions all stay right. The money itself is returned in the payment provider.
 9. **Referrals:** set to **VooSquare** only when the referral program moves there. Joinvoo's Earn page then points to VooSquare and
    existing balances stay withdrawable.
+
+
+## Tutorial voiceovers added (round 19)
+- All 11 voice files are now in `public/media/tutorials/` (t1–t10.mp3 and home.mp3). The dashboard tutorials and the homepage "Watch how it works" video play them automatically. No code changes; just deploy.
+- Only new files were added: nothing else changed, and all 1,619 tests pass.

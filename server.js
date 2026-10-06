@@ -235,6 +235,8 @@ for (const sql of [
     DELETE FROM meta_conns WHERE owner_id=OLD.id; DELETE FROM meta_accounts WHERE owner_id=OLD.id; DELETE FROM meta_campaigns WHERE owner_id=OLD.id;
     DELETE FROM report_log WHERE user_id=OLD.id OR scope_owner=OLD.id; DELETE FROM ch_alerts WHERE owner_id=OLD.id;
     UPDATE sessions SET workspace_owner=NULL WHERE workspace_owner=OLD.id; END`,
+  // round 18: "access ends on" for any team member (one-off setup help); the Setup helper role needs no new column
+  `ALTER TABLE team_members ADD COLUMN expires_at INTEGER`,
 ]) { try { db.exec(sql); } catch { /* already there */ } }
 const Q = (sql) => { const s = db.prepare(sql); return { get: (...a) => s.get(...a), all: (...a) => s.all(...a), run: (...a) => s.run(...a) }; };
 
@@ -399,6 +401,7 @@ const SETTING_DEFS = {
   'team.seat_cents': { def: () => envNum('TEAM_SEAT_CENTS', 500), v: int(0, 1e6) },
   'team.pro_included': { def: () => envNum('TEAM_PRO_INCLUDED', 3), v: int(0, 1000) },
   'team.basic_included': { def: () => envNum('TEAM_BASIC_INCLUDED', 0), v: int(0, 1000) },
+  'team.helper_free': { def: () => envNum('TEAM_HELPER_FREE', 1), v: int(0, 100) }, // round 18: free Setup helpers per account, on every plan
   'ban.fail_streak': { def: () => envNum('BAN_FAIL_STREAK', 3), v: int(1, 50) },
   'deadlink.min_hourly': { def: () => envNum('DEADLINK_MIN_HOURLY', 10), v: int(1, 1e6) },
   'deadlink.quiet_hours': { def: () => envNum('DEADLINK_QUIET_HOURS', 2), v: int(1, 12) },
@@ -1282,7 +1285,7 @@ function tr(lang, key, vars) {
 const userLang = (uid) => normLang(uid ? (Q(`SELECT lang FROM users WHERE id=?`).get(uid) || {}).lang : 'en');
 
 // Header illustrations (public/media/email/<art>.gif|png, 600×260). Only used when the file exists, so a missing one never leaves a broken image.
-const EMAIL_ART = { welcome: 'welcome', email_verified: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
+const EMAIL_ART = { welcome: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
   low_balance: 'low_balance', tracking_paused: 'paused', free_joins_80: 'free_80', free_joins_used: 'free_done', payout_requested: 'payout_requested', payout_sent: 'payout_sent',
   payout_rejected: 'payout_rejected', support_reply: 'support_reply', weekly_summary: 'weekly', trial_started: 'trial_started', trial_ending: 'trial_ending', trial_ended: 'trial_ended',
   pro_welcome: 'pro_welcome', plan_changed: 'plan_changed', meet_joe: 'meet_joe', rank_up: 'rank_up', level_up: ['level_up', 'rank_up'], credits_added: ['credits_added', 'payment'], staff_invite: ['staff_invite', 'welcome'] };
@@ -1377,15 +1380,6 @@ const EMAILS = {
       cta: { text: t('welcome.cta'), url: d.url }, link: true,
       rows: [[t('welcome.step1'), t('welcome.step1_v')], [t('welcome.step2'), t('welcome.step2_v')], [t('welcome.step3'), t('welcome.step3_v')], [t('welcome.step4'), t('welcome.step4_v')]].map(([a, b]) => [a, esc(b)]),
       after: [t('welcome.after', { guide: brandLink(BASE_URL + '/guide', esc(t('welcome.guide_link'))) })] }) },
-  email_verified: { title: 'Email confirmed', when: 'Right after they confirm their email address',
-    sample: () => ({ name: 'Alex', free: C.FREE_JOINS }),
-    build: (d, t) => ({ subject: t('email_verified.subject'), preheader: t('email_verified.preheader', { n: $num(d.free || C.FREE_JOINS) }), tone: 'violet', icon: '✅',
-      title: d.name ? t('email_verified.title_named', { name: d.name }) : t('email_verified.title'),
-      lead: d.free > 0 ? t('email_verified.lead_free', { n: $num(d.free || C.FREE_JOINS) }) : t('email_verified.lead'),
-      rows: [[t('email_verified.row1'), `${$num(d.free || C.FREE_JOINS)} ${t('email_verified.row1_value')}`], [t('email_verified.row2'), t('email_verified.row2_value')], [t('email_verified.row3'), t('email_verified.row3_value')]],
-      paras: [t('email_verified.p1')],
-      cta: { text: t('email_verified.cta'), url: BASE_URL + '/app' },
-      after: [t('email_verified.after', { guide: brandLink(BASE_URL + '/guide', esc(t('welcome.guide_link'))) })] }) },
   password_reset: { title: 'Password reset', when: 'When someone taps “Forgot your password?”',
     sample: () => ({ url: BASE_URL + '/app?reset=sample-token' }),
     build: (d, t) => ({ subject: t('reset.subject'), preheader: t('reset.preheader'), icon: '🔐', title: t('reset.title'),
@@ -1557,7 +1551,7 @@ function renderTemplate(name, data, lang = 'en') { const L = normLang(lang); ret
 const EMAIL_KIND = { payment_received: 'account', topup_review: 'account', topup_rejected: 'account', credits_added: 'account', free_joins_80: 'account', free_joins_used: 'account',
   trial_started: 'account', trial_ending: 'account', trial_ended: 'account', pro_welcome: 'account', plan_changed: 'account', rank_up: 'account', level_up: 'account',
   payout_requested: 'account', payout_sent: 'account', payout_rejected: 'account', support_reply: 'account', low_balance: 'alert', tracking_paused: 'alert', meet_joe: 'joe', weekly_summary: 'update', broadcast: 'update' };
-const SECURITY_EMAILS = new Set(['welcome', 'email_verified', 'password_reset', 'password_changed', 'staff_invite']);
+const SECURITY_EMAILS = new Set(['welcome', 'password_reset', 'password_changed', 'staff_invite']);
 const INBOX_KINDS = ['update', 'account', 'alert', 'joe'];
 const DEFAULT_PREFS = { update: { email: true }, account: { email: true }, alert: { email: true }, joe: { email: true } };
 function notifyPrefs(uid) {
@@ -4212,6 +4206,7 @@ async function api(req, res, url, user) {
   // Own-identity routes (profile, password, inbox, admin, workspace switch) always use the logged-in person; everything else
   // runs as the workspace owner, after the role allow-list (teamGate) and, for media buyers, only on their channels (user._scope).
   if (p === '/api/workspace') return workspaceApi(req, res, user, m);
+  if (p === '/api/managed' && m === 'GET') return send(res, 200, managedView(req, user, qs)); // round 18: "Accounts I manage" (always the logged-in person)
   if (p === '/api/team/accept' && m === 'POST') {
     const r = teamAccept(user.id, String((await readJson(req)).token || ''));
     if (r.ok && r.status === 'active') setSessionWs(req, r.owner_id);
@@ -5192,7 +5187,7 @@ function adminSettings() {
       summary_url: `${BASE_URL}/api/voosquare/summary`, outbox: vooOutboxStats(), api_key: mask(setting('voo.api_key')), support_bridge: !!setting('voo.support_bridge'),
       support_webhook_url: `${BASE_URL}/hooks/voosquare/support`, logout_return_url: BASE_URL + '/', affiliate_url: setting('voo.affiliate_url'), support_out: vooSupportStats(), widget: !!setting('voo.widget') },
     limits: setting('limits'), fraud: { burst_min: setting('fraud.burst_min') },
-    round17: { seat_cents: setting('team.seat_cents'), pro_included: setting('team.pro_included'), basic_included: setting('team.basic_included'), ban_fail_streak: setting('ban.fail_streak'),
+    round17: { seat_cents: setting('team.seat_cents'), pro_included: setting('team.pro_included'), basic_included: setting('team.basic_included'), helper_free: setting('team.helper_free'), ban_fail_streak: setting('ban.fail_streak'),
       deadlink_min_hourly: setting('deadlink.min_hourly'), deadlink_quiet_hours: setting('deadlink.quiet_hours'), deadlink_days: setting('deadlink.days'), deadlink_drop_pct: setting('deadlink.drop_pct'),
       meta_app_id: setting('meta.app_id'), meta_app_secret: mask(setting('meta.app_secret')), meta_available: metaAvailable(), meta_redirect_uri: `${BASE_URL}/auth/meta/callback` },
     keys: { anthropic_key: mask(joeKey()), anthropic_set: !!joeKey(), anthropic_from_env: !!env.ANTHROPIC_API_KEY && !changed.has('joe.api_key'),
@@ -5923,7 +5918,7 @@ async function adminApi(req, res, url, admin, st) {
       links: (k) => ({ domain: 'link.domain', backups: 'link.backups' }[k]),
       domains: (k) => ({ cname_target: 'domains.cname_target', cf_zone_id: 'domains.cf_zone_id', cf_token: 'domains.cf_token' }[k]),
       fraud: (k) => ({ burst_min: 'fraud.burst_min' }[k]),
-      round17: (k) => ({ seat_cents: 'team.seat_cents', pro_included: 'team.pro_included', basic_included: 'team.basic_included', ban_fail_streak: 'ban.fail_streak', deadlink_min_hourly: 'deadlink.min_hourly',
+      round17: (k) => ({ seat_cents: 'team.seat_cents', pro_included: 'team.pro_included', basic_included: 'team.basic_included', helper_free: 'team.helper_free', ban_fail_streak: 'ban.fail_streak', deadlink_min_hourly: 'deadlink.min_hourly',
         deadlink_quiet_hours: 'deadlink.quiet_hours', deadlink_days: 'deadlink.days', deadlink_drop_pct: 'deadlink.drop_pct', meta_app_id: 'meta.app_id', meta_app_secret: 'meta.app_secret' }[k]),
       voo: (k) => ({ login_mode: 'voo.login_mode', issuer: 'voo.issuer', client_id: 'voo.client_id', client_secret: 'voo.client_secret', redirect_uri: 'voo.redirect_uri', service_key: 'voo.service_key',
         webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals', api_key: 'voo.api_key', support_bridge: 'voo.support_bridge', affiliate_url: 'voo.affiliate_url', widget: 'voo.widget' }[k]),
@@ -6613,11 +6608,13 @@ for (const u of Q(`SELECT id FROM users WHERE voo_id IS NOT NULL AND voo_linked_
 const seenUpdates = new Map();
 // ---------- round 17: team seats + workspaces, daily Telegram report, channel ban protection, Meta spend sync, dead-link warning, audience guide ----------
 const R17_INVITE_MS = 7 * 864e5;
-const TEAM_ROLES = ['manager', 'buyer'];
+const TEAM_ROLES = ['manager', 'buyer', 'helper']; // round 18: 'helper' (Setup helper) = a manager's rights, free (team.helper_free per account)
 const tokHash = (t) => crypto.createHash('sha256').update('team:' + String(t)).digest('hex');
 const actorOf = (u) => (u && u._actor) || u;
 const monthLabel = (m = monthKey()) => new Date(m + '-01T00:00:00Z').toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-const roleName = (r) => (r === 'manager' ? 'Manager' : r === 'buyer' ? 'Media buyer' : 'Owner');
+const roleName = (r) => (r === 'manager' ? 'Manager' : r === 'buyer' ? 'Media buyer' : r === 'helper' ? 'Setup helper' : 'Owner');
+/** Round 18: a Setup helper has exactly the manager's rights (the manager allow-list is reused, never copied). */
+const gateRole = (r) => (r === 'helper' ? 'manager' : r);
 /** Joinvoo's own ad-link domains (the link domain + backups), as bases like https://gojoinly.com. */
 const joinvooLinkBases = () => [setting('link.domain'), ...(setting('link.backups') || [])].filter(Boolean);
 const baseHost = (b) => { try { return normDomain(new URL(b).host); } catch { return ''; } };
@@ -6652,11 +6649,25 @@ function teamAudit(req, actor, ownerId, action, email, summary = {}) {
 // ----- seats -----
 /** Pro, the Pro trial, admins and BILLING=off count as Pro (same rule as plan limits). */
 const teamPro = (ownerId) => limitsFor(ownerId).plan === 'pro';
+/**
+ * Round 18: the free Setup helper(s). The oldest helpers (active, paused or with an open invite) up to team.helper_free per account
+ * hold no seat on any plan: they are never charged, never counted in seats, and never paused by a downgrade. Any further helper is a
+ * normal seat (like a manager). Accounts without helpers: an empty set, so nothing changes for them.
+ */
+function freeHelperIds(ownerId) {
+  const n = setting('team.helper_free'); if (!n) return new Set();
+  return new Set(Q(`SELECT id FROM team_members WHERE owner_id=? AND role='helper' AND (status IN ('active','paused') OR (status='invited' AND invited_at>?)) ORDER BY id LIMIT ?`)
+    .all(ownerId, now() - R17_INVITE_MS, n).map((r) => r.id));
+}
+/** Is a free helper slot open (not counting member `exceptId`)? */
+const helperSlotFree = (ownerId, exceptId = 0) => cnt(`SELECT COUNT(*) FROM team_members WHERE owner_id=? AND role='helper' AND id<>? AND (status IN ('active','paused') OR (status='invited' AND invited_at>?))`,
+  ownerId, exceptId, now() - R17_INVITE_MS) < setting('team.helper_free');
 function seatInfo(ownerId) {
   const pro = teamPro(ownerId), m = monthKey();
   const included = pro ? setting('team.pro_included') : setting('team.basic_included');
-  const used = cnt(`SELECT COUNT(*) FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?))`, ownerId, now() - R17_INVITE_MS);
-  return { plan: pro ? 'pro' : 'basic', included, used, extra: Math.max(0, used - included), extra_paid_this_month: cnt(`SELECT COUNT(*) FROM ledger WHERE user_id=? AND kind='seats' AND ref LIKE ?`, ownerId, `seat:${ownerId}:${m}:%`),
+  const free = freeHelperIds(ownerId), liveIds = Q(`SELECT id FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?))`).all(ownerId, now() - R17_INVITE_MS).map((r) => r.id);
+  const used = liveIds.filter((id) => !free.has(id)).length;
+  return { plan: pro ? 'pro' : 'basic', included, used, helper_free: setting('team.helper_free'), helpers_free_used: liveIds.filter((id) => free.has(id)).length, extra: Math.max(0, used - included), extra_paid_this_month: cnt(`SELECT COUNT(*) FROM ledger WHERE user_id=? AND kind='seats' AND ref LIKE ?`, ownerId, `seat:${ownerId}:${m}:%`),
     paused: cnt(`SELECT COUNT(*) FROM team_members WHERE owner_id=? AND status='paused'`, ownerId), seat_cents: setting('team.seat_cents'), can_buy_extra: pro, pro_included: setting('team.pro_included'), month: m };
 }
 /** Extra seat number n for month m: charged once (ledger ref is the lock). Free for admins, BILLING=off and a $0 seat price. */
@@ -6678,10 +6689,12 @@ const teamSyncAt = new Map();
  */
 function teamSync(ownerId) {
   teamSyncAt.set(ownerId, now());
+  teamExpireDue(ownerId); // round 18: "access ends on" passed → removed
   if (!Q(`SELECT 1 FROM team_members WHERE owner_id=? AND status IN ('active','invited','paused') LIMIT 1`).get(ownerId)) return;
   const owner = Q(`SELECT id, email, status FROM users WHERE id=?`).get(ownerId); if (!owner) return;
   const pro = teamPro(ownerId) && owner.status !== 'suspended', included = pro ? setting('team.pro_included') : setting('team.basic_included');
-  const live = () => Q(`SELECT * FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?)) ORDER BY id`).all(ownerId, now() - R17_INVITE_MS);
+  // round 18: free Setup helpers hold no seat, so they are left out here (never paused, never charged)
+  const live = () => { const free = freeHelperIds(ownerId); return Q(`SELECT * FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?)) ORDER BY id`).all(ownerId, now() - R17_INVITE_MS).filter((r) => !free.has(r.id)); };
   const pause = (rows, why) => {
     if (!rows.length) return;
     for (const r of rows) Q(`UPDATE team_members SET status='paused', pause_reason=? WHERE id=?`).run(why, r.id);
@@ -6700,9 +6713,9 @@ function teamSync(ownerId) {
     if (paid < extra) pause(rows.slice(rows.length - (extra - paid)), 'unpaid');
   }
   for (const r of Q(`SELECT * FROM team_members WHERE owner_id=? AND status='paused' ORDER BY id`).all(ownerId)) { // bring paused members back while there is room
-    const used = live().length;
-    if (!pro && used >= included) break;
-    if (pro && used + 1 > included && seatCharge(ownerId, used + 1 - included).error) break;
+    const used = live().length, isFree = owner.status !== 'suspended' && freeHelperIds(ownerId).has(r.id); // round 18: a free Setup helper comes back on any plan
+    if (!isFree && !pro && used >= included) continue;
+    if (!isFree && pro && used + 1 > included && seatCharge(ownerId, used + 1 - included).error) continue;
     const back = r.user_id ? 'active' : 'invited';
     Q(`UPDATE team_members SET status=?, pause_reason=NULL, invited_at=CASE WHEN ?='invited' THEN ? ELSE invited_at END WHERE id=?`).run(back, back, now(), r.id);
     teamAudit(null, null, ownerId, 'team.resume', r.email, {});
@@ -6718,7 +6731,8 @@ function teamCtx(req, actor) {
   const s = Q(`SELECT workspace_owner FROM sessions WHERE token=?`).get(t), ws = s && s.workspace_owner;
   if (!ws || ws === actor.id) return actor;
   if (now() - (teamSyncAt.get(ws) || 0) > 60000) { try { teamSync(ws); } catch (e) { log('team sync', e.message); } }
-  const mbr = Q(`SELECT * FROM team_members WHERE owner_id=? AND user_id=? AND status='active' ORDER BY id DESC LIMIT 1`).get(ws, actor.id);
+  let mbr = Q(`SELECT * FROM team_members WHERE owner_id=? AND user_id=? AND status='active' ORDER BY id DESC LIMIT 1`).get(ws, actor.id);
+  if (mbr && mbr.expires_at && mbr.expires_at <= now()) { teamExpire(mbr); mbr = null; } // round 18: "access ends on" is checked on every request
   const o = mbr && Q(`SELECT id, email, name, status, last_seen, verified_at FROM users WHERE id=?`).get(ws);
   if (!mbr || !o || o.status === 'suspended') { Q(`UPDATE sessions SET workspace_owner=NULL WHERE token=?`).run(t); return actor; }
   return { ...o, _actor: actor, _member: { id: mbr.id, role: mbr.role, user_id: actor.id, owner_id: ws }, _scope: mbr.role === 'buyer' ? memberChannels(mbr.id, ws) : null };
@@ -6735,9 +6749,9 @@ const TEAM_ROUTES = [
   ['PATCH', /^\/api\/meta\/campaigns\/[\w.-]+$/, ['manager']],
 ];
 function teamGate(u, p, m, qs) {
-  const role = u._member.role, meth = m === 'HEAD' ? 'GET' : m;
-  if (p === '/api/deadlink/options' && role === 'buyer') return null; // scoped to their channels inside
-  if (!TEAM_ROUTES.some(([mm, re, roles]) => mm === meth && re.test(p) && roles.includes(role)))
+  const role = u._member.role, gr = gateRole(role), meth = m === 'HEAD' ? 'GET' : m;
+  if (p === '/api/deadlink/options' && gr === 'buyer') return null; // scoped to their channels inside
+  if (!TEAM_ROUTES.some(([mm, re, roles]) => mm === meth && re.test(p) && roles.includes(gr)))
     return { status: 403, error: `${roleName(role)}s can’t do this in a team workspace (billing, wallet, team, API keys and account settings stay with the owner). Switch to your own workspace, or ask the owner.`, team_role: role, team_denied: true };
   const ch = parseInt(qs.get('channel') || '', 10);
   if (u._scope && ch && !u._scope.includes(ch)) return { status: 403, error: 'You don’t have access to this channel.', team_role: role, team_denied: true };
@@ -6746,8 +6760,8 @@ function teamGate(u, p, m, qs) {
 function workspaceInfo(req, actor) {
   const ws = teamCtx(req, actor), me = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(actor.id) || actor;
   const list = [{ owner_id: actor.id, own: true, role: 'owner', status: 'active', name: displayName(me), email: me.email }];
-  for (const r of Q(`SELECT t.owner_id, t.role, t.status, t.pause_reason, u.email, u.name, u.nickname FROM team_members t JOIN users u ON u.id=t.owner_id WHERE t.user_id=? AND t.status IN ('active','paused') ORDER BY t.id`).all(actor.id))
-    list.push({ owner_id: r.owner_id, own: false, role: r.role, status: r.status, pause_reason: r.pause_reason || null, name: displayName(r), email: r.email });
+  for (const r of Q(`SELECT t.owner_id, t.role, t.status, t.pause_reason, t.expires_at, u.email, u.name, u.nickname FROM team_members t JOIN users u ON u.id=t.owner_id WHERE t.user_id=? AND t.status IN ('active','paused') AND (t.expires_at IS NULL OR t.expires_at>?) ORDER BY t.id`).all(actor.id, now()))
+    list.push({ owner_id: r.owner_id, own: false, role: r.role, status: r.status, pause_reason: r.pause_reason || null, name: displayName(r), email: r.email, ...(r.expires_at ? { expires_at: r.expires_at } : {}) });
   const cur = ws === actor ? list[0] : list.find((x) => !x.own && x.owner_id === ws.id) || list[0];
   return { current: { ...cur, channel_ids: ws === actor ? null : ws._scope }, workspaces: list };
 }
@@ -6757,11 +6771,69 @@ async function workspaceApi(req, res, actor, m) {
   const b = await readJson(req), oid = Math.floor(+b.owner_id || 0);
   if (!oid || oid === actor.id) { setSessionWs(req, null); return send(res, 200, { ok: true, ...workspaceInfo(req, actor) }); }
   teamSync(oid);
-  const mbr = Q(`SELECT status FROM team_members WHERE owner_id=? AND user_id=? AND status IN ('active','paused') ORDER BY id DESC LIMIT 1`).get(oid, actor.id);
+  const mbr = Q(`SELECT status FROM team_members WHERE owner_id=? AND user_id=? AND status IN ('active','paused') AND (expires_at IS NULL OR expires_at>?) ORDER BY id DESC LIMIT 1`).get(oid, actor.id, now());
   if (!mbr) return send(res, 403, { error: 'You’re not on that team.' });
   if (mbr.status !== 'active') return send(res, 403, { error: 'This team workspace is paused until the owner upgrades their plan or tops up.', paused: true });
   setSessionWs(req, oid);
   return send(res, 200, { ok: true, ...workspaceInfo(req, actor) });
+}
+// ----- round 18: "Accounts I manage" -----
+const MANAGED_MAX = 200;
+const inIds = (a) => (a.length ? a.map((x) => Math.floor(+x)).join(',') : '-1');
+/**
+ * GET /api/managed: one card per workspace the logged-in person can open (their own first, then every team they're on, up to 200):
+ * owner, role, channels, joins today / 7 days, deposits and revenue (7 days) and alerts, each limited to what that role may see
+ * (a media buyer: only their channels; nobody but the owner sees billing amounts — only "tracking paused"). Paused workspaces show no numbers.
+ * A handful of grouped queries for all workspaces together (no query per channel).
+ */
+function managedView(req, actor, qs) {
+  const t = now(), tz = parseRange(qs).tz;
+  const dayStart = Math.floor((t - tz * 60000) / 864e5) * 864e5 + tz * 60000, weekStart = dayStart - 6 * 864e5;
+  const me = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(actor.id) || actor;
+  const mem = Q(`SELECT t.id mid, t.owner_id, t.role, t.status, t.pause_reason, t.expires_at, u.email, u.name, u.nickname, u.status ustatus FROM team_members t JOIN users u ON u.id=t.owner_id
+    WHERE t.user_id=? AND t.status IN ('active','paused') AND (t.expires_at IS NULL OR t.expires_at>?) AND u.status<>'suspended' ORDER BY t.id`).all(actor.id, t);
+  const seen = new Set([actor.id]), list = [{ owner_id: actor.id, own: true, role: 'owner', status: 'active', pause_reason: null, name: displayName(me), email: me.email, mid: null }];
+  for (const r of mem) { if (seen.has(r.owner_id)) continue; seen.add(r.owner_id); list.push({ owner_id: r.owner_id, own: false, role: r.role, status: r.status, pause_reason: r.pause_reason || null, name: displayName(r), email: r.email, mid: r.mid, expires_at: r.expires_at || null }); }
+  const capped = list.length > MANAGED_MAX, rows = list.slice(0, MANAGED_MAX);
+  const open = rows.filter((w) => w.status === 'active'), ids = inIds(open.map((w) => w.owner_id));
+  // media buyers: the channels given to them (one query for every buyer membership)
+  const scope = new Map();
+  const buyers = open.filter((w) => w.role === 'buyer');
+  for (const w of buyers) scope.set(w.owner_id, new Set());
+  if (buyers.length) for (const r of Q(`SELECT t.owner_id, a.channel_id FROM team_channel_access a JOIN team_members t ON t.id=a.member_id JOIN channels c ON c.id=a.channel_id AND c.owner_id=t.owner_id WHERE a.member_id IN (${inIds(buyers.map((w) => w.mid))})`).all()) scope.get(r.owner_id).add(r.channel_id);
+  const sees = (oid, ch) => !scope.has(oid) || (ch != null && scope.get(oid).has(ch));
+  const agg = new Map(open.map((w) => [w.owner_id, { channels: 0, joins_today: 0, joins_7d: 0, deposits_7d: 0, revenue_7d_cents: 0, lost: 0, dead: 0, ads: 0, bots: 0, external: 0 }]));
+  for (const c of Q(`SELECT id, owner_id, type, lost_at, deadlink_at, COALESCE(ext,0) ext, (COALESCE(pixel_id,'')<>'' AND COALESCE(capi_token,'')<>'') OR (COALESCE(tt_pixel,'')<>'' AND COALESCE(tt_token,'')<>'') OR (COALESCE(sc_pixel,'')<>'' AND COALESCE(sc_token,'')<>'') ads
+      FROM channels WHERE owner_id IN (${ids}) AND status<>'removed'`).all()) {
+    if (!sees(c.owner_id, c.id)) continue;
+    const a = agg.get(c.owner_id); a.channels++; if (c.lost_at) a.lost++; if (c.deadlink_at) a.dead++; if (c.ads) a.ads++; if (c.ext) a.external++;
+  }
+  for (const r of Q(`SELECT owner_id, channel_id, SUM(CASE WHEN hour>=? THEN joins ELSE 0 END) jt, SUM(joins) j7 FROM hourly WHERE owner_id IN (${ids}) AND hour>=? GROUP BY owner_id, channel_id`).all(Math.floor(dayStart / 3600000), Math.floor(weekStart / 3600000))) {
+    if (!sees(r.owner_id, r.channel_id)) continue; const a = agg.get(r.owner_id); a.joins_today += r.jt || 0; a.joins_7d += r.j7 || 0;
+  }
+  for (const r of Q(`SELECT owner_id, channel_id, COALESCE(SUM(event='ftd' AND COALESCE(rejected,0)=0),0) f, COALESCE(SUM(${REVENUE_SQL}),0) rev FROM conversions WHERE owner_id IN (${ids}) AND matched=1 AND created_at>=? GROUP BY owner_id, channel_id`).all(weekStart)) {
+    if (!sees(r.owner_id, r.channel_id)) continue; const a = agg.get(r.owner_id); a.deposits_7d += r.f || 0; a.revenue_7d_cents += r.rev || 0;
+  }
+  for (const r of Q(`SELECT owner_id, COUNT(*) n FROM bots WHERE owner_id IN (${ids}) AND status='active' GROUP BY owner_id`).all()) agg.get(r.owner_id).bots = r.n;
+  const cur = teamCtx(req, actor), curId = cur === actor ? actor.id : cur.id;
+  const accounts = rows.map((w) => {
+    const base = { owner_id: w.owner_id, own: w.own, role: w.role, role_name: roleName(w.role), status: w.status, pause_reason: w.pause_reason, name: w.name, email: w.email, current: w.owner_id === curId,
+      ...(w.expires_at ? { expires_at: w.expires_at } : {}) };
+    const a = agg.get(w.owner_id);
+    if (!a) return { ...base, paused: true, channels: null, joins_today: null, joins_7d: null, deposits_7d: null, revenue_7d_cents: null, alerts: [] };
+    const alerts = [], buyer = w.role === 'buyer';
+    if (a.lost) alerts.push({ kind: 'lost_channel', n: a.lost, label: a.lost === 1 ? 'Channel lost' : `${a.lost} channels lost` });
+    if (a.dead) alerts.push({ kind: 'dead_link', n: a.dead, label: 'Ad link may be blocked' });
+    const missing = [];
+    if (!buyer && !a.bots && !a.external) missing.push('bot');
+    if (!a.channels) missing.push('channel'); else if (!a.ads) missing.push('ads');
+    if (missing.length) alerts.push({ kind: 'setup', missing, label: missing.includes('bot') ? 'Setup not finished: no bot' : missing.includes('channel') ? 'Setup not finished: no channel' : 'Setup not finished: no ad platform' });
+    const st = trackingState(w.owner_id);
+    if (!st.ok && (st.reason === 'need_plan' || st.reason === 'empty')) alerts.push({ kind: 'tracking_paused', label: 'Tracking paused (billing)' });
+    return { ...base, paused: false, channels: a.channels, joins_today: a.joins_today, joins_7d: a.joins_7d, deposits_7d: a.deposits_7d, revenue_7d_cents: isLocked(w.owner_id) ? null : a.revenue_7d_cents, alerts };
+  });
+  const others = list.filter((w) => !w.own);
+  return { eligible: others.length >= 2 || others.some((w) => w.role === 'helper'), count: list.length, capped, max: MANAGED_MAX, current_owner_id: curId, from_day_start: dayStart, accounts };
 }
 /** Who added a channel (for per-buyer results). Set once. */
 function markCreator(chId, user) { const a = actorOf(user); if (chId && a) Q(`UPDATE channels SET created_by=? WHERE id=? AND created_by IS NULL`).run(a.id, chId); }
@@ -6782,43 +6854,87 @@ function memberView(r) {
   const expired = r.status === 'invited' && now() - (r.invited_at || 0) > R17_INVITE_MS;
   return { id: r.id, email: r.email, role: r.role, role_name: roleName(r.role), status: expired ? 'expired' : r.status, pause_reason: r.pause_reason || null, user_id: r.user_id || null,
     account_email: u ? u.email : null, name: u ? displayName(u) : null, invited_at: r.invited_at || null, joined_at: r.joined_at || null,
-    invite_expires_at: r.status === 'invited' ? (r.invited_at || 0) + R17_INVITE_MS : null, channel_ids: memberChannels(r.id, r.owner_id), all_channels: r.role === 'manager', daily_report: !!r.daily_report };
+    invite_expires_at: r.status === 'invited' ? (r.invited_at || 0) + R17_INVITE_MS : null, channel_ids: memberChannels(r.id, r.owner_id), all_channels: r.role === 'manager' || r.role === 'helper', daily_report: !!r.daily_report,
+    expires_at: r.expires_at || null, ...(r.role === 'helper' ? { free: freeHelperIds(r.owner_id).has(r.id) } : {}) };
+}
+// ----- round 18: "access ends on" (expires_at) for any member -----
+/** expires_at from a request body: undefined (not sent), null (no end) or a time in the future (ms; a YYYY-MM-DD date means the end of that day UTC). */
+function parseExpires(v) {
+  if (v === undefined) return { v: undefined };
+  if (v === null || v === '' || v === 0) return { v: null };
+  let t = typeof v === 'number' ? v : /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? Date.parse(v + 'T23:59:59Z') : Date.parse(String(v));
+  if (!Number.isFinite(t)) return { error: 'Pick a valid date for “Access ends on”.' };
+  { const d = typeof v === 'string' && /^(\d{4})-(\d{2})-(\d{2})/.exec(v); // QA: no 30 February (Date.parse rolls it over into March)
+    if (d && (+d[2] < 1 || +d[2] > 12 || new Date(Date.UTC(+d[1], +d[2] - 1, +d[3])).getUTCDate() !== +d[3])) return { error: 'Pick a valid date for “Access ends on”.' }; }
+  t = Math.floor(t);
+  if (t <= now()) return { error: '“Access ends on” must be in the future.' };
+  if (t > now() + 3 * 365 * 864e5) return { error: '“Access ends on” can be at most 3 years away.' };
+  return { v: t };
+}
+/** Access ended: the member is removed (like the owner tapping Remove), their sessions leave the workspace, both sides get an inbox note. */
+function teamExpire(r) {
+  const done = tx(() => {
+    const ch = Q(`UPDATE team_members SET status='removed', removed_at=?, invite_token=NULL, daily_report=0 WHERE id=? AND status<>'removed'`).run(now(), r.id).changes;
+    if (!ch) return false;
+    Q(`DELETE FROM team_channel_access WHERE member_id=?`).run(r.id);
+    if (r.user_id) Q(`UPDATE sessions SET workspace_owner=NULL WHERE workspace_owner=? AND user_id=?`).run(r.owner_id, r.user_id);
+    return true;
+  });
+  if (!done) return;
+  const owner = Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(r.owner_id) || {};
+  teamAudit(null, null, r.owner_id, 'team.expire', r.email, { role: r.role, expires_at: r.expires_at });
+  if (r.user_id) inboxAdd(r.user_id, { kind: 'account', title: 'Your access ended', body: `Your access to ${displayName(owner)}’s Joinvoo account ended as planned. Your own account and data aren’t affected.`, tag: `team_expired:${r.id}` });
+  inboxAdd(r.owner_id, { kind: 'account', title: `${r.email}’s access ended`, body: `${roleName(r.role)} access ended on the date you set. Invite them again any time.`, cta_label: 'Team', cta_url: '#tab:team', tag: `team_expired_o:${r.id}` });
+  log('team expire', r.owner_id, r.email);
+}
+/** Every member whose access end has passed (one account, or all of them from the job). */
+function teamExpireDue(ownerId) {
+  const rows = ownerId ? Q(`SELECT * FROM team_members WHERE owner_id=? AND expires_at IS NOT NULL AND expires_at<=? AND status<>'removed'`).all(ownerId, now())
+    : Q(`SELECT * FROM team_members WHERE expires_at IS NOT NULL AND expires_at<=? AND status<>'removed'`).all(now());
+  for (const r of rows) { try { teamExpire(r); } catch (e) { log('team expire', e.message); } }
+  return rows.length;
 }
 function teamView(owner) {
   return { seats: seatInfo(owner.id), email_on: !!resendKey(), invite_days: R17_INVITE_MS / 864e5,
     members: Q(`SELECT * FROM team_members WHERE owner_id=? AND status<>'removed' ORDER BY id`).all(owner.id).map(memberView),
     channels: Q(`SELECT id, title, type, status FROM channels WHERE owner_id=? AND NOT (status='removed' AND COALESCE(removed_by_user,0)=1) ORDER BY id`).all(owner.id),
     roles: [{ id: 'manager', name: 'Manager', can: 'All channels and results; add and edit channels. No billing, wallet, withdrawals, team, API keys or account deletion.' },
-      { id: 'buyer', name: 'Media buyer', can: 'Only the channels you give them, and only those channels’ joins, people, clicks, deposits, comparisons and exports.' }],
+      { id: 'buyer', name: 'Media buyer', can: 'Only the channels you give them, and only those channels’ joins, people, clicks, deposits, comparisons and exports.' },
+      { id: 'helper', name: 'Setup helper', free: true, can: 'Sets up your bots, channels, ads and domains, and sees your results. No billing, wallet, money, team or API keys. Free on every plan (one per account).' }],
     log: Q(`SELECT at, actor_email, action, summary FROM audit WHERE area='team' AND target=? ORDER BY id DESC LIMIT 50`).all('owner:' + owner.id).map((x) => ({ ...x, summary: pj(x.summary, {}) })) };
 }
 function sendTeamInvite(owner, email, role, url) {
   const by = displayName(Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(owner.id) || owner), to = Q(`SELECT id FROM users WHERE email=?`).get(email);
   return sendPlainMail(to ? to.id : null, email, 'r17:team_invite', { subject: `${by} invited you to their Joinvoo team`, preheader: `Join as ${roleName(role)}`, icon: '🤝', title: `Join ${by}’s team on Joinvoo`,
     lead: `${esc(by)} (${esc(owner.email)}) added you to their Joinvoo workspace as <b>${roleName(role)}</b>.`,
-    paras: [role === 'manager' ? 'You’ll see all their channels and results and can add and edit channels. Billing, the wallet and the team stay with the owner.' : 'You’ll see the channels they give you: joins, people, clicks, deposits and comparisons for those channels.',
+    paras: [role === 'helper' ? 'You can set up their bots, channels, ads and domains, and see their results. Billing and money stay with the owner. If you help several clients, “Accounts I manage” shows them all in one place.'
+      : role === 'manager' ? 'You’ll see all their channels and results and can add and edit channels. Billing, the wallet and the team stay with the owner.' : 'You’ll see the channels they give you: joins, people, clicks, deposits and comparisons for those channels.',
       to ? 'Log in with your Joinvoo account and you can switch between your own workspace and this team any time.' : 'Create a free Joinvoo login with this link (any email works), and you land straight in the team workspace.'],
     cta: { text: 'Join the team', url }, callout: { tone: 'amber', html: 'This link works for 7 days. If you weren’t expecting it, you can ignore this email.' } });
 }
 async function teamInvite(req, owner, b) {
   const email = String(b.email || '').trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 200) return { error: 'Enter a valid email.' };
-  const role = TEAM_ROLES.includes(b.role) ? b.role : null; if (!role) return { error: 'Pick a role: manager or buyer.' };
+  const role = TEAM_ROLES.includes(b.role) ? b.role : null; if (!role) return { error: 'Pick a role: helper, manager or buyer.' };
+  const exp = parseExpires(b.expires_at); if (exp.error) return { error: exp.error };
   if (email === String(owner.email || '').toLowerCase()) return { error: 'That’s you: you already own this workspace.' };
   if (Q(`SELECT 1 FROM team_members WHERE owner_id=? AND email=? AND status<>'removed'`).get(owner.id, email)) return { error: 'This person is already on your team or invited. Use “Resend” to send the link again.' };
   if (limited('teaminv:' + owner.id, 40, 3600)) return { status: 429, error: 'Too many invites in the last hour. Try again later.' };
   teamSync(owner.id);
   const S = seatInfo(owner.id), lim = { kind: 'seats', used: S.used, max: S.included, plan: S.plan };
-  if (S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: lim,
+  const freeHelper = role === 'helper' && helperSlotFree(owner.id); // round 18: the first Setup helper is free on every plan (no seat, no charge)
+  if (!freeHelper && role === 'helper' && S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, helper_limit: true, limit: { ...lim, helper_free: S.helper_free },
+    error: `Your free Setup helper is already invited. Remove them first to invite someone else, or upgrade to Pro to add more helpers as team seats (${S.pro_included} included, then ${$usd(S.seat_cents)} a month each).` };
+  if (!freeHelper && S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: lim,
     error: S.included ? `You’ve used ${S.used} of ${S.included} team seats on Basic. Upgrade to Pro for ${S.pro_included} seats plus extra seats at ${$usd(S.seat_cents)} a month.` : `Team seats are a Pro feature. Upgrade to Pro: ${S.pro_included} seats included, extra seats ${$usd(S.seat_cents)} a month each.` };
   let charged = 0;
-  if (S.used + 1 > S.included) { const c = seatCharge(owner.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents, limit: lim }; charged = c.charged_cents || 0; }
+  if (!freeHelper && S.used + 1 > S.included) { const c = seatCharge(owner.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents, limit: lim }; charged = c.charged_cents || 0; }
   const token = rid(24);
-  const id = Number(Q(`INSERT INTO team_members(owner_id,email,role,status,invite_token,invited_at,invited_by) VALUES(?,?,?,'invited',?,?,?)`).run(owner.id, email, role, tokHash(token), now(), actorOf(owner).id).lastInsertRowid);
-  const chans = setAccess(id, owner.id, b.channel_ids);
+  const id = Number(Q(`INSERT INTO team_members(owner_id,email,role,status,invite_token,invited_at,invited_by,expires_at) VALUES(?,?,?,'invited',?,?,?,?)`).run(owner.id, email, role, tokHash(token), now(), actorOf(owner).id, exp.v || null).lastInsertRowid);
+  const chans = setAccess(id, owner.id, role === 'helper' ? [] : b.channel_ids); // a helper sees every channel, like a manager
   const url = `${BASE_URL}/join-team/${token}`;
   sendTeamInvite(owner, email, role, url);
-  teamAudit(req, owner, owner.id, 'team.invite', email, { role, channels: chans, charged_cents: charged });
+  teamAudit(req, owner, owner.id, 'team.invite', email, { role, channels: chans, charged_cents: charged, ...(freeHelper ? { free: true } : {}), ...(exp.v ? { expires_at: exp.v } : {}) });
   log('team invite', owner.id, email, role);
   return { ok: true, member: memberView(Q(`SELECT * FROM team_members WHERE id=?`).get(id)), invite_url: url, emailed: !!resendKey(), charged_cents: charged, seats: seatInfo(owner.id) };
 }
@@ -6834,7 +6950,7 @@ async function teamApi(req, user, p, m) {
       if (r.status !== 'invited' && !(r.status === 'paused' && !r.user_id)) return { error: 'They already joined. Resend only works for open invites.' };
       if (limited('teamresend:' + user.id, 30, 3600)) return { status: 429, error: 'Too many resends. Try again later.' };
       let charged = 0;
-      if (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS) { // an expired invite didn't hold a seat: it needs one again
+      if (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS && !(r.role === 'helper' && helperSlotFree(user.id, r.id))) { // an expired invite didn't hold a seat: it needs one again (a free helper slot: no seat)
         const S = seatInfo(user.id);
         if (S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: { kind: 'seats', used: S.used, max: S.included, plan: S.plan }, error: `Team seats are full on your plan. Upgrade to Pro for ${S.pro_included} seats.` };
         if (S.used + 1 > S.included) { const c = seatCharge(user.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents }; charged = c.charged_cents || 0; }
@@ -6847,11 +6963,23 @@ async function teamApi(req, user, p, m) {
       return { ok: true, member: memberView(Q(`SELECT * FROM team_members WHERE id=?`).get(r.id)), invite_url: url, emailed: !!resendKey(), charged_cents: charged };
     }
     if (!mm[2] && m === 'PATCH') {
-      const b = await readJson(req), before = { role: r.role, channels: memberChannels(r.id, user.id) };
-      if (b.role !== undefined) { if (!TEAM_ROLES.includes(b.role)) return { error: 'Pick a role: manager or buyer.' }; Q(`UPDATE team_members SET role=? WHERE id=?`).run(b.role, r.id); }
+      const b = await readJson(req), before = { role: r.role, channels: memberChannels(r.id, user.id), ...(r.expires_at ? { expires_at: r.expires_at } : {}) };
+      const exp = parseExpires(b.expires_at); if (exp.error) return { error: exp.error };
+      if (b.role !== undefined) { if (!TEAM_ROLES.includes(b.role)) return { error: 'Pick a role: helper, manager or buyer.' };
+        // round 18: leaving the free helper slot needs a seat like any invite (402 on a plan without one); taking the free slot frees a seat
+        const wasFree = r.role === 'helper' && freeHelperIds(user.id).has(r.id), seatNow = !(r.status === 'paused' || (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS));
+        if (wasFree && b.role !== 'helper' && seatNow && helperSlotFree(user.id, r.id)) { // (when another helper takes over the free slot, the seat count doesn't change)
+          const S = seatInfo(user.id);
+          if (S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: { kind: 'seats', used: S.used, max: S.included, plan: S.plan }, error: `A ${roleName(b.role)} needs a team seat, and your plan has none free. Upgrade to Pro for ${S.pro_included} seats.` };
+          if (S.used + 1 > S.included) { const c = seatCharge(user.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents }; }
+        }
+        Q(`UPDATE team_members SET role=? WHERE id=?`).run(b.role, r.id);
+        if (b.role === 'helper' && r.role !== 'helper') setAccess(r.id, user.id, []); // a helper sees every channel
+        if ((b.role === 'helper') !== (r.role === 'helper')) teamSync(user.id); }
       if (b.channel_ids !== undefined) setAccess(r.id, user.id, b.channel_ids);
+      if (exp.v !== undefined) Q(`UPDATE team_members SET expires_at=? WHERE id=?`).run(exp.v, r.id);
       const after = Q(`SELECT * FROM team_members WHERE id=?`).get(r.id);
-      teamAudit(req, user, user.id, 'team.update', r.email, { before, after: { role: after.role, channels: memberChannels(r.id, user.id) } });
+      teamAudit(req, user, user.id, 'team.update', r.email, { before, after: { role: after.role, channels: memberChannels(r.id, user.id), ...(after.expires_at ? { expires_at: after.expires_at } : {}) } });
       return { ok: true, member: memberView(after) };
     }
     if (!mm[2] && m === 'DELETE') {
@@ -6872,6 +7000,7 @@ function teamAccept(actorId, token) {
   const r = token ? Q(`SELECT * FROM team_members WHERE invite_token=?`).get(tokHash(token)) : null;
   if (!r || r.status === 'removed' || r.status === 'active') return { error: 'This invite link isn’t valid any more. Ask the team owner to send a new one.', code: 'invalid', status_code: 404 };
   if (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS) return { error: 'This invite expired. Ask the team owner to resend it.', code: 'expired', status_code: 410 };
+  if (r.expires_at && r.expires_at <= now()) { teamExpire(r); return { error: 'This invite isn’t valid any more: the access it gave has ended.', code: 'invalid', status_code: 404 }; }
   if (r.owner_id === actorId) return { error: 'This is an invite to your own workspace.', code: 'own', status_code: 400 };
   if (Q(`SELECT 1 FROM team_members WHERE owner_id=? AND user_id=? AND status IN ('active','paused') AND id<>?`).get(r.owner_id, actorId, r.id)) return { error: 'You’re already on this team.', code: 'member', status_code: 400 };
   const owner = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(r.owner_id); if (!owner) return { error: 'This team no longer exists.', code: 'invalid', status_code: 404 };
@@ -6885,7 +7014,7 @@ function teamAccept(actorId, token) {
 }
 function teamInviteInfo(token) {
   const r = token ? Q(`SELECT * FROM team_members WHERE invite_token=?`).get(tokHash(token)) : null;
-  if (!r || r.status === 'removed' || r.status === 'active') return { status: 404, ok: false, valid: false, error: 'This invite link isn’t valid any more.' };
+  if (!r || r.status === 'removed' || r.status === 'active' || (r.expires_at && r.expires_at <= now())) return { status: 404, ok: false, valid: false, error: 'This invite link isn’t valid any more.' }; // QA: the access it gives has ended
   const owner = Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(r.owner_id) || {};
   const expired = r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS;
   return { ok: !expired, valid: !expired, expired, status: expired ? 410 : 200, email: r.email, role: r.role, role_name: roleName(r.role), owner_name: displayName(owner), owner_email: owner.email || null,
@@ -7424,6 +7553,9 @@ setInterval(banJob, Math.max(200, +env.BAN_JOB_MS || 120000)).unref();
 setInterval(deadlinkJob, Math.max(200, +env.DEADLINK_JOB_MS || 15 * 60000)).unref();
 setInterval(metaJob, Math.max(1000, +env.META_SYNC_MS || 3600000)).unref();
 const R17_JOBS = { team_seats: () => { for (const r of Q(`SELECT DISTINCT owner_id FROM team_members WHERE status IN ('active','invited','paused')`).all()) teamSync(r.owner_id); }, daily_report: reportJob, ban_check: banJob, dead_links: deadlinkJob, meta_sync: metaJob };
+// round 18: "access ends on" — revoked within a minute by this job (and at once by the next request of that person, see teamCtx)
+setInterval(() => { try { teamExpireDue(); } catch (e) { log('team expire job', e.message); } }, Math.max(1000, +env.TEAM_EXPIRE_MS || 60000)).unref();
+R17_JOBS.team_expire = () => { teamExpireDue(); };
 
 // ---------- router ----------
 const server = http.createServer(async (req, res) => {
@@ -7526,14 +7658,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/verify') {
       const [uid, exp, sig] = String(url.searchParams.get('t') || '').split('.');
       if (!uid || !exp || sig !== hmac('verify:' + uid + ':' + exp) || +exp < now()) return send(res, 302, '', { location: '/app?verified=expired' });
-      const u = Q(`SELECT id, email, name, verified_at FROM users WHERE id=?`).get(+uid);
-      if (u && !u.verified_at) {
-        Q(`UPDATE users SET verified_at=? WHERE id=?`).run(now(), u.id);
-        grantWelcome(u.id);
-        sendTemplate(u.email, 'email_verified', { name: u.name || '' }, { userId: u.id, lang: userLang(u.id) });
-        staffBust();
-        log('email verified', u.id);
-      }
+      const u = Q(`SELECT id, verified_at FROM users WHERE id=?`).get(+uid);
+      if (u && !u.verified_at) { Q(`UPDATE users SET verified_at=? WHERE id=?`).run(now(), u.id); grantWelcome(u.id); staffBust(); log('email verified', u.id); }
       return send(res, 302, '', { location: '/app?verified=1' });
     }
     if ((mm = /^\/pb\/([A-Za-z0-9_-]{8,40})$/.exec(p))) return await onPostback(req, res, mm[1]);

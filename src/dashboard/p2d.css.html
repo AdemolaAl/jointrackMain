@@ -273,6 +273,45 @@
 .tut-play svg{width:16px;height:16px;margin-left:2px}.tut-card:hover .tut-play{transform:scale(1.08)}
 .tut-th em{position:absolute;right:10px;bottom:12px;font-style:normal;font-size:11.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)}
 .tut-t{display:flex;flex-direction:column;padding:12px 14px 14px;gap:2px}.tut-t b{font-weight:800;font-size:14.5px;letter-spacing:-.015em;line-height:1.3}.tut-t small{color:var(--faint);font-size:12px}
+/* Tutorials page (#tutorials) */
+.tutp{gap:26px}
+.tutp .ph{align-items:flex-end}
+.tut-prog{display:flex;flex-direction:column;gap:6px;min-width:170px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.tut-prog i{display:block;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.tut-prog u{display:block;height:100%;border-radius:inherit;background:var(--mint);transition:width .5s var(--ease)}
+.tut-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tut-h .link{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13.5px}
+.tut-h .link svg{width:14px;height:14px}
+.tut-eb{flex-basis:100%;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-text)}
+.tut-eb svg{width:10px;height:10px}
+.tut-n{position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);color:#1b1340;font-size:12px;font-weight:800;display:grid;place-items:center}
+.tut-ck{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--mint);color:#fff;display:none;place-items:center;box-shadow:0 4px 12px -4px rgba(0,0,0,.45)}
+.tut-ck svg{width:13px;height:13px}
+.tut-card.seen .tut-ck{display:grid}
+.tut-card.seen .tut-play{background:rgba(255,255,255,.85)}
+.tut-foot{margin:0;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tut-foot .link{display:inline-flex;align-items:center;gap:4px;font-weight:700}.tut-foot .link svg{width:14px;height:14px}
+@media (min-width:901px){.subnav .sn-tut{display:none}.subnav:has(.sn-tut){display:none}}
+@media (max-width:560px){.tutp{gap:20px}.tutp .ph{flex-direction:column;align-items:stretch}.tut-prog{min-width:0}.tut-t{padding:10px 11px 12px}.tut-t b{font-size:13.5px}.tut-th em{right:8px;bottom:8px}.tut-play{left:8px;bottom:8px;width:34px;height:34px}.tut-n{left:8px;top:8px}.tut-ck{right:8px;top:8px}}
+.nav-a[data-p="tutorials"] .new{min-width:24px;text-align:center;padding:2px 7px}
+.mtut .mr-ic{background:var(--brand-soft);color:var(--brand-text)}
+.mr-n{font-style:normal;font-size:11.5px;font-weight:800;min-width:24px;text-align:center;padding:2px 7px;border-radius:99px;background:var(--lilac);color:var(--lilac-ink)}
+.tv-end.has-next{align-content:center}.tv-end.has-next .tv-next{flex-basis:100%;max-width:340px;justify-content:center}
+.tv-next span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* Overview: "New here?" strip */
+.tstrip{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid color-mix(in srgb,var(--brand) 20%,var(--line));border-radius:99px;background:color-mix(in srgb,var(--brand-soft) 55%,var(--surface));transition:opacity .2s,transform .2s var(--ease)}
+.tstrip.out{opacity:0;transform:translateY(-4px)}
+.ts-go{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;padding:0 6px 0 0;min-height:40px;cursor:pointer;color:inherit;text-align:left;font:inherit}
+.ts-pl{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 4px 12px -4px color-mix(in srgb,var(--brand) 70%,transparent);transition:transform .15s var(--ease)}
+.ts-pl svg{width:12px;height:12px;margin-left:2px}
+.ts-go:hover .ts-pl{transform:scale(1.06)}.ts-go:active .ts-pl{transform:scale(.95)}
+.ts-t{font-size:13.5px;line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-t b{font-weight:800}.ts-t span{color:var(--muted);font-weight:600}.ts-t em{font-style:normal;font-weight:700;color:var(--brand-text);font-size:12.5px}
+.ts-x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--faint);display:grid;place-items:center;cursor:pointer}
+.ts-x:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.ts-x svg{width:15px;height:15px}
+@media (prefers-reduced-motion:no-preference){.ts-pl{animation:wpulse 2.6s var(--ease) infinite}}
+@media (max-width:400px){.ts-t b{display:none}.ts-t span{color:var(--ink);font-weight:700}}
 
 /* ================= tutorial player ================= */
 .tvp{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;animation:fade .2s}
@@ -695,10 +734,13 @@ body:has(.joe-page) .sup-launch{display:none!important}
 .utm17-l{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:13px;min-height:32px}
 
 .utmc{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.utmc-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.utmc-ps{display:flex;gap:6px}
-.utmc-p{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;opacity:.55;transition:opacity .2s,border-color .2s}
-.utmc-p.on{opacity:1;border-color:var(--brand,#5b3df5);box-shadow:0 0 0 3px color-mix(in srgb,#5b3df5 15%,transparent)}
+.utmc-h{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
+.utmc-ps{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk);border:1px solid var(--line)}
+.utmc-p{height:30px;padding:0 11px 0 7px;border:0;border-radius:999px;background:transparent;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:600 12.5px/1 var(--f);color:var(--muted);transition:background .2s,color .2s,box-shadow .2s}
+.utmc-p .pm{width:18px;height:18px;border-radius:50%;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}.utmc-p .pm svg{width:10px;height:10px}
+.utmc-p:hover{color:var(--ink)}
+.utmc-p.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh1,0 1px 3px rgba(0,0,0,.12))}.utmc-p.on .pm{filter:none;opacity:1}
+@media (max-width:480px){.utmc-ps{display:flex;width:100%}.utmc-p{flex:1;justify-content:center}}
 .utmc-b code{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere;word-break:break-all;font-size:12px;line-height:1.5;text-overflow:clip!important;display:block}
 .utmc-t{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .utmc-b code b{color:var(--brand-text);font-weight:700}

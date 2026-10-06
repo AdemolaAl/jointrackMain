@@ -588,6 +588,10 @@ const Demo = (() => {
      Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.
      ?limits=over puts the sample on 3/3 (two channels show as locked). Upgrading to Pro in the demo lifts both. */
   const q11=new URLSearchParams(location.search);
+  const H18=q11.get('role')==='helper'; /* round 18 demo: a freelancer Setup helper (see handle18) */
+  const CLIENTS18=[{id:7,name:'Ada Okafor',email:'ada@growfast.co',role:'helper',ch:3,dead:true},{id:8,name:'Bayo Stores',email:'bayo@bayostores.ng',role:'helper',setup:'ads',ch:2},
+    {id:9,name:'Chidi Media',email:'chidi@chidimedia.com',role:'manager',ch:5,lost:true},{id:10,name:'Dami Deals',email:'dami@damideals.co',role:'buyer'},
+    {id:12,name:'Efe Signals',email:'efe@efesignals.io',role:'helper',ch:2,billing:true},{id:14,name:'Funmi Fits',email:'funmi@funmifits.com',role:'helper',status:'paused'}];
   const lim11=()=>{ const pro=plan6.id==='pro'||q11.get('limits')==='pro'; return {plan:pro?'pro':'basic',unlimited:pro,ch:pro?null:(q11.get('limits')==='over'||!sample?3:6),bt:pro?null:3}; };
   const liveCh=()=>db.channels.filter(c=>!c.deleted&&c.status!=='removed');
   const actBots=()=>db.bots.filter(b=>b.status==='active');
@@ -678,25 +682,31 @@ const Demo = (() => {
   const e402=(m,body)=>{ const e=err(m,body); e.status=402; e.body=body; return e; };
   let r17=null;
   const R17=()=>{ if (r17) return r17; const t=Date.now(), calm=q11.get('r17')==='calm'||!sample;
-    r17={ ch:{}, ws:q11.get('role')==='buyer'||q11.get('role')==='manager'?7:0, report:{enabled:false,hour:8,linked:false,via:null,saved:false,last_sent:null}, meta:{connected:q11.get('meta')==='on',selected:['act_111']}, mapped:{},
+    r17={ ch:{}, ws:q11.get('role')==='buyer'||q11.get('role')==='manager'||H18?7:0, report:{enabled:false,hour:8,linked:false,via:null,saved:false,last_sent:null}, meta:{connected:q11.get('meta')==='on',selected:['act_111']}, mapped:{},
       members:sample?[{id:12,email:'mia@studio.co',role:'manager',status:'active',user_id:44,name:'Mia',invited_at:t-12*864e5,joined_at:t-11*864e5,invite_expires_at:null,channel_ids:[],daily_report:true},
         {id:13,email:'ben@buyers.io',role:'buyer',status:'active',user_id:45,name:'Ben',invited_at:t-9*864e5,joined_at:t-9*864e5,invite_expires_at:null,channel_ids:[12],daily_report:false},
         {id:14,email:'tolu@buyers.io',role:'buyer',status:'invited',user_id:null,name:null,invited_at:t-2*864e5,joined_at:null,invite_expires_at:t+5*864e5,channel_ids:[13]}]:[], mid:20, log:[] };
     if (sample && !calm){ r17.ch[13]={backup_channel_id:11,lost_at:t-26*60e3,lost_reason:'bot_kicked',failed_over_to:11}; r17.ch[12]={deadlink_at:t-40*60e3}; }
     return r17; };
   const chX=id=>(R17().ch[id]=R17().ch[id]||{});
-  const roleName=r=>r==='manager'?'Manager':r==='buyer'?'Media buyer':'Owner';
-  const seats17=()=>{ const L=lim11(), pro=L.plan==='pro'||sample, inc=pro?3:0, used=R17().members.filter(m=>m.status==='active'||m.status==='invited').length;
-    return {plan:pro?'pro':L.plan,included:inc,used,extra:Math.max(0,used-inc),extra_paid_this_month:Math.max(0,used-inc),paused:0,seat_cents:500,can_buy_extra:pro,pro_included:3,month:ymd(new Date()).slice(0,7)}; };
-  const mem17=m=>({...m,role_name:roleName(m.role),account_email:m.user_id?m.email:null,pause_reason:null,all_channels:m.role==='manager',status:m.status==='invited'&&m.invite_expires_at<Date.now()?'expired':m.status});
+  const roleName=r=>r==='manager'?'Manager':r==='buyer'?'Media buyer':r==='helper'?'Setup helper':'Owner';
+  /* round 18: the first Setup helper is free on every plan (no seat) */
+  const freeHelper18=()=>{ const h=R17().members.find(m=>m.role==='helper'&&(m.status==='active'||m.status==='invited')); return h?h.id:null; };
+  const seats17=()=>{ const L=lim11(), pro=L.plan==='pro'||sample, inc=pro?3:0, fh=freeHelper18(), used=R17().members.filter(m=>(m.status==='active'||m.status==='invited')&&m.id!==fh).length;
+    return {plan:pro?'pro':L.plan,included:inc,used,extra:Math.max(0,used-inc),extra_paid_this_month:Math.max(0,used-inc),paused:0,seat_cents:500,can_buy_extra:pro,pro_included:3,month:ymd(new Date()).slice(0,7),helper_free:1,helpers_free_used:fh?1:0}; };
+  const mem17=m=>({...m,role_name:roleName(m.role),account_email:m.user_id?m.email:null,pause_reason:null,all_channels:m.role==='manager'||m.role==='helper',expires_at:m.expires_at||null,...(m.role==='helper'?{free:m.id===freeHelper18()}:{}),status:m.status==='invited'&&m.invite_expires_at<Date.now()?'expired':m.status});
   const ws17=()=>{ const own={owner_id:1,own:true,role:'owner',status:'active',name:'Alex',email:'alex@example.com'}, ada={owner_id:7,own:false,role:q11.get('role')==='manager'?'manager':'buyer',status:'active',pause_reason:null,name:'Ada',email:'ada@growfast.co'};
+    if (H18){ const list=[own,...CLIENTS18.map(c=>({owner_id:c.id,own:false,role:c.role,status:c.status||'active',pause_reason:c.status==='paused'?'plan':null,name:c.name,email:c.email}))], w=list.find(x=>!x.own&&x.owner_id===R17().ws);
+      return {current:w?{...w,channel_ids:w.role==='buyer'?[11]:[]}:{...own,channel_ids:[]},workspaces:list}; }
     const list=sample?[own,ada]:[own]; const cur=R17().ws===7&&sample?{...ada,channel_ids:ada.role==='buyer'?[11]:[]}:{...own,channel_ids:[]}; return {current:cur,workspaces:list}; };
   const role17=()=>ws17().current.role;
   const tok17='demo-team-7f3a';
   async function handle17(method,path,body){
     const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
     if (p==='/api/me'&&method==='GET'){ const r=await handle16(method,path,body); return {...r,workspace:ws17()}; }
-    if (p==='/api/workspace'){ if(method==='POST'){ await wait(350); const id=+(body&&body.owner_id)||0; if(id&&id!==1&&id!==7) throw err('You’re not in that team.'); R17().ws=id===7?7:0; } return {ok:true,...ws17()}; }
+    if (p==='/api/workspace'){ if(method==='POST'){ await wait(350); const id=+(body&&body.owner_id)||0;
+        if (H18){ const c=CLIENTS18.find(x=>x.id===id); if(id&&id!==1&&!c) throw err('You’re not in that team.'); if(c&&c.status==='paused'){ const e=err('This team workspace is paused until the owner upgrades their plan or tops up.',{paused:true}); e.status=403; e.body=e.data; throw e; } R17().ws=c?id:0; return {ok:true,...ws17()}; }
+        if(id&&id!==1&&id!==7) throw err('You’re not in that team.'); R17().ws=id===7?7:0; } return {ok:true,...ws17()}; }
     if (p==='/api/channels'&&method==='GET'){ const r=await handle16(method,path,body), all=r.channels;
       r.channels=all.map(c=>{ const x=R17().ch[c.id]||{}, bk=all.find(o=>o.id===x.backup_channel_id), fo=all.find(o=>o.id===x.failed_over_to);
         const auto=x.backup_channel_id?(x.auto_failover!==false):false;
@@ -705,7 +715,7 @@ const Demo = (() => {
           ...(x.link_host?{tracking_url:'https://'+x.link_host+'/c/'+(String(c.tracking_url).split('/c/')[1]||'demo1')}:{}),
           ...(x.failed_over_to?{redirect_to:x.failed_over_to,redirect_title:fo?fo.title:null}:{})}; });
       r.link_domains=['gojoinly.com','go2link.com']; r.team_role=role17();
-      if (R17().ws===7){ const ids=ws17().current.channel_ids; if(ids.length) r.channels=r.channels.filter(c=>ids.includes(c.id)); }
+      if (R17().ws){ const ids=ws17().current.channel_ids||[]; if(ids.length) r.channels=r.channels.filter(c=>ids.includes(c.id)); }
       if (role17()==='buyer'){ r.bots=[]; r.domains=[]; } // like the server: media buyers see no bots or link domains
       return r; }
     if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&(body.backup_channel_id!==undefined||body.auto_failover!==undefined||body.link_host!==undefined)){ await wait(350);
@@ -735,15 +745,20 @@ const Demo = (() => {
     if (p==='/api/demo/report-link'){ const R=R17().report; R.linked=true; R.via=body&&body.via||'alert_bot'; R.enabled=true; R.saved=true; return {ok:true}; }
     if (p==='/api/team'&&method==='GET'){ await wait(250); if(role17()!=='owner'){ const e=err('Only the account owner manages the team.',{team_denied:true}); e.status=403; throw e; }
       return {seats:seats17(),email_on:false,invite_days:7,members:R17().members.map(mem17),channels:db.channels.filter(c=>!c.deleted&&c.status!=='removed').map(c=>({id:c.id,title:c.title,type:c.type,status:c.status})),
-        roles:[{id:'manager',name:'Manager',can:'All channels and results. Never billing or team.'},{id:'buyer',name:'Media buyer',can:'Only the channels you give them.'}],log:R17().log}; }
+        roles:[{id:'manager',name:'Manager',can:'All channels and results. Never billing or team.'},{id:'buyer',name:'Media buyer',can:'Only the channels you give them.'},{id:'helper',name:'Setup helper',free:true,can:'Sets up bots, channels and ads. No billing or money.'}],log:R17().log}; }
     if (p==='/api/team/invite'&&method==='POST'){ await wait(500); const b=body||{}, em=String(b.email||'').trim().toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw err('That email doesn’t look right.'); if(!['manager','buyer'].includes(b.role)) throw err('Pick a role.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw err('That email doesn’t look right.'); if(!['manager','buyer','helper'].includes(b.role)) throw err('Pick a role.');
       if (em==='alex@example.com') throw err('That’s you. Invite someone else.'); if (R17().members.some(x=>x.email===em)) throw err('They’re already on your team.');
-      const S0=seats17(); if (S0.included===0) throw e402('Team seats come with Pro. Upgrade to invite your team.',{error:'Team seats come with Pro.',upgrade:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
-      const t=Date.now(), mm={id:R17().mid++,email:em,role:b.role,status:'invited',user_id:null,name:null,invited_at:t,joined_at:null,invite_expires_at:t+7*864e5,channel_ids:(b.channel_ids||[]).map(Number)}; R17().members.push(mm);
-      const charged=S0.used>=S0.included?500:0; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:charged,seats:seats17()}; }
+      const S0=seats17(), free=b.role==='helper'&&!freeHelper18();
+      if (!free&&b.role==='helper'&&S0.included===0) throw e402('Your free Setup helper is already invited.',{error:'Your free Setup helper is already invited. Remove them first to invite someone else, or upgrade to Pro to add more helpers as team seats.',upgrade:true,helper_limit:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
+      if (!free&&S0.included===0) throw e402('Team seats come with Pro. Upgrade to invite your team.',{error:'Team seats come with Pro.',upgrade:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
+      const xp=b.expires_at?(typeof b.expires_at==='number'?b.expires_at:Date.parse(b.expires_at+'T23:59:59')):null; if (xp!=null&&!(xp>Date.now())) throw err('“Access ends on” must be in the future.');
+      const t=Date.now(), mm={id:R17().mid++,email:em,role:b.role,status:'invited',user_id:null,name:null,invited_at:t,joined_at:null,invite_expires_at:t+7*864e5,channel_ids:b.role==='buyer'?(b.channel_ids||[]).map(Number):[],expires_at:xp}; R17().members.push(mm);
+      const charged=!free&&S0.used>=S0.included?500:0; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:charged,seats:seats17()}; }
     if ((m=/^\/api\/team\/(\d+)\/resend$/.exec(p))&&method==='POST'){ await wait(400); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(mm.status==='active') throw err('They already joined.'); mm.invite_expires_at=Date.now()+7*864e5; mm.status='invited'; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:0}; }
-    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(body.role) mm.role=body.role; if(body.channel_ids) mm.channel_ids=body.channel_ids.map(Number); return {ok:true,member:mem17(mm)}; }
+    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(body.role) mm.role=body.role; if(body.channel_ids) mm.channel_ids=body.channel_ids.map(Number);
+      if (body.expires_at!==undefined){ const xp=body.expires_at?(typeof body.expires_at==='number'?body.expires_at:Date.parse(body.expires_at+'T23:59:59')):null; if(xp!=null&&!(xp>Date.now())) throw err('“Access ends on” must be in the future.'); mm.expires_at=xp; }
+      return {ok:true,member:mem17(mm)}; }
     if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(350); R17().members=R17().members.filter(x=>x.id!==+m[1]); return {ok:true,seats:seats17()}; }
     if (p==='/api/team/invite-info'){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'buyer',role_name:'Media buyer',owner_name:'Ada',owner_email:'ada@growfast.co',account_exists:true}; }
     if (p==='/api/team/accept'&&method==='POST'){ await wait(500); if(!sample) useSampleQuiet(); R17().ws=7; return {ok:true,owner_id:7,owner_name:'Ada',role:'buyer',status:'active',paused:false}; }
@@ -767,8 +782,28 @@ const Demo = (() => {
         steps:['Open Meta Ads Manager → Audiences → Create audience → Custom audience.',`Source: Website. Pick your pixel (${(chs[0]||{}).pixel_id||'your pixel'}).`,'Events: choose “Purchase”, in the last 30 days (or 180 days once you have more).','Then Create audience → Lookalike audience. Source: the Purchase audience you just made. Pick your country and 1%.','Use the lookalike in a new ad set. Keep your Joinvoo link in the ad so every join and deposit keeps teaching Meta.']}; }
     return handle16(method,path,body);
   }
+  /* ---------- Round 18 (demo): Setup helper + Accounts I manage. ?role=helper opens as a freelancer who helps five client accounts
+     (lands on "Accounts I manage"; inside a client, Overview shows the helper's welcome card). ---------- */
+  async function handle18(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname;
+    if (p==='/api/managed'&&method==='GET'){ await wait(300); const W=ws17(), cur=W.current.owner_id, t=Date.now();
+      const N=(id,k)=>h('acc18',id,k)%1000;
+      const accounts=W.workspaces.map(w=>{ const base={owner_id:w.owner_id,own:w.own,role:w.role,role_name:roleName(w.role),status:w.status,pause_reason:w.pause_reason||null,name:w.name,email:w.email,current:w.owner_id===cur};
+        if (w.status==='paused') return {...base,paused:true,channels:null,joins_today:null,joins_7d:null,deposits_7d:null,revenue_7d_cents:null,alerts:[]};
+        if (w.own&&H18) return {...base,paused:false,channels:0,joins_today:0,joins_7d:0,deposits_7d:0,revenue_7d_cents:0,alerts:[{kind:'setup',missing:['bot','channel'],label:'Setup not finished: no bot'}]};
+        const c=CLIENTS18.find(x=>x.id===w.owner_id)||{}, setup=c.setup, j7=setup?0:120+N(w.owner_id,1)%900, jt=setup?0:Math.round(j7/7*(.6+N(w.owner_id,2)%80/100)), d7=setup?0:Math.round(j7*(.04+N(w.owner_id,3)%6/100));
+        const alerts=[]; if (c.lost) alerts.push({kind:'lost_channel',n:1,label:'Channel lost'}); if (c.dead) alerts.push({kind:'dead_link',n:1,label:'Ad link may be blocked'});
+        if (setup) alerts.push({kind:'setup',missing:[setup],label:'Setup not finished'}); if (c.billing) alerts.push({kind:'tracking_paused',label:'Tracking paused (billing)'});
+        return {...base,paused:false,channels:w.role==='buyer'?1:setup==='channel'?0:c.ch||3,joins_today:jt,joins_7d:j7,deposits_7d:d7,revenue_7d_cents:d7*(4200+N(w.owner_id,4)*9),alerts}; });
+      const others=W.workspaces.filter(w=>!w.own);
+      return {eligible:others.length>=2||others.some(w=>w.role==='helper'),count:accounts.length,capped:false,max:200,current_owner_id:cur,accounts}; }
+    if (H18&&p==='/api/channels'&&method==='GET'&&!R17().ws){ const r=await handle17(method,path,body); return {...r,channels:[],bots:[],team_role:'owner'}; } // the freelancer's own account is empty
+    if (p==='/api/team/invite-info'&&H18){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'helper',role_name:'Setup helper',owner_name:'Ada Okafor',owner_email:'ada@growfast.co',account_exists:true}; }
+    return handle17(method,path,body);
+  }
   function useSampleQuiet(){ sample=true; db=sampleDb(); }
-  return {handle:handle17,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
+  if (H18) useSampleQuiet();
+  return {handle:handle18,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 
 boot();

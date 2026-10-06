@@ -13,6 +13,7 @@ const TUT = [
  {id:'t7',title:'Connect your own bot’s Start',where:'Bot settings › Bot start ping',text:"Sending your ads to your own bot, and you don't want to share its token? No problem. Open the bot's Settings, then \"Connect your bot's Start\". Copy the ready-made code for your bot, or the web address for no-code builders like ManyChat or SendPulse. Tap Send a test. Now, every time someone presses Start, your bot tells Joinvoo, and the join is matched to the exact ad."},
  {id:'t8',title:'Add your team',where:'More › Team',text:"Working with a team? Open More, then Team, and tap Invite. Enter your buyer's email and pick a role. Managers see every channel. Buyers see only the channels you give them. Pro includes three team members, and you can add more any time. On Results, compare your buyers side by side, and see who brings you the cheapest deposits."},
  {id:'t9',title:'Read your results',where:'Results',text:"Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report."},
+ {id:'t10',title:'Invite a setup helper',where:'More › Team',text:"Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time."},
 ];
 function tutPlan(t){
   const sents=(t.text.match(/[^.!?]+[.!?]+["”]?/g)||[t.text]).map(s=>s.trim()).filter(Boolean);
@@ -202,6 +203,37 @@ const BEATS = {
     {s:'tg-report',a:[[.2,'on','msg']]},
     {s:'jv-more',a:[[.3,'tap','report'],[.48,'screen','jv-report'],[.72,'tap','sw'],[.78,'on','sw']]}]},
 };
+/* ---------- t10: invite a Setup helper (round 18) ---------- */
+const ACC10 = [['Ada Okafor','Setup helper',[['7','joins today'],['96','7 days'],['4','deposits']],[['g','● Live']]],['Bayo Stores','Setup helper',[['0','joins today'],['0','7 days'],['0','deposits']],[['y','Setup not finished']]],['Chidi Media','Manager',[['31','joins today'],['412','7 days'],['22','deposits']],[['r','Channel lost']]],['Dami Deals','Media buyer',[['12','joins today'],['140','7 days'],['9','deposits']],[['g','● Live']]]];
+Object.assign(SCR, {
+  'jv-team10': () => JV(`<b class="m-h1">Team</b><div class="m-card m-help10" data-t="explain"><b>Get help setting up — without sharing your password</b><small class="m-mut">Invite a Setup helper (free). They can set up your bots, channels and ads, but can’t touch your money.</small></div>
+    <div class="m-card m-seat"><b>0 of 3 seats</b><small class="m-mut">$5/mo per extra seat</small>${M.btn('invite',`${I.plus} Invite`,'p sm')}<span class="m-bar"><i style="width:0%"></i></span></div>`, 'more', 'Team'),
+  'jv-invite10': () => JV(`<b class="m-h1">Team</b>${M.sheet('Invite to your team','Pick a role',`<div class="m-shb">${M.lab('Their email')}${M.inp('email','helper@example.com')}${M.lab('Role')}<div class="m-aps" data-t="roles">
+    <span class="m-ap" data-t="rh"><span class="m-rad"></span><b>Setup helper <em class="m-chip g" data-t="free">Free</em></b><small>Sets up bots, channels and ads. No billing.</small></span>
+    <span class="m-ap" data-t="rm"><span class="m-rad"></span><b>Manager</b><small>Every channel. Never billing or team.</small></span>
+    <span class="m-ap" data-t="rb"><span class="m-rad"></span><b>Media buyer</b><small>Only the channels you pick.</small></span></div>${M.btn('send','Send invite','p wide')}</div>`)}`, false, 'Team'),
+  'jv-invdone10': () => JV(`<b class="m-h1">Team</b>${M.sheet('Invite ready','sam@freelance.io',`<div class="m-shb"><div class="m-ok">${I.checkc}<span>Share this link. It works for 7 days.</span></div>
+    <div class="m-code" data-t="link"><code>joinvoo.com/join-team/q7Xk2…</code><span class="m-btn p sm" data-t="copy">${I.copy} Copy</span></div>${M.toast('copied','Link copied')}
+    <span class="m-btn wide m-wa" data-t="wa">Send it on WhatsApp</span><span class="m-btn wide m-tgs10">Share on Telegram</span></div>`)}`, false, 'Team'),
+  'wa-share': () => `<div class="m-scr wa10">${M.sb(1)}<div class="m-tgh m-wah"><span class="m-back">${I.chevl}</span><span class="m-tav" style="background:#25a35a">S</span><span class="m-tn"><b>Sam (freelancer)</b><small>online</small></span></div>
+    <div class="m-chat">${M.msg('out h','Hi Sam, can you set up my Joinvoo tracking? Use this link: <u>joinvoo.com/join-team/q7Xk2…</u>','msg',1)}${M.msg('in h','On it 👍 I’ll have your bot and ads connected today.','rep',1)}</div></div>`,
+  'jv-helper10': () => JV(`<div class="m-card m-hw10 h" data-t="wel"><b>You’re helping Ada set up Joinvoo</b><small class="m-mut">You can set up bots, channels and ads. You can’t see billing.</small>
+    <div class="m-hw-l"><span class="m-chip g" data-t="can">✓ Bots · channels · ads</span><span class="m-chip" data-t="cant">${I.lock} Billing · wallet</span></div></div>
+    <div class="m-stl"><i></i>Tracking live · 2 channels</div><div class="m-k4">${[['Joins from ads','128','lilac'],['Deposits','9','mint']].map(([l,v,t])=>`<span class="m-k t-${t}"><small>${l}</small><b>${v}</b></span>`).join('')}</div>`, 'overview', 'Ada’s team'),
+  'jv-accounts10': () => JV(`<b class="m-h1">Accounts I manage</b>${ACC10.map(([n,r,k,al],i)=>`<div class="m-card m-acc10 h" data-t="a${i+1}"><div class="m-acc-t"><span class="m-pav" style="${avStyle(n.length*7+i)}">${n[0]}</span><span class="m-rt"><b>${n}</b><small>${r}</small></span>${al.map(([c,l])=>`<span class="m-chip ${c}">${l}</span>`).join('')}</div>
+    <div class="m-acc-n">${k.map(([v,l])=>`<span><b>${v}</b><small>${l}</small></span>`).join('')}</div></div>`).join('')}`, 'more', 'All accounts'),
+  'jv-teamrm10': () => JV(`<b class="m-h1">Team</b><div class="m-card">${M.row(`<span class="m-pav" style="${avStyle(21)}">S</span>`,'Sam','sam@freelance.io · <span class="m-g">Setup helper · Free</span>',`<span class="m-dots" data-t="menu">•••</span>`,'mem')}</div>
+    <div class="m-card m-pop10 h" data-t="pop">${M.row(I.gear,'Change role or access','')}<div class="m-row m-rm10" data-t="rm"><span class="m-ric">${I.x}</span><span class="m-rt"><b>Remove</b><small>They lose access right away</small></span></div></div>${M.toast('gone','Removed from your team')}`, 'more', 'Team'),
+});
+BEATS.t10 = {poster:'jv-accounts10', b:[
+  {s:'jv-team10',a:[[.45,'hl','explain']]},
+  {s:'jv-ov',a:[[.08,'tap','nav-more'],[.22,'screen','jv-more'],[.42,'tap','team'],[.56,'screen','jv-team10'],[.84,'tap','invite']]},
+  {s:'jv-invite10',a:[[.2,'tap','rh'],[.3,'on','rh'],[.45,'hl','rh']]},
+  {a:[[.25,'hl','free']]},
+  {a:[[.04,'tap','email'],[.08,'type','email','sam@freelance.io'],[.36,'tap','send'],[.44,'screen','jv-invdone10'],[.56,'tap','copy'],[.62,'on','copied'],[.8,'tap','wa'],[.9,'screen','wa-share'],[.94,'on','msg']]},
+  {s:'jv-helper10',a:[[.04,'on','wel'],[.3,'hl','can'],[.68,'hl','cant']]},
+  {s:'jv-accounts10',a:[[.05,'on','a1'],[.18,'on','a2'],[.31,'on','a3'],[.44,'on','a4'],[.62,'hl','a3']]},
+  {s:'jv-teamrm10',a:[[.1,'tap','menu'],[.24,'on','pop'],[.42,'hl','rm'],[.62,'tap','rm'],[.74,'off','pop'],[.76,'on','gone']]}]};
 function tutPoster(id){ const b=BEATS[id]; const h=(SCR[b&&b.poster]||SCR['jv-ov'])().replace(/(class="[^"]*)\bh\b/g,'$1h on'); return `<span class="tv-vp poster m-all">${h}</span>`; }
 
 /* ---------- the player ---------- */
@@ -251,7 +283,7 @@ function tutPlay(){
 }
 function tutPause(){ const P=TP; if(!P) return; P.want=false; P.playing=false; if(P.mode==='audio') P.audio.pause(); tutUI(); }
 function tutUI(){ const P=TP; if(!P) return; const on=P.playing||(P.want&&!P.mode); P.root.classList.toggle('playing',on); $$('.tvp [data-act="tut-toggle"]').forEach(b=>{ b.innerHTML=on?I.pause:I.play; b.setAttribute('aria-label',on?tt('tut.pause','Pause'):tt('tut.play','Play')); }); }
-function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); }
+function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); tutEndBtns(P.id); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); tutMark(P.id); }
 function tutSeek(t){ const P=TP; if(!P) return; P.t=Math.max(0,Math.min(P.D,t)); if(P.mode==='audio'){ try{ P.audio.currentTime=P.t; }catch{} } P.cur=-1; P.seek=true; $('#tvend').hidden=P.t<P.D-.05; tutUpdate(); }
 function tutClose(quick){
   const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
@@ -350,3 +382,90 @@ document.addEventListener('click', e=>{
 /* closing any sheet forgets which channel's settings were open */
 const closeSheet0 = closeSheet;
 closeSheet = function(){ closeSheet0(); S.cs=null; S.side=null; S.csJrOpen=false; };
+
+/* ---------- Tutorials page (#tutorials): sidebar item, first row on More, "Start here" on Overview, ✓ on watched videos ----------
+   One card renderer (tutCards) serves the Tutorials page and the Help & tutorials page. Watched ids live in localStorage (best effort). */
+I.tutorials = sv('<circle cx="12" cy="12" r="9"/><path d="M10.2 8.6v6.8l5.4-3.4z" fill="currentColor"/>');
+PAGES.tutorials = {t:'Tutorials', tag:String(TUT.length), fn:()=>viewTutorials()};
+const TUT_START = ['t1','t2','t3'];
+const TUT_GROUPS = [['start','Get started',TUT_START],['dep','Track deposits',['t4']],['grow','Grow',['t5','t6','t7']],['team','Team',['t8','t10']],['read','Read results',['t9']]];
+const TUT_SEEN_K = 'jv_tut_seen', TUT_STRIP_K = 'jv_tut_strip_x';
+function tutSeen(){ try { const a=JSON.parse(localStorage.getItem(TUT_SEEN_K)||'[]'); return new Set(Array.isArray(a)?a:[]); } catch { return new Set(); } }
+function tutMark(id){
+  const s=tutSeen(); if (!s.has(id)){ s.add(id); try { localStorage.setItem(TUT_SEEN_K, JSON.stringify([...s])); } catch {} }
+  $$(`.tut-card[data-v="${id}"]`).forEach(c=>c.classList.add('seen')); tutProg();
+}
+const tutMin = ids => Math.max(1, Math.round(ids.reduce((a,id)=>{ const t=TUT.find(x=>x.id===id); return a+(t?tutPlan(t).secs:0); },0)/60));
+/* cards: n=true numbers them 1→2→3 (the "Start here" row) */
+function tutCards(ids, n){
+  const seen=tutSeen();
+  return `<div class="tut-grid${n?' tut-steps':''}">${ids.map((id,i)=>{ const t=TUT.find(x=>x.id===id); if(!t) return ''; const s=seen.has(id);
+    return `<button class="tut-card${s?' seen':''}" data-act="tut" data-v="${id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(id)}</span><span class="tut-play">${I.play}</span>${n?`<span class="tut-n">${i+1}</span>`:''}<span class="tut-ck" title="${esc(tt('tutp.seen','Watched'))}">${I.check}</span><em>${tutLen(id)}</em></span>
+      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc(t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
+}
+function tutProg(){
+  const el=$('#tutprog'); if(!el) return; const n=TUT.filter(t=>tutSeen().has(t.id)).length;
+  el.innerHTML=`<span>${tt('tutp.prog','{n} of {m} watched',{n,m:TUT.length})}</span><i><u style="width:${n/TUT.length*100}%"></u></i>`;
+}
+function viewTutorials(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view tutp"><div class="ph"><div><h1>${tt('tutp.h','Tutorials')}</h1><p>${tt('tutp.p','Short videos, about 30 seconds each. New here? Start with the first three.')}</p></div><div class="tut-prog" id="tutprog"></div></div>
+    ${TUT_GROUPS.map(([k,h,ids])=>`<section class="tut-sec${k==='start'?' tut-start':''}"><div class="card-h tut-h">${k==='start'?`<span class="tut-eb">${I.play}${tt('tutp.start','Start here')}</span>`:''}<h2>${tt('tutp.g.'+k,h)}</h2><span class="sub">${k==='start'?tt('tutp.start.s','3 steps · about {m} min',{m:tutMin(ids)}):(ids.length===1?tt('tutp.one','1 short video'):tt('tut.n','{n} short videos',{n:ids.length}))}</span></div>${tutCards(ids,k==='start')}</section>`).join('')}
+    <p class="tut-foot">${tt('tutp.foot','Still stuck?')} <button class="link" data-act="chat">${tt('tutp.chat','Ask us in chat')} ${I.arrow}</button></p></div>`;
+  tutProg();
+}
+/* Help & tutorials: the "Start here" videos + a link to the full Tutorials page */
+function tutHelpSec(){
+  return `<section class="tut-sec"><div class="card-h tut-h"><h2>${tt('tut.h','Video tutorials')}</h2><button class="link" data-act="nav" data-p="tutorials">${tt('tutp.all','See all {n} tutorials',{n:TUT.length})} ${I.arrow}</button></div>${tutCards(TUT_START,true)}</section>`;
+}
+/* end of a "Start here" video: offer the next one */
+function tutEndBtns(id){
+  const e=$('#tvend'); if(!e) return; const i=TUT_START.indexOf(id), nx=i>=0&&i<TUT_START.length-1?TUT.find(t=>t.id===TUT_START[i+1]):null;
+  e.classList.toggle('has-next',!!nx);
+  e.innerHTML=`${nx?`<button class="btn primary tv-next" data-act="tut" data-v="${nx.id}"><span>${tt('tutp.next','Next: {t}',{t:esc(tt('tut.'+nx.id,nx.title))})}</span> ${I.arrow}</button>`:''}<button class="btn" data-act="tut-replay">${I.refresh} ${tt('tut.replay','Watch again')}</button><button class="btn${nx?'':' primary'}" data-act="tut-close">${tt('common.done','Done')}</button>`;
+}
+/* desktop sidebar: Tutorials after Joe, before More (the phone bottom bar keeps its 5 items) */
+const setNavT = setNav;
+setNav = function(){ setNavT(); const m=NAV[0]&&NAV[0][1]; if (m && !m.includes('tutorials')){ const k=m.indexOf('more'); m.splice(k<0?m.length:k,0,'tutorials'); } };
+const navMarkT = navMark;
+navMark = function(page){ navMarkT(page); if (page==='tutorials'){ const b=$('.bbar [data-p="more"]'); if(b) b.setAttribute('aria-current','page'); } };
+const drawSubnavT = drawSubnav;
+drawSubnav = function(page){
+  drawSubnavT(page); const el=$('#subnav'); if(!el || page!=='tutorials') return;
+  el.hidden=false; el.setAttribute('aria-label',tt('nav.more','More'));
+  el.innerHTML=`<div class="sn-in sn-back sn-tut"><button class="link" data-act="nav" data-p="more">${I.chevl} ${tt('nav.more','More')}</button></div>`;
+};
+/* More: Tutorials is the first row */
+const viewMoreT = viewMore;
+viewMore = function(){
+  viewMoreT(); const v=$('#view .more17'); if(!v || v.querySelector('.mtut')) return;
+  const html=`<div class="card mlist mtut"><button class="mrow17" data-act="nav" data-p="tutorials"><span class="mr-ic">${I.tutorials}</span><span class="mr-t"><b>${tt('tutp.h','Tutorials')}</b><small>${tt('tutp.more.s','30-second videos for every step')}</small></span><em class="mr-n">${TUT.length}</em><span class="mr-go">${I.chevr}</span></button></div>`;
+  const after=v.querySelector('.ws-card')||v.querySelector('.ph'); after?after.insertAdjacentHTML('afterend',html):v.insertAdjacentHTML('afterbegin',html);
+};
+/* Overview: "New here?" strip for a new account (under the setup card, so "Start setup" stays above the fold) and for accounts with under 10 joins */
+const TS = { k:null, n:null, p:null };
+function tsHidden(){ try { if (localStorage.getItem(TUT_STRIP_K)==='1') return true; } catch {} const s=tutSeen(); return TUT_START.every(id=>s.has(id)); }
+async function tsJoins(){
+  const k=(R17.ws&&R17.ws.current&&R17.ws.current.owner_id)||'me';
+  if (TS.k===k && TS.n!=null) return TS.n; if (TS.k===k && TS.p) return TS.p;
+  TS.k=k; TS.n=null; const t=new Date();
+  TS.p=api('GET',`/api/stats?from=${ymd(addDays(t,-365))}&to=${ymd(t)}&${tzq()}`).then(r=>{ const T=(r&&r.totals)||{}; TS.n=(T.joins||0)+(T.organic||0); return TS.n; }).catch(()=>{ TS.p=null; return null; });
+  return TS.p;
+}
+async function ovTutStrip(){
+  if (S.page!=='overview' || tsHidden() || !isOwner()) return;
+  const done=setupState().done;
+  if (done){ const n=await tsJoins(); if (n==null || n>=10) return; }
+  const v=$('#view .view'); if (S.page!=='overview' || !v || v.querySelector('.tstrip')) return;
+  const html=`<section class="tstrip" role="note"><button class="ts-go" data-act="tut" data-v="t1"><span class="ts-pl">${I.play}</span><span class="ts-t"><b>${tt('tutp.strip.h','New here?')}</b> <span>${tt('tutp.strip.p','Watch the 3-step setup')}</span> <em>${tt('tutp.strip.m','{m} min',{m:tutMin(TUT_START)})}</em></span></button><button class="ts-x" data-act="ts-x" aria-label="${esc(tt('tutp.strip.x','Hide this'))}">${I.x}</button></section>`;
+  const st=v.querySelector('.card.start');
+  if (st) st.insertAdjacentHTML('afterend',html);
+  else { const a=v.querySelector('#ovalerts')||v.querySelector('.ov-head'); a?a.insertAdjacentHTML('afterend',html):v.insertAdjacentHTML('afterbegin',html); }
+}
+const viewOverviewT = viewOverview;
+viewOverview = async function(){ const p=viewOverviewT(); ovTutStrip(); await p; ovTutStrip(); };
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act="ts-x"]'); if(!a) return;
+  try { localStorage.setItem(TUT_STRIP_K,'1'); } catch {}
+  const s=a.closest('.tstrip'); if (s){ if (reduced) s.remove(); else { s.classList.add('out'); setTimeout(()=>s.remove(),200); } }
+});

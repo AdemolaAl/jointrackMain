@@ -100,8 +100,10 @@ const graph = http.createServer((req, res) => {
     assert(r.s === 200 && r.j.enabled === false && r.j.linked === false && r.j.hour === 8 && opt && /^https:\/\/t\.me\/test_track_bot\?start=report-[0-9a-z]+-[0-9a-z]+-[0-9a-f]{16}$/.test(opt.url), 'report settings: off, not linked, link through their own bot');
     const code = opt.url.split('start=')[1];
     await tgPost({ update_id: upd++, message: { message_id: 1, chat: { id: 777001, type: 'private' }, from: { id: 777001, first_name: 'Ola' }, date: 1, text: '/start report-0-000000000000' } });
+    for (let i = 0; i < 30 && !(await msgsTo(777001)).some((x) => /expired/.test(x.text)); i++) await new Promise((r) => setTimeout(r, 100));
     assert((await msgsTo(777001)).some((x) => /expired/.test(x.text)), 'a forged code is refused');
     await tgPost({ update_id: upd++, message: { message_id: 2, chat: { id: 777001, type: 'private' }, from: { id: 777001, first_name: 'Ola' }, date: 1, text: '/start ' + code } });
+    for (let i = 0; i < 30 && !(await msgsTo(777001)).some((x) => /Connected/.test(x.text)); i++) await new Promise((r) => setTimeout(r, 100));
     assert((await msgsTo(777001)).some((x) => /Connected/.test(x.text)), 'Start with the link → “Connected” in Telegram');
     r = await O('/api/report-settings'); assert(r.j.linked && r.j.via === 'tracking_bot' && r.j.enabled === true, 'linked through the tracking bot and switched on');
     r = await O('/api/joins'); assert(r.s === 200 && !r.j.rows.some((x) => x.tg_user_id === 777001), 'the /start report message is not tracked as a subscriber');

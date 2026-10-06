@@ -3352,6 +3352,45 @@ main#view{padding-bottom:112px}
 .tut-play svg{width:16px;height:16px;margin-left:2px}.tut-card:hover .tut-play{transform:scale(1.08)}
 .tut-th em{position:absolute;right:10px;bottom:12px;font-style:normal;font-size:11.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:99px;backdrop-filter:blur(6px)}
 .tut-t{display:flex;flex-direction:column;padding:12px 14px 14px;gap:2px}.tut-t b{font-weight:800;font-size:14.5px;letter-spacing:-.015em;line-height:1.3}.tut-t small{color:var(--faint);font-size:12px}
+/* Tutorials page (#tutorials) */
+.tutp{gap:26px}
+.tutp .ph{align-items:flex-end}
+.tut-prog{display:flex;flex-direction:column;gap:6px;min-width:170px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.tut-prog i{display:block;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.tut-prog u{display:block;height:100%;border-radius:inherit;background:var(--mint);transition:width .5s var(--ease)}
+.tut-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tut-h .link{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13.5px}
+.tut-h .link svg{width:14px;height:14px}
+.tut-eb{flex-basis:100%;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-text)}
+.tut-eb svg{width:10px;height:10px}
+.tut-n{position:absolute;left:12px;top:12px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);color:#1b1340;font-size:12px;font-weight:800;display:grid;place-items:center}
+.tut-ck{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--mint);color:#fff;display:none;place-items:center;box-shadow:0 4px 12px -4px rgba(0,0,0,.45)}
+.tut-ck svg{width:13px;height:13px}
+.tut-card.seen .tut-ck{display:grid}
+.tut-card.seen .tut-play{background:rgba(255,255,255,.85)}
+.tut-foot{margin:0;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tut-foot .link{display:inline-flex;align-items:center;gap:4px;font-weight:700}.tut-foot .link svg{width:14px;height:14px}
+@media (min-width:901px){.subnav .sn-tut{display:none}.subnav:has(.sn-tut){display:none}}
+@media (max-width:560px){.tutp{gap:20px}.tutp .ph{flex-direction:column;align-items:stretch}.tut-prog{min-width:0}.tut-t{padding:10px 11px 12px}.tut-t b{font-size:13.5px}.tut-th em{right:8px;bottom:8px}.tut-play{left:8px;bottom:8px;width:34px;height:34px}.tut-n{left:8px;top:8px}.tut-ck{right:8px;top:8px}}
+.nav-a[data-p="tutorials"] .new{min-width:24px;text-align:center;padding:2px 7px}
+.mtut .mr-ic{background:var(--brand-soft);color:var(--brand-text)}
+.mr-n{font-style:normal;font-size:11.5px;font-weight:800;min-width:24px;text-align:center;padding:2px 7px;border-radius:99px;background:var(--lilac);color:var(--lilac-ink)}
+.tv-end.has-next{align-content:center}.tv-end.has-next .tv-next{flex-basis:100%;max-width:340px;justify-content:center}
+.tv-next span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* Overview: "New here?" strip */
+.tstrip{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid color-mix(in srgb,var(--brand) 20%,var(--line));border-radius:99px;background:color-mix(in srgb,var(--brand-soft) 55%,var(--surface));transition:opacity .2s,transform .2s var(--ease)}
+.tstrip.out{opacity:0;transform:translateY(-4px)}
+.ts-go{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;padding:0 6px 0 0;min-height:40px;cursor:pointer;color:inherit;text-align:left;font:inherit}
+.ts-pl{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 4px 12px -4px color-mix(in srgb,var(--brand) 70%,transparent);transition:transform .15s var(--ease)}
+.ts-pl svg{width:12px;height:12px;margin-left:2px}
+.ts-go:hover .ts-pl{transform:scale(1.06)}.ts-go:active .ts-pl{transform:scale(.95)}
+.ts-t{font-size:13.5px;line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-t b{font-weight:800}.ts-t span{color:var(--muted);font-weight:600}.ts-t em{font-style:normal;font-weight:700;color:var(--brand-text);font-size:12.5px}
+.ts-x{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--faint);display:grid;place-items:center;cursor:pointer}
+.ts-x:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.ts-x svg{width:15px;height:15px}
+@media (prefers-reduced-motion:no-preference){.ts-pl{animation:wpulse 2.6s var(--ease) infinite}}
+@media (max-width:400px){.ts-t b{display:none}.ts-t span{color:var(--ink);font-weight:700}}
 
 /* ================= tutorial player ================= */
 .tvp{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;animation:fade .2s}
@@ -3774,10 +3813,13 @@ body:has(.joe-page) .sup-launch{display:none!important}
 .utm17-l{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:13px;min-height:32px}
 
 .utmc{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.utmc-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.utmc-ps{display:flex;gap:6px}
-.utmc-p{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;opacity:.55;transition:opacity .2s,border-color .2s}
-.utmc-p.on{opacity:1;border-color:var(--brand,#5b3df5);box-shadow:0 0 0 3px color-mix(in srgb,#5b3df5 15%,transparent)}
+.utmc-h{display:flex;align-items:center;justify-content:space-between;gap:8px 10px;flex-wrap:wrap}
+.utmc-ps{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--sunk);border:1px solid var(--line)}
+.utmc-p{height:30px;padding:0 11px 0 7px;border:0;border-radius:999px;background:transparent;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font:600 12.5px/1 var(--f);color:var(--muted);transition:background .2s,color .2s,box-shadow .2s}
+.utmc-p .pm{width:18px;height:18px;border-radius:50%;filter:grayscale(1);opacity:.6;transition:filter .2s,opacity .2s}.utmc-p .pm svg{width:10px;height:10px}
+.utmc-p:hover{color:var(--ink)}
+.utmc-p.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh1,0 1px 3px rgba(0,0,0,.12))}.utmc-p.on .pm{filter:none;opacity:1}
+@media (max-width:480px){.utmc-ps{display:flex;width:100%}.utmc-p{flex:1;justify-content:center}}
 .utmc-b code{white-space:normal!important;overflow:visible!important;overflow-wrap:anywhere;word-break:break-all;font-size:12px;line-height:1.5;text-overflow:clip!important;display:block}
 .utmc-t{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .utmc-b code b{color:var(--brand-text);font-weight:700}
@@ -3785,6 +3827,88 @@ body:has(.joe-page) .sup-launch{display:none!important}
 .utmc-n .link{font-size:12.5px;font-weight:700;padding:0;min-height:0}
 
 @media (max-width:380px){.ch17 .c-foot .c-set{flex:1 1 100%;justify-content:center;margin-left:0}.ch17 .c-foot .c-pl{flex:none}}
+</style>
+<style>
+/* ================= Round 18: Setup helper (Team explainer, invite sheet, share buttons, welcome card) and Accounts I manage ================= */
+/* --- Team: explainer --- */
+.help18{display:flex;gap:14px;padding:18px;align-items:flex-start;background:linear-gradient(135deg,color-mix(in srgb,var(--mint-soft) 70%,var(--surface)),var(--surface) 70%);border-color:color-mix(in srgb,var(--mint-ink) 18%,var(--line))}
+.hp-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--surface);color:var(--mint-ink);flex:none;box-shadow:0 1px 0 var(--line)}
+.hp-ic svg{width:21px;height:21px}
+.hp-t{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.hp-t>b{font-size:16px;font-weight:800;letter-spacing:-.02em;line-height:1.3}
+.hp-t>p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.hp-roles{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.hp-roles li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;padding:6px 0;border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);flex-wrap:wrap}
+.hp-roles li b{min-width:128px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.hp-roles li span{color:var(--muted);flex:1;min-width:180px}
+.hp-roles .chip,.rp .chip{height:20px;font-size:11px;padding:0 8px;font-style:normal}
+.hp-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px}
+@media (max-width:520px){.help18{flex-direction:column;padding:16px}.hp-roles li b{min-width:0;width:100%}.hp-roles li span{min-width:0}.hp-act .btn{flex:1 1 auto;justify-content:center}}
+/* --- invite sheet: access end + share --- */
+.rp .mr-t b{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tm-exp{border:1px solid var(--line);border-radius:16px;padding:0;background:var(--surface)}
+.tm-exp>summary{list-style:none;display:flex;white-space:nowrap;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;min-height:48px;font-weight:700;font-size:14px}
+.tm-exp>summary::-webkit-details-marker{display:none}
+.tm-exp>summary svg{width:17px;height:17px;flex:none;color:var(--muted)}
+.tm-exp>summary small{color:var(--faint);font-weight:600;font-size:12.5px;margin-left:auto;text-align:right}
+.tm-exp>summary>svg:last-child{transition:transform .2s var(--ease)}.tm-exp[open]>summary>svg:last-child{transform:rotate(180deg)}
+.tm-exp-b{display:flex;gap:8px;padding:0 14px;align-items:center;flex-wrap:wrap}.tm-exp-b .inp{flex:1;min-width:150px}
+.tm-exp>.hint{display:block;padding:8px 14px 12px}
+.share18{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.share18 .btn svg{width:18px;height:18px}
+.wa18{background:#1f9d55;border-color:#1f9d55;color:#fff}.wa18:hover{background:#1a8a4a}
+.tg18{background:color-mix(in srgb,#2aabee 12%,var(--surface));border-color:color-mix(in srgb,#2aabee 30%,var(--line));color:var(--ink)}
+.pop .pi-all{font-weight:700}.pop .pi-all .ws-l{flex:1}
+/* --- helper welcome card --- */
+.hw18{position:relative;display:flex;gap:14px;padding:16px 18px;align-items:flex-start;border-color:color-mix(in srgb,var(--brand) 22%,var(--line));background:linear-gradient(120deg,var(--brand-soft),var(--surface) 75%);animation:hwin .4s var(--ease)}
+@keyframes hwin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hw18{animation:none}}
+.hw-ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--surface);color:var(--brand-text);flex:none}.hw-ic svg{width:20px;height:20px}
+.hw-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;padding-right:28px}
+.hw-t b{font-size:15.5px;font-weight:800;letter-spacing:-.015em;overflow-wrap:anywhere}.hw-t p{margin:0;color:var(--muted);font-size:14px}
+.hw-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.hw-x{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}.hw-x:hover{background:var(--sunk)}.hw-x svg{width:16px;height:16px}
+@media (max-width:420px){.hw18{padding:14px}.hw-ic{display:none}.hw-act .btn{flex:1 1 auto;justify-content:center}}
+/* --- Accounts I manage --- */
+.acc18{max-width:880px}
+.acc-row{margin:0}
+.acc-q{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);margin-bottom:12px}
+.acc-q svg{width:18px;height:18px;color:var(--faint);flex:none}.acc-q input{border:0;outline:0;background:transparent;flex:1;min-width:0;font:inherit;color:inherit;height:100%}
+.acc-q:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.acc-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:12px}
+.acc-c{display:flex;flex-direction:column;gap:12px;padding:16px;text-align:left;cursor:pointer;color:inherit;width:100%;border:1px solid var(--line);transition:border-color .15s,transform .15s var(--ease),box-shadow .15s;min-width:0}
+.acc-c:hover{border-color:var(--line-2);box-shadow:0 8px 24px -16px rgba(20,16,50,.35)}.acc-c:active{transform:scale(.99)}
+.acc-c.cur{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.acc-c.acc-paused{opacity:.75}.acc-c.busy{opacity:.6;pointer-events:none}
+.acc-c[hidden]{display:none}
+.acc-t{display:flex;align-items:center;gap:12px;min-width:0}
+.acc-av{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:14px;flex:none;letter-spacing:.02em}
+.acc-nm{display:flex;flex-direction:column;min-width:0;flex:1}.acc-nm b{font-weight:800;font-size:15px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-nm small{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.acc-cur{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--brand-text)}.acc-cur svg{width:13px;height:13px}
+.acc-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.acc-n span{display:flex;flex-direction:column;padding:10px 12px;border-radius:14px;background:var(--sunk);min-width:0}
+.acc-n b{font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.acc-n small{color:var(--muted);font-size:11.5px;line-height:1.3;overflow-wrap:anywhere}
+.acc-al{display:flex;flex-wrap:wrap;gap:6px}.acc-al .chip svg{width:12px;height:12px}
+.acc-pz{margin:0;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13.5px;padding:10px 12px;border-radius:14px;background:var(--sunk)}.acc-pz svg{width:15px;height:15px}
+.acc-none{text-align:center;color:var(--muted);padding:24px}
+@media (max-width:360px){.acc-c{padding:14px}.acc-n{gap:6px}.acc-n span{padding:8px 9px}.acc-n b{font-size:17px}.acc-n small{font-size:11px}.acc-av{width:38px;height:38px}}
+/* --- tutorial t10 mini screens --- */
+.m-help10{background:linear-gradient(135deg,#e8f3ec,#fff 70%)}.m-help10 b{font-size:12px;line-height:1.3}
+.m-ap b .m-chip{height:16px;font-size:8.5px;padding:0 6px;margin-left:4px;vertical-align:1px}
+.m-btn.m-wa{background:#1f9d55;border-color:#1f9d55;color:#fff}
+.m-scr.wa10{background:#efe7dd}.m-scr.wa10 .m-chat{background:#efe7dd}.m-wah{background:#1f7a4d;color:#fff;border:0}.m-wah small{color:#d6f3e2!important}.m-wah .m-back{color:#fff}
+.m-hw10{background:linear-gradient(120deg,#f1edff,#fff 75%);border-color:#d9d0ff}.m-hw10 b{font-size:12px}
+.m-hw-l{display:flex;flex-wrap:wrap;gap:4px}.m-hw-l .m-chip svg{width:10px;height:10px}
+.m-acc10{gap:7px;padding:9px}.m-acc-t{display:flex;align-items:center;gap:8px;min-width:0}.m-acc-t .m-rt{flex:1}
+.m-acc-n{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.m-acc-n span{display:flex;flex-direction:column;background:#f5f4fa;border-radius:8px;padding:4px 6px}
+.m-acc-n b{font-size:12px}.m-acc-n small{font-size:8px;color:#86847c}
+.m-chip.r{background:#fdeceb;color:#b3392f}
+.m-dots{font-weight:900;letter-spacing:1px;color:#67665f;padding:4px 6px;border-radius:8px}
+.m-pop10{position:absolute;right:14px;top:150px;width:200px;box-shadow:0 14px 34px -14px rgba(20,16,50,.45);z-index:3}
+.m-rm10 b{color:#b3392f}
 </style>
 
 <div id="root"></div>
@@ -4486,7 +4610,7 @@ function accountPop(a){
     <button class="pi" data-act="nav" data-p="levels">${I.levels}${tt('menu.level','My level')}${lvPopTag()}</button>
     <button class="pi" data-act="nav" data-p="wallet">${I.wallet}${tt('menu.credits','Credits & plan')}${pro?'':`<small class="probadge sm" style="margin-left:auto">${tt('pro.try','Try Pro')}</small>`}</button>
     <button class="pi" data-act="ib-prefs">${I.bell}${tt('menu.notif','Notifications')}</button>
-    <button class="pi" data-act="alerts">${I.bolt}${tt('menu.alerts','Telegram alerts')}${FEAT('alerts')?'':`<small class="faint" style="margin-left:auto">${tt('common.soon','Soon')}</small>`}</button>
+    <button class="pi" data-act="alerts">${I.bolt}${tt('menu.alerts','Telegram alerts')}</button>
     <button class="pi" data-act="nav" data-p="channels">${I.channels}${tt('menu.channels','Channels & bots')}</button>
     <button class="pi" data-act="chat">${I.chat}${tt('menu.support','Support chat')}</button>
     ${DEMO?'':`<button class="pi" data-act="change-pass">${I.key}${tt('menu.pass','Change password')}</button>`}
@@ -6010,7 +6134,8 @@ function openSales(){
 const ALERTS=[['daily_report','Morning summary','Every day at 8:00 your time: joins, FTDs, revenue, spend, ROAS and cost per FTD'],['no_joins_2h','No joins for 2 hours','When a channel that usually gets joins goes quiet'],['no_ftd_campaign','No deposits from a campaign today','A campaign with deposits yesterday has none by 18:00'],['ftd_live','Live first deposits','A ping the moment someone deposits'],['token_errors','Ad platform errors','When Meta, TikTok or Snapchat rejects your events'],['links_low','Invite links running low','Before visitors fall back to the backup link'],['paused','Tracking paused','When your credits run out'],['cpa_spike','Cost per FTD spike','When cost per first deposit jumps against last week']];
 async function openAlerts(){
   try { api('PATCH','/api/me',{tz:Intl.DateTimeFormat().resolvedOptions().timeZone}).catch(()=>{}); } catch {}
-  if (!FEAT('alerts')){ sheet('<h2>Telegram alerts<small>Coming soon</small></h2>', `<div class="empty" style="padding:24px 8px"><span class="ei">${I.bolt}</span><h3>Alerts in Telegram are coming soon</h3><p>A daily report and instant pings for deposits, errors and low invite links, straight to your Telegram.</p></div><button class="btn lg wide" data-act="close">OK</button>`); return; }
+  if (!FEAT('alerts')){ /* no separate alert bot on this server: alerts arrive through the Daily report's Telegram link */ try{ closeSheet(); }catch{} go('report'); return; }
+  if (false){ sheet('<h2>Telegram alerts<small>Coming soon</small></h2>', `<div class="empty" style="padding:24px 8px"><span class="ei">${I.bolt}</span><h3>Alerts in Telegram are coming soon</h3><p>A daily report and instant pings for deposits, errors and low invite links, straight to your Telegram.</p></div><button class="btn lg wide" data-act="close">OK</button>`); return; }
   sheet('<h2>Telegram alerts<small>Reports and pings from Joinvoo’s bot</small></h2>', '<div class="sk" style="height:240px"></div>');
   let r; try { r=await api('GET','/api/alerts'); } catch(e){ $('.sheet-b').innerHTML=`<div class="err">${esc(e.message)}</div>`; return; }
   S.alerts=r; drawAlerts();
@@ -7774,7 +7899,7 @@ const centsOr = (v,d='—') => v==null||!isFinite(v)?d:money(v);
 function setRole(){
   const ws=(S.me&&S.me.workspace)||R17.ws; if (ws) R17.ws=ws;
   R17.role=(ws&&ws.current&&ws.current.role)||(S.chans&&S.chans.team_role)||'owner';
-  const r=document.documentElement; ['owner','manager','buyer'].forEach(k=>r.classList.toggle('role-'+k, R17.role===k));
+  const r=document.documentElement; ['owner','manager','buyer','helper'].forEach(k=>r.classList.toggle('role-'+k, R17.role===k||(k==='manager'&&R17.role==='helper'))); /* a Setup helper gets the manager's view */
 }
 
 /* ---------- pages + navigation ---------- */
@@ -7837,7 +7962,7 @@ function wsChip(){
 }
 function wsPop(a){
   const ws=R17.ws||{}, cur=ws.current||{};
-  const p=openPop(a, `<div class="ph2">${tt('ws.h','Workspace')}</div>${(ws.workspaces||[]).map(w=>`<button class="pi" data-act="ws-go" data-id="${w.owner_id}" aria-pressed="${w.owner_id===cur.owner_id}">${w.own?I.user:I.team}<span class="ws-l"><b>${w.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(w.name||'Team')})}</b><small>${w.own?tt('ws.owner','Owner'):esc(w.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))}${w.status==='paused'?' · '+tt('ws.paused','paused'):''}</small></span>${w.owner_id===cur.owner_id?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}`,'wsp');
+  const p=openPop(a, `<div class="ph2">${tt('ws.h','Workspace')}</div>${(ws.workspaces||[]).map(w=>`<button class="pi" data-act="ws-go" data-id="${w.owner_id}" aria-pressed="${w.owner_id===cur.owner_id}">${w.own?I.user:I.team}<span class="ws-l"><b>${w.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(w.name||'Team')})}</b><small>${w.own?tt('ws.owner','Owner'):esc(ROLE_T(w.role))}${w.status==='paused'?' · '+tt('ws.paused','paused'):''}</small></span>${w.owner_id===cur.owner_id?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}`,'wsp');
   p.style.width='260px';
 }
 async function wsGo(id){
@@ -7859,12 +7984,12 @@ function viewMore(){
   const me=S.me||{}, ws=R17.ws, cur=(ws&&ws.current)||{}, own=isOwner();
   const row=(act,p,ic,t,sub,extra='')=>`<button class="mrow17" data-act="${act}" ${p?`data-p="${p}"`:''}><span class="mr-ic">${ic}</span><span class="mr-t"><b>${t}</b><small>${sub}</small></span>${extra}<span class="mr-go">${I.chevr}</span></button>`;
   const grp=(h,rows)=>{ const r=rows.filter(Boolean).join(''); return r?`<section class="mgrp"><h2>${h}</h2><div class="card mlist">${r}</div></section>`:''; };
-  $('#view').innerHTML=`<div class="view more17"><div class="ph"><div><h1>${tt('nav.more','More')}</h1><p>${own?tt('more.p','Your team, reports, billing and help, all in one place.'):tt('more.p2','You’re working in {n}’s team as {r}.',{n:esc(cur.name||''),r:esc(cur.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))})}</p></div></div>
+  $('#view').innerHTML=`<div class="view more17"><div class="ph"><div><h1>${tt('nav.more','More')}</h1><p>${own?tt('more.p','Your team, reports, billing and help, all in one place.'):tt('more.p2','You’re working in {n}’s team as {r}.',{n:esc(cur.name||''),r:esc(ROLE_T(cur.role))})}</p></div></div>
     ${ws&&ws.workspaces&&ws.workspaces.length>1?`<button class="card ws-card" data-act="ws-pop"><span class="mr-ic">${I.swap}</span><span class="mr-t"><b>${cur.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(cur.name||'')})}</b><small>${tt('ws.tap','Tap to switch workspace')}</small></span><span class="mr-go">${I.chev}</span></button>`:''}
     ${grp(tt('more.g.work','Work'),[
       own&&row('nav','team',I.team,tt('more.team','Team'),tt('more.team.s','Invite media buyers and managers')),
-      row('nav','report',I.report,tt('more.report','Daily report'),tt('more.report.s','Yesterday’s numbers in Telegram every morning')),
-      own&&row('alerts','',I.bolt,tt('menu.alerts','Telegram alerts'),tt('more.alerts.s','Get pinged when something needs you')),
+      row('nav','report',I.report,tt('more.report','Daily report'),(FEAT('alerts')?tt('more.report.s','Yesterday’s numbers in Telegram every morning'):tt('more.report.s2','Morning summary + instant alerts in Telegram'))),
+      own&&FEAT('alerts')&&row('alerts','',I.bolt,tt('menu.alerts','Telegram alerts'),tt('more.alerts.s','Get pinged when something needs you')),
       row('ib-prefs','',I.bell,tt('menu.notif','Notifications'),tt('more.notif.s','Choose what lands in your inbox')),
     ])}
     ${grp(tt('more.g.money','Money'),[
@@ -8067,7 +8192,7 @@ async function viewLeaderboard(){
   const mj=Math.max(1,...rows.map(x=>x.joins||0));
   el.innerHTML=`<div class="card-h"><h2>${tt('lb.h','Your buyers side by side')}</h2><span class="sub">${tt('lb.s','Cheapest deposits first')}</span></div>
     ${rows.length?`<div class="lb-l">${rows.map((x,i)=>`<div class="lb-r${x===best?' top':''}"><span class="lb-av" style="${avStyle(x.user_id||i)}">${esc(((x.name||x.email||'?')[0]||'?').toUpperCase())}</span>
-      <span class="lb-n"><b>${esc(x.name||x.email)}</b>${x===best?`<em class="lb-best">${I.sparkles}${tt('lb.best','Cheapest deposits')}</em>`:''}<small>${esc(x.role==='owner'?tt('ws.owner','Owner'):x.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))} · ${nNoun(x.channels||0,'channel','channels')}</small><span class="lb-bar"><i style="width:${(x.joins||0)/mj*100}%"></i></span></span>
+      <span class="lb-n"><b>${esc(x.name||x.email)}</b>${x===best?`<em class="lb-best">${I.sparkles}${tt('lb.best','Cheapest deposits')}</em>`:''}<small>${esc(ROLE_T(x.role))} · ${nNoun(x.channels||0,'channel','channels')}</small><span class="lb-bar"><i style="width:${(x.joins||0)/mj*100}%"></i></span></span>
       <span class="lb-k"><small>${tt('lb.j','Joins')}</small><b class="num">${fmt(x.joins)}</b></span><span class="lb-k"><small>${tt('lb.d','Deposits')}</small><b class="num">${x.ftds==null?'—':fmt(x.ftds)}</b></span><span class="lb-k"><small>${tt('lb.c','Per deposit')}</small><b class="num">${centsOr(x.cost_per_ftd_cents)}</b></span></div>`).join('')}</div>`
     :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('lb.e','No team yet')}</h3><p>${tt('lb.e.p','Invite your media buyers and compare them here.')}</p>${isOwner()?`<button class="btn sm primary" data-act="nav" data-p="team">${tt('lb.inv','Invite your team')}</button>`:''}</div>`}
     ${r.locked?`<p class="hint" style="padding:0 18px 16px">${tt('lb.locked','Deposits and cost per deposit are a Pro detail.')}</p>`:''}`;
@@ -8166,7 +8291,7 @@ function utmCard17(c){
   const ps=['meta'].concat(FEAT('tiktok')?['tiktok']:[]).concat(FEAT('snapchat')?['snap']:[]);
   const on=ps.filter(p=>platOn(c,p)); const cur=(S.utmP&&S.utmP[c.id]&&ps.includes(S.utmP[c.id]))?S.utmP[c.id]:(on[0]||'meta');
   const hl=s=>esc(s).replace(/(\{\{[^}]+\}\}|__[A-Z_]+__)/g,'<b>$1</b>');
-  return `<div class="utmc"><div class="utmc-h"><span class="utmc-t">${tt('utm.tags','Campaign tags')}</span><span class="utmc-ps" role="tablist">${ps.map(p=>`<button type="button" class="utmc-p${p===cur?' on':''}" data-act="utm-p" data-id="${c.id}" data-p="${p}" aria-selected="${p===cur}" title="${PLAT[p].name}">${pm(p)}</button>`).join('')}</span></div>
+  return `<div class="utmc"><div class="utmc-h"><span class="utmc-t">${tt('utm.tags','Campaign tags')}</span><span class="utmc-ps" role="tablist">${ps.map(p=>`<button type="button" class="utmc-p${p===cur?' on':''}" data-act="utm-p" data-id="${c.id}" data-p="${p}" aria-selected="${p===cur}" title="${PLAT[p].name}">${pm(p)}<span>${p==='snap'?'Snap':PLAT[p].name}</span></button>`).join('')}</span></div>
     <div class="codebox utmc-b"><code>${hl(UTM17[cur])}</code><button class="btn sm" data-act="copy" data-v="${esc(UTM17[cur].slice(1))}">${I.copy} ${tt('common.copy','Copy')}</button></div>
     <small class="utmc-n">${tt('utm.where','Paste in your ad’s “URL parameters” field, or copy the full link with tags:')} <button type="button" class="link" data-act="copy" data-v="${esc(c.tracking_url+UTM17[cur])}">${tt('utm.full2','Copy link + tags')}</button></small></div>`;
 }
@@ -8261,7 +8386,7 @@ async function switchBack(a){
 }
 
 /* ---------- Team (owner) ---------- */
-const ROLE_T = r => r==='manager'?tt('team.r.m','Manager'):r==='buyer'?tt('team.r.b','Media buyer'):tt('ws.owner','Owner');
+function ROLE_T(r){ return r==='manager'?tt('team.r.m','Manager'):r==='buyer'?tt('team.r.b','Media buyer'):r==='helper'?tt('team.r.h','Setup helper'):tt('ws.owner','Owner'); }
 const ST_T = {invited:['y','Invited'],expired:['r','Invite expired'],active:['g','Active'],paused:['o','Paused']};
 async function viewTeam(){
   S.redraw=[];
@@ -8279,7 +8404,7 @@ function drawTeam(){
     <section class="card"><div class="card-h"><h2>${tt('team.people','People')}</h2><span class="sub">${nNoun(ms.length,'person','people')}</span></div>
     ${ms.length?`<div class="tm-l">${ms.map(m=>{ const [cc,lb]=ST_T[m.status]||['o',m.status]; const chs=(m.channel_ids||[]).map(id=>(r.channels||[]).find(c=>c.id===id)).filter(Boolean);
       return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b>${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>esc(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
-        <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
+        <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':m.role==='helper'?'g':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
       :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('team.e','Just you for now')}</h3><p>${tt('team.e.p','Invite a media buyer and compare results side by side.')}</p><button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>`}</section>
     ${ms.some(m=>m.status==='active')?`<button class="card row17" data-act="nav" data-p="leaderboard"><span class="mr-ic">${I.results}</span><span class="mr-t"><b>${tt('team.lb','Compare your buyers')}</b><small>${tt('team.lb.p','Joins, deposits and cost per deposit, per person')}</small></span><span class="mr-go">${I.chevr}</span></button>`:''}`;
 }
@@ -8325,7 +8450,7 @@ function tmRemove(id){
 /* ---------- Daily report in Telegram ---------- */
 async function viewReport(){
   S.redraw=[];
-  $('#view').innerHTML=`<div class="view rep17"><div class="ph"><div><h1>${tt('more.report','Daily report')}</h1><p>${tt('rep.p','Yesterday’s joins, deposits and costs, sent to your Telegram every morning.')}</p></div></div><div id="rp"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
+  $('#view').innerHTML=`<div class="view rep17"><div class="ph"><div><h1>${tt('more.report','Daily report')}</h1><p>${tt('rep.p','Yesterday’s joins, deposits and costs, sent to your Telegram every morning.')} ${tt('rep.p2','Urgent alerts, like a blocked link or a lost channel, come to the same chat right away.')}</p></div></div><div id="rp"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
   let r; try { r=await api('GET','/api/report-settings'); } catch(e){ const el=$('#rp'); if(el) el.innerHTML=`<div class="card"><div class="empty"><h3>${esc(e.message)}</h3></div></div>`; return; }
   R17.rep=r; if (S.page!=='report') return; drawReport(); repPreview();
 }
@@ -8387,7 +8512,7 @@ ibNav = function(u){ const m=/^#tab:(channels\/[\w/-]+|spend)$/.exec(u||''); if 
 addEventListener('hashchange',()=>{ if ($('#shell')) deepLink(location.hash.slice(1)); });
 async function teamAsk(tk){
   let i; try { i=await api('GET','/api/team/invite-info?token='+encodeURIComponent(tk)); } catch(e){ toast(e.status===410?tt('team.exp','That team invite expired. Ask for a new one.'):tt('team.inv0','That team invite link isn’t valid.'),false); return; }
-  sheet(`<h2>${tt('team.join.h','Join {n}’s team?',{n:esc(i.owner_name||i.owner_email)})}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${tt('team.join.b','You’ll join as {r}',{r:esc(i.role_name||ROLE_T(i.role))})}</b><span>${i.role==='buyer'?tt('team.join.pb','You’ll see the channels {n} gives you. Your own account stays as it is.',{n:esc(i.owner_name||'')}):tt('team.join.pm','You’ll see all of {n}’s channels and results. Your own account stays as it is.',{n:esc(i.owner_name||'')})}</span></div>
+  sheet(`<h2>${tt('team.join.h','Join {n}’s team?',{n:esc(i.owner_name||i.owner_email)})}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${tt('team.join.b','You’ll join as {r}',{r:esc(i.role_name||ROLE_T(i.role))})}</b><span>${i.role==='helper'?tt('team.join.ph','You’ll set up {n}’s bots, channels and ads. You won’t see their billing. Your own account stays as it is.',{n:esc(i.owner_name||'')}):i.role==='buyer'?tt('team.join.pb','You’ll see the channels {n} gives you. Your own account stays as it is.',{n:esc(i.owner_name||'')}):tt('team.join.pm','You’ll see all of {n}’s channels and results. Your own account stays as it is.',{n:esc(i.owner_name||'')})}</span></div>
     <div id="tjerr"></div><button class="btn primary lg wide" data-act="team-accept" data-v="${esc(tk)}">${tt('team.join.go','Join the team')} ${I.arrow}</button><button class="btn ghost wide" data-act="close">${tt('team.join.no','Not now')}</button>`);
 }
 async function teamAccept(a){
@@ -8418,7 +8543,7 @@ viewHelp = function(){
   viewHelp0();
   const v=$('#view .view'); if(!v) return;
   const ph=v.querySelector('.ph'); if (ph){ const e=ph.querySelector('.eyebrow'); if(e) e.remove(); const h=ph.querySelector('h1'); if(h) h.textContent=tt('help.h','Help & tutorials'); const p=ph.querySelector('p'); if(p) p.textContent=tt('help.p','Short videos for every step. Real people in chat when you need them.'); }
-  ph && ph.insertAdjacentHTML('afterend', `<section class="tut-sec"><div class="card-h tut-h"><h2>${tt('tut.h','Video tutorials')}</h2><span class="sub">${tt('tut.n','{n} short videos',{n:TUT.length})}</span></div><div class="tut-grid">${TUT.map(t=>`<button class="tut-card" data-act="tut" data-v="${t.id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(t.id)}</span><span class="tut-play">${I.play}</span><em>${tutLen(t.id)}</em></span><span class="tut-t"><b>${esc(tt('tut.'+t.id,t.title))}</b><small>${esc(t.where)}</small></span></button>`).join('')}</div></section>`);
+  ph && ph.insertAdjacentHTML('afterend', tutHelpSec()); /* the same cards as the Tutorials page (p8f) */
 };
 
 /* ---------- handlers ---------- */
@@ -8481,6 +8606,7 @@ const TUT = [
  {id:'t7',title:'Connect your own bot’s Start',where:'Bot settings › Bot start ping',text:"Sending your ads to your own bot, and you don't want to share its token? No problem. Open the bot's Settings, then \"Connect your bot's Start\". Copy the ready-made code for your bot, or the web address for no-code builders like ManyChat or SendPulse. Tap Send a test. Now, every time someone presses Start, your bot tells Joinvoo, and the join is matched to the exact ad."},
  {id:'t8',title:'Add your team',where:'More › Team',text:"Working with a team? Open More, then Team, and tap Invite. Enter your buyer's email and pick a role. Managers see every channel. Buyers see only the channels you give them. Pro includes three team members, and you can add more any time. On Results, compare your buyers side by side, and see who brings you the cheapest deposits."},
  {id:'t9',title:'Read your results',where:'Results',text:"Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report."},
+ {id:'t10',title:'Invite a setup helper',where:'More › Team',text:"Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time."},
 ];
 function tutPlan(t){
   const sents=(t.text.match(/[^.!?]+[.!?]+["”]?/g)||[t.text]).map(s=>s.trim()).filter(Boolean);
@@ -8670,6 +8796,37 @@ const BEATS = {
     {s:'tg-report',a:[[.2,'on','msg']]},
     {s:'jv-more',a:[[.3,'tap','report'],[.48,'screen','jv-report'],[.72,'tap','sw'],[.78,'on','sw']]}]},
 };
+/* ---------- t10: invite a Setup helper (round 18) ---------- */
+const ACC10 = [['Ada Okafor','Setup helper',[['7','joins today'],['96','7 days'],['4','deposits']],[['g','● Live']]],['Bayo Stores','Setup helper',[['0','joins today'],['0','7 days'],['0','deposits']],[['y','Setup not finished']]],['Chidi Media','Manager',[['31','joins today'],['412','7 days'],['22','deposits']],[['r','Channel lost']]],['Dami Deals','Media buyer',[['12','joins today'],['140','7 days'],['9','deposits']],[['g','● Live']]]];
+Object.assign(SCR, {
+  'jv-team10': () => JV(`<b class="m-h1">Team</b><div class="m-card m-help10" data-t="explain"><b>Get help setting up — without sharing your password</b><small class="m-mut">Invite a Setup helper (free). They can set up your bots, channels and ads, but can’t touch your money.</small></div>
+    <div class="m-card m-seat"><b>0 of 3 seats</b><small class="m-mut">$5/mo per extra seat</small>${M.btn('invite',`${I.plus} Invite`,'p sm')}<span class="m-bar"><i style="width:0%"></i></span></div>`, 'more', 'Team'),
+  'jv-invite10': () => JV(`<b class="m-h1">Team</b>${M.sheet('Invite to your team','Pick a role',`<div class="m-shb">${M.lab('Their email')}${M.inp('email','helper@example.com')}${M.lab('Role')}<div class="m-aps" data-t="roles">
+    <span class="m-ap" data-t="rh"><span class="m-rad"></span><b>Setup helper <em class="m-chip g" data-t="free">Free</em></b><small>Sets up bots, channels and ads. No billing.</small></span>
+    <span class="m-ap" data-t="rm"><span class="m-rad"></span><b>Manager</b><small>Every channel. Never billing or team.</small></span>
+    <span class="m-ap" data-t="rb"><span class="m-rad"></span><b>Media buyer</b><small>Only the channels you pick.</small></span></div>${M.btn('send','Send invite','p wide')}</div>`)}`, false, 'Team'),
+  'jv-invdone10': () => JV(`<b class="m-h1">Team</b>${M.sheet('Invite ready','sam@freelance.io',`<div class="m-shb"><div class="m-ok">${I.checkc}<span>Share this link. It works for 7 days.</span></div>
+    <div class="m-code" data-t="link"><code>joinvoo.com/join-team/q7Xk2…</code><span class="m-btn p sm" data-t="copy">${I.copy} Copy</span></div>${M.toast('copied','Link copied')}
+    <span class="m-btn wide m-wa" data-t="wa">Send it on WhatsApp</span><span class="m-btn wide m-tgs10">Share on Telegram</span></div>`)}`, false, 'Team'),
+  'wa-share': () => `<div class="m-scr wa10">${M.sb(1)}<div class="m-tgh m-wah"><span class="m-back">${I.chevl}</span><span class="m-tav" style="background:#25a35a">S</span><span class="m-tn"><b>Sam (freelancer)</b><small>online</small></span></div>
+    <div class="m-chat">${M.msg('out h','Hi Sam, can you set up my Joinvoo tracking? Use this link: <u>joinvoo.com/join-team/q7Xk2…</u>','msg',1)}${M.msg('in h','On it 👍 I’ll have your bot and ads connected today.','rep',1)}</div></div>`,
+  'jv-helper10': () => JV(`<div class="m-card m-hw10 h" data-t="wel"><b>You’re helping Ada set up Joinvoo</b><small class="m-mut">You can set up bots, channels and ads. You can’t see billing.</small>
+    <div class="m-hw-l"><span class="m-chip g" data-t="can">✓ Bots · channels · ads</span><span class="m-chip" data-t="cant">${I.lock} Billing · wallet</span></div></div>
+    <div class="m-stl"><i></i>Tracking live · 2 channels</div><div class="m-k4">${[['Joins from ads','128','lilac'],['Deposits','9','mint']].map(([l,v,t])=>`<span class="m-k t-${t}"><small>${l}</small><b>${v}</b></span>`).join('')}</div>`, 'overview', 'Ada’s team'),
+  'jv-accounts10': () => JV(`<b class="m-h1">Accounts I manage</b>${ACC10.map(([n,r,k,al],i)=>`<div class="m-card m-acc10 h" data-t="a${i+1}"><div class="m-acc-t"><span class="m-pav" style="${avStyle(n.length*7+i)}">${n[0]}</span><span class="m-rt"><b>${n}</b><small>${r}</small></span>${al.map(([c,l])=>`<span class="m-chip ${c}">${l}</span>`).join('')}</div>
+    <div class="m-acc-n">${k.map(([v,l])=>`<span><b>${v}</b><small>${l}</small></span>`).join('')}</div></div>`).join('')}`, 'more', 'All accounts'),
+  'jv-teamrm10': () => JV(`<b class="m-h1">Team</b><div class="m-card">${M.row(`<span class="m-pav" style="${avStyle(21)}">S</span>`,'Sam','sam@freelance.io · <span class="m-g">Setup helper · Free</span>',`<span class="m-dots" data-t="menu">•••</span>`,'mem')}</div>
+    <div class="m-card m-pop10 h" data-t="pop">${M.row(I.gear,'Change role or access','')}<div class="m-row m-rm10" data-t="rm"><span class="m-ric">${I.x}</span><span class="m-rt"><b>Remove</b><small>They lose access right away</small></span></div></div>${M.toast('gone','Removed from your team')}`, 'more', 'Team'),
+});
+BEATS.t10 = {poster:'jv-accounts10', b:[
+  {s:'jv-team10',a:[[.45,'hl','explain']]},
+  {s:'jv-ov',a:[[.08,'tap','nav-more'],[.22,'screen','jv-more'],[.42,'tap','team'],[.56,'screen','jv-team10'],[.84,'tap','invite']]},
+  {s:'jv-invite10',a:[[.2,'tap','rh'],[.3,'on','rh'],[.45,'hl','rh']]},
+  {a:[[.25,'hl','free']]},
+  {a:[[.04,'tap','email'],[.08,'type','email','sam@freelance.io'],[.36,'tap','send'],[.44,'screen','jv-invdone10'],[.56,'tap','copy'],[.62,'on','copied'],[.8,'tap','wa'],[.9,'screen','wa-share'],[.94,'on','msg']]},
+  {s:'jv-helper10',a:[[.04,'on','wel'],[.3,'hl','can'],[.68,'hl','cant']]},
+  {s:'jv-accounts10',a:[[.05,'on','a1'],[.18,'on','a2'],[.31,'on','a3'],[.44,'on','a4'],[.62,'hl','a3']]},
+  {s:'jv-teamrm10',a:[[.1,'tap','menu'],[.24,'on','pop'],[.42,'hl','rm'],[.62,'tap','rm'],[.74,'off','pop'],[.76,'on','gone']]}]};
 function tutPoster(id){ const b=BEATS[id]; const h=(SCR[b&&b.poster]||SCR['jv-ov'])().replace(/(class="[^"]*)\bh\b/g,'$1h on'); return `<span class="tv-vp poster m-all">${h}</span>`; }
 
 /* ---------- the player ---------- */
@@ -8719,7 +8876,7 @@ function tutPlay(){
 }
 function tutPause(){ const P=TP; if(!P) return; P.want=false; P.playing=false; if(P.mode==='audio') P.audio.pause(); tutUI(); }
 function tutUI(){ const P=TP; if(!P) return; const on=P.playing||(P.want&&!P.mode); P.root.classList.toggle('playing',on); $$('.tvp [data-act="tut-toggle"]').forEach(b=>{ b.innerHTML=on?I.pause:I.play; b.setAttribute('aria-label',on?tt('tut.pause','Pause'):tt('tut.play','Play')); }); }
-function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); }
+function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); tutEndBtns(P.id); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); tutMark(P.id); }
 function tutSeek(t){ const P=TP; if(!P) return; P.t=Math.max(0,Math.min(P.D,t)); if(P.mode==='audio'){ try{ P.audio.currentTime=P.t; }catch{} } P.cur=-1; P.seek=true; $('#tvend').hidden=P.t<P.D-.05; tutUpdate(); }
 function tutClose(quick){
   const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
@@ -8818,6 +8975,272 @@ document.addEventListener('click', e=>{
 /* closing any sheet forgets which channel's settings were open */
 const closeSheet0 = closeSheet;
 closeSheet = function(){ closeSheet0(); S.cs=null; S.side=null; S.csJrOpen=false; };
+
+/* ---------- Tutorials page (#tutorials): sidebar item, first row on More, "Start here" on Overview, ✓ on watched videos ----------
+   One card renderer (tutCards) serves the Tutorials page and the Help & tutorials page. Watched ids live in localStorage (best effort). */
+I.tutorials = sv('<circle cx="12" cy="12" r="9"/><path d="M10.2 8.6v6.8l5.4-3.4z" fill="currentColor"/>');
+PAGES.tutorials = {t:'Tutorials', tag:String(TUT.length), fn:()=>viewTutorials()};
+const TUT_START = ['t1','t2','t3'];
+const TUT_GROUPS = [['start','Get started',TUT_START],['dep','Track deposits',['t4']],['grow','Grow',['t5','t6','t7']],['team','Team',['t8','t10']],['read','Read results',['t9']]];
+const TUT_SEEN_K = 'jv_tut_seen', TUT_STRIP_K = 'jv_tut_strip_x';
+function tutSeen(){ try { const a=JSON.parse(localStorage.getItem(TUT_SEEN_K)||'[]'); return new Set(Array.isArray(a)?a:[]); } catch { return new Set(); } }
+function tutMark(id){
+  const s=tutSeen(); if (!s.has(id)){ s.add(id); try { localStorage.setItem(TUT_SEEN_K, JSON.stringify([...s])); } catch {} }
+  $$(`.tut-card[data-v="${id}"]`).forEach(c=>c.classList.add('seen')); tutProg();
+}
+const tutMin = ids => Math.max(1, Math.round(ids.reduce((a,id)=>{ const t=TUT.find(x=>x.id===id); return a+(t?tutPlan(t).secs:0); },0)/60));
+/* cards: n=true numbers them 1→2→3 (the "Start here" row) */
+function tutCards(ids, n){
+  const seen=tutSeen();
+  return `<div class="tut-grid${n?' tut-steps':''}">${ids.map((id,i)=>{ const t=TUT.find(x=>x.id===id); if(!t) return ''; const s=seen.has(id);
+    return `<button class="tut-card${s?' seen':''}" data-act="tut" data-v="${id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(id)}</span><span class="tut-play">${I.play}</span>${n?`<span class="tut-n">${i+1}</span>`:''}<span class="tut-ck" title="${esc(tt('tutp.seen','Watched'))}">${I.check}</span><em>${tutLen(id)}</em></span>
+      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc(t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
+}
+function tutProg(){
+  const el=$('#tutprog'); if(!el) return; const n=TUT.filter(t=>tutSeen().has(t.id)).length;
+  el.innerHTML=`<span>${tt('tutp.prog','{n} of {m} watched',{n,m:TUT.length})}</span><i><u style="width:${n/TUT.length*100}%"></u></i>`;
+}
+function viewTutorials(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view tutp"><div class="ph"><div><h1>${tt('tutp.h','Tutorials')}</h1><p>${tt('tutp.p','Short videos, about 30 seconds each. New here? Start with the first three.')}</p></div><div class="tut-prog" id="tutprog"></div></div>
+    ${TUT_GROUPS.map(([k,h,ids])=>`<section class="tut-sec${k==='start'?' tut-start':''}"><div class="card-h tut-h">${k==='start'?`<span class="tut-eb">${I.play}${tt('tutp.start','Start here')}</span>`:''}<h2>${tt('tutp.g.'+k,h)}</h2><span class="sub">${k==='start'?tt('tutp.start.s','3 steps · about {m} min',{m:tutMin(ids)}):(ids.length===1?tt('tutp.one','1 short video'):tt('tut.n','{n} short videos',{n:ids.length}))}</span></div>${tutCards(ids,k==='start')}</section>`).join('')}
+    <p class="tut-foot">${tt('tutp.foot','Still stuck?')} <button class="link" data-act="chat">${tt('tutp.chat','Ask us in chat')} ${I.arrow}</button></p></div>`;
+  tutProg();
+}
+/* Help & tutorials: the "Start here" videos + a link to the full Tutorials page */
+function tutHelpSec(){
+  return `<section class="tut-sec"><div class="card-h tut-h"><h2>${tt('tut.h','Video tutorials')}</h2><button class="link" data-act="nav" data-p="tutorials">${tt('tutp.all','See all {n} tutorials',{n:TUT.length})} ${I.arrow}</button></div>${tutCards(TUT_START,true)}</section>`;
+}
+/* end of a "Start here" video: offer the next one */
+function tutEndBtns(id){
+  const e=$('#tvend'); if(!e) return; const i=TUT_START.indexOf(id), nx=i>=0&&i<TUT_START.length-1?TUT.find(t=>t.id===TUT_START[i+1]):null;
+  e.classList.toggle('has-next',!!nx);
+  e.innerHTML=`${nx?`<button class="btn primary tv-next" data-act="tut" data-v="${nx.id}"><span>${tt('tutp.next','Next: {t}',{t:esc(tt('tut.'+nx.id,nx.title))})}</span> ${I.arrow}</button>`:''}<button class="btn" data-act="tut-replay">${I.refresh} ${tt('tut.replay','Watch again')}</button><button class="btn${nx?'':' primary'}" data-act="tut-close">${tt('common.done','Done')}</button>`;
+}
+/* desktop sidebar: Tutorials after Joe, before More (the phone bottom bar keeps its 5 items) */
+const setNavT = setNav;
+setNav = function(){ setNavT(); const m=NAV[0]&&NAV[0][1]; if (m && !m.includes('tutorials')){ const k=m.indexOf('more'); m.splice(k<0?m.length:k,0,'tutorials'); } };
+const navMarkT = navMark;
+navMark = function(page){ navMarkT(page); if (page==='tutorials'){ const b=$('.bbar [data-p="more"]'); if(b) b.setAttribute('aria-current','page'); } };
+const drawSubnavT = drawSubnav;
+drawSubnav = function(page){
+  drawSubnavT(page); const el=$('#subnav'); if(!el || page!=='tutorials') return;
+  el.hidden=false; el.setAttribute('aria-label',tt('nav.more','More'));
+  el.innerHTML=`<div class="sn-in sn-back sn-tut"><button class="link" data-act="nav" data-p="more">${I.chevl} ${tt('nav.more','More')}</button></div>`;
+};
+/* More: Tutorials is the first row */
+const viewMoreT = viewMore;
+viewMore = function(){
+  viewMoreT(); const v=$('#view .more17'); if(!v || v.querySelector('.mtut')) return;
+  const html=`<div class="card mlist mtut"><button class="mrow17" data-act="nav" data-p="tutorials"><span class="mr-ic">${I.tutorials}</span><span class="mr-t"><b>${tt('tutp.h','Tutorials')}</b><small>${tt('tutp.more.s','30-second videos for every step')}</small></span><em class="mr-n">${TUT.length}</em><span class="mr-go">${I.chevr}</span></button></div>`;
+  const after=v.querySelector('.ws-card')||v.querySelector('.ph'); after?after.insertAdjacentHTML('afterend',html):v.insertAdjacentHTML('afterbegin',html);
+};
+/* Overview: "New here?" strip for a new account (under the setup card, so "Start setup" stays above the fold) and for accounts with under 10 joins */
+const TS = { k:null, n:null, p:null };
+function tsHidden(){ try { if (localStorage.getItem(TUT_STRIP_K)==='1') return true; } catch {} const s=tutSeen(); return TUT_START.every(id=>s.has(id)); }
+async function tsJoins(){
+  const k=(R17.ws&&R17.ws.current&&R17.ws.current.owner_id)||'me';
+  if (TS.k===k && TS.n!=null) return TS.n; if (TS.k===k && TS.p) return TS.p;
+  TS.k=k; TS.n=null; const t=new Date();
+  TS.p=api('GET',`/api/stats?from=${ymd(addDays(t,-365))}&to=${ymd(t)}&${tzq()}`).then(r=>{ const T=(r&&r.totals)||{}; TS.n=(T.joins||0)+(T.organic||0); return TS.n; }).catch(()=>{ TS.p=null; return null; });
+  return TS.p;
+}
+async function ovTutStrip(){
+  if (S.page!=='overview' || tsHidden() || !isOwner()) return;
+  const done=setupState().done;
+  if (done){ const n=await tsJoins(); if (n==null || n>=10) return; }
+  const v=$('#view .view'); if (S.page!=='overview' || !v || v.querySelector('.tstrip')) return;
+  const html=`<section class="tstrip" role="note"><button class="ts-go" data-act="tut" data-v="t1"><span class="ts-pl">${I.play}</span><span class="ts-t"><b>${tt('tutp.strip.h','New here?')}</b> <span>${tt('tutp.strip.p','Watch the 3-step setup')}</span> <em>${tt('tutp.strip.m','{m} min',{m:tutMin(TUT_START)})}</em></span></button><button class="ts-x" data-act="ts-x" aria-label="${esc(tt('tutp.strip.x','Hide this'))}">${I.x}</button></section>`;
+  const st=v.querySelector('.card.start');
+  if (st) st.insertAdjacentHTML('afterend',html);
+  else { const a=v.querySelector('#ovalerts')||v.querySelector('.ov-head'); a?a.insertAdjacentHTML('afterend',html):v.insertAdjacentHTML('afterbegin',html); }
+}
+const viewOverviewT = viewOverview;
+viewOverview = async function(){ const p=viewOverviewT(); ovTutStrip(); await p; ovTutStrip(); };
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act="ts-x"]'); if(!a) return;
+  try { localStorage.setItem(TUT_STRIP_K,'1'); } catch {}
+  const s=a.closest('.tstrip'); if (s){ if (reduced) s.remove(); else { s.classList.add('out'); setTimeout(()=>s.remove(),200); } }
+});
+
+/* ================= Round 18 UI: the free "Setup helper" role and "Accounts I manage".
+   Team page: a short explainer card, roles in one line each, the invite sheet with Setup helper first (Free), "Access ends on",
+   share-by-WhatsApp/Telegram when email isn't set up. Helpers: a welcome card on Overview. Anyone on 2+ teams (or a helper):
+   #accounts, reachable from More, the top of the workspace switcher ("All accounts") and, after login, as the landing page
+   when they have no channels of their own. Owners, managers and media buyers see nothing new unless they use these. ================= */
+const R18 = { managed:null, init:false, h0:location.hash.slice(1) }; /* h0: the address the app was opened with (the first render rewrites the hash) */
+const wsList = () => ((R17.ws&&R17.ws.workspaces)||[]);
+/** "Accounts I manage" is for people on 2+ teams, or a Setup helper on at least one. */
+const accOn = () => { const o=wsList().filter(w=>!w.own); return o.length>=2 || o.some(w=>w.role==='helper'); };
+const ROLE_P = r => r==='helper'?tt('team.r.h.p','Sets up your bots, channels and ads. Can’t touch your money.'):r==='manager'?tt('team.r.m.p2','Sees and edits every channel. Never billing or team.'):tt('team.r.b.p2','Sees only the channels you pick.');
+const ini = s => { const p=String(s||'?').trim().split(/[\s@._-]+/).filter(Boolean); return ((p[0]||'?')[0]+((p[1]||'')[0]||'')).toUpperCase(); };
+const dayTxt = t => new Date(t).toLocaleDateString(undefined,{day:'numeric',month:'short',year:new Date(t).getFullYear()===new Date().getFullYear()?undefined:'numeric'});
+Object.assign(I,{ wa:'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.2a9.8 9.8 0 0 0-8.4 14.9L2.3 21.8l4.8-1.3A9.8 9.8 0 1 0 12 2.2zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-2.8.8.8-2.7-.2-.3A8 8 0 1 1 12 20zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8.9c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 5 5 0 0 0 1 2.6 11.3 11.3 0 0 0 4.3 3.8c1.6.7 2.3.7 3.1.6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.6-.1z"/></svg>' });
+
+/* ---------- pages + navigation ---------- */
+PAGES.accounts = {t:'Accounts I manage', fn:()=>viewAccounts()};
+MORE_SET.add('accounts');
+const viewMore18 = viewMore;
+viewMore = function(){
+  viewMore18();
+  if (!accOn()) return;
+  const v=$('#view .more17'); if(!v) return; const anchor=v.querySelector('.ws-card')||v.querySelector('.mgrp');
+  anchor && anchor.insertAdjacentHTML(anchor.classList.contains('ws-card')?'afterend':'beforebegin', `<button class="card row17 acc-row" data-act="nav" data-p="accounts"><span class="mr-ic">${I.team}</span><span class="mr-t"><b>${tt('acc.h','Accounts I manage')}</b><small>${tt('acc.more.s','Every account you help with, in one place')}</small></span><span class="mr-go">${I.chevr}</span></button>`);
+};
+const wsPop18 = wsPop;
+wsPop = function(a){
+  wsPop18(a);
+  if (!accOn()) return; const p=$('.pop.wsp'); if(!p) return;
+  const h=p.querySelector('.ph2'); h && h.insertAdjacentHTML('afterend', `<button class="pi pi-all" data-act="nav" data-p="accounts">${I.results}<span class="ws-l"><b>${tt('acc.all','All accounts')}</b><small>${tt('acc.all.s','Accounts I manage')}</small></span>${I.chevr}</button><hr>`);
+};
+
+/* ---------- Accounts I manage ---------- */
+const ALERT_T = { lost_channel:['r',I.alert], dead_link:['y',I.alert], setup:['y',I.gear], tracking_paused:['r',I.lock] };
+function alertLabel(a){
+  if (a.kind==='lost_channel') return a.n>1?tt('acc.al.lost.n','{n} channels lost',{n:a.n}):tt('acc.al.lost','Channel lost');
+  if (a.kind==='dead_link') return tt('acc.al.dead','Link may be blocked');
+  if (a.kind==='tracking_paused') return tt('acc.al.paused','Tracking paused');
+  if (a.kind==='setup') return (a.missing||[]).includes('bot')?tt('acc.al.bot','Setup: no bot'):(a.missing||[]).includes('channel')?tt('acc.al.ch','Setup: no channel'):tt('acc.al.ads','Setup: no ads connected');
+  return a.label||'';
+}
+async function viewAccounts(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view acc18"><div class="ph"><div><h1>${tt('acc.h','Accounts I manage')}</h1><p>${tt('acc.p','Tap an account to work in it.')}</p></div></div>
+    <div id="accs"><div class="acc-l">${'<div class="card acc-c"><div class="sk" style="height:96px"></div></div>'.repeat(3)}</div></div></div>`;
+  let r; try { r=await api('GET','/api/managed?'+tzq()); } catch(e){ const el=$('#accs'); if(el) el.innerHTML=`<div class="card"><div class="empty"><h3>${esc(e.message)}</h3></div></div>`; return; }
+  R18.managed=r; if (S.page!=='accounts') return; drawAccounts();
+}
+function accCard(x){
+  const al=(x.alerts||[]), nums=x.paused?`<p class="acc-pz">${I.lock} ${tt('acc.paused','Paused until the owner upgrades')}</p>`
+    :`<div class="acc-n"><span><b class="num">${fmt(x.joins_today||0)}</b><small>${tt('acc.jt','Joins today')}</small></span><span><b class="num">${fmt(x.joins_7d||0)}</b><small>${tt('acc.j7','Joins · 7d')}</small></span><span><b class="num">${fmt(x.deposits_7d||0)}</b><small>${tt('acc.d7','Deposits · 7d')}</small></span></div>`;
+  const chips=x.paused?'':al.length?al.map(a=>{ const [c,ic]=ALERT_T[a.kind]||['o','']; return `<span class="chip ${c}">${ic}${esc(alertLabel(a))}</span>`; }).join(''):`<span class="chip g"><i class="d"></i>${tt('acc.ok','All good')}</span>`;
+  return `<button class="card acc-c${x.current?' cur':''}${x.paused?' acc-paused':''}" data-act="acc-go" data-id="${x.owner_id}" data-q="${esc((x.name+' '+x.email).toLowerCase())}">
+    <span class="acc-t"><span class="acc-av" style="${avStyle(x.owner_id)}">${esc(ini(x.name||x.email))}</span><span class="acc-nm"><b>${esc(x.own?tt('acc.own','Your account'):x.name||x.email)}</b><small>${esc(x.own?(x.email||''):x.email||'')}</small></span>
+      <span class="acc-side"><span class="chip ${x.role==='helper'?'g':x.role==='manager'?'v':x.role==='owner'?'o':'b'}">${esc(ROLE_T(x.role))}</span>${x.current?`<span class="acc-cur">${I.check}${tt('acc.cur','Open')}</span>`:''}</span></span>
+    ${nums}<span class="acc-al">${chips}${x.expires_at?`<span class="chip o">${I.clock}${tt('acc.until','Until {d}',{d:dayTxt(x.expires_at)})}</span>`:''}</span></button>`;
+}
+function drawAccounts(){
+  const el=$('#accs'), r=R18.managed; if(!el||!r) return;
+  const list=(r.accounts||[]).filter(x=>!x.own||x.channels); // your own account only when it has channels
+  if (!list.length){ el.innerHTML=`<div class="card"><div class="empty"><span class="ei">${I.team}</span><h3>${tt('acc.e','No accounts yet')}</h3><p>${tt('acc.e.p','When a client invites you, their account shows up here.')}</p></div></div>`; return; }
+  el.innerHTML=`${list.length>6?`<label class="acc-q">${I.search}<input id="accq" type="search" placeholder="${esc(tt('acc.q','Search accounts'))}" aria-label="${esc(tt('acc.q','Search accounts'))}" autocomplete="off"></label>`:''}
+    <div class="acc-l" id="accl">${list.map(accCard).join('')}</div><p class="acc-none" id="accnone" hidden>${tt('acc.none','No account matches.')}</p>
+    ${r.capped?`<p class="hint">${tt('acc.cap','Showing the first {n} accounts.',{n:r.max})}</p>`:''}`;
+  const q=$('#accq'); if (q) q.addEventListener('input',()=>{ const v=q.value.trim().toLowerCase(); let n=0; $$('#accl .acc-c').forEach(c=>{ const hit=!v||c.dataset.q.includes(v); c.hidden=!hit; if(hit) n++; }); $('#accnone').hidden=n>0; });
+}
+async function accGo(a){
+  const x=((R18.managed&&R18.managed.accounts)||[]).find(z=>String(z.owner_id)===a.dataset.id); if(!x) return;
+  if (x.paused) return toast(tt('ws.paused.t','That team is paused until its owner upgrades.'),false);
+  if (x.current){ go('overview'); return; }
+  a.classList.add('busy');
+  try { const r=await api('POST','/api/workspace',{owner_id:x.own?0:x.owner_id}); R17.ws=r; if(S.me) S.me.workspace=r; R17.team=null; R17.rep=null; R17.meta=null; R17.aud=null;
+    await refreshChans(); setRole(); S.page='overview'; S.channel=''; renderApp(); toast(x.own?tt('ws.sw.own','Back in your workspace'):tt('acc.sw','Now working in {n}’s account',{n:x.name||x.email})); }
+  catch(e){ a.classList.remove('busy'); toast(e.body&&e.body.paused?tt('ws.paused.t','That team is paused until its owner upgrades.'):e.message,false); }
+}
+
+/* ---------- Team page: explainer, roles, invite sheet with the Setup helper first ---------- */
+const viewTeam18 = viewTeam;
+viewTeam = async function(){
+  await viewTeam18();
+  if (!isOwner() || S.page!=='team') return; const v=$('#view .team17'); if(!v||v.querySelector('.help18')) return;
+  v.querySelector('.ph').insertAdjacentHTML('afterend', `<section class="card help18"><span class="hp-ic">${I.shield}</span><div class="hp-t"><b>${tt('help18.h','Get help setting up — without sharing your password')}</b>
+    <p>${tt('help18.p','Invite a Setup helper (free) — they can set up your bots, channels and ads, but can’t touch your money.')}</p>
+    <ul class="hp-roles">${['helper','manager','buyer'].map(r=>`<li><b>${ROLE_T(r)}${r==='helper'?` <em class="chip g">${tt('common.free','Free')}</em>`:''}</b><span>${ROLE_P(r)}</span></li>`).join('')}</ul>
+    <div class="hp-act"><button class="btn primary sm" data-act="team-invite" data-role="helper">${I.plus} ${tt('help18.b','Invite a Setup helper')}</button>${watchBtn('t10')}</div></div></section>`);
+};
+const drawTeam18 = drawTeam;
+drawTeam = function(){
+  drawTeam18();
+  const r=R17.team; if(!r) return;
+  $$('#tm .tm-r').forEach(row=>{ const b=row.querySelector('[data-act="tm-menu"]'), m=b&&(r.members||[]).find(x=>String(x.id)===b.dataset.id); if(!m) return;
+    const ch=row.querySelector('.tm-chips'); if(!ch) return;
+    if (m.role==='helper' && m.free) ch.insertAdjacentHTML('beforeend',`<span class="chip o">${tt('common.free','Free')}</span>`);
+    if (m.expires_at) ch.insertAdjacentHTML('beforeend',`<span class="chip y">${I.clock}${tt('team.until','Access ends {d}',{d:dayTxt(m.expires_at)})}</span>`); });
+  const s=r.seats||{}, top=$('#tm .seat17 .mr-t small');
+  if (top && s.helpers_free_used) top.insertAdjacentHTML('beforeend', ' · '+tt('team.freeh','Setup helper free'));
+};
+const helperFree = () => { const s=(R17.team&&R17.team.seats)||{}; return (s.helper_free??1) > (s.helpers_free_used||0); };
+const ymdIn = t => { const d=new Date(t); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+inviteForm = function(m){
+  const r=R17.team||{}, role=S.tmRole, sel=new Set(((m&&m.channel_ids)||[]).map(Number)), chs=(r.channels||[]).filter(c=>c.status!=='removed');
+  const rp=(k,label,extra='')=>`<button type="button" class="rp" role="radio" data-act="tm-role" data-v="${k}" aria-checked="${role===k}"><span class="o-rad"></span><span class="mr-t"><b>${label}${extra}</b><small>${ROLE_P(k)}</small></span></button>`;
+  const freeChip = helperFree()||(m&&m.role==='helper'&&m.free) ? ` <em class="chip g">${tt('common.free','Free')}</em>` : ` <em class="chip o">${tt('team.seat1','Uses a seat')}</em>`;
+  const tmr=ymdIn(Date.now()+864e5), exp=m&&m.expires_at?ymdIn(m.expires_at):'';
+  return `<form id="tmf" class="cs-form" novalidate>${m?'':`<div class="field"><label for="tme">${tt('team.email','Their email')}</label><input class="inp" id="tme" type="email" autocomplete="off" inputmode="email" placeholder="${role==='helper'?'helper@example.com':'buyer@example.com'}" required></div>`}
+    <div class="field"><span class="lbl">${tt('team.role','Role')}</span><div class="role-pick" role="radiogroup">${rp('helper',tt('team.r.h','Setup helper'),freeChip)}${rp('manager',tt('team.r.m','Manager'))}${rp('buyer',tt('team.r.b','Media buyer'))}</div></div>
+    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span>${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
+    <details class="field tm-exp"${exp?' open':''}><summary>${I.clock}<span>${tt('team.exp.h','Access ends on')}</span><small>${exp?'':tt('team.exp.opt','Optional')}</small>${I.chev}</summary>
+      <div class="tm-exp-b"><input class="inp" id="tmx" type="date" min="${tmr}" value="${exp}" aria-label="${esc(tt('team.exp.h','Access ends on'))}">${exp?`<button type="button" class="btn sm ghost" data-act="tm-exp-clear">${tt('team.exp.clear','No end date')}</button>`:''}</div>
+      <small class="hint">${tt('team.exp.p','Their access stops by itself at the end of that day.')}</small></details>
+    <div id="tmerr"></div><button class="btn primary lg wide" type="submit">${m?tt('common.save','Save'):tt('team.send','Send invite')}</button></form>`;
+};
+openInvite = function(m, role){
+  S.tmRole=(m&&m.role)||role||(helperFree()?'helper':'buyer'); const s=(R17.team&&R17.team.seats)||{};
+  sheet(`<h2>${m?tt('team.edit','Change role or channels'):tt('team.inv.h','Invite to your team')}<small>${m?esc(m.email):s.included?tt('team.inv.s','{a} of {b} seats used',{a:fmt(s.used||0),b:fmt(s.included)}):tt('team.inv.s2','Setup helpers are free on every plan')}</small></h2>`, `${inviteForm(m)}`);
+  $('#tmf').addEventListener('submit', async e=>{ e.preventDefault(); const b=e.submitter; const ids=$$('#tmch input:checked').map(x=>+x.value);
+    const body={role:S.tmRole, channel_ids:S.tmRole==='buyer'?ids:[]}; if(!m){ body.email=$('#tme').value.trim(); if(!body.email){ $('#tme').focus(); return; } }
+    const xv=$('#tmx')&&$('#tmx').value; /* QA: the end of the picked day in the user's own time zone (the server reads a bare date as UTC); an unchanged date isn't resent */
+    if (xv){ if (!(m&&m.expires_at&&ymdIn(m.expires_at)===xv)){ const [y,mo,d]=xv.split('-').map(Number); body.expires_at=new Date(y,mo-1,d,23,59,59).getTime(); } } else if (m&&m.expires_at) body.expires_at=null;
+    if(b) b.disabled=true;
+    try { if (m){ await api('PATCH','/api/team/'+m.id, body); closeSheet(); toast(tt('common.saved','Saved')); }
+      else { const r=await api('POST','/api/team/invite', body); inviteDone(r); }
+      viewTeamReload(); }
+    catch(err){ if(b) b.disabled=false; if (err.status===402) return seatSheet(err.body||{}); $('#tmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+};
+const inviteDone18 = inviteDone;
+inviteDone = function(r){
+  inviteDone18(r);
+  const url=r.invite_url||'', role=r.member&&r.member.role;
+  const msg=role==='helper'?tt('share.h','Hi! Can you help me set up Joinvoo? Use this link to get access (no password needed): {u}',{u:url}):tt('share.t','Join my Joinvoo team with this link: {u}',{u:url});
+  const box=$('.sheet .codebox'); if(!box||!url) return;
+  box.insertAdjacentHTML('afterend', `<div class="share18${r.emailed?' sub':''}">${r.emailed?`<span class="hint">${tt('share.also','You can also send the link yourself:')}</span>`:''}
+    <a class="btn wide wa18" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${I.wa} ${tt('share.wa','Send it on WhatsApp')}</a>
+    <a class="btn wide tg18" href="https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(role==='helper'?tt('share.h2','Can you help me set up Joinvoo? This link gives you access (no password needed).'):tt('share.t2','Join my Joinvoo team'))}" target="_blank" rel="noopener">${I.send} ${tt('share.tg','Share on Telegram')}</a></div>`);
+  if (role==='helper'){ const ld=$('.sheet .lim-done > span:last-child'); if(ld) ld.insertAdjacentHTML('beforeend',' '+tt('share.free','Setup helpers are free.')); }
+};
+const seatSheet18 = seatSheet;
+seatSheet = function(b){
+  if (!b.helper_limit) return seatSheet18(b);
+  sheet(`<h2>${tt('seat.h.h','One free Setup helper per account')}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${esc(b.error||'')}</b><span>${tt('seat.h.p','You can remove your current helper any time from the Team list, then invite someone else for free.')}</span></div>
+    <button class="btn primary lg wide" data-act="lim-up">${I.sparkles} ${tt('pro.upgrade','Upgrade to Pro')}</button><button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+};
+
+/* ---------- a helper's first visit: welcome card on Overview ---------- */
+const hwKey = () => 'jv_hw_'+((R17.ws&&R17.ws.current&&R17.ws.current.owner_id)||'');
+function hwSeen(){ try { return localStorage.getItem(hwKey())==='1'; } catch { return false; } }
+function hwCard(){
+  if (myRole()!=='helper' || hwSeen() || S.page!=='overview') return; const v=$('#view .view'); if(!v||v.querySelector('.hw18')) return;
+  const c=(R17.ws&&R17.ws.current)||{}, done=setupState().done;
+  const html=`<section class="card hw18" role="note"><button class="hw-x" data-act="hw-close" aria-label="${esc(tt('common.close','Close'))}">${I.x}</button><span class="hw-ic">${I.team}</span>
+    <div class="hw-t"><b>${tt('hw.h','You’re helping {n} set up Joinvoo',{n:esc(c.name||c.email||'')})}</b><p>${tt('hw.p','You can set up bots, channels and ads. You can’t see billing.')}</p>
+    <div class="hw-act"><button class="btn primary sm" data-act="${done?'nav':'start-setup'}" ${done?'data-p="channels"':''}>${done?tt('hw.ch','Open channels'):tt('hw.setup','Setup steps')} ${I.arrow}</button>${accOn()?`<button class="btn sm" data-act="nav" data-p="accounts">${tt('acc.h','Accounts I manage')}</button>`:''}</div></div></section>`;
+  const h=v.querySelector('.ov-head')||v.querySelector('.ph'); h?h.insertAdjacentHTML('afterend',html):v.insertAdjacentHTML('afterbegin',html);
+}
+const viewOverview18 = viewOverview;
+viewOverview = async function(){ const p=viewOverview18(); hwCard(); await p; hwCard(); };
+
+/* ---------- landing: no channels of your own, and 2+ accounts to manage → Accounts I manage ---------- */
+async function r18Boot(){
+  if (R18.init) return; R18.init=true;
+  if (R18.h0 || S.page!=='overview') return; // only a plain /app open (right after login), never a deep link or a reload on a page
+  const others=wsList().filter(w=>!w.own&&w.status==='active'); if (others.length<2) return;
+  let r; try { r=await api('GET','/api/managed?'+tzq()); } catch { return; }
+  R18.managed=r; const own=(r.accounts||[]).find(x=>x.own);
+  if (own && !own.channels && S.page==='overview') go('accounts');
+}
+const renderApp18 = renderApp;
+renderApp = function(){ renderApp18(); r18Boot(); };
+
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'acc-go': accGo(a); break;
+    case 'hw-close': try{ localStorage.setItem(hwKey(),'1'); }catch{} { const c=a.closest('.hw18'); if(c) c.remove(); } break;
+    case 'tm-exp-clear': { const x=$('#tmx'); if(x) x.value=''; a.remove(); } break;
+  }
+});
+/* the explainer's "Invite a Setup helper" opens the sheet with the helper picked (the shared handler opens it with the default) */
+document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="team-invite"][data-role]'); if(!a) return; e.stopImmediatePropagation(); openInvite(null, a.dataset.role); }, true);
 
 /* ================= DEMO BACKEND (sample data, in the browser) ================= */
 const Demo = (() => {
@@ -9408,6 +9831,10 @@ const Demo = (() => {
      Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.
      ?limits=over puts the sample on 3/3 (two channels show as locked). Upgrading to Pro in the demo lifts both. */
   const q11=new URLSearchParams(location.search);
+  const H18=q11.get('role')==='helper'; /* round 18 demo: a freelancer Setup helper (see handle18) */
+  const CLIENTS18=[{id:7,name:'Ada Okafor',email:'ada@growfast.co',role:'helper',ch:3,dead:true},{id:8,name:'Bayo Stores',email:'bayo@bayostores.ng',role:'helper',setup:'ads',ch:2},
+    {id:9,name:'Chidi Media',email:'chidi@chidimedia.com',role:'manager',ch:5,lost:true},{id:10,name:'Dami Deals',email:'dami@damideals.co',role:'buyer'},
+    {id:12,name:'Efe Signals',email:'efe@efesignals.io',role:'helper',ch:2,billing:true},{id:14,name:'Funmi Fits',email:'funmi@funmifits.com',role:'helper',status:'paused'}];
   const lim11=()=>{ const pro=plan6.id==='pro'||q11.get('limits')==='pro'; return {plan:pro?'pro':'basic',unlimited:pro,ch:pro?null:(q11.get('limits')==='over'||!sample?3:6),bt:pro?null:3}; };
   const liveCh=()=>db.channels.filter(c=>!c.deleted&&c.status!=='removed');
   const actBots=()=>db.bots.filter(b=>b.status==='active');
@@ -9498,25 +9925,31 @@ const Demo = (() => {
   const e402=(m,body)=>{ const e=err(m,body); e.status=402; e.body=body; return e; };
   let r17=null;
   const R17=()=>{ if (r17) return r17; const t=Date.now(), calm=q11.get('r17')==='calm'||!sample;
-    r17={ ch:{}, ws:q11.get('role')==='buyer'||q11.get('role')==='manager'?7:0, report:{enabled:false,hour:8,linked:false,via:null,saved:false,last_sent:null}, meta:{connected:q11.get('meta')==='on',selected:['act_111']}, mapped:{},
+    r17={ ch:{}, ws:q11.get('role')==='buyer'||q11.get('role')==='manager'||H18?7:0, report:{enabled:false,hour:8,linked:false,via:null,saved:false,last_sent:null}, meta:{connected:q11.get('meta')==='on',selected:['act_111']}, mapped:{},
       members:sample?[{id:12,email:'mia@studio.co',role:'manager',status:'active',user_id:44,name:'Mia',invited_at:t-12*864e5,joined_at:t-11*864e5,invite_expires_at:null,channel_ids:[],daily_report:true},
         {id:13,email:'ben@buyers.io',role:'buyer',status:'active',user_id:45,name:'Ben',invited_at:t-9*864e5,joined_at:t-9*864e5,invite_expires_at:null,channel_ids:[12],daily_report:false},
         {id:14,email:'tolu@buyers.io',role:'buyer',status:'invited',user_id:null,name:null,invited_at:t-2*864e5,joined_at:null,invite_expires_at:t+5*864e5,channel_ids:[13]}]:[], mid:20, log:[] };
     if (sample && !calm){ r17.ch[13]={backup_channel_id:11,lost_at:t-26*60e3,lost_reason:'bot_kicked',failed_over_to:11}; r17.ch[12]={deadlink_at:t-40*60e3}; }
     return r17; };
   const chX=id=>(R17().ch[id]=R17().ch[id]||{});
-  const roleName=r=>r==='manager'?'Manager':r==='buyer'?'Media buyer':'Owner';
-  const seats17=()=>{ const L=lim11(), pro=L.plan==='pro'||sample, inc=pro?3:0, used=R17().members.filter(m=>m.status==='active'||m.status==='invited').length;
-    return {plan:pro?'pro':L.plan,included:inc,used,extra:Math.max(0,used-inc),extra_paid_this_month:Math.max(0,used-inc),paused:0,seat_cents:500,can_buy_extra:pro,pro_included:3,month:ymd(new Date()).slice(0,7)}; };
-  const mem17=m=>({...m,role_name:roleName(m.role),account_email:m.user_id?m.email:null,pause_reason:null,all_channels:m.role==='manager',status:m.status==='invited'&&m.invite_expires_at<Date.now()?'expired':m.status});
+  const roleName=r=>r==='manager'?'Manager':r==='buyer'?'Media buyer':r==='helper'?'Setup helper':'Owner';
+  /* round 18: the first Setup helper is free on every plan (no seat) */
+  const freeHelper18=()=>{ const h=R17().members.find(m=>m.role==='helper'&&(m.status==='active'||m.status==='invited')); return h?h.id:null; };
+  const seats17=()=>{ const L=lim11(), pro=L.plan==='pro'||sample, inc=pro?3:0, fh=freeHelper18(), used=R17().members.filter(m=>(m.status==='active'||m.status==='invited')&&m.id!==fh).length;
+    return {plan:pro?'pro':L.plan,included:inc,used,extra:Math.max(0,used-inc),extra_paid_this_month:Math.max(0,used-inc),paused:0,seat_cents:500,can_buy_extra:pro,pro_included:3,month:ymd(new Date()).slice(0,7),helper_free:1,helpers_free_used:fh?1:0}; };
+  const mem17=m=>({...m,role_name:roleName(m.role),account_email:m.user_id?m.email:null,pause_reason:null,all_channels:m.role==='manager'||m.role==='helper',expires_at:m.expires_at||null,...(m.role==='helper'?{free:m.id===freeHelper18()}:{}),status:m.status==='invited'&&m.invite_expires_at<Date.now()?'expired':m.status});
   const ws17=()=>{ const own={owner_id:1,own:true,role:'owner',status:'active',name:'Alex',email:'alex@example.com'}, ada={owner_id:7,own:false,role:q11.get('role')==='manager'?'manager':'buyer',status:'active',pause_reason:null,name:'Ada',email:'ada@growfast.co'};
+    if (H18){ const list=[own,...CLIENTS18.map(c=>({owner_id:c.id,own:false,role:c.role,status:c.status||'active',pause_reason:c.status==='paused'?'plan':null,name:c.name,email:c.email}))], w=list.find(x=>!x.own&&x.owner_id===R17().ws);
+      return {current:w?{...w,channel_ids:w.role==='buyer'?[11]:[]}:{...own,channel_ids:[]},workspaces:list}; }
     const list=sample?[own,ada]:[own]; const cur=R17().ws===7&&sample?{...ada,channel_ids:ada.role==='buyer'?[11]:[]}:{...own,channel_ids:[]}; return {current:cur,workspaces:list}; };
   const role17=()=>ws17().current.role;
   const tok17='demo-team-7f3a';
   async function handle17(method,path,body){
     const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
     if (p==='/api/me'&&method==='GET'){ const r=await handle16(method,path,body); return {...r,workspace:ws17()}; }
-    if (p==='/api/workspace'){ if(method==='POST'){ await wait(350); const id=+(body&&body.owner_id)||0; if(id&&id!==1&&id!==7) throw err('You’re not in that team.'); R17().ws=id===7?7:0; } return {ok:true,...ws17()}; }
+    if (p==='/api/workspace'){ if(method==='POST'){ await wait(350); const id=+(body&&body.owner_id)||0;
+        if (H18){ const c=CLIENTS18.find(x=>x.id===id); if(id&&id!==1&&!c) throw err('You’re not in that team.'); if(c&&c.status==='paused'){ const e=err('This team workspace is paused until the owner upgrades their plan or tops up.',{paused:true}); e.status=403; e.body=e.data; throw e; } R17().ws=c?id:0; return {ok:true,...ws17()}; }
+        if(id&&id!==1&&id!==7) throw err('You’re not in that team.'); R17().ws=id===7?7:0; } return {ok:true,...ws17()}; }
     if (p==='/api/channels'&&method==='GET'){ const r=await handle16(method,path,body), all=r.channels;
       r.channels=all.map(c=>{ const x=R17().ch[c.id]||{}, bk=all.find(o=>o.id===x.backup_channel_id), fo=all.find(o=>o.id===x.failed_over_to);
         const auto=x.backup_channel_id?(x.auto_failover!==false):false;
@@ -9525,7 +9958,7 @@ const Demo = (() => {
           ...(x.link_host?{tracking_url:'https://'+x.link_host+'/c/'+(String(c.tracking_url).split('/c/')[1]||'demo1')}:{}),
           ...(x.failed_over_to?{redirect_to:x.failed_over_to,redirect_title:fo?fo.title:null}:{})}; });
       r.link_domains=['gojoinly.com','go2link.com']; r.team_role=role17();
-      if (R17().ws===7){ const ids=ws17().current.channel_ids; if(ids.length) r.channels=r.channels.filter(c=>ids.includes(c.id)); }
+      if (R17().ws){ const ids=ws17().current.channel_ids||[]; if(ids.length) r.channels=r.channels.filter(c=>ids.includes(c.id)); }
       if (role17()==='buyer'){ r.bots=[]; r.domains=[]; } // like the server: media buyers see no bots or link domains
       return r; }
     if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&(body.backup_channel_id!==undefined||body.auto_failover!==undefined||body.link_host!==undefined)){ await wait(350);
@@ -9555,15 +9988,20 @@ const Demo = (() => {
     if (p==='/api/demo/report-link'){ const R=R17().report; R.linked=true; R.via=body&&body.via||'alert_bot'; R.enabled=true; R.saved=true; return {ok:true}; }
     if (p==='/api/team'&&method==='GET'){ await wait(250); if(role17()!=='owner'){ const e=err('Only the account owner manages the team.',{team_denied:true}); e.status=403; throw e; }
       return {seats:seats17(),email_on:false,invite_days:7,members:R17().members.map(mem17),channels:db.channels.filter(c=>!c.deleted&&c.status!=='removed').map(c=>({id:c.id,title:c.title,type:c.type,status:c.status})),
-        roles:[{id:'manager',name:'Manager',can:'All channels and results. Never billing or team.'},{id:'buyer',name:'Media buyer',can:'Only the channels you give them.'}],log:R17().log}; }
+        roles:[{id:'manager',name:'Manager',can:'All channels and results. Never billing or team.'},{id:'buyer',name:'Media buyer',can:'Only the channels you give them.'},{id:'helper',name:'Setup helper',free:true,can:'Sets up bots, channels and ads. No billing or money.'}],log:R17().log}; }
     if (p==='/api/team/invite'&&method==='POST'){ await wait(500); const b=body||{}, em=String(b.email||'').trim().toLowerCase();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw err('That email doesn’t look right.'); if(!['manager','buyer'].includes(b.role)) throw err('Pick a role.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw err('That email doesn’t look right.'); if(!['manager','buyer','helper'].includes(b.role)) throw err('Pick a role.');
       if (em==='alex@example.com') throw err('That’s you. Invite someone else.'); if (R17().members.some(x=>x.email===em)) throw err('They’re already on your team.');
-      const S0=seats17(); if (S0.included===0) throw e402('Team seats come with Pro. Upgrade to invite your team.',{error:'Team seats come with Pro.',upgrade:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
-      const t=Date.now(), mm={id:R17().mid++,email:em,role:b.role,status:'invited',user_id:null,name:null,invited_at:t,joined_at:null,invite_expires_at:t+7*864e5,channel_ids:(b.channel_ids||[]).map(Number)}; R17().members.push(mm);
-      const charged=S0.used>=S0.included?500:0; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:charged,seats:seats17()}; }
+      const S0=seats17(), free=b.role==='helper'&&!freeHelper18();
+      if (!free&&b.role==='helper'&&S0.included===0) throw e402('Your free Setup helper is already invited.',{error:'Your free Setup helper is already invited. Remove them first to invite someone else, or upgrade to Pro to add more helpers as team seats.',upgrade:true,helper_limit:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
+      if (!free&&S0.included===0) throw e402('Team seats come with Pro. Upgrade to invite your team.',{error:'Team seats come with Pro.',upgrade:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
+      const xp=b.expires_at?(typeof b.expires_at==='number'?b.expires_at:Date.parse(b.expires_at+'T23:59:59')):null; if (xp!=null&&!(xp>Date.now())) throw err('“Access ends on” must be in the future.');
+      const t=Date.now(), mm={id:R17().mid++,email:em,role:b.role,status:'invited',user_id:null,name:null,invited_at:t,joined_at:null,invite_expires_at:t+7*864e5,channel_ids:b.role==='buyer'?(b.channel_ids||[]).map(Number):[],expires_at:xp}; R17().members.push(mm);
+      const charged=!free&&S0.used>=S0.included?500:0; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:charged,seats:seats17()}; }
     if ((m=/^\/api\/team\/(\d+)\/resend$/.exec(p))&&method==='POST'){ await wait(400); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(mm.status==='active') throw err('They already joined.'); mm.invite_expires_at=Date.now()+7*864e5; mm.status='invited'; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:0}; }
-    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(body.role) mm.role=body.role; if(body.channel_ids) mm.channel_ids=body.channel_ids.map(Number); return {ok:true,member:mem17(mm)}; }
+    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(body.role) mm.role=body.role; if(body.channel_ids) mm.channel_ids=body.channel_ids.map(Number);
+      if (body.expires_at!==undefined){ const xp=body.expires_at?(typeof body.expires_at==='number'?body.expires_at:Date.parse(body.expires_at+'T23:59:59')):null; if(xp!=null&&!(xp>Date.now())) throw err('“Access ends on” must be in the future.'); mm.expires_at=xp; }
+      return {ok:true,member:mem17(mm)}; }
     if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(350); R17().members=R17().members.filter(x=>x.id!==+m[1]); return {ok:true,seats:seats17()}; }
     if (p==='/api/team/invite-info'){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'buyer',role_name:'Media buyer',owner_name:'Ada',owner_email:'ada@growfast.co',account_exists:true}; }
     if (p==='/api/team/accept'&&method==='POST'){ await wait(500); if(!sample) useSampleQuiet(); R17().ws=7; return {ok:true,owner_id:7,owner_name:'Ada',role:'buyer',status:'active',paused:false}; }
@@ -9587,8 +10025,28 @@ const Demo = (() => {
         steps:['Open Meta Ads Manager → Audiences → Create audience → Custom audience.',`Source: Website. Pick your pixel (${(chs[0]||{}).pixel_id||'your pixel'}).`,'Events: choose “Purchase”, in the last 30 days (or 180 days once you have more).','Then Create audience → Lookalike audience. Source: the Purchase audience you just made. Pick your country and 1%.','Use the lookalike in a new ad set. Keep your Joinvoo link in the ad so every join and deposit keeps teaching Meta.']}; }
     return handle16(method,path,body);
   }
+  /* ---------- Round 18 (demo): Setup helper + Accounts I manage. ?role=helper opens as a freelancer who helps five client accounts
+     (lands on "Accounts I manage"; inside a client, Overview shows the helper's welcome card). ---------- */
+  async function handle18(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname;
+    if (p==='/api/managed'&&method==='GET'){ await wait(300); const W=ws17(), cur=W.current.owner_id, t=Date.now();
+      const N=(id,k)=>h('acc18',id,k)%1000;
+      const accounts=W.workspaces.map(w=>{ const base={owner_id:w.owner_id,own:w.own,role:w.role,role_name:roleName(w.role),status:w.status,pause_reason:w.pause_reason||null,name:w.name,email:w.email,current:w.owner_id===cur};
+        if (w.status==='paused') return {...base,paused:true,channels:null,joins_today:null,joins_7d:null,deposits_7d:null,revenue_7d_cents:null,alerts:[]};
+        if (w.own&&H18) return {...base,paused:false,channels:0,joins_today:0,joins_7d:0,deposits_7d:0,revenue_7d_cents:0,alerts:[{kind:'setup',missing:['bot','channel'],label:'Setup not finished: no bot'}]};
+        const c=CLIENTS18.find(x=>x.id===w.owner_id)||{}, setup=c.setup, j7=setup?0:120+N(w.owner_id,1)%900, jt=setup?0:Math.round(j7/7*(.6+N(w.owner_id,2)%80/100)), d7=setup?0:Math.round(j7*(.04+N(w.owner_id,3)%6/100));
+        const alerts=[]; if (c.lost) alerts.push({kind:'lost_channel',n:1,label:'Channel lost'}); if (c.dead) alerts.push({kind:'dead_link',n:1,label:'Ad link may be blocked'});
+        if (setup) alerts.push({kind:'setup',missing:[setup],label:'Setup not finished'}); if (c.billing) alerts.push({kind:'tracking_paused',label:'Tracking paused (billing)'});
+        return {...base,paused:false,channels:w.role==='buyer'?1:setup==='channel'?0:c.ch||3,joins_today:jt,joins_7d:j7,deposits_7d:d7,revenue_7d_cents:d7*(4200+N(w.owner_id,4)*9),alerts}; });
+      const others=W.workspaces.filter(w=>!w.own);
+      return {eligible:others.length>=2||others.some(w=>w.role==='helper'),count:accounts.length,capped:false,max:200,current_owner_id:cur,accounts}; }
+    if (H18&&p==='/api/channels'&&method==='GET'&&!R17().ws){ const r=await handle17(method,path,body); return {...r,channels:[],bots:[],team_role:'owner'}; } // the freelancer's own account is empty
+    if (p==='/api/team/invite-info'&&H18){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'helper',role_name:'Setup helper',owner_name:'Ada Okafor',owner_email:'ada@growfast.co',account_exists:true}; }
+    return handle17(method,path,body);
+  }
   function useSampleQuiet(){ sample=true; db=sampleDb(); }
-  return {handle:handle17,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
+  if (H18) useSampleQuiet();
+  return {handle:handle18,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 
 boot();
