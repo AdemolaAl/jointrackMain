@@ -73,52 +73,103 @@ function jrFields(c){
       <div class="field" style="flex:2;min-width:200px"><label for="jru">Offer link</label><input class="inp" id="jru" inputmode="url" value="${esc(c.offer_url||'')}" placeholder="https://partner.com/offer?sub1={tg_id}"></div></div>
     <span class="hint">Put <button type="button" class="kbd" data-act="jr-ins" data-v="{tg_id}">{tg_id}</button> where your program expects the sub ID (often <b>sub1</b>). Joinvoo swaps in each person’s Telegram ID, so their deposit comes back matched. <button type="button" class="kbd" data-act="jr-ins" data-v="{click_id}">{click_id}</button> works too.</span>`;
 }
-const jrWhy = `<div class="jr-why"><span class="jr-i">${I.target}</span><div><b>So every deposit can be matched to the exact person and ad.</b><span>People tap “Request to join”, the bot lets them in instantly and sends this message. Your offer link carries their Telegram ID, so the program reports deposits for that exact person.</span></div></div>`;
+const jrWhy = `<div class="jr-why"><span class="jr-i">${I.target}</span><div><b>So every deposit can be matched to the exact person and ad.</b><span>People tap “Request to join”. Joinvoo matches each request to its ad click before they’re in, so deposits can be traced back to the exact person.</span></div></div>`;
 function bindJrPreview(c, bot){
   const upd=()=>{ const pv=$('#jrpv'); if(pv) pv.innerHTML=jrPreview({offer_text:$('#jro').value,offer_btn:$('#jrb').value,offer_url:$('#jru').value}, bot); };
   ['#jro','#jrb','#jru'].forEach(s=>{ const e=$(s); e&&e.addEventListener('input',upd); });
 }
-const jrBody = () => ({join_mode:'request', offer_text:$('#jro').value.trim(), offer_btn:$('#jrb').value.trim(), offer_url:$('#jru').value.trim()});
-function jrValid(b){ if(!b.offer_text) return 'Write a short welcome message.'; if(b.offer_url && !/^https?:\/\//.test(b.offer_url)) return 'The offer link must start with https://'; if(b.offer_url && !/\{tg_id\}|\{click_id\}/.test(b.offer_url)) return 'Add {tg_id} to the offer link so deposits can be matched.'; return ''; }
+/* Who lets new members in: Joinvoo (welcome message + offer link), the customer's own bot (Joinvoo only tracks),
+   or their bot first with Joinvoo as a timed backup. 'own' and 'backup' need no welcome message. */
+const JR_AP=[
+  ['joinvoo',()=>tt('jr.ap.j','Joinvoo lets them in'),()=>tt('jr.ap.j.tag','Recommended if you don’t have your own bot'),I.sparkles,
+    ()=>[tt('jr.ap.j.1','Instant entry, highest join rate'),tt('jr.ap.j.2','Sends your welcome message with your offer link'),tt('jr.ap.j.3','{tg_id} in the link matches every deposit to the exact person and ad'),tt('jr.ap.j.4','Nothing else to set up')]],
+  ['own',()=>tt('jr.ap.o','My own bot lets them in'),()=>tt('jr.ap.o.tag','For people with their own welcome bot'),I.bot,
+    ()=>[tt('jr.ap.o.1','Keep your bot’s welcome, captcha and follow-ups exactly as they are'),tt('jr.ap.o.2','Joinvoo only tracks: each request is matched to its ad click and sent to Meta when your bot approves'),tt('jr.ap.o.3','People join when your bot approves them')]],
+  ['backup',()=>tt('jr.ap.b','My bot first, Joinvoo as backup'),()=>tt('jr.ap.b.tag','Never leave anyone waiting'),I.shield,
+    ()=>[tt('jr.ap.b.1','Your bot’s flow runs as normal'),tt('jr.ap.b.2','If your bot hasn’t let someone in after a set time, Joinvoo does, so nobody waits forever (for example when your bot is down)')]]];
+/* Welcome + follow-up flows (drips, broadcasts) live in Castvoo; recommend it here for anyone who wants more than one welcome message. */
+function jrCastvoo(){
+  /* first castvoo entry with a link, from the apps catalog, the showcase cards or appsAll(); demo apps use logo:'castvoo', showcase cards use logo_url */
+  const pool=[...((typeof appsAll==='function'&&appsAll())||[]),...((S.cfg&&S.cfg.apps)||[]),...((S.cfg&&S.cfg.showcase&&S.cfg.showcase.cards)||[])].filter(a=>a&&a.id==='castvoo'&&a.enabled!==false&&a.status!=='soon');
+  const cv=pool.find(a=>a.url); if(!cv) return '';
+  const lu=pool.map(a=>a.logo_url||(a.logo&&/^(\/|https?:)/.test(a.logo)?a.logo:'')).find(Boolean);
+  const src=lu?asset(lu):(typeof logoSrc==='function'?logoSrc('castvoo'):'');
+  return `<a class="jr-cv" href="${esc(cv.url)}" target="_blank" rel="noopener" data-act="app-go" data-id="castvoo" data-w="jr-sheet"><span class="jr-cv-l">${src?`<img src="${esc(src)}" alt="" width="36" height="36" onerror="this.remove()">`:''}</span><span class="jr-cv-t"><b>${tt('jr.cv.h','Want a welcome + follow-up flow?')}</b><small>${tt('jr.cv.p','Castvoo welcomes every new member and runs your follow-ups and broadcasts on autopilot. Works with any of the options above.')}</small></span><span class="jr-cv-go">${tt('jr.cv.go','Try Castvoo')} ${I.arrow}</span></a>`;
+}
+const jrAp = c => ['joinvoo','own','backup'].includes(c&&c.join_approver)?c.join_approver:'joinvoo';
+const jrSecs = c => { const v=+(c&&c.approve_after); return v>=10&&v<=3600?Math.round(v):60; };
+function jrApprover(c, bot){
+  const ap=S.jrAp||jrAp(c);
+  return `<div class="field"><span class="lbl">${tt('jr.who','Who lets new members in?')}</span>
+    <div class="jr-aps" role="radiogroup" aria-label="${esc(tt('jr.who','Who lets new members in?'))}">${JR_AP.map(([k,t,tag,ic,pros])=>`<button type="button" class="jr-ap" role="radio" data-act="jr-ap" data-v="${k}" aria-checked="${ap===k}">
+      <span class="jra-top"><span class="jra-ic">${ic}</span><span class="jra-t"><b>${t()}</b><small>${tag()}</small></span><span class="jra-rad" aria-hidden="true"></span></span>
+      <ul class="jra-pros">${pros().map(p=>`<li>${I.check}<span>${esc(p).replace('{tg_id}','<code>{tg_id}</code>')}</span></li>`).join('')}</ul></button>`).join('')}</div></div>
+    <div class="jr-pane" data-pane="joinvoo" ${ap==='joinvoo'?'':'hidden'}>${jrFields(c)}<div class="field"><span class="lbl">${tt('jr.preview','Preview')}</span><div id="jrpv">${jrPreview(c,bot)}</div></div></div>
+    <div class="jr-pane" data-pane="backup" ${ap==='backup'?'':'hidden'}><div class="jr-secs"><label for="jrs">${tt('jr.secs','Joinvoo lets them in after')}</label><span class="jrs-in"><input class="inp num" id="jrs" type="number" min="10" max="3600" step="1" value="${jrSecs(c)}" inputmode="numeric"><em>${tt('jr.secs.u','seconds')}</em></span><small>${tt('jr.secs.h','Only if your bot hasn’t approved them by then. 10 to 3600 seconds.')}</small></div></div>
+    <div class="jr-pane" data-pane="ownbk" ${ap==='joinvoo'?'hidden':''}><div class="jr-tip"><span class="jr-i">${I.coin}</span><div><b>${tt('jr.tip.h','Track deposits too')}</b><span>${esc(tt('jr.tip.p','Put the person’s Telegram ID in the offer link your bot sends (for example ?sub1=<their Telegram ID>) and add Joinvoo’s postback to your affiliate program.')).replace('?sub1=&lt;their Telegram ID&gt;','<code>?sub1=&lt;their Telegram ID&gt;</code>')}</span><button type="button" class="link" data-act="jr-conv">${tt('jr.tip.go','Get your postback on the Conversions page')} ${I.arrow}</button></div></div></div>${jrCastvoo()}`;
+}
+function jrSetAp(v){
+  S.jrAp=v; $$('[data-act="jr-ap"]').forEach(b=>b.setAttribute('aria-checked',b.dataset.v===v));
+  $$('.jr-pane').forEach(p=>{ p.hidden = p.dataset.pane==='joinvoo'?v!=='joinvoo':p.dataset.pane==='backup'?v!=='backup':v==='joinvoo'; });
+  const e=$('#jrerr'); if(e) e.innerHTML='';
+  const sb=$('#jrf [type="submit"]'); if(sb&&sb.dataset.lbl) sb.innerHTML=jrSaveLbl(sb.dataset.lbl);
+  // phones: after a tap, bring what comes next (that option's settings) into view so nobody wonders where to go
+  if (window.matchMedia('(max-width: 720px)').matches) { const pane=$$('.jr-pane').find(p=>!p.hidden), card=$(`[data-act="jr-ap"][data-v="${v}"]`), tgt=pane||card;
+    if (tgt) setTimeout(()=>{ const r=tgt.getBoundingClientRect(); if (r.top>innerHeight*0.55 || r.top<0) tgt.scrollIntoView({behavior:'smooth',block:'start'}); },60); }
+}
+const jrSaveLbl = mode => mode==='step'?`${tt('jr.step.go','Turn on and continue')} ${I.arrow}`:mode==='on'?tt('common.save','Save'):(S.jrAp||'joinvoo')==='joinvoo'?tt('jr.on','Turn on request-to-join'):tt('jr.on2','Turn on tracking');
+const jrBody = () => { const ap=S.jrAp||'joinvoo', b={join_mode:'request',join_approver:ap};
+  if (ap==='joinvoo') Object.assign(b,{offer_text:$('#jro').value.trim(), offer_btn:$('#jrb').value.trim(), offer_url:$('#jru').value.trim()});
+  if (ap==='backup') b.approve_after=Math.round(+($('#jrs')&&$('#jrs').value));
+  return b; };
+function jrValid(b){
+  if (b.join_approver==='backup' && !(b.approve_after>=10&&b.approve_after<=3600)) return tt('jr.v.secs','Pick a wait between 10 and 3600 seconds.');
+  if (b.join_approver!=='joinvoo') return '';
+  if(!b.offer_text) return 'Write a short welcome message.'; if(b.offer_url && !/^https?:\/\//.test(b.offer_url)) return 'The offer link must start with https://'; if(b.offer_url && !/\{tg_id\}|\{click_id\}/.test(b.offer_url)) return 'Add {tg_id} to the offer link so deposits can be matched.'; return ''; }
+const jrDone = ap => ap==='own'?tt('jr.done.o','Done. Your bot lets people in, Joinvoo tracks every request.'):ap==='backup'?tt('jr.done.b','Done. Your bot goes first, Joinvoo steps in if it doesn’t.'):tt('jr.done.j','Request-to-join is on. New joiners get your welcome message.');
 function openJr(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot='@'+((c.bots&&c.bots[0])||'your_bot');
+  S.jrAp=jrAp(c); const mode=jrOn(c)?'on':'off';
   sheet(`<h2>Request-to-join<small>${esc(c.title)}</small></h2>`, `${jrWhy}
-    <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields(c)}
-      <div class="field"><span class="lbl">Preview</span><div id="jrpv">${jrPreview(c,bot)}</div></div>
-      <div id="jrerr"></div><button class="btn primary lg wide" type="submit">${jrOn(c)?'Save':'Turn on request-to-join'}</button></form>`);
+    <form id="jrf" novalidate style="display:flex;flex-direction:column;gap:14px">${jrApprover(c,bot)}
+      <div id="jrerr"></div><button class="btn primary lg wide" type="submit" data-lbl="${mode}">${jrSaveLbl(mode)}</button></form>`);
   bindJrPreview(c,bot);
   $('#jrf').addEventListener('submit', async e=>{ e.preventDefault(); const b=jrBody(), v=jrValid(b); if(v){ $('#jrerr').innerHTML=`<div class="err">${esc(v)}</div>`; return; }
-    try { await api('PATCH','/api/channels/'+c.id,b); closeSheet(); toast('Request-to-join is on. New joiners get your welcome message.'); await refreshChans(); drawChannels(); }
-    catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+    const btn=e.submitter; if(btn) btn.disabled=true;
+    try { await api('PATCH','/api/channels/'+c.id,b); closeSheet(); toast(jrDone(b.join_approver)); await refreshChans(); drawChannels(); }
+    catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; if(btn) btn.disabled=false; } });
 }
 async function jrToggle(btn){
   const c=S.chans.channels.find(x=>String(x.id)===String(btn.dataset.id)); if(!c) return;
-  if (!jrOn(c)){ if(!c.offer_text) return openJr(c.id); }
+  if (!jrOn(c) && jrAp(c)==='joinvoo' && !c.offer_text) return openJr(c.id);
   btn.disabled=true;
   try { await api('PATCH','/api/channels/'+c.id,{join_mode:jrOn(c)?'link':'request'}); await refreshChans(); drawChannels(); toast(jrOn(c)?'Back to direct invite links':'Request-to-join is on'); }
   catch(e){ toast(e.message,false); btn.disabled=false; }
 }
 function jrCardSection(c){
   if (!FEAT('join_requests') || c.type==='bot') return '';
-  const on=jrOn(c);
-  return `<div class="chan-sec jr-sec ${on?'on':''}"><div class="prow2"><span class="jr-t"><b>Request-to-join + welcome message</b><small>Recommended for FTD tracking</small></span><button class="switch" data-act="jr-toggle" data-id="${c.id}" role="switch" aria-checked="${on}" aria-label="Request-to-join mode"></button></div>
-    ${on?`<div class="jr-sum"><span class="tgp-mini">${esc((c.offer_text||'').slice(0,90))}${(c.offer_text||'').length>90?'…':''}</span><button class="link" data-act="jr-edit" data-id="${c.id}">Edit message ${I.arrow}</button></div>`:`<span class="hint">So every deposit can be matched to the exact person and ad.</span>`}</div>`;
+  const on=jrOn(c), ap=jrAp(c), n=+c.pending_requests||0;
+  const who = ap==='own'?tt('jr.sum.o','Your own bot approves · Joinvoo tracks'):ap==='backup'?tt('jr.sum.b','Your bot first · Joinvoo after {s}s',{s:jrSecs(c)}):tt('jr.sum.j','Joinvoo lets them in · sends your welcome');
+  return `<div class="chan-sec jr-sec ${on?'on':''}"><div class="prow2"><span class="jr-t"><b>Request-to-join</b><small>Recommended for FTD tracking</small></span><button class="switch" data-act="jr-toggle" data-id="${c.id}" role="switch" aria-checked="${on}" aria-label="Request-to-join mode"></button></div>
+    ${on?`<div class="jr-sum"><span class="jr-who"><span class="jrw-ic">${ap==='joinvoo'?I.sparkles:ap==='own'?I.bot:I.shield}</span>${esc(who)}</span>
+      ${ap==='joinvoo'&&c.offer_text?`<span class="tgp-mini">${esc((c.offer_text||'').slice(0,90))}${(c.offer_text||'').length>90?'…':''}</span>`:''}
+      ${ap!=='joinvoo'&&n>0?`<span class="jr-wait"><i></i>${n===1?tt('jr.wait1','1 waiting for your bot'):tt('jr.waitn','{n} waiting for your bot',{n:fmt(n)})}</span>`:''}
+      <button class="link" data-act="jr-edit" data-id="${c.id}">${ap==='joinvoo'?tt('jr.edit','Edit message'):tt('jr.change','Change who lets them in')} ${I.arrow}</button></div>`:`<span class="hint">So every deposit can be matched to the exact person and ad.</span>`}</div>`;
 }
 function jrStepHtml(){
   const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
+  if (!S.jrAp || S.jrFor!==c.id){ S.jrAp=jrAp(c); S.jrFor=c.id; }
   return `<div class="step">${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${esc(c.title||'Your channel')} is connected</span></div>`}
-    <span class="step-ico">${I.coin}</span><h1>Track deposits too?</h1><p class="lede">Turn on request-to-join with a welcome message. It’s the easiest way to see who deposits, not just who joins.</p>
-    ${jrWhy}
-    <form id="jrf" style="display:flex;flex-direction:column;gap:14px">${jrFields({...c,offer_text:c.offer_text||'Welcome 👋 Thanks for joining! Tap below to get today’s offer.',offer_btn:c.offer_btn||'Get the offer'})}
-      <div class="field"><span class="lbl">Preview</span><div id="jrpv"></div></div>
-      <div id="jrerr"></div><button class="btn primary lg wide" type="submit">Turn on and continue ${I.arrow}</button></form>
+    <span class="step-ico">${I.coin}</span><h1>Track deposits too?</h1><p class="lede">Turn on request-to-join. It’s the easiest way to see who deposits, not just who joins.</p>
+    <form id="jrf" novalidate style="display:flex;flex-direction:column;gap:14px">${jrApprover({...c,offer_text:c.offer_text||'Welcome 👋 Thanks for joining! Tap below to get today’s offer.',offer_btn:c.offer_btn||'Get the offer'},bot)}
+      <div id="jrerr"></div><div class="jr-go"><button class="btn primary lg wide" type="submit" data-lbl="step">${jrSaveLbl('step')}</button></div></form>
     <button class="btn ghost" data-act="jr-skip">Not now, keep direct invite links</button></div>`;
 }
 function bindJrStep(){
   const c=W.channel||{}, bot='@'+((c.bots&&c.bots[0])||(W.bot&&W.bot.username)||'your_bot');
   bindJrPreview(c,bot); const e=new Event('input'); $('#jro').dispatchEvent(e);
   $('#jrf').addEventListener('submit', async ev=>{ ev.preventDefault(); const b=jrBody(), v=jrValid(b); if(v){ $('#jrerr').innerHTML=`<div class="err">${esc(v)}</div>`; return; }
-    try { await api('PATCH','/api/channels/'+c.id,b); await refreshChans(); W.channel=S.chans.channels.find(x=>x.id===c.id)||c; W.jrSeen=true; toast('Request-to-join is on'); drawStep(); }
+    try { await api('PATCH','/api/channels/'+c.id,b); await refreshChans(); W.channel=S.chans.channels.find(x=>x.id===c.id)||c; W.jrSeen=true; toast(jrDone(b.join_approver)); drawStep(); }
     catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
 }
 
@@ -425,6 +476,8 @@ document.addEventListener('click', e=>{
     case 'int-connect': connectIntegration(a); break;
     case 'jr-toggle': jrToggle(a); break;
     case 'jr-edit': openJr(a.dataset.id); break;
+    case 'jr-ap': jrSetAp(a.dataset.v); break;
+    case 'jr-conv': closeSheet(); if (!$('#shell')){ S.page='conversions'; renderApp(); } else go('conversions'); break;
     case 'jr-skip': W.jrSeen=true; drawStep(); break;
     case 'jr-ins': { const u=$('#jru'); if(u){ const sep=/[?&]$/.test(u.value)||!u.value?'':u.value.includes('?')?'&sub1=':'?sub1='; u.value+=(sep&&!/=$/.test(u.value)?sep:'')+a.dataset.v; u.dispatchEvent(new Event('input')); u.focus(); } break; }
     case 'cmp-mode': S.cPreset=null; S.ccKeys=null; S.cmpMode=a.dataset.v; store.set('cmpMode',S.cmpMode); viewCompare(); break;
@@ -434,7 +487,7 @@ document.addEventListener('click', e=>{
     case 'spend': openSpend(); break;
     case 'sp-tab': S.spTab=a.dataset.v; openSpend(); break;
     case 'sp-del': api('DELETE','/api/spend/'+a.dataset.id).then(()=>{ drawSpendList(); spendChanged(); }).catch(err=>toast(err.message,false)); break;
-    case 'buy-tier': S.dep=null; openDeposit(); S.dep.amt=+a.dataset.v; if(a.dataset.promo){ S.dep.promo=a.dataset.promo; S.dep.promoPct=(S.bill&&S.bill.promo&&S.bill.promo.bonus_pct)||0; } drawDeposit(); break;
+    case 'buy-tier': S.dep={amt:+a.dataset.v, promo:a.dataset.promo||'', promoPct:a.dataset.promo?((S.bill&&S.bill.promo&&S.bill.promo.bonus_pct)||0):0}; openDeposit(); break;
     case 'promo-apply': applyPromo(a); break;
     case 'sales': openSales(); break;
     case 'alerts': closePop(); openAlerts(); break;

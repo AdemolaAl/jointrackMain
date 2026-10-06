@@ -1,0 +1,136 @@
+
+/* ================= Round 16: your own link domain, own landing page script, bot /start ping ================= */
+const hostOf = u => { try{ return new URL(u).host; }catch{ return String(u||''); } };
+const DOM_ST = { active:['g','dm.st.active','Active'], pending:['y','dm.st.pending','Checking DNS'], failed:['r','dm.st.failed','Needs a fix'], disabled:['o','dm.st.disabled','Switched off'] };
+function domChip(x){ const [c,k,l]=DOM_ST[x.status]||['o','',x.status]; return `<span class="chip ${c} dm-chip${x.status==='pending'?' live':''}"><i class="d"></i>${tt(k,l)}</span>`; }
+const dmRec = (k,v,full) => `<div class="dm-rec"><span class="dm-k">${k}</span><div class="codebox"><code${full&&full!==v?` title="${esc(full)}"`:''}>${esc(v)}</code><button class="btn sm" data-act="copy" data-v="${esc(v)}" aria-label="${esc(tt('common.copy','Copy'))} ${esc(k)}">${I.copy}</button></div></div>`;
+const HTTPS_TXT = { ready:['dm.h.ready','HTTPS ready'], issuing:['dm.h.issuing','HTTPS certificate on its way'], waiting:['dm.h.waiting','HTTPS starts once verified'], manual:['dm.h.manual','HTTPS is set up by our team'] };
+function domRow(x){
+  const ok=x.status==='active', h=HTTPS_TXT[x.https]||HTTPS_TXT.manual;
+  const steps = ok ? '' : `<ol class="dm-steps">
+      <li><span class="n">1</span><div class="dm-sb"><b>${tt('dm.s1','Add a CNAME record')}</b>${dmRec(tt('dm.name','Name'),x.dns.cname.short||x.dns.cname.name,x.dns.cname.name)}${dmRec(tt('dm.target','Points to'),x.dns.cname.value)}</div></li>
+      <li><span class="n">2</span><div class="dm-sb"><b>${tt('dm.s2','Add a TXT record')}</b>${dmRec(tt('dm.name','Name'),x.dns.txt.short,x.dns.txt.name)}${dmRec(tt('dm.value','Value'),x.dns.txt.value)}</div></li>
+      <li><span class="n">3</span><div class="dm-sb"><b>${tt('dm.s3','Tap Check now')}</b><small>${tt('dm.s3.p','DNS changes usually show up within minutes. We also check every 10 minutes.')}</small></div></li></ol>
+    <p class="hint dm-full">${tt('dm.fullname','Some DNS panels want the full name instead: {a} and {b}.',{a:`<span class="mono">${esc(x.dns.cname.name)}</span>`,b:`<span class="mono">${esc(x.dns.txt.name)}</span>`})}</p>`;
+  const meta = ok ? `<div class="dm-meta"><span class="dm-flag ${x.pointing?'on':''}">${x.pointing?I.check:I.clock}${x.pointing?tt('dm.point.on','Pointing to Joinvoo'):tt('dm.point.off','CNAME not pointing yet')}</span><span class="dm-flag ${x.https==='ready'?'on':''}">${x.https==='ready'?I.lock:I.shield}${tt(h[0],h[1])}</span></div>` : '';
+  return `<div class="dm-row${ok?' ok':''}" data-dm="${x.id}"><div class="dm-top"><span class="dm-host">${esc(x.host)}</span>${domChip(x)}</div>${meta}
+    ${x.last_error?`<div class="note ${ok?'':'warn'} dm-note">${esc(x.last_error)}</div>`:''}${steps}
+    <div class="dm-act">${x.status!=='disabled'?`<button class="btn sm${ok?'':' primary'}" data-act="dm-check" data-id="${x.id}">${I.refresh} ${tt('dm.check','Check now')}</button>`:''}<button class="btn sm ghost" data-act="dm-rm" data-id="${x.id}">${TRASH}<span>${tt('dm.rm','Remove')}</span></button>${x.last_check_at?`<span class="hint dm-when">${tt('dm.checked','Checked {t}',{t:ago(x.last_check_at)})}</span>`:''}</div></div>`;
+}
+function domainCard(d){
+  if (!d || !d.limits) return '';
+  const doms=d.domains||[], L=d.limits.domains||{used:doms.length,max:null}, plan=planName(d.limits.plan), full=L.max!=null&&(L.used||0)>=L.max;
+  const sub = L.max==null ? tt('dm.unl','Unlimited on {p}',{p:plan}) : tt('dm.of','{a} of {b} on {p}',{a:fmt(L.used||0),b:fmt(L.max),p:plan});
+  return `<section class="card dm-card" id="dmcard"><div class="card-h"><h2>${I.globe} ${tt('dm.title','Your link domain')}</h2><span class="sub">${sub}</span></div>
+    <p class="dm-lede">${tt('dm.lede','Run your ad links on a subdomain you own, like <b>go.yourbrand.com</b>. It’s yours alone, so a flag on a shared link domain never touches your ads.')}</p>
+    ${doms.length?`<div class="dm-list">${doms.map(domRow).join('')}</div>`:''}
+    ${full ? `<div class="dm-more"><span>${tt('dm.fullp','Need another domain? Pro has unlimited link domains.')}</span><button class="btn sm primary" data-act="lim-up">${I.sparkles} ${tt('pro.upgrade','Upgrade to Pro')}</button></div>`
+      : `<form class="dm-add" id="dmadd" novalidate><input class="inp" id="dmh" placeholder="go.yourbrand.com" aria-label="${esc(tt('dm.add.l','Your subdomain'))}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" enterkeyhint="go"><button class="btn primary" type="submit">${I.plus} ${tt('dm.add','Add domain')}</button></form><div id="dmerr" aria-live="polite"></div>`}
+  </section>`;
+}
+/* domain picker inside a channel card (only when the customer has domains) */
+function domPick(c,d){
+  const doms=(d&&d.domains)||[]; if(!doms.length) return '';
+  const act=doms.filter(x=>x.status==='active');
+  const live=act.filter(x=>x.live!==false); /* automatic only moves links to a domain that already opens (CNAME + HTTPS ready) */
+  const cur = c.domain_id===0 ? 0 : (c.domain_id>0&&act.some(x=>x.id===c.domain_id)) ? c.domain_id : ((live.find(x=>x.channel_id===c.id)||live.find(x=>x.channel_id==null)||{}).id||0);
+  return `<div class="dm-pick"><label for="dmp-${c.id}">${tt('dm.pick','Link domain')}</label><select class="sel" id="dmp-${c.id}" data-dmch="${c.id}">
+    <option value="0" ${cur===0?'selected':''}>${esc(tt('dm.jv','Joinvoo · {h}',{h:hostOf(d.joinvoo_link_base||'')}))}</option>
+    ${doms.map(x=>`<option value="${x.id}" ${x.status!=='active'?'disabled':''} ${cur===x.id?'selected':''}>${esc(x.host)}${x.status!=='active'?' · '+esc(tt('dm.notyet','not verified yet')):''}</option>`).join('')}</select></div>`;
+}
+async function domAdd(form){
+  const inp=$('#dmh'), btn=form.querySelector('button'), v=inp.value.trim(); if(!v){ inp.focus(); return; }
+  btn.disabled=true; const old=btn.innerHTML; btn.innerHTML=`<span class="spin"></span> ${tt('dm.adding','Adding')}`; { const er=$('#dmerr'); if(er) er.innerHTML=''; }
+  try { await api('POST','/api/domains',{host:v}); await refreshChans(); drawChannels(); toast(tt('dm.added','Domain added. Add the two DNS records shown.'));
+    const row=$('#dmcard .dm-row:last-child'); if(row) row.scrollIntoView({behavior:reduced?'auto':'smooth',block:'center'}); }
+  catch(e){ if(e.status===402&&e.body&&e.body.limit) openDomLimit(e.body.limit); else { const er=$('#dmerr'); if(er) er.innerHTML=`<div class="err">${esc(e.message)}</div>`; } btn.disabled=false; btn.innerHTML=old; }
+}
+async function domCheck(a){
+  a.disabled=true; const old=a.innerHTML; a.innerHTML=`<span class="spin"></span> ${tt('dm.checking','Checking')}`;
+  try { const r=await api('POST',`/api/domains/${a.dataset.id}/check`); await refreshChans(); drawChannels();
+    const x=r.domain||{}; toast(x.status==='active'&&x.live!==false?tt('dm.live','{h} is live. Your ad links use it now.',{h:x.host}):x.status==='active'?tt('dm.verified','{h} is verified. Your ad links switch to it once the CNAME points to us and HTTPS is ready.',{h:x.host}):tt('dm.notyet.t','Not verified yet. Check the records and try again in a few minutes.'), x.status==='active'); }
+  catch(e){ toast(e.message,false); a.disabled=false; a.innerHTML=old; }
+}
+function domRemove(id){
+  const x=((S.chans&&S.chans.domains)||[]).find(z=>String(z.id)===String(id)); if(!x) return;
+  sheet(`<h2>${tt('dm.rm.h','Remove this domain?')}<small>${esc(x.host)}</small></h2>`, `<p class="muted" style="font-size:14.5px">${tt('dm.rm.p','Ads that use links on {h} stop working. Your other links move back to {j}.',{h:`<b>${esc(x.host)}</b>`,j:`<b>${esc(hostOf(S.chans.joinvoo_link_base||''))}</b>`})}</p>
+    <div id="dmrmerr"></div><button class="btn danger lg wide" data-act="dm-rm-go" data-id="${x.id}">${TRASH} ${tt('dm.rm.go','Remove domain')}</button><button class="btn ghost wide" data-act="close">${tt('common.cancel','Cancel')}</button>`);
+}
+async function domRemoveGo(a){
+  a.disabled=true; try { await api('DELETE','/api/domains/'+a.dataset.id); closeSheet(); await refreshChans(); drawChannels(); toast(tt('dm.rmd','Domain removed')); }
+  catch(e){ $('#dmrmerr').innerHTML=`<div class="err">${esc(e.message)}</div>`; a.disabled=false; }
+}
+function openDomLimit(lim){
+  const plan=planName(lim.plan), price=((S.chans&&S.chans.limits)||{}).pro_price_usd;
+  sheet(`<h2>${tt('dm.lim.h','Domain limit reached')}<small>${plan} plan</small></h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true">${Array.from({length:Math.min(lim.max||1,6)},(_,i)=>`<i style="--d:${i*90}ms">${I.globe}</i>`).join('')}<span class="lh-plus">${I.lock}</span></div>
+      <b>${tt('dm.lim.b','You’ve used {a} of {b} link {n} on {p}',{a:fmt(lim.used),b:fmt(lim.max),n:lim.max===1?'domain':'domains',p:plan})}</b><span>${tt('dm.lim.p','Upgrade for unlimited link domains, or remove one you don’t use to make room.')}</span></div>
+    <div class="lim-opts"><button class="lim-opt pro" data-act="lim-up"><span class="lo-ic">${I.sparkles}</span><span class="lo-t"><b>${tt('lim.o.up','Upgrade to Pro')}</b><small>${tt('dm.lim.up','Unlimited channels, bots and link domains')}${price?` · $${fmt(price)}/${tt('lim.mo','month')}`:''}</small></span><span class="lo-go">${I.arrow}</span></button>
+      <button class="lim-opt" data-act="dm-lim-list"><span class="lo-ic">${TRASH}</span><span class="lo-t"><b>${tt('dm.lim.rm','Remove a domain')}</b><small>${tt('lim.o.rm.p','Frees a slot right away. Past stats stay.')}</small></span><span class="lo-go">${I.chevr}</span></button></div>
+    <button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+}
+
+/* ---------- own landing page: the redirect script ---------- */
+S.snip = S.snip || {}; S.snipOpen = S.snipOpen || {};
+const snipSt = id => (S.snip[id] = S.snip[id] || { mode:'instant', delay:3, sel:'' });
+function snipCode(c){
+  const st=snipSt(c.id), src=c.snippet_src||String(c.tracking_url||'').replace('/c/','/r/')+'.js';
+  const q = st.mode==='button' ? '?mode=button'+(st.sel?'&sel='+encodeURIComponent(st.sel):'') : st.mode==='delay' ? `?mode=delay&delay=${st.delay}` : '';
+  return `<script src="${src}${q}" async><\/script>`;
+}
+function snipSection(c){
+  const st=snipSt(c.id), code=snipCode(c), orig=(c.snip_origins||[]);
+  const M=[['instant',tt('sn.m.now','Instantly')],['button',tt('sn.m.btn','On a button tap')],['delay',tt('sn.m.delay','After a delay')]];
+  return `<details class="chan-sec bk-sec sn-sec" data-snsec="${c.id}"${S.snipOpen[c.id]?' open':''}><summary><span class="bk-t"><b>${tt('sn.title','Send people from your own website')}</b><small>${tt('sn.sub','Paste one line on your page. Visitors land there, then go into Telegram, tracked.')}</small></span>${I.chev}</summary>
+    <div class="bk-body sn-body">
+      <div class="sn-row"><span class="lbl">${tt('sn.when','Open Telegram')}</span><span class="seg sn-seg" role="group" aria-label="${esc(tt('sn.when','Open Telegram'))}">${M.map(([k,l])=>`<button type="button" data-act="sn-mode" data-id="${c.id}" data-v="${k}" aria-pressed="${st.mode===k}">${l}</button>`).join('')}</span></div>
+      ${st.mode==='delay'?`<div class="sn-opt"><label for="snd-${c.id}">${tt('sn.wait','Wait')}</label><select class="sel" id="snd-${c.id}" data-snd="${c.id}">${[1,2,3,5,8,10,15].map(n=>`<option value="${n}"${n===st.delay?' selected':''}>${tt('sn.secs','{n} seconds',{n})}</option>`).join('')}</select></div>`:''}
+      ${st.mode==='button'?`<div class="sn-opt col"><label for="sns-${c.id}">${tt('sn.btn','Your button')}</label><input class="inp" id="sns-${c.id}" data-sns="${c.id}" value="${esc(st.sel)}" placeholder="${esc(tt('sn.btn.ph','Leave empty to use data-joinvoo'))}" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="hint">${tt('sn.btn.p','Add {a} to your button, or type its CSS selector, like {b}.',{a:'<code>data-joinvoo</code>',b:'<code>.join-btn</code>'})}</span></div>`:''}
+      <div class="codewrap sn-cw"><pre class="codeblock sn-code">${esc(code)}</pre><button class="btn sm primary" data-act="copy" data-v="${esc(code)}">${I.copy} ${tt('common.copy','Copy')}</button></div>
+      <p class="hint">${tt('sn.how','Put it in your page’s &lt;head&gt;. It reads the ad click ID and pixel cookies on your page, gets this visitor’s own invite link and opens Telegram. If anything is slow it uses your backup link after 3 seconds.')}</p>
+      <div class="sn-fb"><span class="lbl">${tt('sn.fb','No script? Link your button to')}</span><div class="codebox"><code>${esc(c.tracking_url||'')}</code><button class="btn sm" data-act="copy" data-v="${esc(c.tracking_url||'')}">${I.copy} ${tt('common.copy','Copy')}</button></div></div>
+      <details class="sn-more"${orig.length?' open':''}><summary>${I.shield}<span>${tt('sn.only','Only allow my websites')}</span><small class="faint">${orig.length?tt('sn.only.n','{n} set',{n:orig.length}):tt('sn.opt','optional')}</small></summary>
+        <div class="sn-mb"><textarea class="inp" rows="2" id="sno-${c.id}" placeholder="mybrand.com" aria-label="${esc(tt('sn.only','Only allow my websites'))}">${esc(orig.join('\n'))}</textarea><span class="hint">${tt('sn.only.p','One per line. Subdomains are included. Leave empty to allow any page.')}</span><button class="btn sm" type="button" data-act="sn-orig" data-id="${c.id}">${tt('common.save','Save')}</button></div></details>
+    </div></details>`;
+}
+function snipRedraw(id){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)), el=$(`[data-snsec="${id}"]`); if(!c||!el) return;
+  S.snipOpen[id]=true; el.outerHTML=snipSection(c);
+}
+function snipRefreshCode(id){
+  const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)), el=$(`[data-snsec="${id}"]`); if(!c||!el) return;
+  const code=snipCode(c), pre=el.querySelector('.sn-code'), b=el.querySelector('.sn-cw [data-act="copy"]'); if(pre) pre.textContent=code; if(b) b.dataset.v=code;
+}
+async function snipOrigins(a){
+  const id=a.dataset.id, v=($('#sno-'+id)||{}).value||''; a.disabled=true;
+  try { const r=await api('PATCH','/api/channels/'+id,{snip_origins:v}); await refreshChans(); S.snipOpen[id]=true; drawChannels(); toast((r.snip_origins||[]).length?tt('sn.only.ok','Only your websites can use this script now'):tt('sn.only.any','Any page can use this script'));
+  } catch(e){ toast(e.message,false); a.disabled=false; }
+}
+
+/* ---------- bot /start ping status ---------- */
+function pingLine(c){
+  if (!c || !c.external) return '';
+  return c.last_ping_at ? `<div class="ping-st on"><i></i><span>${tt('ping.last','Last ping {t}',{t:ago(c.last_ping_at)})}${c.last_ping_test?' · '+tt('ping.test','test'):''}</span><b>${tt('ping.today','{n} today',{n:fmt(c.pings_today||0)})}</b></div>`
+    : `<div class="ping-st"><i></i><span>${tt('ping.none','No pings yet. Add the call to your bot, then tap Send a test.')}</span></div>`;
+}
+
+/* ---------- handlers ---------- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'dm-check': domCheck(a); break;
+    case 'dm-rm': domRemove(a.dataset.id); break;
+    case 'dm-rm-go': domRemoveGo(a); break;
+    case 'dm-lim-list': closeSheet(); { const c=$('#dmcard'); if(c){ c.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'}); c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),1600); } } break;
+    case 'sn-mode': { const st=snipSt(a.dataset.id); if(st.mode!==a.dataset.v){ st.mode=a.dataset.v; snipRedraw(a.dataset.id); } break; }
+    case 'sn-orig': snipOrigins(a); break;
+  }
+});
+document.addEventListener('submit', e=>{ if(e.target.id==='dmadd'){ e.preventDefault(); domAdd(e.target); } });
+document.addEventListener('change', e=>{
+  const t=e.target;
+  if (t.dataset && t.dataset.dmch){ const id=t.dataset.dmch; t.disabled=true;
+    api('PATCH','/api/channels/'+id,{domain_id:+t.value}).then(async r=>{ await refreshChans(); drawChannels(); toast(tt('dm.picked','Ad link now on {h}',{h:hostOf(r.tracking_url)})); }).catch(err=>{ toast(err.message,false); t.disabled=false; }); }
+  if (t.dataset && t.dataset.snd){ snipSt(t.dataset.snd).delay=+t.value; snipRefreshCode(t.dataset.snd); }
+});
+document.addEventListener('input', e=>{ const t=e.target; if (t.dataset && t.dataset.sns){ snipSt(t.dataset.sns).sel=t.value.trim(); snipRefreshCode(t.dataset.sns); } });
+document.addEventListener('toggle', e=>{ const t=e.target; if (t.dataset && t.dataset.snsec) S.snipOpen[t.dataset.snsec]=t.open; }, true);

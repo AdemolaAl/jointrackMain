@@ -73,7 +73,7 @@ function startCard(){
   if (st.done && st.ads) return `<section class="card nudge">${I.checkc}<span><b>Tracking setup is complete.</b> Add another bot or channel whenever you’re ready.</span><button class="btn sm primary" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
   if (st.done) return `<section class="card nudge">${pm('meta')}${pm('tiktok')}${pm('snap')}<span><b>Connect Meta, TikTok or Snapchat</b> so every join is sent to your ads and they learn who really joins.</span><button class="btn sm primary" data-act="nav" data-p="channels">Connect ads ${I.arrow}</button><button class="btn sm" data-act="start-setup">Start setup ${I.arrow}</button></section>`;
   const li=(ok,n,t)=>`<li class="${ok?'done':''}"><span class="n">${ok?'✓':n}</span><span>${t}</span></li>`;
-  return `<section class="card start"><div><h2>Let’s get you tracking.</h2><p>Three quick steps, about 10 minutes. Your numbers appear here as soon as people start joining.</p>
+  return `<section class="card start"><div><h2>Let’s get you tracking.</h2><p><span class="st-l">Three quick steps, about 10 minutes. Your numbers appear here as soon as people start joining.</span><span class="st-s">3 quick steps · about 10 minutes</span></p>
     <ol>${li(st.bot,1,'Make your tracking bot')}${li(st.ch,2,'Add it to your channel or bot')}${li(st.ads,3,'Connect Meta, TikTok or Snapchat')}</ol></div>
     <div><button class="btn primary lg" data-act="start-setup">${st.bot?'Continue setup':'Start setup'} ${I.arrow}</button></div></section>`;
 }
@@ -86,7 +86,7 @@ async function viewOverview(){
   S.redraw=[];
   const me=S.me||{}, hr=new Date().getHours(), greet=hr<5?tt('greet.evening','Good evening'):hr<12?tt('greet.morning','Good morning'):hr<17?tt('greet.afternoon','Good afternoon'):tt('greet.evening','Good evening'), nm=dispName();
   if (!setupState().done){
-    $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow greet">${meFace(34,true)}<span>${greet}${nm?', '+esc(nm):''} 👋</span></div><h1>Welcome to Joinvoo</h1><p>Track every join and deposit from Meta, TikTok and Snapchat ads, matched to the exact click.</p></div></div>${startCard()}
+    $('#view').innerHTML = `<div class="view ob"><div class="ph"><div><div class="eyebrow greet">${meFace(34,true)}<span>${greet}${nm?', '+esc(nm):''} 👋</span></div><h1>Welcome to Joinvoo</h1><p>Track every join and deposit from Meta, TikTok and Snapchat ads, matched to the exact click.</p></div></div>${startCard()}
       <div class="kpis zero">${KPI_DEF.map(([k,l,t])=>`<section class="kpi t-${t}"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${k==='rate'?'—':k==='rev'?'$0':'0'}</span></div><div class="kd"><span class="ks">Waiting for your first ${k==='ftd'||k==='rev'?'deposit':'join'}</span></div></section>`).join('')}</div>
       <section class="card"><div class="empty"><span class="ei" style="font-size:30px;background:var(--cream)">👋</span><h3>Nobody here yet</h3><p>Once your bot is in your channel and your link is in an ad, people show up here the moment they join.</p></div></section></div>`;
     return;
@@ -114,14 +114,9 @@ async function viewOverview(){
   await loadOverview(true);
   if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')) loadOverview(false); });
 }
-let seen=new Set();
-async function loadOverview(first){
-  const t=new Date(), [pf,pt,span]=prevRange(), [f0,t0]=range();
-  let st, prev, feed, topc;
-  try { [st,prev,feed,topc]=await Promise.all([api('GET','/api/stats?'+rq()), first||!S.ovPrev?api('GET',`/api/stats?from=${pf}&to=${pt}&${tzq()}${chq()}`):Promise.resolve(S.ovPrev),
-      api('GET',`/api/joins?from=${ymd(addDays(t,-6))}&to=${ymd(t)}&${tzq()}${chq()}&limit=6`), first?api('GET','/api/breakdown?dim=campaign&'+rq()).catch(()=>({rows:[]})):Promise.resolve(null)]); } catch { return; }
-  if (S.page!=='overview' || !$('#kpis')) return;
-  S.ovPrev=prev;
+/* Fills the #kpis grid (KPI_DEF tiles + Ad spend / Cost per FTD when there is spend). Shared by the Overview loaders. */
+function drawKpis(st,prev,first){
+  const t=new Date(), [,,span]=prevRange(), [,t0]=range();
   const T=st.totals, P0=prev.totals;
   // compare at the same pace: if today is still running, scale the previous period to the same share of time
   let k=1; if (t0===ymd(new Date())){ const frac=(t.getHours()*60+t.getMinutes())/1440; k=((span-1)+frac)/span; }
@@ -150,6 +145,17 @@ async function loadOverview(first){
     if (first && !reduced) count(el.querySelector('.kn'), c.raw, c.p?'p':c.m?'m':''); }
   if (T.ftd_locked){ const r=$('.kpi[data-k="rev"]'); if(r){ r.classList.add('locked'); r.innerHTML=`<span class="kl">${tt('kpi.revenue','Revenue')}</span><div class="kv-row"><span class="kn">${I.lock}</span></div><div class="kd"><button class="ks link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></div>`; }
     if (!$('#lockb')){ const k=$('#kpis'); k&&k.insertAdjacentHTML('afterend',`<div id="lockb">${lockBanner(T.ftd)}</div>`); } }
+  return {T,P,hasConv,vl};
+}
+let seen=new Set();
+async function loadOverview(first){
+  const t=new Date(), [pf,pt,span]=prevRange(), [f0,t0]=range();
+  let st, prev, feed, topc;
+  try { [st,prev,feed,topc]=await Promise.all([api('GET','/api/stats?'+rq()), first||!S.ovPrev?api('GET',`/api/stats?from=${pf}&to=${pt}&${tzq()}${chq()}`):Promise.resolve(S.ovPrev),
+      api('GET',`/api/joins?from=${ymd(addDays(t,-6))}&to=${ymd(t)}&${tzq()}${chq()}&limit=6`), first?api('GET','/api/breakdown?dim=campaign&'+rq()).catch(()=>({rows:[]})):Promise.resolve(null)]); } catch { return; }
+  if (S.page!=='overview' || !$('#kpis')) return;
+  S.ovPrev=prev;
+  const {T,P,hasConv}=drawKpis(st,prev,first), vl=vsLabel();
   const ins=$('#insight'), all=T.joins;
   if (ins){ const d=deltaPct(T.joins,P.joins); ins.innerHTML = !all ? 'Overview' : `<em class="num">${fmt(all)}</em> ${all===1?'person':'people'} joined.`; }
   const isub=$('#insub'); if(isub){ const d=deltaPct(T.joins,P.joins), dt=!P.joins||!isFinite(d)?'':Math.abs(d)<0.5?'Level with the period before':`Joins ${d>0?'up':'down'} ${Math.abs(d).toFixed(Math.abs(d)<10?1:0)}% ${vl}`;

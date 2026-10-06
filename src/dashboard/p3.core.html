@@ -199,9 +199,9 @@ async function boot(){
     if (v==='1'){ S.me.verified=true; setTimeout(()=>{ toast(`Email confirmed. Your first ${fmt(S.me.free_joins_gift||PRICE().free_joins)} joins are free`); confetti(); },400); }
     else S.verifyExpired=true; }
   await refreshChans();
-  const h=location.hash.slice(1);
+  const h=location.hash.slice(1); S.hash0=h; // round 17 deep links (#channels/<id>, #spend…) are opened after the first render, which rewrites the hash
   { const pm=/^(?:credits|wallet)\?(?:.*&)?paid=([^&]+)/.exec(h); if (pm){ S.payRef=decodeURIComponent(pm[1]); S.page='wallet'; } }
-  if (h==='billing') S.page='wallet'; else if (h==='support'){ S.page='help'; S.openChat=true; } else if (PAGES[h]) S.page=h;
+  if (h==='billing'||/^credits(\?|$)/.test(h)) S.page='wallet'; else if (h==='invite') S.page='earn'; else if (h==='support'){ S.page='help'; S.openChat=true; } else if (PAGES[h]) S.page=h;
   if (S.forceSetup){ S.forceSetup=false; return renderSetup(1); }
   renderApp();
 }

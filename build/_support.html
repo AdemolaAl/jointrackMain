@@ -81,6 +81,14 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   .sp-launch .sp-dot{left:30px;top:8px}
   .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
   .sp-launch[aria-expanded="true"]{display:none}
+  .sp-form textarea,.sp-form input{font-size:16px}
+  .sp-launch{transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s,bottom .45s cubic-bezier(.2,.8,.2,1)}
+  body.sp-rest .sp-launch{transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none}
+  body.sp-pad{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  /* with the page's sticky CTA bar up, the launcher shrinks to one face and sits in the same row (the bar makes room), so the two never stack over the content */
+  body.mcta-on .sp-launch{bottom:calc(16px + env(safe-area-inset-bottom,0px));right:12px;width:54px;padding:0;justify-content:center}
+  body.mcta-on .sp-launch .sp-faces .sp-av:not(:first-child){display:none}
+  body.mcta-on .sp-launch .sp-dot{left:36px;top:6px}
   .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
   body.mcta-on .sp{bottom:0;height:auto}
   .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -127,6 +135,12 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const $=id=>document.getElementById(id);
   const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
   if(!launch||!panel) return;
+  /* phones: keep the launcher off the first screen (it would sit on the hero buttons) and leave room for it at the end of the page */
+  (function(){ const mq=matchMedia('(max-width:560px)'); let t=0;
+    const upd=()=>{ const tall=document.documentElement.scrollHeight>innerHeight*1.6;
+      document.body.classList.toggle('sp-rest', mq.matches && tall && scrollY<innerHeight*.55 && launch.getAttribute('aria-expanded')!=='true');
+      document.body.classList.toggle('sp-pad', mq.matches); };
+    addEventListener('scroll',()=>{ if(!t) t=requestAnimationFrame(()=>{ t=0; upd(); }); },{passive:true}); addEventListener('resize',upd); upd(); })();
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */

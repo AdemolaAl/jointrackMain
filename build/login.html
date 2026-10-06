@@ -59,6 +59,7 @@ form{display:flex;flex-direction:column;gap:16px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .view{animation:vin .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes vin{from{opacity:0;transform:translateY(10px)}}
+.newh{margin:26px 0 0;text-align:center;color:var(--muted);font-size:15px}.newh a{color:var(--ink);font-weight:800;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#5b3df5 45%,transparent)}
 .secure{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--faint);font-size:12.5px;margin:2px 0 0}
 .secure svg{width:14px;height:14px;flex:none}
 @media (max-width:900px){
@@ -73,6 +74,17 @@ form{display:flex;flex-direction:column;gap:16px}
   .brand .top{display:flex;justify-content:space-between;align-items:center}
 }
 @media (min-width:901px){.brand .top{display:block}.brand .tl-m{display:none}}
+
+/* phones: 44px tap targets */
+@media (max-width:900px){
+  .top a.logo{min-height:44px}
+  .brand .stage{margin-top:14px}
+  .topline a{white-space:nowrap}
+  .brand .tl-m{display:inline-flex;align-items:center;min-height:44px}
+  .pw button{width:44px;height:44px;right:6px}
+  .topline a,#forgot{position:relative}
+  .topline a::after,#forgot::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+}
 </style>
 
 <div class="shell">
@@ -85,9 +97,9 @@ form{display:flex;flex-direction:column;gap:16px}
   </aside>
 
   <main class="side">
-    <div class="topline"><a href="{{BLOG}}" style="color:var(--muted);font-weight:700;margin-right:auto">Blog</a><span>New to Joinvoo? <a href="{{SIGNUP}}">Start free</a></span><div class="lsw" data-lsw></div></div>
+    <div class="topline"><div class="lsw" data-lsw></div></div>
     <div class="box" id="box"></div>
-    <div class="foot"><span>© Joinvoo · By Zedapex company</span><span class="fl"><a href="{{GUIDE}}">Guide</a><a href="{{BLOG}}">Blog</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a></span>{{VOOFOOT}}</div>
+    <div class="foot"><span>© Joinvoo · By Zedapex company</span><span class="fl"><a href="{{GUIDE}}">Help</a><a href="{{BLOG}}">Blog</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a></span>{{VOOFOOT}}</div>
   </main>
 </div>
 
@@ -102,6 +114,8 @@ form{display:flex;flex-direction:column;gap:16px}
   const arrow='<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   let email='';
   try{ email=localStorage.getItem('jv_last_email')||''; }catch(e){}
+  /* Team invite link (/join-team/<token> → /login?team=<token>&email=<email>): logging in accepts it in the same step. */
+  const TEAM=(()=>{ try{ const q=new URLSearchParams(location.search), t=q.get('team')||''; if(t&&q.get('email')) email=q.get('email'); return /^[A-Za-z0-9_-]{16,64}$/.test(t)?t:''; }catch(e){ return ''; } })();
   const desk=matchMedia('(min-width:901px)').matches;
   let VM='off'; const LOCAL=JVVoo.local;  // VooSquare sign-in: 'off' (default, unchanged) | 'both' | 'only'; ?local=1 always shows the password form
 
@@ -119,8 +133,7 @@ form{display:flex;flex-direction:column;gap:16px}
         <button class="btn violet full" type="submit" id="go">${_t('Log in')} ${arrow}</button>
         <p class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>${_t('Encrypted connection. Your password is never stored in plain text.')}</p>
       </form>`}
-      <div class="or">${_t('New here?')}</div>
-      <div class="alt"><b>${_t('Don’t have an account yet?')}</b><span>${_t('Your first 500 joins are free. Setup takes about 10 minutes.')}</span><a class="btn dark" href="{{SIGNUP}}">${_t('Create a free account')} ${arrow}</a></div>
+      <p class="newh">${_t('New to Joinvoo?')} <a href="{{SIGNUP}}">${_t('Start free')}</a> · ${_t('500 joins on us')}</p>
     </div>`;
     const f=$('#f'), em=$('#em'), pw=$('#pw'), go=$('#go'), eye=$('#eye');
     if(!f) return;
@@ -136,10 +149,10 @@ form{display:flex;flex-direction:column;gap:16px}
       try{ localStorage.setItem('jv_last_email',ev); }catch(x){}
       if(DEMO){ setTimeout(()=>location.href=APP,700); return; }
       try{
-        const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:ev,password:pv})});
+        const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(TEAM?{email:ev,password:pv,team_token:TEAM}:{email:ev,password:pv})});
         const j=await r.json().catch(()=>({}));
         if(!r.ok){ throw new Error(j.error||(r.status===429?_t('Too many tries. Wait 15 minutes, or reset your password.'):_t('Couldn’t log in. Try again.'))); }
-        go.innerHTML=icOk.replace('<svg','<svg width="18" height="18"')+' '+_t('Welcome back'); location.href=APP;
+        go.innerHTML=icOk.replace('<svg','<svg width="18" height="18"')+' '+_t('Welcome back'); location.href=APP+(j.team&&j.team.error&&/^(expired|invalid)$/.test(j.team.code)?'?team_error='+j.team.code:'');
       }catch(x){ go.disabled=false; go.innerHTML=_t('Log in')+' '+arrow; err(x.message==='Failed to fetch'?_t('Can’t reach Joinvoo. Check your connection and try again.'):x.message); pw.select(); }
     };
   }
@@ -177,7 +190,7 @@ form{display:flex;flex-direction:column;gap:16px}
   login();
   JVVoo.mode(m=>{ if(m!==VM){ VM=m; if($('#f')||m==='only') login(); } });
   /* Already logged in? Go straight to the dashboard. */
-  if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP); }).catch(()=>{});
+  if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP+(TEAM?'?team='+encodeURIComponent(TEAM):'')); }).catch(()=>{});
 })();
 </script>
 

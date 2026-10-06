@@ -113,7 +113,8 @@ section.blk{padding-block:100px}
 @keyframes bl{50%{opacity:0}}
 .mini-acc{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:var(--sunk);font-size:13px;font-weight:700}
 .mini-acc svg{width:22px;height:22px;flex:none}
-.mini-acc em{margin-left:auto;font-style:normal;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-weight:800}
+.mini-acc span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-acc em{flex:none;margin-left:auto;font-style:normal;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-weight:800}
 .mini-months{display:flex;gap:5px;align-items:flex-end;height:46px;padding:0 4px}
 .mini-months i{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--voo),color-mix(in srgb,var(--voo) 50%,#5b3df5));transform-origin:bottom;animation:grow 2.8s cubic-bezier(.2,.8,.2,1) infinite}
 .mini-months i:nth-child(1){height:58%;animation-delay:0s}.mini-months i:nth-child(2){height:66%;animation-delay:.12s}.mini-months i:nth-child(3){height:72%;animation-delay:.24s}.mini-months i:nth-child(4){height:80%;animation-delay:.36s}.mini-months i:nth-child(5){height:88%;animation-delay:.48s}.mini-months i:nth-child(6){height:96%;animation-delay:.6s}
@@ -260,11 +261,14 @@ footer.site nav a:hover{color:var(--ink)}
   .chip{font-size:13px;gap:8px;padding-right:12px}
   .ctas .btn{flex:1 1 100%}
 }
+
+@media (max-width:900px){.hcopy a.chip{min-height:44px}}
+@media (max-width:560px){body.mcta-on:has(#spLaunch) .mcta{right:74px}}
 </style>
 
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="{{HOME}}" aria-label="Joinvoo home">{{LOGO}}Joinvoo</a>
-  <nav aria-label="Main"><a class="plain" href="#how">How it works</a><a class="plain" href="#why">Why it converts</a><a class="plain" href="#faq">FAQ</a><a class="plain" href="{{HOME}}">Joinvoo</a><div class="lsw" data-lsw></div><a class="btn violet navbtn" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Join now</a></nav>
+  <nav aria-label="Main"><a class="plain" href="#how">How it works</a><a class="plain" href="#faq">FAQ</a><a class="plain" href="{{HOME}}">Joinvoo</a><div class="lsw" data-lsw></div><a class="btn violet navbtn" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Join now</a></nav>
 </div></header>
 
 <main>
@@ -309,39 +313,7 @@ footer.site nav a:hover{color:var(--ink)}
   </div>
 </div></section>
 
-<section class="blk" id="why" style="padding-top:0"><div class="wrap">
-  <div class="show reveal">
-    <div class="show-copy">
-      <span class="kick">Why Joinvoo converts</span>
-      <h2>Your audience <span>already needs it.</span></h2>
-      <p>If someone buys ads that send people to Telegram, they’re flying blind without tracking. <b>Joinvoo is the fix they go looking for.</b></p>
-      <ul class="why">
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#c9bfff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#c9bfff"/></svg></i><div><b>Media buyers need it</b><span>Ad platforms count clicks. Buyers pay for real joiners and depositors, so tracking isn’t optional.</span></div></li>
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#7ff0b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></i><div><b>Tracks Telegram joins and FTDs</b><span>Every real join to a channel, group or bot, plus first deposits from the buyer’s postback.</span></div></li>
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#9fe6ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h12M12 6l6 6-6 6"/></svg></i><div><b>Sends them to Meta, TikTok and Snap</b><span>So their campaigns learn from real people, not noise, and buy more of the users who stay.</span></div></li>
-      </ul>
-    </div>
-    <div class="stream" aria-hidden="true">
-      <div class="lb"><i></i>What a Joinvoo customer sees</div>
-      <div class="evs" id="evs"></div>
-    </div>
-  </div>
-</div></section>
 
-<section class="blk" id="get" style="padding-top:0"><div class="wrap center">
-  <span class="kick reveal">What you get</span>
-  <h2 class="h2 reveal">Everything a serious <span>affiliate expects.</span></h2>
-  <div class="gets">
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><h3>Tracking links with sub IDs</h3><p>One link per placement, with sub IDs to split traffic by video, channel or campaign.</p>
-      <div class="vis" aria-hidden="true"><div class="subid">?aff=you&amp;sub1=<b id="sub1">tiktok_ugc_3</b></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span><h3>Postbacks</h3><p>Get sign-ups and payments sent to your own tracker, so your numbers live where you work.</p>
-      <div class="vis" aria-hidden="true"><div class="pbk"><span>VooSquare</span><span class="wire"><i></i></span><em>Your tracker</em></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span><h3>Creatives &amp; brand kit</h3><p>Logos, screenshots, videos and copy you can use as they are, or remix for your audience.</p>
-      <div class="vis" aria-hidden="true"><div class="kit"><i style="background:#5b3df5"></i><i style="background:#8f7bff"></i><i style="background:#0fae6b"></i><i style="background:#c6f45a"></i><i style="background:#141413"></i></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><h3>Affiliate managers</h3><p>Real people who help you pick angles, get creatives and grow your volume.</p>
-      <div class="vis" aria-hidden="true"><div class="mgr"><span class="av">VS</span><span class="bub"><i></i><i></i><i></i></span></div></div></article>
-  </div>
-</div></section>
 
 <section class="blk" id="terms" style="padding-top:0"><div class="wrap">
   <div class="terms reveal">
@@ -358,7 +330,6 @@ footer.site nav a:hover{color:var(--ink)}
   <div class="faq reveal">
     <details open><summary>Who can join?</summary><p>Media buyers, creators, educators, agencies and community owners whose audience runs ads or Telegram funnels. You apply on VooSquare, and the program terms say who qualifies.</p></details>
     <details><summary>How much can I earn?</summary><p>Up to <b>50% recurring commission</b> on what the customers you bring pay. Your exact rate depends on the program’s conditions. The current rates are in the terms on <a href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>affiliate.voosquare.com</a>.</p></details>
-    <details><summary>What does “for life” mean?</summary><p>You keep earning <b>every month a customer you referred keeps paying</b>, on Joinvoo and on any other Zedapex tool they use, as long as the program conditions are met.</p></details>
     <details><summary>How do you know a customer came from me?</summary><p>Your tracking link remembers the visitor, and the account they create is tied to you when they sign up. Sub IDs show which link or piece of content brought them, and postbacks can send each event to your own tracker.</p></details>
     <details><summary>When and how do I get paid?</summary><p>Commission is paid monthly. Payout methods, minimums and any holding period are in the program terms on VooSquare.</p></details>
   </div>
@@ -374,7 +345,7 @@ footer.site nav a:hover{color:var(--ink)}
 <div class="mcta" id="mcta"><a class="btn violet" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Become an affiliate</a></div>
 <footer class="site"><div class="wrap">
   <div class="fby"><a class="logo" href="{{HOME}}" style="font-size:18px">{{LOGO}}Joinvoo</a><span>© <span id="yr">2026</span> Joinvoo · By <b>Zedapex</b> company</span></div>
-  <nav aria-label="Footer"><a href="{{HOME}}">Home</a><a href="{{GUIDE}}">Guide</a><a href="{{BLOG}}">Blog</a><a href="{{AFFILIATES}}" aria-current="page">Affiliates</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFTERMS}}">Referral terms</a><a href="{{LOGIN}}">Log in</a><a href="{{SIGNUP}}">Start free</a></nav>
+  <nav aria-label="Footer"><a href="{{HOME}}">Home</a><a href="{{GUIDE}}">Help</a><a href="{{BLOG}}">Blog</a><a href="{{AFFILIATES}}" aria-current="page">Affiliates</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFTERMS}}">Referral terms</a><a href="{{LOGIN}}">Log in</a><a href="{{SIGNUP}}">Start free</a></nav>
 {{VOOFOOT}}</div></footer>
 {{SUPPORT}}
 
@@ -387,7 +358,7 @@ footer.site nav a:hover{color:var(--ink)}
 
   /* header + sticky mobile CTA */
   const mcta=$('#mcta');
-  const onScroll=()=>{ $('#top').classList.toggle('scrolled',scrollY>10); mcta.classList.toggle('up',scrollY>innerHeight*.8 && innerHeight+scrollY<document.documentElement.scrollHeight-260); };
+  const onScroll=()=>{ $('#top').classList.toggle('scrolled',scrollY>10); const up=scrollY>innerHeight*.8 && innerHeight+scrollY<document.documentElement.scrollHeight-260; mcta.classList.toggle('up',up); document.body.classList.toggle('mcta-on',up && matchMedia('(max-width:900px)').matches); };
   addEventListener('scroll',onScroll,{passive:true}); onScroll();
 
   /* the affiliate link can be changed in admin (VooSquare → affiliate link); /api/config carries it */

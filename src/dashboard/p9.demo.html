@@ -11,13 +11,13 @@ const Demo = (() => {
   const SRC={meta:'meta',tiktok:'tiktok',snap:'snapchat'}, PNAME={meta:'Meta',tiktok:'TikTok',snap:'Snapchat'};
   const today0=()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
   const dayIdx=d=>Math.round((parseYmd(ymd(d))-today0())/864e5);
-  const blank={pixel_id:'',has_token:false,test_code:'',event_name:'Subscribe',tt_pixel:'',tt_has_token:false,tt_test_code:'',tt_event:'Subscribe',sc_pixel:'',sc_has_token:false,sc_test:false,sc_event:'SUBSCRIBE',has_fallback:true,landing:'auto',welcome:'',btn_text:'',btn_url:'',forward_url:'',join_mode:'link',offer_text:'',offer_btn:'',offer_url:''};
+  const blank={pixel_id:'',has_token:false,test_code:'',event_name:'Subscribe',tt_pixel:'',tt_has_token:false,tt_test_code:'',tt_event:'Subscribe',sc_pixel:'',sc_has_token:false,sc_test:false,sc_event:'SUBSCRIBE',has_fallback:true,landing:'auto',welcome:'',btn_text:'',btn_url:'',forward_url:'',join_mode:'link',offer_text:'',offer_btn:'',offer_url:'',join_approver:'joinvoo',approve_after:60,pending_requests:0};
   const sampleDb=()=>({
     bots:[{id:1,tg_id:7712045533,username:'dailydeals_track_bot',status:'active'},{id:2,tg_id:7790112274,username:'fit30_track_bot',status:'active'},{id:3,tg_id:7731880412,username:'studysquad_bot',status:'active'}],
     channels:[
       {...blank,id:11,title:'Daily Deals Club',type:'channel',join_mode:'request',offer_text:'Welcome to Daily Deals Club 👋 Today’s best offer is waiting for you. Tap below to claim it.',offer_btn:'Claim today’s offer',offer_url:'https://partner.example/offer?sub1={tg_id}',status:'active',pool:184,pool_target:200,bots:['dailydeals_track_bot','fit30_track_bot'],tracking_url:'https://joinvoo.com/c/deals7Q',pixel_id:'884210395527140',has_token:true,tt_pixel:'CQ7B9E3C77U5JHG0T1A0',tt_has_token:true,sc_pixel:'5f1c2a9e-8b7d-4e3a-9c21-7d0e6b4a3f12',sc_has_token:true,sc_event:'SUBSCRIBE',
         age:420,base:1150,rate:.41,cc:['US','US','GB','DE','BR','IN','AE','US'],mix:{meta:.6,tiktok:.28,snap:.12},fr:.085,avg:52},
-      {...blank,id:12,title:'Fit in 30',type:'channel',status:'active',pool:197,pool_target:200,bots:['fit30_track_bot'],tracking_url:'https://joinvoo.com/c/fit30Ka',pixel_id:'884210395527140',has_token:true,event_name:'Lead',sc_pixel:'9a7b3c2d-1e4f-4a5b-8c6d-0e1f2a3b4c5d',sc_has_token:true,sc_event:'SIGN_UP',sc_test:true,landing:'button',
+      {...blank,id:12,title:'Fit in 30',type:'channel',join_mode:'request',join_approver:'own',pending_requests:3,status:'active',pool:197,pool_target:200,bots:['fit30_track_bot'],tracking_url:'https://joinvoo.com/c/fit30Ka',pixel_id:'884210395527140',has_token:true,event_name:'Lead',sc_pixel:'9a7b3c2d-1e4f-4a5b-8c6d-0e1f2a3b4c5d',sc_has_token:true,sc_event:'SIGN_UP',sc_test:true,landing:'button',
         age:300,base:640,rate:.35,cc:['US','GB','CA','AU','DE','ZA'],mix:{meta:.7,snap:.3},fr:.06,avg:39},
       {...blank,id:13,title:'Creator Studio',type:'supergroup',status:'active',pool:142,pool_target:200,bots:['fit30_track_bot'],tracking_url:'https://joinvoo.com/c/creat2r',tt_pixel:'CQ7B9E3C77U5JHG0T1A0',tt_has_token:true,
         age:110,base:330,rate:.28,cc:['BR','MX','ES','IN','PH','BR'],mix:{tiktok:1},fr:.04,avg:28},
@@ -257,9 +257,15 @@ const Demo = (() => {
     if (p==='/api/sales'){ await wait(500); if(!/\S+@\S+\.\S+/.test(body.email||'')) throw err('Add your email so we can reply.'); return {ok:true}; }
     if (p==='/api/alerts'&&method==='GET'){ await wait(200); return {connected:alerts.connected,bot_username:'joinvoo_alerts_bot',link:'https://t.me/joinvoo_alerts_bot?start=demo7k2',prefs:{...alerts.prefs}}; }
     if (p==='/api/alerts'&&method==='POST'){ await wait(200); if(body.prefs) Object.assign(alerts.prefs,body.prefs); if(body.connect) alerts.connected=true; return {ok:true}; }
-    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&(body.join_mode!==undefined||body.offer_text!==undefined)){ await wait(250); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&(body.join_mode!==undefined||body.offer_text!==undefined||body.join_approver!==undefined||body.approve_after!==undefined)){ await wait(250); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
       if (body.offer_url && !/^https?:\/\//.test(body.offer_url)) throw err('The offer link must start with https://');
-      for (const k of ['join_mode','offer_text','offer_btn','offer_url']) if (body[k]!==undefined) c[k]=body[k]; return {ok:true}; }
+      if (body.join_approver!==undefined && !['joinvoo','own','backup'].includes(body.join_approver)) throw err('Pick who lets new members in.');
+      if (body.approve_after!==undefined && !(+body.approve_after>=10&&+body.approve_after<=3600)) throw err('Pick a wait between 10 and 3600 seconds.');
+      const ap=body.join_approver||c.join_approver||'joinvoo';
+      if (body.join_mode==='request' && ap==='joinvoo' && !String(body.offer_text??c.offer_text??'').trim()) throw err('Write a short welcome message.');
+      for (const k of ['join_mode','offer_text','offer_btn','offer_url','join_approver']) if (body[k]!==undefined) c[k]=body[k];
+      if (body.approve_after!==undefined) c.approve_after=Math.round(+body.approve_after);
+      if (ap!=='joinvoo' && c.pending_requests==null) c.pending_requests=ap==='own'?3:0; return {ok:true}; }
     if (p==='/api/billing'&&method==='GET'){ const b=await handle0(method,path,body); const bonus=bonusRows.reduce((a,x)=>a+x.amount_cents,0);
       b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $300 top-up',amount_cents:1500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
       const sb=sample?1500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
@@ -556,7 +562,7 @@ const Demo = (() => {
     if (!timer) timer=setInterval(tick,1300);
     if (W.step===2 && $('#stp')) checkArrived();
   }
-  function clear(){ inbox6=null; spendRows=[]; bonusRows=[]; connected=new Set(['keitaro']); alerts={connected:false,prefs:{daily_report:true,token_errors:true,links_low:true,cpa_spike:false,paused:true,ftd_live:false,no_joins_2h:true,no_ftd_campaign:false}}; credit=0; payouts=[]; deposits=[]; extra=new Map(); extraConvs=[]; clearInterval(timer); timer=null; live=[]; liveClicks=[]; support=[]; sid=1; S.channel=''; S.page='overview'; closeSheet(); closeChat(true); CH.msgs=[]; CH.last=0; }
+  function clear(){ r17=null; inbox6=null; spendRows=[]; bonusRows=[]; connected=new Set(['keitaro']); alerts={connected:false,prefs:{daily_report:true,token_errors:true,links_low:true,cpa_spike:false,paused:true,ftd_live:false,no_joins_2h:true,no_ftd_campaign:false}}; credit=0; payouts=[]; deposits=[]; extra=new Map(); extraConvs=[]; clearInterval(timer); timer=null; live=[]; liveClicks=[]; support=[]; sid=1; S.channel=''; S.page='overview'; closeSheet(); closeChat(true); CH.msgs=[]; CH.last=0; try{ dom16=null; }catch{} }
   function useSample(){ clear(); sample=true; db=sampleDb();
     support=[{id:sid++,from_admin:1,demo:true,body:'Hi Alex 👋 Your Snapchat pixel on Fit in 30 is still in test mode. Switch it off on the Channels page when you’re ready to go live, and shout if you want a hand with the deposit postback.',created_at:Date.now()-50*60e3}];
     try{ localStorage.removeItem('jv_seen_admin'); }catch{} CH.seen=0;
@@ -631,7 +637,138 @@ const Demo = (() => {
         {id:'gatevoo',name:'Gatevoo',headline:'Get paid in crypto, straight to your wallet.',tagline:'A USDT and Bitcoin checkout for your Telegram business. No middleman holding your money.',url:'https://gatevoo.com',color:'#0b0b0f',color2:'#24242c',ink:'light',logo_url:'/media/paylogos/gatevoo.svg',status:'soon',cta:'Join the waitlist',badge:'Coming soon'}]};
     return c;
   }
-  return {handle:handle11,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null};
+  /* ---------- Round 16: your own link domain, landing-page script, bot /start ping (demo) ----------
+     Domains are kept in memory. "Check now" verifies the domain (the demo has no real DNS). ?dom=active starts with a live domain. */
+  let dom16=null, domN=1; const snip16={}, dpick16={};
+  const doms16=()=>{ if(!dom16){ dom16=q11.get('dom')==='active'&&sample?[mkDom('go.dailydeals.shop','active')]:[]; } return dom16; };
+  function mkDom(host,status){ const p=host.split('.'), short=p.slice(0,p.length-2).join('.'), tok='joinvoo-verify='+Array.from({length:24},(_,i)=>'0123456789abcdef'[(h('d',host,i)>>>3)%16]).join('');
+    return {id:domN++,host,status,channel_id:null,created_at:Date.now()-60e3,verified_at:status==='active'?Date.now()-3600e3:null,last_check_at:Date.now()-50e3,last_error:status==='active'?null:`No TXT record at _joinvoo.${host} yet. DNS changes usually show up within minutes, sometimes a few hours.`,
+      pointing:status==='active',https:status==='active'?'ready':'manual',url:'https://'+host,dns:{cname:{type:'CNAME',name:host,short,value:'customers.gojoinly.com'},txt:{type:'TXT',name:'_joinvoo.'+host,short:'_joinvoo'+(short?'.'+short:''),value:tok}}}; }
+  const domLim=()=>{ const L=lim11(); return {used:doms16().length,max:L.unlimited?null:1}; };
+  const chBase=c=>{ const act=doms16().filter(d=>d.status==='active'), pk=dpick16[c.id]; if(pk===0) return 'https://gojoinly.com';
+    const d=(pk>0&&act.find(x=>x.id===pk))||act.find(x=>x.channel_id==null); return d?'https://'+d.host:'https://gojoinly.com'; };
+  async function handle16(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname; let m;
+    if (p==='/api/channels'&&method==='GET'){ const r=await handle11(method,path,body); r.domains=doms16().map(d=>({...d})); r.domain_target='customers.gojoinly.com'; r.joinvoo_link_base='https://gojoinly.com';
+      r.limits={...r.limits,domains:domLim()};
+      r.channels=r.channels.map(c=>{ const slug=String(c.tracking_url||'').split('/c/')[1]||'demo1', base=chBase(c);
+        return {...c,tracking_url:`${base}/c/${slug}`,snippet_src:`${base}/r/${slug}.js`,domain_id:dpick16[c.id]??null,snip_origins:snip16[c.id]||[],
+          ...(c.external?{last_ping_at:c.last_ping_at||Date.now()-140e3,last_ping_test:!!c.last_ping_test,pings_today:c.pings_today??(sample?14:0)}:{})}; });
+      return r; }
+    if (p==='/api/domains'&&method==='GET'){ await wait(150); return {domains:doms16(),target:'customers.gojoinly.com',limit:domLim(),plan:lim11().plan}; }
+    if (p==='/api/domains'&&method==='POST'){ await wait(600); const host=String(body&&body.host||'').trim().toLowerCase().replace(/^https?:\/\//,'').replace(/[/:?#].*$/,'').replace(/\.$/,'');
+      if (!/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(host)) throw err('That isn’t a valid domain. Use a subdomain like go.yourbrand.com');
+      if (/(^|\.)(joinvoo\.com|gojoinly\.com)$/.test(host)) throw err('That domain belongs to Joinvoo. Use a subdomain of your own domain, like go.yourbrand.com');
+      if (host.split('.').length<3) throw err(`Use a subdomain like go.${host}, not the main domain. Your main website stays untouched.`);
+      if (doms16().some(d=>d.host===host)) throw err('You already added this domain.');
+      const L=domLim(); if (L.max!=null&&L.used>=L.max){ const e=err(`You’ve used ${L.used} of ${L.max} link domain on Basic. Upgrade to Pro for unlimited link domains, or remove one to make room.`); e.status=402; e.data=e.body={error:e.message,limit:{kind:'domains',used:L.used,max:L.max,plan:'basic'}}; throw e; }
+      const d=mkDom(host,'pending'); doms16().push(d); return {ok:true,domain:d}; }
+    if ((m=/^\/api\/domains\/(\d+)\/check$/.exec(p))&&method==='POST'){ await wait(900); const d=doms16().find(x=>x.id===+m[1]); if(!d) throw err('Domain not found.');
+      Object.assign(d,{status:'active',pointing:true,https:'ready',last_error:null,verified_at:d.verified_at||Date.now(),last_check_at:Date.now()}); return {ok:true,domain:d}; }
+    if ((m=/^\/api\/domains\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(400); dom16=doms16().filter(x=>x.id!==+m[1]); Object.keys(dpick16).forEach(k=>{ if(dpick16[k]===+m[1]) delete dpick16[k]; }); return {ok:true}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&(body.domain_id!==undefined||body.snip_origins!==undefined)){ await wait(300); const id=+m[1];
+      if (body.domain_id!==undefined){ if(body.domain_id===null) delete dpick16[id]; else dpick16[id]=+body.domain_id; }
+      if (body.snip_origins!==undefined) snip16[id]=String(body.snip_origins||'').split(/[\s,]+/).map(x=>x.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/[/:].*$/,'')).filter(Boolean);
+      const c=db.channels.find(x=>x.id===id)||{}; const slug=String(c.tracking_url||'').split('/c/')[1]||'demo1';
+      return {ok:true,domain_id:dpick16[id]??null,tracking_url:`${chBase(c)}/c/${slug}`,snip_origins:snip16[id]||[]}; }
+    return handle11(method,path,body);
+  }
+  /* ---------- Round 17: team seats, workspaces, daily report, ban protection, dead links, Meta spend, audience guide (demo) ----------
+     ?meta=on shows the Meta connection as approved; ?r17=calm hides the lost-channel and dead-link examples; ?role=buyer|manager starts inside a team. */
+  const e402=(m,body)=>{ const e=err(m,body); e.status=402; e.body=body; return e; };
+  let r17=null;
+  const R17=()=>{ if (r17) return r17; const t=Date.now(), calm=q11.get('r17')==='calm'||!sample;
+    r17={ ch:{}, ws:q11.get('role')==='buyer'||q11.get('role')==='manager'?7:0, report:{enabled:false,hour:8,linked:false,via:null,saved:false,last_sent:null}, meta:{connected:q11.get('meta')==='on',selected:['act_111']}, mapped:{},
+      members:sample?[{id:12,email:'mia@studio.co',role:'manager',status:'active',user_id:44,name:'Mia',invited_at:t-12*864e5,joined_at:t-11*864e5,invite_expires_at:null,channel_ids:[],daily_report:true},
+        {id:13,email:'ben@buyers.io',role:'buyer',status:'active',user_id:45,name:'Ben',invited_at:t-9*864e5,joined_at:t-9*864e5,invite_expires_at:null,channel_ids:[12],daily_report:false},
+        {id:14,email:'tolu@buyers.io',role:'buyer',status:'invited',user_id:null,name:null,invited_at:t-2*864e5,joined_at:null,invite_expires_at:t+5*864e5,channel_ids:[13]}]:[], mid:20, log:[] };
+    if (sample && !calm){ r17.ch[13]={backup_channel_id:11,lost_at:t-26*60e3,lost_reason:'bot_kicked',failed_over_to:11}; r17.ch[12]={deadlink_at:t-40*60e3}; }
+    return r17; };
+  const chX=id=>(R17().ch[id]=R17().ch[id]||{});
+  const roleName=r=>r==='manager'?'Manager':r==='buyer'?'Media buyer':'Owner';
+  const seats17=()=>{ const L=lim11(), pro=L.plan==='pro'||sample, inc=pro?3:0, used=R17().members.filter(m=>m.status==='active'||m.status==='invited').length;
+    return {plan:pro?'pro':L.plan,included:inc,used,extra:Math.max(0,used-inc),extra_paid_this_month:Math.max(0,used-inc),paused:0,seat_cents:500,can_buy_extra:pro,pro_included:3,month:ymd(new Date()).slice(0,7)}; };
+  const mem17=m=>({...m,role_name:roleName(m.role),account_email:m.user_id?m.email:null,pause_reason:null,all_channels:m.role==='manager',status:m.status==='invited'&&m.invite_expires_at<Date.now()?'expired':m.status});
+  const ws17=()=>{ const own={owner_id:1,own:true,role:'owner',status:'active',name:'Alex',email:'alex@example.com'}, ada={owner_id:7,own:false,role:q11.get('role')==='manager'?'manager':'buyer',status:'active',pause_reason:null,name:'Ada',email:'ada@growfast.co'};
+    const list=sample?[own,ada]:[own]; const cur=R17().ws===7&&sample?{...ada,channel_ids:ada.role==='buyer'?[11]:[]}:{...own,channel_ids:[]}; return {current:cur,workspaces:list}; };
+  const role17=()=>ws17().current.role;
+  const tok17='demo-team-7f3a';
+  async function handle17(method,path,body){
+    const u=new URL(path,'https://demo.local'), p=u.pathname, qs=u.searchParams; let m;
+    if (p==='/api/me'&&method==='GET'){ const r=await handle16(method,path,body); return {...r,workspace:ws17()}; }
+    if (p==='/api/workspace'){ if(method==='POST'){ await wait(350); const id=+(body&&body.owner_id)||0; if(id&&id!==1&&id!==7) throw err('You’re not in that team.'); R17().ws=id===7?7:0; } return {ok:true,...ws17()}; }
+    if (p==='/api/channels'&&method==='GET'){ const r=await handle16(method,path,body), all=r.channels;
+      r.channels=all.map(c=>{ const x=R17().ch[c.id]||{}, bk=all.find(o=>o.id===x.backup_channel_id), fo=all.find(o=>o.id===x.failed_over_to);
+        const auto=x.backup_channel_id?(x.auto_failover!==false):false;
+        return {...c,backup_channel_id:x.backup_channel_id||null,backup_title:bk?bk.title:null,auto_failover:auto,lost_at:x.lost_at||null,lost_reason:x.lost_reason||null,failed_over_to:x.failed_over_to||null,failed_over_title:fo?fo.title:null,
+          recovered_at:x.recovered_at||null,can_switch_back:!!(x.recovered_at&&x.failed_over_to&&!x.lost_at),deadlink_at:x.deadlink_at||null,link_host:x.link_host||null,created_by:null,
+          ...(x.link_host?{tracking_url:'https://'+x.link_host+'/c/'+(String(c.tracking_url).split('/c/')[1]||'demo1')}:{}),
+          ...(x.failed_over_to?{redirect_to:x.failed_over_to,redirect_title:fo?fo.title:null}:{})}; });
+      r.link_domains=['gojoinly.com','go2link.com']; r.team_role=role17();
+      if (R17().ws===7){ const ids=ws17().current.channel_ids; if(ids.length) r.channels=r.channels.filter(c=>ids.includes(c.id)); }
+      if (role17()==='buyer'){ r.bots=[]; r.domains=[]; } // like the server: media buyers see no bots or link domains
+      return r; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&(body.backup_channel_id!==undefined||body.auto_failover!==undefined||body.link_host!==undefined)){ await wait(350);
+      const id=+m[1], c=db.channels.find(x=>x.id===id); if(!c) throw err('Channel not found'); const x=chX(id); let switched=false;
+      if (body.backup_channel_id!==undefined){ if(body.backup_channel_id===null){ x.backup_channel_id=null; }
+        else { const t=db.channels.find(o=>o.id===+body.backup_channel_id&&o.id!==id&&o.type!=='bot'&&!o.deleted); if(!t) throw err('Pick another channel or group of yours.'); x.backup_channel_id=t.id; if (x.lost_at&&x.auto_failover!==false){ x.failed_over_to=t.id; switched=true; } } }
+      if (body.auto_failover!==undefined) x.auto_failover=body.auto_failover;
+      if (body.link_host!==undefined){ x.link_host=body.link_host==='gojoinly.com'?null:body.link_host; x.deadlink_at=null; }
+      const slug=String(c.tracking_url||'').split('/c/')[1]||'demo1';
+      return {ok:true,switched,backup_channel_id:x.backup_channel_id||null,auto_failover:x.backup_channel_id?x.auto_failover!==false:false,link_host:x.link_host||null,domain_id:null,tracking_url:'https://'+(x.link_host||'gojoinly.com')+'/c/'+slug,redirect_to:x.failed_over_to||null,failed_over_to:x.failed_over_to||null,lost_at:x.lost_at||null}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&body.domain_id!==undefined){ const x=chX(+m[1]); x.link_host=null; x.deadlink_at=null; }
+    if ((m=/^\/api\/channels\/(\d+)\/switch-back$/.exec(p))&&method==='POST'){ await wait(400); const x=chX(+m[1]); if(x.lost_at) throw err('The channel is still lost. Add your bot back as an admin first.'); if(!x.failed_over_to) throw err('This channel isn’t switched to a backup.');
+      x.failed_over_to=null; x.recovered_at=null; const c=db.channels.find(o=>o.id===+m[1]); if(c){ c.redirect_to=null; c.redirect_title=null; } return {ok:true,redirect_to:null,failed_over_to:null}; }
+    if (p==='/api/deadlink/options'){ await wait(250); const id=+qs.get('channel_id'), x=chX(id), cur=x.link_host||'gojoinly.com';
+      const opts=[{type:'joinvoo',host:'gojoinly.com',current:cur==='gojoinly.com',patch:{link_host:'gojoinly.com'}},{type:'joinvoo',host:'go2link.com',current:cur==='go2link.com',patch:{link_host:'go2link.com'}}];
+      doms16().filter(d=>d.status==='active').forEach(d=>opts.push({type:'custom',domain_id:d.id,host:d.host,live:true,current:false,patch:{domain_id:d.id}}));
+      return {channel_id:id,current_host:cur,deadlink_at:x.deadlink_at||null,options:opts,note:'Links already running in your ads keep working on every domain; new links use the one you pick.'}; }
+    if (p==='/api/report-settings'){ const R=R17().report;
+      if (method==='PATCH'){ await wait(300); const b=body||{}; if(b.disconnect){ R.linked=false; R.via=null; } if(b.enabled!==undefined) R.enabled=!!b.enabled; if(b.hour!==undefined){ if(b.hour!==null&&!(b.hour>=0&&b.hour<=23)) throw err('Pick an hour between 0 and 23.'); R.hour=b.hour==null?8:+b.hour; } R.saved=true; }
+      return {ok:true,scope:R17().ws===7?'team':'own',enabled:R.enabled,hour:R.hour,tz:'Africa/Lagos',hour_note:null,linked:R.linked,via:R.via,
+        link_options:[{via:'alert_bot',username:'JoinvooAlertsBot',url:'https://t.me/JoinvooAlertsBot?start=report-1z-3f9a0c1b2d4e'},{via:'tracking_bot',bot_id:1,username:'dailydeals_track_bot',url:'https://t.me/dailydeals_track_bot?start=report-1z-3f9a0c1b2d4e'}],last_sent:R.last_sent}; }
+    if (p==='/api/report-settings/test'&&method==='POST'){ await wait(700); const R=R17().report, y=ymd(addDays(new Date(),-1)), y2=ymd(addDays(new Date(),-2));
+      const T=stats(new URLSearchParams({from:y,to:y})).totals, P=stats(new URLSearchParams({from:y2,to:y2})).totals, sp=Math.round((T.joins||0)*62), psp=Math.round((P.joins||0)*60);
+      const report={day:y,totals:{clicks:T.clicks,joins:T.joins,ftd:T.ftd,revenue_cents:T.revenue_cents,spend_cents:sp,cost_per_join_cents:T.joins?Math.round(sp/T.joins):null,cost_per_ftd_cents:T.ftd?Math.round(sp/T.ftd):null},previous:{clicks:P.clicks,joins:P.joins,ftd:P.ftd,revenue_cents:P.revenue_cents,spend_cents:psp},best_channel:{id:11,title:'Daily Deals Club',n:Math.max(1,Math.round(T.ftd*.6)),by:'FTDs'},best_campaign:{name:'Lookalike_1pct',n:Math.max(1,Math.round(T.ftd*.3)),by:'FTDs'}};
+      if (!R.linked){ const e=err('Link your Telegram first, then send a test.',{not_linked:true,report}); e.status=400; e.body=e.data; throw e; }
+      R.last_sent={day:y,at:Date.now(),ok:true}; return {ok:true,sent:true,via:R.via,report}; }
+    if (p==='/api/demo/report-link'){ const R=R17().report; R.linked=true; R.via=body&&body.via||'alert_bot'; R.enabled=true; R.saved=true; return {ok:true}; }
+    if (p==='/api/team'&&method==='GET'){ await wait(250); if(role17()!=='owner'){ const e=err('Only the account owner manages the team.',{team_denied:true}); e.status=403; throw e; }
+      return {seats:seats17(),email_on:false,invite_days:7,members:R17().members.map(mem17),channels:db.channels.filter(c=>!c.deleted&&c.status!=='removed').map(c=>({id:c.id,title:c.title,type:c.type,status:c.status})),
+        roles:[{id:'manager',name:'Manager',can:'All channels and results. Never billing or team.'},{id:'buyer',name:'Media buyer',can:'Only the channels you give them.'}],log:R17().log}; }
+    if (p==='/api/team/invite'&&method==='POST'){ await wait(500); const b=body||{}, em=String(b.email||'').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw err('That email doesn’t look right.'); if(!['manager','buyer'].includes(b.role)) throw err('Pick a role.');
+      if (em==='alex@example.com') throw err('That’s you. Invite someone else.'); if (R17().members.some(x=>x.email===em)) throw err('They’re already on your team.');
+      const S0=seats17(); if (S0.included===0) throw e402('Team seats come with Pro. Upgrade to invite your team.',{error:'Team seats come with Pro.',upgrade:true,limit:{kind:'seats',used:S0.used,max:0,plan:'basic'}});
+      const t=Date.now(), mm={id:R17().mid++,email:em,role:b.role,status:'invited',user_id:null,name:null,invited_at:t,joined_at:null,invite_expires_at:t+7*864e5,channel_ids:(b.channel_ids||[]).map(Number)}; R17().members.push(mm);
+      const charged=S0.used>=S0.included?500:0; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:charged,seats:seats17()}; }
+    if ((m=/^\/api\/team\/(\d+)\/resend$/.exec(p))&&method==='POST'){ await wait(400); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(mm.status==='active') throw err('They already joined.'); mm.invite_expires_at=Date.now()+7*864e5; mm.status='invited'; return {ok:true,member:mem17(mm),invite_url:'https://joinvoo.com/join-team/'+tok17+mm.id,emailed:false,charged_cents:0}; }
+    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const mm=R17().members.find(x=>x.id===+m[1]); if(!mm) throw err('Not found.'); if(body.role) mm.role=body.role; if(body.channel_ids) mm.channel_ids=body.channel_ids.map(Number); return {ok:true,member:mem17(mm)}; }
+    if ((m=/^\/api\/team\/(\d+)$/.exec(p))&&method==='DELETE'){ await wait(350); R17().members=R17().members.filter(x=>x.id!==+m[1]); return {ok:true,seats:seats17()}; }
+    if (p==='/api/team/invite-info'){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'buyer',role_name:'Media buyer',owner_name:'Ada',owner_email:'ada@growfast.co',account_exists:true}; }
+    if (p==='/api/team/accept'&&method==='POST'){ await wait(500); if(!sample) useSampleQuiet(); R17().ws=7; return {ok:true,owner_id:7,owner_name:'Ada',role:'buyer',status:'active',paused:false}; }
+    if (p==='/api/team/leaderboard'){ await wait(300); const [f,t]=[qs.get('from'),qs.get('to')], T=stats(new URLSearchParams({from:f,to:t})).totals;
+      const ppl=[['Alex','alex@example.com','owner',[11],.46,.95],['Mia','mia@studio.co','manager',[13],.22,1.18],['Ben','ben@buyers.io','buyer',[12],.32,.82]];
+      return {from:f,to:t,locked:false,rows:ppl.map(([n,e,r,ch,w,k],i)=>{ const joins=Math.round(T.joins*w), ftds=Math.round(T.ftd*w*k), spend=Math.round(joins*[64,71,55][i]), rev=Math.round(T.revenue_cents*w*k);
+        return {member_id:i?12+i-1:null,user_id:i?44+i-1:1,email:e,name:n,role:r,status:'active',channels:ch.length,channel_ids:ch,clicks:Math.round(T.clicks*w),joins,ftds,revenue_cents:rev,spend_cents:spend,cost_per_join_cents:joins?Math.round(spend/joins):null,cost_per_ftd_cents:ftds?Math.round(spend/ftds):null}; })}; }
+    if (p==='/api/meta'||p.startsWith('/api/meta/')){ const M=R17().meta;
+      if (q11.get('meta')!=='on') return {available:false,reason:'Waiting for Meta app approval',connected:false,status:'unavailable'};
+      if (p==='/api/meta/campaigns'){ await wait(250); return {campaigns:CAMPS.meta.map((n,i)=>({campaign_id:'2384'+(i+1)+'0091',name:n,account_id:'111',channel_id:R17().mapped[n]!==undefined?R17().mapped[n]:(i<3?[11,12,11][i]:null),channel_title:null,mapped_by:R17().mapped[n]!==undefined?'user':(i<3?'auto':null),last_seen:ymd(addDays(new Date(),-1)),spend_7d_cents:[184000,96500,42000,23500][i]})).map(x=>({...x,channel_title:(db.channels.find(c=>c.id===x.channel_id)||{}).title||null})) }; }
+      if ((m=/^\/api\/meta\/campaigns\/([\w-]+)$/.exec(p))&&method==='PATCH'){ await wait(250); const n=CAMPS.meta.find((x,i)=>'2384'+(i+1)+'0091'===m[1]); if(n) R17().mapped[n]=body.channel_id==null?null:+body.channel_id; return {ok:true,campaign_id:m[1],channel_id:body.channel_id,spend_rows_updated:7}; }
+      if (p==='/api/meta/accounts'&&method==='PATCH') M.selected=(body.selected||[]).map(String);
+      if (p==='/api/meta/sync'&&method==='POST'){ await wait(900); M.last=Date.now(); }
+      if (p==='/api/meta'&&method==='DELETE'){ await wait(400); M.connected=false; }
+      const t=Date.now();
+      return {ok:true,available:true,connected:M.connected,status:M.connected?'connected':'not_connected',status_label:M.connected?'Connected':'Not connected',fb_name:'Alex FB',connected_at:t-6*864e5,expires_at:t+54*864e5,last_sync_at:M.last||t-38*60e3,last_error:null,connect_url:'#meta-demo',redirect_uri:'https://joinvoo.com/auth/meta/callback',
+        accounts:M.connected?[{id:'act_111',account_id:'111',name:'Main USD',currency:'USD',account_status:1,selected:M.selected.includes('act_111'),supported:true,last_sync_at:M.last||t-38*60e3,last_error:null},{id:'act_222',account_id:'222',name:'Scale NGN',currency:'NGN',account_status:1,selected:M.selected.includes('act_222'),supported:true,last_sync_at:null,last_error:null},{id:'act_333',account_id:'333',name:'Old EUR',currency:'EUR',account_status:1,selected:false,supported:false,last_sync_at:null,last_error:'EUR isn’t supported yet.'}]:[] }; }
+    if (p==='/api/audience-guide'){ await wait(250); const chs=db.channels.filter(c=>!c.deleted&&c.pixel_id), n=sample?38:0;
+      return {event_name:'Purchase',repeat_deposit_event:'Deposit',registration_event:'CompleteRegistration',value_sent:true,value_note:'Deposits are sent as Purchase with value and currency whenever your postback includes the amount.',has_ftd_events_last_30d:n>0,count:n,ftd_30d:sample?41:0,lookalike_min:100,ready_for_lookalike:n>=100,
+        pixels:[...new Set(chs.map(c=>c.pixel_id))],channels:chs.map(c=>({channel_id:c.id,title:c.title,pixel_id:c.pixel_id,has_token:!!c.has_token,join_event:c.event_name||'Subscribe',ftd_30d:12,ftd_sent_30d:11,ftd_with_value_30d:10})),
+        steps:['Open Meta Ads Manager → Audiences → Create audience → Custom audience.',`Source: Website. Pick your pixel (${(chs[0]||{}).pixel_id||'your pixel'}).`,'Events: choose “Purchase”, in the last 30 days (or 180 days once you have more).','Then Create audience → Lookalike audience. Source: the Purchase audience you just made. Pick your country and 1%.','Use the lookalike in a new ad set. Keep your Joinvoo link in the ad so every join and deposit keeps teaching Meta.']}; }
+    return handle16(method,path,body);
+  }
+  function useSampleQuiet(){ sample=true; db=sampleDb(); }
+  return {handle:handle17,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 
 boot();

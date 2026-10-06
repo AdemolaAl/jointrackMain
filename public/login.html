@@ -146,7 +146,22 @@ p{text-wrap:pretty}
 .lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
 .lsw-m i{margin-left:auto;font-style:normal}
 .lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
-@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+@media (max-width:560px){.lsw-b{height:44px;min-width:44px;justify-content:center;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}.lsw-m button{min-height:44px}.lsw-m{max-width:calc(100vw - 32px)}}
+@media (max-width:400px){.lsw-b{padding:0;width:44px}.lsw-b svg{display:none}}
+/* phones: never scroll sideways, comfortable tap targets, nothing hidden behind fixed bars */
+img,video{max-width:100%}
+pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+h1,h2,h3{overflow-wrap:break-word}
+@media (max-width:900px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  header a.logo,footer a.logo{min-height:44px}
+  header .btn,header nav a{min-height:44px}
+  footer a:not(.btn):not(.logo),.vfoot a,.fl a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}
+}
+/* small pills and inline nav links keep their look but get a 44px hit area */
+.hit44{position:relative}
+.hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
 
 /* Layout: split screen in the former look. Left: the dark illustration panel he loved (person + laptop, floating join/deposit cards, orbiting badges).
    Right: the light warm form. Phones: a short dark band with the illustration, then the form slides up over it as a rounded sheet. */
@@ -198,6 +213,7 @@ form{display:flex;flex-direction:column;gap:16px}
 @keyframes sp{to{transform:rotate(360deg)}}
 .view{animation:vin .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes vin{from{opacity:0;transform:translateY(10px)}}
+.newh{margin:26px 0 0;text-align:center;color:var(--muted);font-size:15px}.newh a{color:var(--ink);font-weight:800;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#5b3df5 45%,transparent)}
 .secure{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--faint);font-size:12.5px;margin:2px 0 0}
 .secure svg{width:14px;height:14px;flex:none}
 @media (max-width:900px){
@@ -212,6 +228,17 @@ form{display:flex;flex-direction:column;gap:16px}
   .brand .top{display:flex;justify-content:space-between;align-items:center}
 }
 @media (min-width:901px){.brand .top{display:block}.brand .tl-m{display:none}}
+
+/* phones: 44px tap targets */
+@media (max-width:900px){
+  .top a.logo{min-height:44px}
+  .brand .stage{margin-top:14px}
+  .topline a{white-space:nowrap}
+  .brand .tl-m{display:inline-flex;align-items:center;min-height:44px}
+  .pw button{width:44px;height:44px;right:6px}
+  .topline a,#forgot{position:relative}
+  .topline a::after,#forgot::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+}
 </style>
 
 <div class="shell">
@@ -414,9 +441,9 @@ form{display:flex;flex-direction:column;gap:16px}
   </aside>
 
   <main class="side">
-    <div class="topline"><a data-i18n="1jdup01" href="/blog" style="color:var(--muted);font-weight:700;margin-right:auto">Blog</a><span data-i18n="qvqkmw">New to Joinvoo? <a href="/signup">Start free</a></span><div class="lsw" data-lsw></div></div>
+    <div class="topline"><div class="lsw" data-lsw></div></div>
     <div class="box" id="box"></div>
-    <div class="foot"><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="1bq4igq" class="fl"><a href="/guide">Guide</a><a href="/blog">Blog</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a><a href="/acceptable-use">Acceptable use</a><a href="/cookies">Cookies</a><a href="/referral-terms">Referral terms</a></span><div class="vfoot"><style>
+    <div class="foot"><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="c4gcyx" class="fl"><a href="/guide">Help</a><a href="/blog">Blog</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a><a href="/acceptable-use">Acceptable use</a><a href="/cookies">Cookies</a><a href="/referral-terms">Referral terms</a></span><div class="vfoot"><style>
 .vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
 .vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
 .vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
@@ -478,6 +505,8 @@ window.JVVoo=(function(){
   const arrow='<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   let email='';
   try{ email=localStorage.getItem('jv_last_email')||''; }catch(e){}
+  /* Team invite link (/join-team/<token> → /login?team=<token>&email=<email>): logging in accepts it in the same step. */
+  const TEAM=(()=>{ try{ const q=new URLSearchParams(location.search), t=q.get('team')||''; if(t&&q.get('email')) email=q.get('email'); return /^[A-Za-z0-9_-]{16,64}$/.test(t)?t:''; }catch(e){ return ''; } })();
   const desk=matchMedia('(min-width:901px)').matches;
   let VM='off'; const LOCAL=JVVoo.local;  // VooSquare sign-in: 'off' (default, unchanged) | 'both' | 'only'; ?local=1 always shows the password form
 
@@ -495,8 +524,7 @@ window.JVVoo=(function(){
         <button class="btn violet full" type="submit" id="go">${_t('Log in')} ${arrow}</button>
         <p class="secure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>${_t('Encrypted connection. Your password is never stored in plain text.')}</p>
       </form>`}
-      <div class="or">${_t('New here?')}</div>
-      <div class="alt"><b>${_t('Don’t have an account yet?')}</b><span>${_t('Your first 500 joins are free. Setup takes about 10 minutes.')}</span><a class="btn dark" href="/signup">${_t('Create a free account')} ${arrow}</a></div>
+      <p class="newh">${_t('New to Joinvoo?')} <a href="/signup">${_t('Start free')}</a> · ${_t('500 joins on us')}</p>
     </div>`;
     const f=$('#f'), em=$('#em'), pw=$('#pw'), go=$('#go'), eye=$('#eye');
     if(!f) return;
@@ -512,10 +540,10 @@ window.JVVoo=(function(){
       try{ localStorage.setItem('jv_last_email',ev); }catch(x){}
       if(DEMO){ setTimeout(()=>location.href=APP,700); return; }
       try{
-        const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:ev,password:pv})});
+        const r=await fetch('/api/login',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(TEAM?{email:ev,password:pv,team_token:TEAM}:{email:ev,password:pv})});
         const j=await r.json().catch(()=>({}));
         if(!r.ok){ throw new Error(j.error||(r.status===429?_t('Too many tries. Wait 15 minutes, or reset your password.'):_t('Couldn’t log in. Try again.'))); }
-        go.innerHTML=icOk.replace('<svg','<svg width="18" height="18"')+' '+_t('Welcome back'); location.href=APP;
+        go.innerHTML=icOk.replace('<svg','<svg width="18" height="18"')+' '+_t('Welcome back'); location.href=APP+(j.team&&j.team.error&&/^(expired|invalid)$/.test(j.team.code)?'?team_error='+j.team.code:'');
       }catch(x){ go.disabled=false; go.innerHTML=_t('Log in')+' '+arrow; err(x.message==='Failed to fetch'?_t('Can’t reach Joinvoo. Check your connection and try again.'):x.message); pw.select(); }
     };
   }
@@ -553,7 +581,7 @@ window.JVVoo=(function(){
   login();
   JVVoo.mode(m=>{ if(m!==VM){ VM=m; if($('#f')||m==='only') login(); } });
   /* Already logged in? Go straight to the dashboard. */
-  if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP); }).catch(()=>{});
+  if(!DEMO) fetch('/api/me',{credentials:'same-origin'}).then(r=>{ if(r.ok&&(r.headers.get('content-type')||'').includes('json')) location.replace(APP+(TEAM?'?team='+encodeURIComponent(TEAM):'')); }).catch(()=>{});
 })();
 </script>
 
@@ -641,6 +669,14 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   .sp-launch .sp-dot{left:30px;top:8px}
   .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
   .sp-launch[aria-expanded="true"]{display:none}
+  .sp-form textarea,.sp-form input{font-size:16px}
+  .sp-launch{transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s,bottom .45s cubic-bezier(.2,.8,.2,1)}
+  body.sp-rest .sp-launch{transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none}
+  body.sp-pad{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  /* with the page's sticky CTA bar up, the launcher shrinks to one face and sits in the same row (the bar makes room), so the two never stack over the content */
+  body.mcta-on .sp-launch{bottom:calc(16px + env(safe-area-inset-bottom,0px));right:12px;width:54px;padding:0;justify-content:center}
+  body.mcta-on .sp-launch .sp-faces .sp-av:not(:first-child){display:none}
+  body.mcta-on .sp-launch .sp-dot{left:36px;top:6px}
   .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
   body.mcta-on .sp{bottom:0;height:auto}
   .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -687,6 +723,12 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const $=id=>document.getElementById(id);
   const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
   if(!launch||!panel) return;
+  /* phones: keep the launcher off the first screen (it would sit on the hero buttons) and leave room for it at the end of the page */
+  (function(){ const mq=matchMedia('(max-width:560px)'); let t=0;
+    const upd=()=>{ const tall=document.documentElement.scrollHeight>innerHeight*1.6;
+      document.body.classList.toggle('sp-rest', mq.matches && tall && scrollY<innerHeight*.55 && launch.getAttribute('aria-expanded')!=='true');
+      document.body.classList.toggle('sp-pad', mq.matches); };
+    addEventListener('scroll',()=>{ if(!t) t=requestAnimationFrame(()=>{ t=0; upd(); }); },{passive:true}); addEventListener('resize',upd); upd(); })();
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
@@ -766,3 +808,4 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 })();
 </script>
 
+<script>JVI();/* open every page at the top (no leftover scroll from the last page) unless a #section was asked for */(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}if(location.hash)return;var t=function(){window.scrollTo(0,0);var f=document.body&&document.body.firstElementChild;if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'start'})}catch(e){}};var n=0,u=function(){n=1},w=function(){if(!n)t()};addEventListener('touchstart',u,{passive:true,once:true});addEventListener('wheel',u,{passive:true,once:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();addEventListener('load',w);setTimeout(w,80);setTimeout(w,300);setTimeout(w,800);addEventListener('pageshow',w)})();</script>

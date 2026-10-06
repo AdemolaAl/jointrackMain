@@ -52,24 +52,24 @@ bot.command("start", async (ctx) => {
   // ...your usual welcome reply
 });
 // Telegraf: bot.start((ctx) => …) and use ctx.payload instead of ctx.match`;
-  const py=`# python-telegram-bot: runs when someone presses Start
-import httpx
+  const py=`# Python (requests): call this when someone presses Start
+import requests
 HOOK = "${hs}"
 
-async def start(update, context):
-    u = update.effective_user
-    payload = context.args[0] if context.args else ""   # the code after /start
+def joinvoo_start(user, payload):
+    # user = the Telegram user, payload = the code after /start
     try:
-        async with httpx.AsyncClient(timeout=5) as c:
-            await c.get(HOOK, params={
-                "bot": "${u}", "start": payload, "tg_id": u.id,
-                "first_name": u.first_name or "", "last_name": u.last_name or "",
-                "username": u.username or "", "lang": u.language_code or ""})
-    except Exception:
-        pass
-    # ...your usual welcome reply
+        requests.get(HOOK, params={
+            "bot": "${u}", "start": payload or "", "tg_id": user.id,
+            "first_name": user.first_name or "", "last_name": user.last_name or "",
+            "username": user.username or "", "lang": user.language_code or ""},
+            timeout=3)
+    except requests.RequestException:
+        pass  # never breaks your bot
 
-# aiogram 3: @dp.message(CommandStart()) and use command.args for the payload`;
+# python-telegram-bot: joinvoo_start(update.effective_user, context.args[0] if context.args else "")
+# aiogram 3:           joinvoo_start(message.from_user, command.args)
+# async bots: await asyncio.to_thread(joinvoo_start, user, payload)`;
   const php=`<?php
 // Inside your webhook handler: when the message starts with /start
 $m = $update['message'] ?? [];
@@ -84,16 +84,28 @@ if (strpos($text, '/start') === 0) {
     'username'   => $m['from']['username'] ?? '',
     'lang'       => $m['from']['language_code'] ?? '',
   ]);
-  @file_get_contents('${hs}?' . $q);
+  @file_get_contents('${hs}?' . $q);   // or curl: curl_setopt($ch, CURLOPT_TIMEOUT, 3)
 }`;
+  const raw=`GET ${hs}?bot=${u}&tg_id=<TELEGRAM_USER_ID>&start=<START_CODE>&first_name=<FIRST_NAME>&username=<USERNAME>
+
+# or POST (JSON or form)
+POST ${hs}
+Content-Type: application/json
+
+{"bot":"${u}","tg_id":123456789,"start":"<START_CODE>","first_name":"Ada"}
+
+# <START_CODE> is what comes after /start. Your ad link opens
+# t.me/${u}?start=<code>, so Telegram sends your bot "/start <code>".
+# Reply {"ok":true,"from_ad":true} means it matched the ad click.
+# The same person sent twice is counted once ("duplicate":true).`;
   const nc=`${hs}?bot=${u}&tg_id={user id}&start={start parameter}&first_name={first name}`;
-  const T=[['node','Node.js'],['py','Python'],['php','PHP'],['nc','No-code bot builder']];
-  const pane=(k,code)=>`<div class="snip-pane" data-pane="${k}" ${k==='node'?'':'hidden'}><div class="codewrap"><pre class="codeblock">${esc(code)}</pre><button class="btn sm" data-act="copy" data-v="${esc(code)}">${I.copy} Copy</button></div></div>`;
+  const T=[['raw','HTTP'],['node','Node.js'],['py','Python'],['php','PHP'],['nc','No-code bot builder']];
+  const pane=(k,code)=>`<div class="snip-pane" data-pane="${k}" ${k==='raw'?'':'hidden'}><div class="codewrap"><pre class="codeblock">${esc(code)}</pre><button class="btn sm" data-act="copy" data-v="${esc(code)}">${I.copy} Copy</button></div></div>`;
   return `<div class="snips"><div class="utabs snip-tabs" role="tablist">${T.map(([k,l],i)=>`<button role="tab" data-act="snip" data-k="${k}" aria-selected="${!i}">${l}</button>`).join('')}</div>
-    ${pane('node',node)}${pane('py',py)}${pane('php',php)}
+    ${pane('raw',raw)}${pane('node',node)}${pane('py',py)}${pane('php',php)}
     <div class="snip-pane" data-pane="nc" hidden><ol class="howto" style="margin-bottom:12px">
       <li><span class="n">1</span><span>Open the <b>Start</b> step (the flow that runs when someone presses Start).</span></li>
-      <li><span class="n">2</span><span>Add an <b>HTTP request</b> or <b>Webhook</b> block at the top. Method: <b>GET</b>.</span></li>
+      <li><span class="n">2</span><span>Add an <b>HTTP request</b> or <b>Webhook</b> block at the top (ManyChat, SendPulse, BotHelp, Puzzlebot and most builders have one). Method: <b>GET</b>.</span></li>
       <li><span class="n">3</span><span>Paste the URL below, then swap each <b>{…}</b> for your builder’s variable (user ID, start parameter, first name). The names differ per builder.</span></li>
       <li><span class="n">4</span><span>Save, then tap <b>Send a test</b> below or open your ad link on your phone.</span></li></ol>
       <div class="codewrap"><pre class="codeblock">${esc(nc)}</pre><button class="btn sm" data-act="copy" data-v="${esc(nc)}">${I.copy} Copy</button></div></div></div>`;
@@ -104,7 +116,7 @@ function hookBoxes(c){
 }
 function hookPanel(c){
   return `${hookBoxes(c)}
-    <div class="field"><label>Add this to your bot</label>${snippets(c)}</div>
+    <div class="field"><label>Add this to your bot</label>${snippets(c)}</div>${typeof pingLine==='function'&&c.id?pingLine({...c,external:true}):''}
     <div class="hooktest"><button class="btn" data-act="hook-test" data-u="${esc(c.hook_start||'')}" data-b="${esc(botUser(c))}">${I.bolt} Send a test</button><span class="hint">Calls your Start hook with a test person (ID 1000000001, code “test”). It won’t count as an ad join.</span></div><div class="hook-res" aria-live="polite"></div>`;
 }
 async function hookTest(a){
@@ -115,14 +127,17 @@ async function hookTest(a){
     else { const q=new URLSearchParams({bot:a.dataset.b,tg_id:'1000000001',start:'test',first_name:'Test',username:'joinvoo_test'});
       const x=await fetch(a.dataset.u+'?'+q,{method:'GET'}); r=await x.json().catch(()=>({})); if(!x.ok||r.error) throw new Error(r.error||('The hook answered '+x.status)); }
     res.innerHTML=`<div class="okbar">${I.checkc}<span>Test received${r.duplicate?' (seen before)':''}. The hook works. Now add the call to your bot${DEMO?' — demo: simulated':''}.</span></div>`;
+    { const ps=a.closest('.hooktest').previousElementSibling; if (ps&&ps.classList.contains('ping-st')){ const c0=((S.chans&&S.chans.channels)||[]).find(x=>x.hook_start===a.dataset.u&&botUser(x)===a.dataset.b);
+      if (DEMO&&c0){ c0.last_ping_at=Date.now(); c0.last_ping_test=true; } if (!DEMO) await refreshChans().catch(()=>{});
+      const c1=((S.chans&&S.chans.channels)||[]).find(x=>x.hook_start===a.dataset.u&&botUser(x)===a.dataset.b); if (c1) ps.outerHTML=pingLine({...c1,external:true}); } }
   } catch(e){ res.innerHTML=`<div class="err">Couldn’t reach the hook: ${esc(e.message)}</div>`; }
   a.disabled=false; a.innerHTML=old;
 }
 function openSnippets(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return;
-  sheet(`<h2>Connect your bot<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
+  sheet(`<h2>Connect your bot’s /start<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
 }
-function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo · sample data</b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
+function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo<span class="dm-sd"> · sample data</span></b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
 async function renderSetup(step, fromApp, opt){
   stopTimers(); clearInterval(W.poll); closeChat(true);
   W.fromApp = !!fromApp;
@@ -350,6 +365,8 @@ function go(page, first){
 }
 addEventListener('popstate',()=>{ const h=location.hash.slice(1); if ($('#shell') && PAGES[h] && h!==S.page) go(h,true); });
 addEventListener('scroll',()=>{ const t=$('#topbar'); if(t) t.classList.toggle('scrolled',scrollY>4); },{passive:true});
+/* phones: tuck the support launcher away while scrolling down, bring it back on scroll up (CSS only applies it under 900px) */
+let fabY=0; addEventListener('scroll',()=>{ const y=Math.max(0,scrollY), d=y-fabY; if(Math.abs(d)<8) return; document.body.classList.toggle('fab-tuck', d>0 && y>120); fabY=y; },{passive:true});
 function drawFilters(){
   const el=$('#tbf'); if(!el) return; const f=PAGES[S.page].f; const ch=((S.chans&&S.chans.channels)||[]).filter(c=>c.status!=='removed');
   el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''}>${esc(c.title)}</option>`).join('')}</select>`:'');
@@ -394,6 +411,7 @@ function accountPop(a){
     ${me.admin?`<a class="pi" href="${DEMO?'admin.html':'/admin'}">${I.shield}${tt('menu.admin','Admin panel')}</a>`:''}
     ${vooLink('menu')}
     ${DEMO?'':`<hr><button class="pi" data-act="logout">${I.logout}${tt('menu.logout','Log out')}</button>`}`); p.style.width='280px';
+  { const r=a.getBoundingClientRect(), vw=document.documentElement.clientWidth, w=p.offsetWidth; p.style.left=Math.max(8,Math.min(r.right-w,vw-w-8))+'px'; p.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-p.offsetHeight-8))+'px'; } /* re-place after the width change so it stays on screen */
 }
 // Our own attribute: the page host may set data-theme on <html>, which must not turn the dashboard dark. Light unless the user picks Dark or System.
 function applyTheme(v){ document.documentElement.dataset.jv = (v==='dark'||v==='system') ? v : 'light'; }
@@ -415,6 +433,6 @@ async function refreshBal(){
 function drawBanners(){
   const el=$('#banners'); if(!el) return; const b=S.bill, me=S.me||{}; let h='';
   if (b && b.billing_on && b.tracking===false) h+=`<div class="banner pause" role="status"><span class="bd"></span><span><span class="pause-full"><b>Tracking is paused.</b> ${b.state==='suspended'?'Your account is suspended. Contact support.':b.state==='need_plan'?`Add at least ${money(b.month.base_cents)} to start this month’s plan.`:'Your wallet is empty.'} Your ads still work; joins just aren’t tracked or sent to your ad platforms.</span><span class="pause-mobile"><b>Paused.</b> ${b.state==='suspended'?'Account suspended.':b.state==='need_plan'?`Add ${money(b.month.base_cents)} to resume.`:'Add credits to resume.'}</span></span>${b.state==='suspended'?'<button class="btn sm" data-act="chat">Support</button>':'<button class="btn sm primary" data-act="deposit">Top up</button>'}</div>`;
-  if (me.email_on && !me.verified && !S.mailHidden) h+=`<div class="banner mail" role="status"><span class="bd"></span><span>${S.verifyExpired?'<b>That confirmation link expired.</b> Send yourself a new one.':`<b>Confirm your email to unlock your first ${fmt(me.free_joins_gift||500)} tracked joins free.</b> Check your inbox for the link.`}</span><button class="btn sm" data-act="resend">${I.mail} Resend email</button><button class="x2" data-act="hide-mail" aria-label="Hide">${I.x}</button></div>`;
+  if (me.email_on && !me.verified && !S.mailHidden) h+=`<div class="banner mail" role="status"><span class="bd"></span><span><span class="bm-l">${S.verifyExpired?'<b>That confirmation link expired.</b> Send yourself a new one.':`<b>Confirm your email to unlock your first ${fmt(me.free_joins_gift||500)} tracked joins free.</b> Check your inbox for the link.`}</span><span class="bm-s">${I.mail}<span>${S.verifyExpired?'Your confirmation link expired':`Confirm your email to unlock ${fmt(me.free_joins_gift||500)} free joins`}</span></span></span><button class="btn sm" data-act="resend">${I.mail} <span class="bm-l">Resend email</span><span class="bm-s">Resend</span></button><button class="x2" data-act="hide-mail" aria-label="Hide">${I.x}</button></div>`;
   el.innerHTML=h;
 }

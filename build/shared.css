@@ -99,4 +99,19 @@ p{text-wrap:pretty}
 .lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
 .lsw-m i{margin-left:auto;font-style:normal}
 .lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
-@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+@media (max-width:560px){.lsw-b{height:44px;min-width:44px;justify-content:center;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}.lsw-m button{min-height:44px}.lsw-m{max-width:calc(100vw - 32px)}}
+@media (max-width:400px){.lsw-b{padding:0;width:44px}.lsw-b svg{display:none}}
+/* phones: never scroll sideways, comfortable tap targets, nothing hidden behind fixed bars */
+img,video{max-width:100%}
+pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+h1,h2,h3{overflow-wrap:break-word}
+@media (max-width:900px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  header a.logo,footer a.logo{min-height:44px}
+  header .btn,header nav a{min-height:44px}
+  footer a:not(.btn):not(.logo),.vfoot a,.fl a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}
+}
+/* small pills and inline nav links keep their look but get a 44px hit area */
+.hit44{position:relative}
+.hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}

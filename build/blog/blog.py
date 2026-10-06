@@ -448,6 +448,18 @@ a.tg:hover{background:color-mix(in srgb,#5b3df5 18%,var(--lilac))}
   .bf nav{justify-content:flex-start}
   .srch kbd{display:none}
 }
+/* phones: 44px tap targets without changing the look, no dangling separators */
+@media (hover:none){.prose .anc{display:none}}
+@media (max-width:760px){
+  .bh .sec,.crumbs a,a.tg,.hstats a{position:relative}
+  .bh .sec::after,.crumbs a::after,a.tg::after,.hstats a::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .chip{min-height:44px}
+  .srch input{min-height:44px}
+  .shr a,.shr button{width:44px;height:44px}
+  .toc a{padding-top:12px;padding-bottom:12px}
+  .mtoc summary{min-height:44px}
+}
+@media (max-width:560px){.meta{gap:6px 14px}.meta .dot{display:none}}
 """
 
 JS_COMMON = r"""

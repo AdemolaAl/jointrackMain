@@ -1232,6 +1232,7 @@ async function userSheet(id, q) {
       <div style="display:flex;gap:8px;justify-content:flex-end">${d.custom_pricing ? '<button type="button" class="btn sm ghost" id="cpclr">Back to list price</button>' : ''}<button type="button" class="btn sm primary" id="cpsave">Save deal</button></div></div>
     <label>Bots</label>${d.bots.length ? d.bots.map((b) => `<div class="list-row"><span>@${esc(b.username)}</span><span class="pill ${b.status === 'active' ? 'g' : 'r'}">${esc(b.status)}</span></div>`).join('') : '<small style="color:var(--muted)">None yet</small>'}
     <label>Channels, groups and bots tracked</label>${d.channels.length ? d.channels.map((c) => `<div class="list-row"><span>${esc(c.title || '@' + c.username)} <small style="color:var(--muted)">${c.type}${c.meta ? ' · Meta' : ''}${c.tiktok ? ' · TikTok' : ''}${c.snap ? ' · Snapchat' : ''}${c.type !== 'bot' ? ' · ' + c.pool + ' links ready' : ''}</small></span><span class="pill ${c.status === 'active' ? 'g' : 'r'}">${esc(c.status)}</span></div>`).join('') : '<small style="color:var(--muted)">None yet</small>'}
+    ${d.team ? `<label>Team (${num(d.team.size)} ${d.team.size === 1 ? 'person' : 'people'} · ${num(d.team.seats.used)} of ${num(d.team.seats.included)} seats used${d.team.seats.extra ? ` · ${num(d.team.seats.extra)} extra` : ''})</label>${d.team.members.length ? d.team.members.map((x) => `<div class="list-row"><span>${esc(x.account_email || x.email)} <small style="color:var(--muted)">${x.role === 'manager' ? 'Manager' : 'Media buyer'}</small></span><span class="pill ${x.status === 'active' ? 'g' : x.status === 'invited' ? '' : 'r'}">${esc(x.status)}</span></div>`).join('') : '<small style="color:var(--muted)">Owner only</small>'}${(d.team.member_of || []).map((x) => `<div class="list-row"><span>Member of ${esc(x.owner_email)}'s team <small style="color:var(--muted)">${x.role === 'manager' ? 'Manager' : 'Media buyer'}</small></span><span class="pill ${x.status === 'active' ? 'g' : 'r'}">${esc(x.status)}</span></div>`).join('')}` : ''}
     <label>Wallet history</label>${d.ledger.slice(0, 12).map((l) => `<div class="list-row"><span>${esc(l.note || l.kind)}<br><small style="color:var(--faint)">${day(l.created_at)}${l.kind === 'gift' ? ' · gift' : ''}</small></span><span class="${l.amount_cents < 0 ? 'neg' : 'pos'}">${l.amount_cents > 0 ? '+' : ''}${num(l.amount_cents)}</span></div>`).join('') || '<small style="color:var(--muted)">Nothing yet</small>'}
     <div class="acts"><button type="button" class="btn no" id="susp">${susp ? 'Unsuspend' : 'Suspend'}</button><button type="button" class="btn" data-close>Close</button><button class="btn primary" id="gbtn">Add credits</button></div>`,
   async () => {
@@ -1528,7 +1529,7 @@ const SETINDEX = () => [
   ['payments', 'Exchange rate and fees per method', 'fx rate currency fee min max limits'],
   ['keys', 'Anthropic API key', 'joe ai claude anthropic key'], ['keys', 'Resend API key', 'email sending resend key smtp'], ['keys', 'Paystack and Stripe keys', 'secret key payments api'],
   ['integrations', 'Affiliate postback presets', '1win pocket option keitaro binom postback'], ['team', 'Support team', 'agents photos saved replies canned reply time hours'],
-  ['links', 'Tracking link domain', 'link domain gojoinly ad links blocked meta backup domain'],
+  ['links', 'Tracking link domain', 'link domain gojoinly ad links blocked meta backup domain'], ['links', 'Customer domains', 'customer domain own subdomain cname txt cloudflare saas https custom hostname'],
   ['apps', 'Zedapex apps', 'sister products replyvoo castvoo advoo affleego landvoo cross promotion offer utm'], ['apps', 'Clicks per app', 'apps clicks counter'],
   ['keys', 'VooSquare login', 'voosquare oidc sso single sign-on login issuer client id webhook summary referrals api key support bridge hq inbox affiliate'],
   ['brand', 'Company name and support email', 'brand sender from name email'], ['brand', 'Weekly summary email', 'weekly email digest'],
@@ -1608,6 +1609,32 @@ function sLinks() {
   const f = $('#lkf');
   f.onsubmit = async (e) => { e.preventDefault(); const backups = f.backups.value.split(/[\s,]+/).map((v) => v.trim()).filter(Boolean);
     try { await saveSet({ links: { domain: f.domain.value.trim() || null, backups } }, 'Link domains saved'); sLinks(); } catch (err) { toast(err.message); } };
+  $('#setv').insertAdjacentHTML('beforeend', '<div id="cdoms"></div>'); cDomains();
+}
+/* customer domains (round 16): customers' own link domains like go.theirbrand.com, verified by a TXT record, HTTPS by Cloudflare for SaaS or by hand */
+async function cDomains() {
+  const box = $('#cdoms'); if (!box) return;
+  let r; try { r = await api('GET', '/api/admin/domains'); } catch (e) { box.innerHTML = `<div class="acard"><div class="empty">${esc(e.message)}</div></div>`; return; }
+  const x = S.set.domains || {}, L = r.domains || [], manual = L.filter((d) => d.needs_setup);
+  const st = { active: ['g', 'Active'], pending: ['y', 'Checking DNS'], failed: ['r', 'Failed'], disabled: ['', 'Disabled'] };
+  const hs = { ready: 'HTTPS ready', issuing: 'HTTPS issuing', waiting: 'HTTPS waits for verification', manual: 'Add in Railway' };
+  box.innerHTML = `<form class="acard" id="cdf"><div class="sec-h"><div><h2>Customer domains</h2><p>Customers can run their ad links on a subdomain they own (like <span class="mono">go.theirbrand.com</span>). They add a CNAME to the target below and a TXT record that proves it’s theirs. Basic: 1 domain, Pro: unlimited (Plans &amp; trial → Plan limits).</p></div></div>
+    <div class="fgrid"><label class="fld"><span>CNAME target</span><input name="cname_target" maxlength="120" value="${esc(x.cname_target || '')}" placeholder="${esc(x.cname_effective || 'customers.gojoinly.com')}"><small>Customers point their subdomain here. Empty = ${esc(x.cname_effective || 'the link domain')}.</small></label>
+      <label class="fld"><span>Cloudflare zone ID</span><input name="cf_zone_id" maxlength="40" class="mono" value="${esc(x.cf_zone_id || '')}" placeholder="32 letters and numbers"><small>Cloudflare → your link domain → Overview → API.</small></label>
+      <label class="fld"><span>Cloudflare API token</span><input name="cf_token" type="password" autocomplete="off" placeholder="${esc(x.cf_token || 'Custom Hostnames: Edit')}"><small>${x.cf_on ? 'Connected. HTTPS for new domains is set up automatically.' : 'Optional. Without it, add each verified domain in Railway by hand.'}</small></label></div>
+    <div class="savebar"><span class="hint">Cloudflare for SaaS gives every customer domain HTTPS automatically. Steps in UPGRADE.md.</span><button class="btn primary">Save</button></div></form>
+  <div class="acard"><div class="sec-h"><div><h2>${num(L.length)} customer ${L.length === 1 ? 'domain' : 'domains'}</h2><p>${manual.length ? `<b>${num(manual.length)} need${manual.length === 1 ? 's' : ''} setup:</b> add ${manual.length === 1 ? 'it' : 'them'} in Railway → Settings → Networking → Custom domain (or connect Cloudflare above).` : r.cf_on ? 'HTTPS is handled by Cloudflare.' : 'Verified domains show here. Without Cloudflare you add each one in Railway.'}</p></div></div>
+    ${L.length ? `<table class="rs"><thead><tr><th>Domain</th><th>Customer</th><th>Status</th><th>HTTPS</th><th>Checked</th><th></th></tr></thead><tbody>${L.map((d) => `<tr>
+      <td class="wide"><b class="mono" style="font-size:13.5px;overflow-wrap:anywhere">${esc(d.host)}</b>${d.pointing ? '' : ' <span class="pill y">CNAME not pointing</span>'}${d.last_error ? `<div class="sub" style="margin-top:4px;font-size:12.5px">${esc(d.last_error)}</div>` : ''}</td>
+      <td data-l="Customer" style="overflow-wrap:anywhere">${esc(d.email)}</td><td><span class="pill ${(st[d.status] || [])[0] || ''}">${(st[d.status] || [, d.status])[1]}</span></td>
+      <td data-l="HTTPS">${d.needs_setup ? '<span class="pill v">Add in Railway</span>' : d.status !== 'active' && d.https === 'manual' ? 'After verification' : esc(hs[d.https] || d.https)}</td><td data-l="Checked">${d.last_check_at ? ago(d.last_check_at) : 'never'}</td>
+      <td class="wide"><div class="row-act">${d.status === 'disabled' ? `<button class="btn sm" data-cdo="enable" data-id="${d.id}">Enable</button>` : `<button class="btn sm" data-cdo="recheck" data-id="${d.id}">Recheck</button><button class="btn sm" data-cdo="disable" data-id="${d.id}">Disable</button>`}<button class="btn sm no" data-cdel="${d.id}" data-h="${esc(d.host)}" aria-label="Delete ${esc(d.host)}">${I(IC.trash)}</button></div></td></tr>`).join('')}</tbody></table>`
+      : '<div class="empty"><b>No customer domains yet</b>Customers add them in Channels → Your link domain.</div>'}</div>`;
+  const f = $('#cdf'); const edit = can('keys.manage'); if (!edit) $$('input,button', f).forEach((e) => (e.disabled = true));
+  f.onsubmit = async (e) => { e.preventDefault(); const b = { cname_target: f.cname_target.value.trim(), cf_zone_id: f.cf_zone_id.value.trim() }; if (f.cf_token.value.trim()) b.cf_token = f.cf_token.value.trim();
+    try { await saveSet({ domains: b }, 'Customer domain settings saved'); cDomains(); } catch (err) { toast(err.message); } };
+  $$('[data-cdo]', box).forEach((b) => b.onclick = async () => { b.disabled = true; try { await api('POST', '/api/admin/domains/' + b.dataset.id, { action: b.dataset.cdo }); toast({ enable: 'Enabled', disable: 'Disabled', recheck: 'Checked' }[b.dataset.cdo]); cDomains(); } catch (err) { toast(err.message); b.disabled = false; } });
+  $$('[data-cdel]', box).forEach((b) => b.onclick = async () => { if (!confirm(`Delete ${b.dataset.h}? The customer's links on it stop working and move back to the Joinvoo link domain.`)) return; try { await api('DELETE', '/api/admin/domains/' + b.dataset.cdel); toast('Deleted'); cDomains(); } catch (err) { toast(err.message); } });
 }
 /* ---------- Zedapex apps: the catalog customers see in the dashboard (replaces the single Sister products card) ---------- */
 const APPLOGO = ['replyvoo', 'castvoo', 'advoo', 'affleego', 'landvoo', 'voosquare', 'joinvoo'];
@@ -2163,8 +2190,8 @@ function sPlans() {
   <div class="acard"><div class="sec-h"><div><h2>Pro trial</h2><p>Every Basic account gets one free Pro trial: the days or the tracked deposits below, whichever comes first. One trial per account, ad account and pixel. After it, deposits are still matched and sent to the ad platforms; only which ads drove them is hidden.</p></div></div>
     <div class="fgrid three">${F('td', 'Trial length', T.days, '', 'days', 'min="1" max="90" step="1"')}${F('tf', 'Or until', T.ftd_limit, 'Attributed first deposits.', 'FTDs', 'min="1" step="1"')}
       <label class="fld"><span>The clock starts</span><select name="ts"><option value="first_ftd" ${T.starts === 'first_ftd' ? 'selected' : ''}>At the first tracked deposit</option><option value="signup" ${T.starts === 'signup' ? 'selected' : ''}>At sign-up</option></select></label></div>
-    <div class="savebar"><span class="hint">Change a customer’s plan or reset their trial in Users.</span><button class="btn primary">Save plans &amp; trial</button></div></div></form>${limitsCard()}`;
-  wireLimits();
+    <div class="savebar"><span class="hint">Change a customer’s plan or reset their trial in Users.</span><button class="btn primary">Save plans &amp; trial</button></div></div></form>${limitsCard()}${r17Card()}`;
+  wireLimits(); wireR17();
   const f = $('#plf');
   f.oninput = () => { for (const k of ['basic', 'pro']) $('#' + k + 'usd').textContent = '≈ ' + money(+f[k + 'b'].value || 0); };
   f.onsubmit = async (e) => { e.preventDefault(); const btn = e.submitter; btn.disabled = true;
@@ -2172,13 +2199,13 @@ function sPlans() {
     try { await saveSet({ plans: { basic: plan('basic'), pro: plan('pro') }, trial: { days: +f.td.value, ftd_limit: +f.tf.value, starts: f.ts.value } }, 'Plans & trial saved'); sPlans(); } catch (err) { toast(err.message); btn.disabled = false; } };
 }
 /* plan limits: how many channels and bots each plan can add (0 = unlimited). Read/written as settings.limits */
-const LIMDEF = { basic: { channels: 3, bots: 3 }, pro: { channels: 0, bots: 0 } };
+const LIMDEF = { basic: { channels: 3, bots: 3, domains: 1 }, pro: { channels: 0, bots: 0, domains: 0 } };
 function limitsCard() {
   const L = S.set.limits || {}, v = (p, k) => { const x = (L[p] || {})[k]; return x == null ? LIMDEF[p][k] : x; };
   const nm = (p) => esc(((S.set.plans || {})[p] || {}).name || (p === 'pro' ? 'Pro' : 'Basic'));
-  const F = (p, k, label) => `<label class="fld"><span>${label}</span><span class="inp s"><input name="${p}_${k}" type="number" inputmode="numeric" min="0" max="1000" step="1" value="${v(p, k)}"><span class="suf" data-lu="${p}_${k}">${+v(p, k) ? (k === 'bots' ? 'bots' : 'channels') : 'unlimited'}</span></span></label>`;
-  const col = (p) => `<div class="limc ${p}"><div class="ph"><span>${nm(p)}</span><small data-lsum="${p}"></small></div><div class="fgrid">${F(p, 'channels', 'Channels')}${F(p, 'bots', 'Bots')}</div></div>`;
-  return `<form class="acard" id="limf"><div class="sec-h"><div><h2>Plan limits</h2><p>How many channels and bots each plan can add. Bot-subscriber trackers count as channels. <b>0 means unlimited.</b></p></div></div>
+  const F = (p, k, label) => `<label class="fld"><span>${label}</span><span class="inp s"><input name="${p}_${k}" type="number" inputmode="numeric" min="0" max="1000" step="1" value="${v(p, k)}"><span class="suf" data-lu="${p}_${k}">${+v(p, k) ? (k === 'bots' ? 'bots' : k === 'domains' ? 'domains' : 'channels') : 'unlimited'}</span></span></label>`;
+  const col = (p) => `<div class="limc ${p}"><div class="ph"><span>${nm(p)}</span><small data-lsum="${p}"></small></div><div class="fgrid">${F(p, 'channels', 'Channels')}${F(p, 'bots', 'Bots')}${F(p, 'domains', 'Own link domains')}</div></div>`;
+  return `<form class="acard" id="limf"><div class="sec-h"><div><h2>Plan limits</h2><p>How many channels, bots and own link domains each plan can add. Bot-subscriber trackers count as channels. <b>0 means unlimited.</b></p></div></div>
     <div class="limg">${col('basic')}${col('pro')}</div>
     <div class="cprev" style="margin-top:12px">${I(IC.info)}<span>Existing customers keep what they already have; limits only apply when adding new ones.</span></div>
     <div class="savebar"><span class="hint">Trials, admins and accounts with billing off are never limited.</span><button class="btn primary">Save limits</button></div></form>`;
@@ -2186,13 +2213,35 @@ function limitsCard() {
 function wireLimits() {
   const f = $('#limf'); if (!f) return;
   const sum = () => { for (const p of ['basic', 'pro']) { const c = +f[p + '_channels'].value || 0, b = +f[p + '_bots'].value || 0;
-    for (const [k, x] of [['channels', c], ['bots', b]]) $(`[data-lu="${p}_${k}"]`, f).textContent = x ? k : 'unlimited';
+    for (const [k, x] of [['channels', c], ['bots', b], ['domains', +f[p + '_domains'].value || 0]]) $(`[data-lu="${p}_${k}"]`, f).textContent = x ? k : 'unlimited';
     $(`[data-lsum="${p}"]`, f).innerHTML = !c && !b ? '<span class="inf">Unlimited</span>' : `${c ? c : '∞'} ${c === 1 ? 'channel' : 'channels'} · ${b ? b : '∞'} ${b === 1 ? 'bot' : 'bots'}`; } };
   f.oninput = sum; sum();
   f.onsubmit = async (e) => { e.preventDefault(); const btn = e.submitter; if (btn) btn.disabled = true;
     const n = (k) => Math.max(0, Math.min(1000, Math.round(+f[k].value || 0)));
-    try { await saveSet({ limits: { basic: { channels: n('basic_channels'), bots: n('basic_bots') }, pro: { channels: n('pro_channels'), bots: n('pro_bots') } } }, 'Plan limits saved'); sPlans(); }
+    try { await saveSet({ limits: { basic: { channels: n('basic_channels'), bots: n('basic_bots'), domains: n('basic_domains') }, pro: { channels: n('pro_channels'), bots: n('pro_bots'), domains: n('pro_domains') } } }, 'Plan limits saved'); sPlans(); }
     catch (err) { toast(err.message); if (btn) btn.disabled = false; } };
+}
+/* round 17: team seat prices, channel ban protection, dead-link warning, Meta app (read/written as settings.round17) */
+function r17Card() {
+  const R = S.set.round17; if (!R) return '';
+  const N = (k, label, suf, min, max) => `<label class="fld"><span>${label}</span><span class="inp s"><input name="${k}" type="number" inputmode="numeric" min="${min}" max="${max}" step="1" value="${esc(R[k])}">${suf ? `<span class="suf">${suf}</span>` : ''}</span></label>`;
+  return `<form class="acard" id="r17f"><div class="sec-h"><div><h2>Team seats, ban protection &amp; dead links</h2><p>Team seats: how many people Pro and Basic include, and the price of each extra seat (charged monthly from the wallet). Ban protection: how many refused invite links in a row mark a channel lost. Dead-link warning: when a link with steady clicks goes quiet.</p></div></div>
+    <div class="fgrid three">${N('pro_included', 'Pro seats included', 'people', 0, 1000)}${N('basic_included', 'Basic seats included', 'people', 0, 1000)}${N('seat_cents', 'Extra seat / month', 'credits', 0, 1000000)}</div>
+    <div class="fgrid three">${N('ban_fail_streak', 'Lost after refusals in a row', '', 1, 50)}${N('deadlink_quiet_hours', 'Quiet for', 'hours', 1, 12)}${N('deadlink_min_hourly', 'Usual clicks at least', '/ hour', 1, 1000000)}</div>
+    <div class="fgrid three">${N('deadlink_days', 'Compared with the same hours of', 'days', 1, 14)}${N('deadlink_drop_pct', 'Quiet means below', '% of usual', 0, 90)}</div>
+    <div class="fgrid three"><label class="fld"><span>Meta app ID (ad spend sync)</span><input name="meta_app_id" inputmode="numeric" value="${esc(R.meta_app_id || '')}" placeholder="Waiting for Meta approval"></label>
+      <label class="fld"><span>Meta app secret</span><input name="meta_app_secret" type="password" autocomplete="off" value="${esc(R.meta_app_secret || '')}"></label>
+      <label class="fld"><span>OAuth redirect URI (paste in Meta)</span><input readonly value="${esc(R.meta_redirect_uri || '')}"></label></div>
+    <div class="cprev" style="margin-top:12px">${I(IC.info)}<span>Meta spend sync is ${R.meta_available ? '<b>on</b>' : '<b>off</b> (customers see “Coming soon” until both Meta fields are filled)'}. Setup steps are in UPGRADE.md, round 17.</span></div>
+    <div class="savebar"><span class="hint">Seat prices apply from the next seat added or the next month.</span><button class="btn primary">Save</button></div></form>`;
+}
+function wireR17() {
+  const f = $('#r17f'); if (!f) return;
+  f.onsubmit = async (e) => { e.preventDefault(); const btn = e.submitter; if (btn) btn.disabled = true;
+    const n = (k) => Math.max(0, Math.round(+f[k].value || 0)), b = {};
+    for (const k of ['pro_included', 'basic_included', 'seat_cents', 'ban_fail_streak', 'deadlink_quiet_hours', 'deadlink_min_hourly', 'deadlink_days', 'deadlink_drop_pct']) b[k] = n(k);
+    b.meta_app_id = f.meta_app_id.value.trim(); b.meta_app_secret = f.meta_app_secret.value;
+    try { await saveSet({ round17: b }, 'Saved'); sPlans(); } catch (err) { toast(err.message); if (btn) btn.disabled = false; } };
 }
 /* levels */
 const DEFAULT_LEVELS = [['rookie', 'Rookie', 0], ['hustler', 'Hustler', 1000], ['operator', 'Operator', 5000], ['shark', 'Shark', 25000], ['whale', 'Whale', 100000], ['kraken', 'Kraken', 300000], ['legend', 'Legend', 1000000]].map(([id, name, from]) => ({ id, name, from }));
@@ -2438,6 +2487,7 @@ const DM = (() => {
       billing: { enabled: true, free_daily: { basic: 5, pro: 30, trial: 30 }, markup: 4, min_credits: 3, max_credits: 40, deep_model: 'claude-sonnet-5-5', deep_markup: 3, deep_min_credits: 10, deep_for: 'pro', show_cost: true, default_monthly_cap_credits: 1000 },
       prices: { 'claude-haiku-4-5-20251001': { in: 1, cache_write: 1.25, cache_read: 0.1, out: 5 }, 'claude-sonnet-4-5': { in: 3, cache_write: 3.75, cache_read: 0.3, out: 15 }, 'claude-sonnet-5': { in: 2, cache_write: 2.5, cache_read: 0.2, out: 10 }, 'claude-sonnet-5-5': { in: 2, cache_write: 2.5, cache_read: 0.2, out: 10 }, 'openai-default': { in: 0.15, cache_write: 0.15, cache_read: 0.075, out: 0.6, check: true } } },
     links: { domain: 'https://gojoinly.com', backups: [], main: 'https://joinvoo.com', active: 'https://gojoinly.com' },
+    domains: { cname_target: 'customers.gojoinly.com', cname_effective: 'customers.gojoinly.com', cf_zone_id: '', cf_token: '', cf_on: false },
     sister: { enabled: true, name: 'Replyvoo', url: 'https://replyvoo.com', tagline: 'AI Closers that reply to your Telegram leads in seconds and close the sale.', promo_code: 'JOINVOO20', utm: true, live: true, clicks: 214 },
     apps: [['replyvoo', 'Replyvoo', 'Sky-rocket your sales. On autopilot.', 'AI Closers answer every chat in seconds, qualify every lead and send the payment link while you sleep.', 'https://replyvoo.com', '#FFC21A', '#FFD65C', 'dark', '', '30 free chats a month', 'live', 412],
       ['castvoo', 'Castvoo', 'Turn your Telegram into a sales machine.', 'Welcomes every new subscriber, follows up on time and sends each group the message written for them. Broadcasts, drips and AI in one place.', 'https://castvoo.com', '#3b6cf6', '#2f55e4', 'light', 'New', '7 days free', 'live', 236],
@@ -2575,7 +2625,17 @@ function demoApi(method, path, body) {
     if (path.startsWith('/api/admin/support')) { const st = path.includes('closed') ? 'closed' : 'open', sales = path.includes('tag=sales'); return { tickets: DM.tickets.filter((t) => t.status === st && (!sales || t.tag === 'sales')).map(DM.view).sort((a, b) => b.last_at - a.last_at),
       counts: { open: DM.tickets.filter((t) => t.status === 'open').length, closed: DM.tickets.filter((t) => t.status === 'closed').length, unread: DM.tickets.filter((t) => t.status === 'open' && t.unread_admin).length, sales: DM.tickets.filter((t) => t.status === 'open' && t.tag === 'sales').length }, me: DM.ag(1) }; }
     if (path.startsWith('/api/admin/canned')) { if (method !== 'GET') DM.canned = (body.items || []).map((c, i) => ({ id: c.id || 'n' + i + Date.now(), title: c.title || 'Reply', body: c.body })); return { ok: true, items: DM.canned }; }
+    if (path.startsWith('/api/admin/domains')) { // round 16: customers' own link domains (demo)
+      if (!DM.cdoms) DM.cdoms = [['go.dailydeals.shop', 'hannah@dailydeals.club', 'active', true, ''], ['t.fitin30.co', 'leo@fitin30.co', 'pending', false, 'No TXT record at _joinvoo.t.fitin30.co yet.'], ['join.studysquad.app', 'ravi@studysquad.app', 'active', true, '']]
+        .map(([host, email, status, pointing, err], i) => ({ id: i + 1, host, email, status, pointing, last_error: err || null, https: 'manual', last_check_at: now - (i + 1) * 9 * 60e3, needs_setup: status === 'active' }));
+      const dm = /domains\/(\d+)$/.exec(path), d = dm && DM.cdoms.find((x) => x.id === +dm[1]);
+      if (d && method === 'DELETE') DM.cdoms = DM.cdoms.filter((x) => x !== d);
+      else if (d) { if (body.action === 'disable') d.status = 'disabled'; else if (body.action === 'enable') d.status = 'active'; d.last_check_at = Date.now(); d.needs_setup = d.status === 'active' && !DM.settings.domains.cf_on; }
+      return { ok: true, cf_on: DM.settings.domains.cf_on, target: DM.settings.domains.cname_effective, domains: DM.cdoms.map((x) => ({ ...x, https: DM.settings.domains.cf_on ? 'ready' : 'manual', needs_setup: x.status === 'active' && !DM.settings.domains.cf_on })) };
+    }
     if (path.startsWith('/api/admin/settings')) {
+      if (method !== 'GET' && body && body.domains) { const v = DM.settings.domains; if (body.domains.cname_target != null) v.cname_target = v.cname_effective = body.domains.cname_target || 'customers.gojoinly.com';
+        if (body.domains.cf_zone_id != null) v.cf_zone_id = body.domains.cf_zone_id; if (body.domains.cf_token) v.cf_token = body.domains.cf_token.slice(0, 4) + '••••' + body.domains.cf_token.slice(-4); v.cf_on = !!(v.cf_zone_id && v.cf_token); delete body.domains; }
       if (method !== 'GET' && body && 'apps' in body) { if (body.apps === null) DM.settings.apps.forEach((a) => Object.assign(a, { enabled: true })); else { for (const a of body.apps) { if (a.status !== 'soon' && !/^https?:\/\//.test(a.url || '')) throw new Error(`${a.name || 'App'}: add a link, or mark it “soon”.`); if (!a.id) a.id = a.name.toLowerCase().replace(/[^a-z0-9]/g, ''); }
         const old = Object.fromEntries(DM.settings.apps.map((a) => [a.id, a.clicks || 0])); DM.settings.apps = body.apps.map((a) => ({ ...a, clicks: body.reset_app_clicks ? 0 : old[a.id] || 0 })); } delete body.apps; delete body.reset_app_clicks; }
       if (method !== 'GET' && body && body.voo) { const v = DM.settings.voo; for (const [k, x] of Object.entries(body.voo)) v[k] = /secret|key/.test(k) && typeof x === 'string' ? x.slice(0, 4) + '••••' + x.slice(-4) : x; v.active = v.login_mode !== 'off' && !!v.issuer && !!v.client_id; delete body.voo; }

@@ -3,7 +3,6 @@
 <meta name="theme-color" content="#f7f6f2">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
-<script src="joomoji.js"></script>
 <style>
 /*SHARED*/
 /* Layout: the former split screen. Left: a violet panel that keeps selling (rotating benefit, three facts, platform chips).
@@ -73,6 +72,9 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
 .back:hover{color:var(--ink)}
 .err{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--blush);color:var(--rose);font-size:14px;font-weight:600}
 .gift{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--mint);color:var(--green);font-weight:700;font-size:14.5px}
+.terms{margin:-4px 0 0;font-size:13.5px;color:var(--faint);text-align:center}.terms a{color:var(--muted);font-weight:700}
+.link{border:0;background:none;padding:10px 0;min-height:44px;align-self:flex-start;font:700 15px var(--f);color:var(--brand-text);cursor:pointer}
+.btn.full{width:100%}
 .have{text-align:center;color:var(--muted);font-size:15px;margin:2px 0 0}
 .have a{color:var(--ink);font-weight:800;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#5b3df5 45%,transparent)}
 .done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;margin:auto;max-width:520px;padding-block:20px;animation:sin .5s}
@@ -150,6 +152,16 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
 }
 @media (max-width:480px){.sfoot .fl{justify-content:flex-start}.topline .hm{display:none}.topline span a{padding:9px 16px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}}
 @media (max-width:560px){.opts{grid-template-columns:1fr}.opts.four{grid-template-columns:1fr 1fr}.opt{padding:14px}}
+
+/* phones: 44px tap targets */
+@media (max-width:900px){
+  .topline a.logo{min-height:44px}
+  .pw button{min-height:44px;min-width:56px}
+  .topline a{position:relative}
+  .topline a:not(.logo)::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .topline span a{display:inline-flex;align-items:center;min-height:44px}
+}
+@media (max-width:374px){html:not([lang=en]) .topline .mlogo{font-size:0!important;gap:0;min-width:44px}.topline{gap:8px}.topline span a{white-space:nowrap;padding:9px 12px}}
 </style>
 
 <div class="shell">
@@ -169,7 +181,7 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
   <section class="main">
     <div class="topline"><a class="logo mlogo" href="{{HOME}}" style="font-size:19px">{{LOGO}}Joinvoo</a><a href="{{BLOG}}" style="color:var(--muted);font-weight:700">Blog</a><span><span class="hm">Already have an account? </span><a href="{{LOGIN}}">Log in</a></span><div class="lsw" data-lsw></div></div>
     <div id="flow"></div>
-    <div class="sfoot"><span>© Joinvoo · By Zedapex company</span><span class="fl"><a href="{{GUIDE}}">Guide</a><a href="{{BLOG}}">Blog</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a></span>{{VOOFOOT}}</div>
+    <div class="sfoot"><span>© Joinvoo · By Zedapex company</span><span class="fl"><a href="{{GUIDE}}">Help</a><a href="{{BLOG}}">Blog</a><a href="{{TERMS}}">Terms</a><a href="{{PRIVACY}}">Privacy</a><a href="{{REFUNDS}}">Refunds</a><a href="{{AUP}}">Acceptable use</a><a href="{{COOKIES}}">Cookies</a><a href="{{REFTERMS}}">Referral terms</a></span>{{VOOFOOT}}</div>
   </section>
 </div>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -190,23 +202,18 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
     snap:'<svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>',
     google:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M9 5l-5 13" stroke="#FBBC04"/><path d="M14 5l5 13" stroke="#4285F4"/><circle cx="5" cy="18" r="1.6" fill="#34A853" stroke="none"/></svg>'};
   const refFromUrl=(()=>{ try{ return new URLSearchParams(location.search).get('ref')||''; }catch{ return ''; } })();
+  /* Team invite link (/join-team/<token> → /signup?team=<token>&email=<email>): the new account joins that team in the same step. */
+  const TEAM=(()=>{ try{ const t=new URLSearchParams(location.search).get('team')||''; return /^[A-Za-z0-9_-]{16,64}$/.test(t)?t:''; }catch{ return ''; } })();
+  const teamEmail=(()=>{ try{ return TEAM?(new URLSearchParams(location.search).get('email')||''):''; }catch{ return ''; } })();
   let FEAT={signup:true,referrals:true,snapchat:true,tiktok:true};
-  const F={step:1,name:'',email:'',password:'',country:'',countryAuto:false,track:['channel'],ads:['meta'],spend:'',ref:refFromUrl,agree:false,gender:'surprise',avatar:null,nickname:''};
+  const F={step:1,email:teamEmail,password:'',country:'',countryAuto:false,ref:refFromUrl,showRef:false};
 
   // side panel rotation
-  const LINES=[_t('Meta, TikTok and Snapchat can’t see who joins your Telegram. In 10 minutes, they will.'),_t('Track every lead. Kill every fake.'),_t('Send first deposits back, so your ads find buyers, not browsers.'),_t('Know which campaign and ad brought every lead.'),_t('If you buy traffic, tracking is non-negotiable.')];
+  const LINES=[_t('Meta, TikTok and Snapchat can’t see who joins your Telegram. In 10 minutes, they will.'),_t('Send first deposits back, so your ads find buyers, not browsers.'),_t('Know which campaign and ad brought every lead.'),_t('If you buy traffic, tracking is non-negotiable.')];
   { const r0=$('#rot'); if(r0) r0.textContent=LINES[0]; }
   let li=0; setInterval(()=>{ const r=$('#rot'); if(!r) return; r.style.opacity=0; r.style.transform='translateY(6px)'; setTimeout(()=>{ li=(li+1)%LINES.length; r.textContent=LINES[li]; r.style.opacity=1; r.style.transform='none'; },400); },3600);
 
   let VM='off';  // VooSquare sign-up: 'off' (default, unchanged) | 'both' | 'only'
-  const STEPS=5;
-  const prog=n=>`<div class="prog">${Array.from({length:STEPS},(_,i)=>`<i class="${i+1<=n?'on':''}"></i>`).join('')}</div><span class="stepno">${_t('Step')} ${n} ${_t('of')} ${STEPS}</span>`;
-  const back=`<button type="button" class="back" data-back>← ${_t('Back')}</button>`;
-  const cont=`<button class="btn violet lg wide" type="submit">${_t('Continue')} ${arrow}</button>`;
-  /* Joomoji: the animated face the user picks (renderer: /joomoji.js, shared with the dashboard) */
-  const HAS_J=()=>!!(window.Joomoji&&Joomoji.svg&&Joomoji.random);
-  function face(size){ if(!HAS_J()) return `<span class="jph" style="width:${size}px;height:${size}px">${esc((F.nickname||F.name||'J').trim().charAt(0).toUpperCase()||'J')}</span>`; return Joomoji.svg(F.avatar,{size,animate:!reduced}); }
-  function shuffle(){ if(!HAS_J()) return; const g=F.gender==='surprise'?(['female','male','other'][Math.floor(Math.random()*3)]):F.gender; F.avatar=Joomoji.random(g,Date.now()+'-'+Math.random()); }
   /* ---------- country picker ---------- */
   const CP=(()=>{
     const RAW=/*COUNTRIES*/[];
@@ -260,36 +267,20 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
     const f=$('#flow'); let h='';
     if(F.step===1&&VM==='only') h=`<form class="step" id="s"><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Create your account. No card needed. Your first 500 joins are on us.')}</p>
       ${JVVoo.block(false)}<p class="have">${_t('Already have an account?')} <a href="{{LOGIN}}">${_t('Log in')}</a></p></form>`;
-    else if(F.step===1) h=`${prog(1)}<form class="step" id="s"><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Create your account. No card needed. Your first 500 joins are on us.')}</p>
-      ${VM==='both'?JVVoo.block(true):''}<div class="field"><label for="nm">${_t('Your name')}</label><input class="inp" id="nm" autocomplete="name" value="${esc(F.name)}" placeholder="Alex Morgan" required></div>
-      <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" value="${esc(F.email)}" placeholder="you@company.com" required></div>
+    else if(F.step===1) h=`<form class="step" id="s" novalidate><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Your first 500 joins are on us. No card needed.')}</p>
+      ${VM==='both'?JVVoo.block(true):''}
+      <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" value="${esc(F.email)}" placeholder="you@company.com" required></div>
       <div class="field"><label for="pw">${_t('Password')}</label><div class="pw"><input class="inp" id="pw" type="password" autocomplete="new-password" minlength="8" value="${esc(F.password)}" placeholder="${_t('At least 8 characters')}" required><button type="button" id="pwt">${_t('Show')}</button></div><div class="meter"><i id="pm"></i></div></div>
       <div class="field cfield"><label id="ctyl" for="cty">${_t('Country')}</label>${CP.trigger()}<span class="cnote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/></svg>${_t('We use this to show payment methods available in your country.')}</span></div>
-      <div id="err"></div><div class="row">${cont}</div><p class="have">${_t('Already have an account?')} <a href="{{LOGIN}}">${_t('Log in')}</a></p></form>`;
-    if(F.step===2) h=`${prog(2)}<form class="step" id="s"><h1>${_t('What are you <span>growing?</span>')}</h1><p class="lede">${_t('Pick all that apply. You can add more later.')}</p>
-      <div class="opts">${[['channel',IC.channel,_t('Channel'),_t('People who join')],['group',IC.group,_t('Group'),_t('Members who join')],['bot',IC.bot,_t('Bot'),_t('People who press Start')]].map(([k,e,t,s])=>`<button type="button" class="opt" data-g="track" data-v="${k}" aria-pressed="${F.track.includes(k)}"><span class="e">${e}</span>${t}<small>${s}</small></button>`).join('')}</div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`;
-    if(F.step===3) h=`${prog(3)}<form class="step" id="s"><h1>${_t('Where do you run <span>ads?</span>')}</h1><p class="lede">${_t('We’ll send every real join, and every first deposit, back to these platforms.')}</p>
-      <div class="opts four">${[['meta',IC.meta,'Meta',_t('Facebook & Instagram'),0,'#0866FF'],['tiktok',IC.tiktok,'TikTok',_t('TikTok Ads'),0,'#0B0B12'],['snap',IC.snap,'Snapchat',_t('Snapchat Ads'),0,'#FFFC00'],['google',IC.google,'Google Ads',_t('Coming soon'),1,'var(--sunk)']].filter(([k])=>!(k==='tiktok'&&!FEAT.tiktok)&&!(k==='snap'&&!FEAT.snapchat)).map(([k,e,t,s,dis,bg])=>`<button type="button" class="opt" data-g="ads" data-v="${k}" aria-pressed="${F.ads.includes(k)}" ${dis?'disabled':''}><span class="e" style="background:${bg}">${e}</span>${t}<small>${s}</small></button>`).join('')}</div>
-      <div class="field"><label>${_t('Monthly ad spend')}</label><div class="chips">${[['Under $500',_t('Under $500')],['$500–$2k','$500–$2k'],['$2k–$10k','$2k–$10k'],['$10k+','$10k+']].map(([v,l])=>`<button type="button" class="chip" data-spend="${v}" aria-pressed="${F.spend===v}">${l}</button>`).join('')}</div><span class="hint">${_t('Helps us tailor your setup.')}</span></div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`;
-    if(F.step===4){ if(!F.avatar&&HAS_J()) shuffle();
-      h=`${prog(4)}<form class="step" id="s"><h1>${_t('Your <span>Joomoji.</span>')}</h1><p class="lede">${_t('Pick the face that greets you in your dashboard. Shuffle until it’s you.')}</p>
-      <div class="jpick"><div class="jface" id="jface">${face(132)}</div>
-        <div class="jctl"><div class="chips" role="group" aria-label="${_t('Style')}">${[['female',_t('Female')],['male',_t('Male')],['surprise',_t('Surprise me')]].map(([v,l])=>`<button type="button" class="chip" data-gender="${v}" aria-pressed="${F.gender===v}">${l}</button>`).join('')}</div>
-        <button type="button" class="btn" id="jshuf"${HAS_J()?'':' disabled'}>${_t('Shuffle')} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button></div></div>
-      <div class="field"><label for="nk">${_t('Nickname')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="nk" maxlength="24" value="${esc(F.nickname)}" placeholder="${_t('What should Joe call you?')}" autocomplete="nickname"><span class="hint">${_t('2–24 characters. Letters, numbers, spaces and _ - .')}</span></div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`; }
-    if(F.step===5) h=`${prog(5)}<form class="step" id="s"><h1>${_t('Almost <span>there.</span>')}</h1><p class="lede">${_t('Got a referral code from a friend? Add it so they get credit.')}</p>
-      ${FEAT.referrals?`<div class="field"><label for="rf">${_t('Referral code')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="rf" value="${esc(F.ref)}" placeholder="${_t('e.g. em7k2q')}" autocomplete="off" spellcheck="false"></div>
-      `:''}${F.ref&&FEAT.referrals?`<div class="gift">🎁 ${_t('Your friend’s code is applied.')}</div>`:''}<div class="gift" style="background:var(--lilac);color:var(--brand-text)">✦ ${_t('Confirm your email after sign-up to unlock your first 500 tracked joins free, plus a 7-day deposit-tracking trial.')}</div>
-      <label class="check"><input type="checkbox" id="ag" ${F.agree?'checked':''}><span>${(()=>{ let k=0; const L=['<a href="{{TERMS}}" data-legal="Terms of Service">','<a href="{{PRIVACY}}" data-legal="Privacy Policy">']; return _t('I agree to the [Terms] and [Privacy Policy].').replace(/\[([^\]]+)\]/g,(m,x)=>(L[k++]||'<a>')+x+'</a>'); })()}</span></label>
-      <div id="err"></div><div class="row">${back}<button class="btn violet lg wide" type="submit" id="go">${_t('Create my account')} ${arrow}</button></div></form>`;
-    if(F.step===6){ const P={meta:'Meta',tiktok:'TikTok',snap:'Snapchat'}; const plats=F.ads.filter(a=>P[a]).map(a=>P[a]); const pl=plats.length>1?plats.slice(0,-1).join(', ')+' '+_t('or')+' '+plats[plats.length-1]:(plats[0]||_t('your ad platform'));
-      const nm=(F.nickname||F.name).trim().split(' ')[0]||_t('friend');
-      h=`<div class="done"><div class="jdone">${HAS_J()?face(150):''}</div>
-      <h1>${_t('You’re in,')} <span>${esc(nm)}.</span></h1><p>${_t('Your account is ready. Three quick steps and your ads can see every real join.')}</p>
-      <ul class="checklist"><li><span>1</span>${_t('Make a bot with @BotFather')}<small>2 min</small></li><li><span>2</span>${F.track.includes('bot')&&F.track.length===1?_t('Connect your bot'):_t('Connect your channel or group')}<small>2 min</small></li><li><span>3</span>${_t('Connect')} ${esc(pl)} ${_t('and swap your ad link')}<small>6 min</small></li></ul>
+      ${FEAT.referrals?(F.ref||F.showRef?`<div class="field"><label for="rf">${_t('Referral code')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="rf" value="${esc(F.ref)}" placeholder="${_t('e.g. em7k2q')}" autocomplete="off" spellcheck="false"></div>${F.ref?`<div class="gift">🎁 ${_t('Your friend’s code is applied.')}</div>`:''}`:`<button type="button" class="link" id="showRef">${_t('Have a referral code?')}</button>`):''}
+      <div id="err"></div><button class="btn violet lg full" type="submit" id="go">${_t('Create my account')} ${arrow}</button>
+      <p class="terms">${(()=>{ let k=0; const L=['<a href="{{TERMS}}" data-legal="Terms of Service">','<a href="{{PRIVACY}}" data-legal="Privacy Policy">']; return _t('By creating an account you agree to the [Terms] and [Privacy Policy].').replace(/\[([^\]]+)\]/g,(m,x)=>(L[k++]||'<a>')+x+'</a>'); })()}</p>
+      <p class="have">${_t('Already have an account?')} <a href="{{LOGIN}}">${_t('Log in')}</a></p></form>`;
+    if(F.step===6){ 
+      
+      h=`<div class="done">
+      <h1>${_t('You’re <span>in.</span>')}</h1><p>${_t('Your account is ready. Three quick steps and your ads can see every real join.')}</p>
+      <ul class="checklist"><li><span>1</span>${_t('Make a bot with @BotFather')}<small>2 min</small></li><li><span>2</span>${_t('Add it to your channel, group or bot')}<small>2 min</small></li><li><span>3</span>${_t('Connect Meta, TikTok or Snapchat and put your link in your ad')}<small>6 min</small></li></ul>
       <a class="btn violet lg" href="${APP}" style="width:100%">${_t('Start setup · about 10 min')} ${arrow}</a></div>`; }
     f.innerHTML=h; bind();
     if(F.step===6) confetti();
@@ -298,34 +289,29 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
   function err(m){ $('#err').innerHTML=`<div class="err" role="alert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>${esc(m)}</div>`; }
   function bind(){
     const s=$('#s'); if(!s) return;
-    document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{ save(); F.step--; draw(); });
-    document.querySelectorAll('.opt[data-g]').forEach(b=>b.onclick=()=>{ const g=F[b.dataset.g], v=b.dataset.v; const i=g.indexOf(v); i>=0?g.splice(i,1):g.push(v); b.setAttribute('aria-pressed',g.includes(v)); });
-    document.querySelectorAll('[data-spend]').forEach(b=>b.onclick=()=>{ F.spend=b.dataset.spend; document.querySelectorAll('[data-spend]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
-    document.querySelectorAll('[data-gender]').forEach(b=>b.onclick=()=>{ F.gender=b.dataset.gender; document.querySelectorAll('[data-gender]').forEach(x=>x.setAttribute('aria-pressed',x===b)); shuffle(); const jf=$('#jface'); if(jf){ jf.innerHTML=face(132); jf.classList.remove('pop'); void jf.offsetWidth; jf.classList.add('pop'); } });
-    const js=$('#jshuf'); if(js) js.onclick=()=>{ shuffle(); const jf=$('#jface'); jf.innerHTML=face(132); jf.classList.remove('pop'); void jf.offsetWidth; jf.classList.add('pop'); };
     const pw=$('#pw'); if(pw){ const m=$('#pm'); const upd=()=>{ const v=pw.value; const sc=(v.length>=8)+(v.length>=12)+/[A-Z]/.test(v)+/[0-9]/.test(v)+/[^\w]/.test(v); m.style.width=(sc*20)+'%'; m.style.background=sc<2?'var(--rose)':sc<4?'#e6b866':'var(--green)'; }; pw.oninput=upd; upd();
       $('#pwt').onclick=()=>{ pw.type=pw.type==='password'?'text':'password'; $('#pwt').textContent=pw.type==='password'?_t('Show'):_t('Hide'); }; }
     CP.bind();
     const rf=$('#rf'); if(rf) rf.oninput=()=>{ F.ref=rf.value.trim(); };
+    const sr=$('#showRef'); if(sr) sr.onclick=()=>{ save(); F.showRef=true; draw(); const r=$('#rf'); if(r) r.focus(); };
     s.onsubmit=async e=>{ e.preventDefault(); save();
-      if(F.step===1){ if(!F.name.trim()) return err(_t('Enter your name.')); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(F.email)) return err(_t('Enter a valid email.')); if(F.password.length<8) return err(_t('Use at least 8 characters for your password.')); if(!F.country){ err(_t('Choose your country.')); CP.open(); return; } }
-      if(F.step===2 && !F.track.length) return err(_t('Pick at least one.'));
-      if(F.step===3 && !F.ads.length) return err(_t('Pick at least one ad platform.'));
-      if(F.step===4 && F.nickname && !/^[\p{L}\p{N} _.\-]{2,24}$/u.test(F.nickname)) return err(_t('Nicknames are 2–24 characters: letters, numbers, spaces and _ - .'));
-      if(F.step===5){ if(!F.agree) return err(_t('Please agree to the Terms to continue.')); const b=$('#go'); b.disabled=true; b.textContent=_t('Creating your account…');
-        try { await create(); } catch(x){ b.disabled=false; b.innerHTML=_t('Create my account')+' '+arrow; return err(x.message); } }
-      F.step++; draw(); };
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(F.email)){ $('#em').focus(); return err(_t('Enter a valid email.')); }
+      if(F.password.length<8){ $('#pw').focus(); return err(_t('Use at least 8 characters for your password.')); }
+      if(!F.country){ err(_t('Choose your country.')); CP.open(); return; }
+      const b=$('#go'); b.disabled=true; b.textContent=_t('Creating your account…');
+      let cr; try { cr=await create(); } catch(x){ b.disabled=false; b.innerHTML=_t('Create my account')+' '+arrow; return err(x.message); }
+      if(cr&&cr.team){ location.href=APP+(cr.team.error&&/^(expired|invalid)$/.test(cr.team.code)?'?team_error='+cr.team.code:''); return; } // joined a team: straight into its workspace
+      F.step=6; draw(); };
   }
   function save(){ const g=id=>{ const el=document.getElementById(id); return el?el.value:null; };
-    if(g('nm')!==null) F.name=g('nm'); if(g('em')!==null) F.email=g('em').trim(); if(g('pw')!==null) F.password=g('pw'); if(g('rf')!==null) F.ref=g('rf').trim(); if(g('nk')!==null) F.nickname=g('nk').trim();
-    const ag=$('#ag'); if(ag) F.agree=ag.checked; }
+    if(g('em')!==null) F.email=g('em').trim(); if(g('pw')!==null) F.password=g('pw'); if(g('rf')!==null) F.ref=g('rf').trim();
+  }
   async function create(){
     if(DEMO){ await new Promise(r=>setTimeout(r,900)); return; }
-    const gender=F.gender==='female'?'female':F.gender==='male'?'male':'other';
-    const body={name:F.name,email:F.email,password:F.password,ref:F.ref,profile:{track:F.track,ads:F.ads,spend:F.spend},gender,lang:window.JV_LANG||'en',country:F.country};
-    if(F.avatar) body.avatar=F.avatar; if(F.nickname) body.nickname=F.nickname;
+    const body={email:F.email,password:F.password,ref:F.ref,lang:window.JV_LANG||'en',country:F.country,...(TEAM?{team_token:TEAM}:{})};
     const r=await fetch('/api/signup',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Something went wrong. Try again.'));
+    return j;
   }
   function confetti(){ if(reduced) return; const cv=$('#confetti'), ctx=cv.getContext('2d'), dpr=Math.min(2,devicePixelRatio||1), w=innerWidth, h=innerHeight; cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
     const cols=['#5b3df5','#8f7bff','#c8f169','#7ee0a6','#e6b866','#ff5c8a']; const ps=Array.from({length:140},()=>({x:w/2+(Math.random()-.5)*120,y:h*.35,vx:(Math.random()-.5)*13,vy:-Math.random()*13-4,r:Math.random()*7+4,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.3}));
@@ -335,8 +321,8 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
   JVVoo.mode(m=>{ if(m!==VM){ VM=m; if(F.step===1){ save(); draw(); } } });
   if(!DEMO) fetch('/api/config',{credentials:'same-origin'}).then(r=>(r.headers.get('content-type')||'').includes('json')?r.json():null).then(c=>{ const f=c&&c.features; if(!f) return;
     ['signup','referrals','snapchat','tiktok'].forEach(k=>{ if(f[k]===false) FEAT[k]=false; });
-    if(!FEAT.snapchat) F.ads=F.ads.filter(a=>a!=='snap'); if(!FEAT.tiktok) F.ads=F.ads.filter(a=>a!=='tiktok'); if(!FEAT.referrals) F.ref='';
-    if(!FEAT.signup) closed(); else if(F.step>1) draw(); }).catch(()=>{});
+    if(!FEAT.referrals) F.ref='';
+    if(!FEAT.signup) closed(); else if(F.step===1&&!FEAT.referrals){ save(); draw(); } }).catch(()=>{});
 })();
 </script>
 

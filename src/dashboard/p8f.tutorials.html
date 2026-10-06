@@ -1,0 +1,352 @@
+
+/* ================= Video-style tutorials: an in-app player that plays an animated walkthrough of the real (simplified) screens,
+   synced to the voice-over in /media/tutorials/<id>.mp3 when it exists, else on a ~150 wpm timer with captions only.
+   Scenes: one "beat" per narration sentence. A beat may switch screen (s) and runs timed actions [at 0..1 of the sentence, op, target, arg]:
+   tap / move (finger), hl (highlight ring), on / off (reveal or select), type (typing), screen (switch screen mid-sentence). ================= */
+const TUT = [
+ {id:'t1',title:'Create your tracking bot',where:'Setup step 1',text:"Welcome to Joinvoo. First, let's make your tracking bot. It takes about one minute. Open Telegram and search for BotFather, the one with the blue tick. Tap Start, then send slash new bot. Give your bot any name, then a username that ends with the word bot. BotFather sends you a long token. Copy it, come back to Joinvoo, paste it in the box, and tap Connect. That's it. Your bot is ready."},
+ {id:'t2',title:'Add your bot to your channel',where:'Setup step 2',text:"Now add your bot to your channel. In Telegram, open your channel and tap its name. Tap Administrators, then Add Admin. Search for your bot and add it. Make sure \"Invite users via link\" is switched on, then tap Save. Come back to Joinvoo. It finds your channel by itself in a few seconds. If you want to track a bot instead of a channel, choose \"My bot\" and follow the same simple steps."},
+ {id:'t3',title:'Connect Meta',where:'Setup step 3 · Channel settings › Ad platforms',text:"Next, connect Meta, so every join is sent back to your ads. In Meta Events Manager, copy your Pixel ID. Then open Settings, find Conversions API, and generate an access token. Paste both into Joinvoo and tap Send test. When you see \"Test received\", you're done. Now copy your ad link from your channel card, and put it in your ad. Every join shows up in Meta, matched to the exact click."},
+ {id:'t4',title:'Track deposits with request-to-join',where:'Channel settings › Join method',text:"Want to see who deposits, not just who joins? Turn on request-to-join. Open your channel's Settings, then Join method. Pick who lets people in. Joinvoo can let them in instantly, and send your welcome message with your offer link. Or, if you already have your own welcome bot, choose \"My own bot\", and Joinvoo simply tracks. Keep the Telegram ID tag in your offer link, and every deposit is matched to the right person and the right ad."},
+ {id:'t5',title:'Send people from your own website',where:'Channel settings › Your own website',text:"Already have your own landing page? Keep it. Open your channel's Settings, then \"Your own website\". Choose when people go to Telegram: instantly, when they tap your button, or after a few seconds. Copy the one line of code, and paste it into your page. Visitors land on your page, then go straight into Telegram. And every join is still matched to the exact ad click."},
+ {id:'t6',title:'Use your own domain',where:'Channels › Your link domain',text:"You can run your ad links on your own domain, like go dot your brand dot com. Open Channels, then \"Your link domain\", and type your subdomain. Joinvoo shows you two records. Add them where you bought your domain, in your DNS settings. Then tap Check now. When it says Live, your new links use your own domain, and your old links keep working. Basic includes one domain. Pro gives you unlimited domains."},
+ {id:'t7',title:'Connect your own bot’s Start',where:'Bot settings › Bot start ping',text:"Sending your ads to your own bot, and you don't want to share its token? No problem. Open the bot's Settings, then \"Connect your bot's Start\". Copy the ready-made code for your bot, or the web address for no-code builders like ManyChat or SendPulse. Tap Send a test. Now, every time someone presses Start, your bot tells Joinvoo, and the join is matched to the exact ad."},
+ {id:'t8',title:'Add your team',where:'More › Team',text:"Working with a team? Open More, then Team, and tap Invite. Enter your buyer's email and pick a role. Managers see every channel. Buyers see only the channels you give them. Pro includes three team members, and you can add more any time. On Results, compare your buyers side by side, and see who brings you the cheapest deposits."},
+ {id:'t9',title:'Read your results',where:'Results',text:"Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report."},
+];
+function tutPlan(t){
+  const sents=(t.text.match(/[^.!?]+[.!?]+["”]?/g)||[t.text]).map(s=>s.trim()).filter(Boolean);
+  const w=sents.map(s=>s.split(/\s+/).length+1.6), W=w.reduce((a,b)=>a+b,0);
+  return {sents,w,W,secs:W/150*60};
+}
+const tutLen = id => { const t=TUT.find(x=>x.id===id); return t?Math.round(tutPlan(t).secs)+'s':''; };
+
+/* ---------- mini replicas of the real screens (virtual phone screen: 300 × 560) ---------- */
+const MI = (p,w=2) => sv(p,w);
+const M = {
+  sb: (dark) => `<div class="m-sb${dark?' dk':''}"><b>9:41</b><span class="m-sbi"><i></i><i></i><i></i><em></em></span></div>`,
+  top: (t,back) => `<div class="m-top">${back?`<span class="m-back">${I.chevl}</span>`:`<span class="m-logo">${I.mark}</span>`}<b>${t}</b><span class="m-ava"></span></div>`,
+  bb: on => `<div class="m-bb">${[['overview','Overview'],['channels','Channels'],['results','Results'],['joe','Joe'],['more','More']].map(([k,l])=>`<span class="m-bbi${k===on?' on':''}" data-t="nav-${k}">${I[k]}<small>${l}</small></span>`).join('')}</div>`,
+  btn: (t,l,c='') => `<span class="m-btn ${c}" data-t="${t}">${l}</span>`,
+  inp: (t,ph,v='',c='') => `<span class="m-inp ${c}${v?' has':''}" data-t="${t}"><span class="m-v">${v}</span><span class="m-ph">${ph}</span></span>`,
+  lab: l => `<span class="m-lab">${l}</span>`,
+  chip: (c,l,t='') => `<span class="m-chip ${c}" ${t?`data-t="${t}"`:''}>${l}</span>`,
+  sw: (t,on) => `<span class="m-sw${on?' on':''}" data-t="${t}"></span>`,
+  toast: (t,l) => `<span class="m-toast h" data-t="${t}">${I.checkc}${l}</span>`,
+  tg: (name,sub,ava,tick) => `<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tav" style="background:${ava||'#3390ec'}">${esc(name[0])}</span><span class="m-tn"><b>${esc(name)}${tick?`<i class="m-tick">${I.check}</i>`:''}</b><small>${sub}</small></span></div>`,
+  msg: (dir,h,t,hid) => `<div class="m-msg ${dir}${hid?' h':''}" ${t?`data-t="${t}"`:''}>${h}</div>`,
+  card: (h,c='',t='') => `<div class="m-card ${c}" ${t?`data-t="${t}"`:''}>${h}</div>`,
+  row: (ic,b,s,right='',t='',c='') => `<div class="m-row ${c}" ${t?`data-t="${t}"`:''}><span class="m-ric">${ic}</span><span class="m-rt"><b>${b}</b>${s?`<small>${s}</small>`:''}</span>${right}</div>`,
+  tabs: (on,list) => `<div class="m-tabs">${list.map(([k,l])=>`<span class="m-tab${k===on?' on':''}" data-t="tab-${k}">${l}</span>`).join('')}</div>`,
+  sheet: (h,sub,body) => `<div class="m-dim"></div><div class="m-sheet"><div class="m-shh"><b>${h}</b><small>${sub}</small><span class="m-x">${I.x}</span></div>${body}</div>`,
+  chcard: (name,link,i,extra='') => `<div class="m-card m-ch" data-t="card"><div class="m-cht"><span class="m-chi" style="background:${CH_GRAD[i||0]}">${esc(name.replace('@','')[0].toUpperCase())}</span><span class="m-rt"><b>${esc(name)}</b><small>${i===4?'Bot · no token':'Channel'}</small></span><span class="m-chip g">● Tracking</span></div>
+    <div class="m-code" data-t="link"><code>${link}</code><span class="m-btn p sm" data-t="copy">${I.copy} Copy</span></div><div class="m-chf"><span><b>${i===4?'14':'128'}</b> joins today</span><span class="m-pms">${pm('meta')}${pm('tiktok')}</span><span class="m-btn sm" data-t="set">${I.gear} Settings</span></div>${extra}</div>`,
+  person: (n,sub,ftd,t='',hid) => `<div class="m-pr${hid?' h':''}" ${t?`data-t="${t}"`:''}><span class="m-pav" style="${avStyle(n.length*7)}">${n[0]}</span><span class="m-rt"><b>${n}${ftd?` <em class="m-ftd">FTD ${ftd}</em>`:''}</b><small>${sub}</small></span></div>`,
+};
+const JV = (body, nav, title='Joinvoo', cls='') => `<div class="m-scr jv ${cls}">${M.sb()}${M.top(title)}<div class="m-body">${body}</div>${nav!==false?M.bb(nav):''}</div>`;
+const TG = (head, body, comp) => `<div class="m-scr tg">${M.sb()}${head}<div class="m-chat">${body}</div>${comp||''}</div>`;
+const csHead = (name,on,tabs) => `${M.sheet('Channel settings',name,`${M.tabs(on,tabs)}<div class="m-shb">`)}`;
+const CS_TABS = [['ads','Ad platforms'],['join','Join method'],['web','Your own website'],['domain','Domain']];
+const SCR = {
+  'jv-hello': () => JV(`<div class="m-hero"><span class="m-hlogo">${I.mark}</span><b>Let’s get you tracking</b><small>Three quick steps. Every join matched to the exact ad.</small></div>
+    <div class="m-card m-steps"><div class="m-st" data-t="st1"><span class="n">1</span>Make your tracking bot</div><div class="m-st"><span class="n">2</span>Add it to your channel</div><div class="m-st"><span class="n">3</span>Connect Meta</div></div>${M.btn('start','Start setup →','p wide')}`, false, 'Welcome'),
+  'jv-s1': () => JV(`<div class="m-prog"><i class="on">1</i><em></em><i>2</i><em></em><i>3</i></div><b class="m-h1">Make your tracking bot.</b>
+    <div class="m-card m-steps" data-t="howto"><div class="m-st"><span class="n">1</span>Open <b>@BotFather</b></div><div class="m-st"><span class="n">2</span>Send <code>/newbot</code></div><div class="m-st"><span class="n">3</span>Pick a username ending in <b>bot</b></div><div class="m-st"><span class="n">4</span>Paste the token below</div></div>
+    ${M.lab('Bot token')}${M.inp('tokinp','123456789:AAH4k…','','mono')}${M.btn('connect','Connect bot →','p wide')}`, false, 'Setup'),
+  'jv-s1ok': () => JV(`<div class="m-prog"><i class="ok">✓</i><em class="ok"></em><i class="on">2</i><em></em><i>3</i></div><div class="m-ok h" data-t="ok">${I.checkc}<span>@dailydeals_track_bot is connected</span></div>
+    <div class="m-hero sm"><span class="m-burst">${I.sparkles}</span><b>Your bot is ready</b><small>Next: add it to your channel.</small></div>${M.btn('next','Next: add to my channel →','p wide')}`, false, 'Setup'),
+  'tg-search': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgs">${M.inp('q','Search','','tgq')}</div><div class="m-chat lst"><div class="m-res h" data-t="res">${M.row(`<span class="m-tav" style="background:#3390ec">B</span>`,`BotFather <i class="m-tick">${I.check}</i>`,'bot · 4.1M users','', 'res1')}${M.row(`<span class="m-tav" style="background:#999">B</span>`,'BotFather_fake','bot','')}</div></div></div>`,
+  'tg-bf': () => TG(M.tg('BotFather','bot','#3390ec',1), `${M.msg('in','I can help you create and manage Telegram bots.','m1',1)}${M.msg('out','/newbot','m2',1)}${M.msg('in','Alright, a new bot. How are we going to call it?','m3',1)}${M.msg('out','Daily Deals Tracker','m4',1)}${M.msg('in','Good. Now choose a username. It must end in “bot”.','m5',1)}${M.msg('out','dailydeals_track_bot','m6',1)}${M.msg('in',`Done! Use this token to access the HTTP API:<code class="m-tok" data-t="tok">7712045533:AAHk3vZq…88xQw</code>`,'m7',1)}${M.toast('copied','Copied')}`,
+    `<div class="m-comp"><span class="m-btn tgb h" data-t="startbtn-w">START</span>${M.inp('comp','Message')}<span class="m-send" data-t="send">${I.send}</span></div><span class="m-startbar" data-t="startbtn">START</span>`),
+  'tg-chan-chat': () => TG(`<div class="m-tgh" data-t="head"><span class="m-back">${I.chevl}</span><span class="m-tav" style="background:${CH_GRAD[0]}">D</span><span class="m-tn"><b>Daily Deals Club</b><small>1,204 subscribers</small></span></div>`, `${M.msg('in post','🔥 Today’s deal: 40% off. Join the giveaway below!')}${M.msg('in post','Winners announced at 8pm 🎉')}`),
+  'tg-chan-info': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgi"><span class="m-back">${I.chevl}</span><span class="m-tav lg" style="background:${CH_GRAD[0]}">D</span><b>Daily Deals Club</b><small>channel · 1,204 subscribers</small></div><div class="m-tgl">${M.row(I.bell,'Notifications','On')}${M.row(I.shield,'Administrators','2','', 'admins')}${M.row(I.people,'Subscribers','1,204')}${M.row(I.link,'Invite links','4')}</div></div>`,
+  'tg-admins': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tn"><b>Administrators</b></span></div><div class="m-tgl">${M.row(`<span class="m-tav" style="background:#7c61ff">A</span>`,'Alex','Owner')}${M.row(`<span class="m-plus">${I.plus}</span>`,'<span class="m-blue">Add Admin</span>','','','addadm')}</div></div>`,
+  'tg-addadm': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tn"><b>Add Admin</b></span></div><div class="m-tgs">${M.inp('q','Search','','tgq')}</div><div class="m-tgl h" data-t="res">${M.row(`<span class="m-tav" style="background:#5b3df5">D</span>`,'Daily Deals Tracker','@dailydeals_track_bot · bot','', 'res1')}</div></div>`,
+  'tg-rights': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tn"><b>Admin rights</b><small>@dailydeals_track_bot</small></span><span class="m-blue m-done" data-t="save">Save</span></div><div class="m-tgl">${M.row('','Change channel info','',M.sw('',0))}${M.row('','Post messages','',M.sw('',0))}${M.row('','Delete messages','',M.sw('',0))}${M.row('','<b>Invite users via link</b>','',M.sw('invsw',1),'invite')}${M.row('','Manage live streams','',M.sw('',0))}</div></div>`,
+  'jv-s2': () => JV(`<div class="m-prog"><i class="ok">✓</i><em class="ok"></em><i class="on">2</i><em></em><i>3</i></div><b class="m-h1">What do you want to track?</b>
+    <div class="m-two"><span class="m-pick on" data-t="mch">${pm('tg')}<b>Channel or group</b></span><span class="m-pick" data-t="mbot">${I.bot}<b>My bot</b></span></div>
+    ${M.btn('add','Add to my channel →','p wide')}<div class="m-radar" data-t="radar"><span class="m-rr"><i></i><i></i></span><span><b>Waiting for Telegram…</b><small>Moves on by itself.</small></span></div><div class="m-ok h" data-t="found">${I.checkc}<span>Found Daily Deals Club</span></div>`, false, 'Setup'),
+  'jv-s3': () => JV(`<div class="m-prog"><i class="ok">✓</i><em class="ok"></em><i class="ok">✓</i><em class="ok"></em><i class="on">3</i></div><b class="m-h1">Tell your ads about every join.</b>
+    <div class="m-three"><span class="m-pick on" data-t="pmeta">${pm('meta')}<b>Meta</b></span><span class="m-pick">${pm('tiktok')}<b>TikTok</b></span><span class="m-pick">${pm('snap')}<b>Snap</b></span></div>
+    ${M.lab('Pixel ID')}${M.inp('px','1234567890123456','','mono')}${M.lab('Conversions API token')}${M.inp('tk','EAAG…','','mono')}${M.btn('send','Save and send a test →','p wide')}<div class="m-ok h" data-t="ok">${I.checkc}<span>Test received by Meta</span></div>`, false, 'Setup'),
+  'meta-ev': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Events Manager</b></div><div class="m-mtabs"><span class="on">Overview</span><span data-t="tabset">Settings</span></div>
+    <div class="m-body"><div class="m-card"><b>Daily Deals pixel</b><small class="m-mut">Dataset · Active</small><div class="m-pid" data-t="pid">${M.lab('Pixel ID')}<span class="m-code"><code>884210395527140</code><span class="m-ic" data-t="pcopy">${I.copy}</span></span></div></div>
+    <div class="m-card m-graph"><b>Events</b><span class="m-bars">${[30,48,36,60,52,70,64].map(h=>`<i style="height:${h}%"></i>`).join('')}</span></div>${M.toast('copied','Copied')}</div></div>`,
+  'meta-set': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Events Manager</b></div><div class="m-mtabs"><span>Overview</span><span class="on">Settings</span></div>
+    <div class="m-body"><div class="m-card" data-t="capi"><b>Conversions API</b><small class="m-mut">Send events from your server</small><span class="m-btn mb" data-t="gen">Generate access token</span><div class="m-code h" data-t="tok"><code>EAAGm0PX4ZCpsBAO…ZBq9</code><span class="m-ic">${I.copy}</span></div></div></div></div>`,
+  'jv-ch': () => JV(`<b class="m-h1">Channels</b>${M.chcard('Daily Deals Club','gojoinly.com/c/deals7Q',0)}${M.toast('copied','Ad link copied')}
+    <div class="m-card m-rowc" data-t="domrow">${M.row(I.globe,'Your link domain','Use your own, like go.yourbrand.com',`<span class="m-chev">${I.chevr}</span>`)}</div>`, 'channels', 'Channels'),
+  'jv-ch-brand': () => JV(`<b class="m-h1">Channels</b>${M.chcard('Daily Deals Club','<b>go.dailydeals.shop</b>/c/deals7Q',0)}
+    <div class="m-card m-rowc">${M.row(I.globe,'Your link domain','go.dailydeals.shop · <span class="m-g">Live</span>',`<span class="m-chev">${I.chevr}</span>`)}</div>`, 'channels', 'Channels'),
+  'ads-mgr': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Ads Manager</b><small>New ad</small></div><div class="m-body"><div class="m-card"><b>Destination</b>${M.lab('Website URL')}${M.inp('url','https://','','mono')}<small class="m-mut">Paste your Joinvoo ad link</small></div><div class="m-card m-adp"><span class="m-adimg"></span><b>Daily Deals Club</b><small class="m-mut">Join on Telegram</small><span class="m-btn mb">Learn more</span></div></div></div>`,
+  'meta-joins': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Events Manager</b></div><div class="m-body"><div class="m-card"><b>Subscribe</b><small class="m-mut">Server · Joinvoo</small><span class="m-big" data-t="cnt">128</span></div>
+    ${['Mia · Lookalike_1pct','Lucas · Spring_Sale_Broad','Aisha · Retarget_7d'].map((x,i)=>`<div class="m-ev h" data-t="e${i+1}">${I.checkc}<span><b>Subscribe</b><small>${x} · matched to click</small></span><em>now</em></div>`).join('')}</div></div>`,
+  'jv-cs-join': () => JV(`${M.chcard('Daily Deals Club','gojoinly.com/c/deals7Q',0)}${csHead('Daily Deals Club','ads',CS_TABS)}<div class="m-pane h" data-t="pane">
+    <div class="m-rowx">${M.row('','Ask people to request to join','So every deposit is matched',M.sw('jrsw',0))}</div><div class="m-aps" data-t="aps">
+    <span class="m-ap" data-t="ap1"><span class="m-rad"></span><b>Joinvoo lets them in</b><small>Instant + your welcome message</small></span>
+    <span class="m-ap" data-t="ap2"><span class="m-rad"></span><b>My own bot lets them in</b><small>Joinvoo only tracks</small></span></div>
+    <div class="m-msg in h" data-t="wel">Welcome 👋 Tap below to get today’s offer.<span class="m-tgbtn">Claim the offer</span></div><div class="m-ok h" data-t="trk">${I.checkc}<span>Joinvoo tracks every request</span></div></div></div></div>`, false, 'Channels'),
+  'jv-offer': () => JV(`<b class="m-h1">Join method</b><div class="m-card">${M.lab('Offer link')}<span class="m-inp has mono"><span class="m-v">partner.com/offer?sub1=<b class="m-tag" data-t="tgid">{tg_id}</b></span></span><small class="m-mut">Joinvoo swaps in each person’s Telegram ID, so their deposit comes back matched.</small></div>
+    <div class="m-msg in">Welcome 👋 Tap below to get today’s offer.<span class="m-tgbtn">Claim the offer</span></div>`, 'channels', 'Settings'),
+  'jv-person': () => JV(`${M.person('Lucas','Daily Deals Club · 🇺🇸 US','')}${M.sheet('Lucas Martin','Joined 2h ago',`<div class="m-shb"><div class="m-ftdc h" data-t="ftd">${I.coin}<span><b>First deposit · $120</b><small>Matched by Telegram ID · sent to Meta as Purchase</small></span></div>
+    <div class="m-kv" data-t="adrow"><span>Platform</span><b>${pm('meta')} Meta</b><span>Campaign</span><b>Lookalike_1pct</b><span>Ad</span><b>Hook_A_Video</b><span>Click</span><b class="mono">fb.1.1791…Qx</b></div></div>`)}`, 'results', 'Results'),
+  'site': () => `<div class="m-scr web">${M.sb()}<div class="m-url" data-t="url">${I.lock}<span>dailydeals.shop</span></div><div class="m-site" data-t="page"><span class="m-sl">DAILY DEALS</span><b>Today’s best deals, every day.</b><small>Join 12,000 smart shoppers on Telegram.</small><span class="m-sbtn" data-t="join">Join our Telegram</span><div class="m-simg"></div><div class="m-ok h" data-t="keep">${I.checkc}<span>Keep your page as it is</span></div></div></div>`,
+  'jv-cs-web': () => JV(`${M.chcard('Daily Deals Club','gojoinly.com/c/deals7Q',0)}${csHead('Daily Deals Club','ads',CS_TABS)}<div class="m-pane h" data-t="pane">${M.lab('Open Telegram')}
+    <div class="m-seg"><span class="on" data-t="m1">Instantly</span><span data-t="m2">On a button tap</span><span data-t="m3">After a delay</span></div>
+    <div class="m-codeb"><code class="c1">&lt;script src="https://gojoinly.com/r/deals7Q.js" async&gt;&lt;/script&gt;</code><code class="c2 h" data-t="code2">&lt;script src="https://gojoinly.com/r/deals7Q.js?mode=button" async&gt;&lt;/script&gt;</code>${M.btn('copy',`${I.copy} Copy`,'p sm')}</div>
+    <small class="m-mut">Put it in your page’s &lt;head&gt;.</small>${M.toast('copied','Copied')}</div></div></div>`, false, 'Channels'),
+  'site-code': () => `<div class="m-scr ed">${M.sb(1)}<div class="m-edh"><b>index.html</b></div><pre class="m-ed">&lt;head&gt;
+  &lt;title&gt;Daily Deals&lt;/title&gt;
+  <span data-t="line" class="m-edl">  </span><span class="m-paste h" data-t="paste">&lt;script src="https://gojoinly.com/r/deals7Q.js?mode=button" async&gt;&lt;/script&gt;</span>
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;button data-joinvoo&gt;Join our Telegram&lt;/button&gt;
+&lt;/body&gt;</pre></div>`,
+  'tg-joined': () => TG(`<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tav" style="background:${CH_GRAD[0]}">D</span><span class="m-tn"><b>Daily Deals Club</b><small>1,205 subscribers</small></span></div>`, `${M.msg('in post','🔥 Today’s deal: 40% off.')}<div class="m-sys">You joined this channel</div>`),
+  'jv-feed': () => JV(`<b class="m-h1">Just joined</b><div class="m-card">${M.person('Mia','Lookalike_1pct · from your website · now','','n1',1)}${M.person('Noah','Spring_Sale_Broad · 4m ago','')}${M.person('Aisha','Retarget_7d · 11m ago','$80')}</div>`, 'overview', 'Overview'),
+  'jv-dom': () => JV(`<b class="m-h1">Your link domain</b><div class="m-card">${M.inp('dinp','go.yourbrand.com')}${M.btn('add',`${I.plus} Add domain`,'p wide')}</div>
+    <div class="m-card h" data-t="recs"><div class="m-domt"><b>go.dailydeals.shop</b><span class="m-chip y h on" data-t="pend">Checking DNS</span><span class="m-chip g h" data-t="live">● Live</span></div><div class="m-rec"><span>CNAME</span><code>go</code><code>customers.gojoinly.com</code></div><div class="m-rec"><span>TXT</span><code>_joinvoo.go</code><code>joinvoo-verify=3f9a…</code></div>${M.btn('check',`${I.refresh} Check now`,'sm')}<span class="m-spin h" data-t="spin"></span></div>`, 'channels', 'Channels'),
+  'dns': () => `<div class="m-scr web">${M.sb()}<div class="m-url">${I.lock}<span>registrar.com/dns</span></div><div class="m-body"><b class="m-h1">DNS records · dailydeals.shop</b><div class="m-dns"><div class="m-dr hd"><span>Type</span><span>Name</span><span>Value</span></div><div class="m-dr"><span>A</span><span>@</span><span>76.76.21.21</span></div><div class="m-dr h nw" data-t="r1"><span>CNAME</span><span>go</span><span>customers.gojoinly.com</span></div><div class="m-dr h nw" data-t="r2"><span>TXT</span><span>_joinvoo.go</span><span>joinvoo-verify=3f9a…</span></div></div><span class="m-btn mb">Save changes</span></div></div>`,
+  'plans': () => JV(`<b class="m-h1">Link domains</b><div class="m-card m-plan" data-t="basic"><b>Basic</b><span class="m-big">1</span><small class="m-mut">link domain included</small></div><div class="m-card m-plan pro" data-t="pro"><b>Pro</b><span class="m-big">∞</span><small>unlimited link domains</small></div>`, 'more', 'Plans'),
+  'tg-bot': () => TG(M.tg('Recipe Box Help','bot','#e0609a'), `<div class="m-botintro"><b>Recipe Box Help</b><small>Daily recipes and cooking help.</small></div>${M.msg('in','Hi Mia 👋 Welcome to Recipe Box! Here’s today’s recipe.','m1',1)}`, `<span class="m-startbar" data-t="start">START</span>`),
+  'jv-ch-bot': () => JV(`<b class="m-h1">Channels</b>${M.chcard('@recipebox_help_bot','gojoinly.com/c/rcpBx',4)}`, 'channels', 'Channels'),
+  'jv-cs-ping': () => JV(`${M.chcard('@recipebox_help_bot','gojoinly.com/c/rcpBx',4)}${M.sheet('Channel settings','@recipebox_help_bot',`${M.tabs('ping',[['ads','Ad platforms'],['ping','Bot start ping'],['web','Your own website']])}<div class="m-shb">
+    <div class="m-seg"><span class="on" data-t="lang-node">Node.js</span><span>Python</span><span>PHP</span><span data-t="lang-nc">No-code</span></div>
+    <pre class="m-codeb pre h on" data-t="nodec">fetch(HOOK + '?tg_id=' + id
+  + '&amp;start=' + payload)</pre><div class="m-code h" data-t="nc"><code>gojoinly.com/hook/rcpBx/start?tg_id=…</code></div>
+    <div class="m-two">${M.btn('copycode',`${I.copy} Copy`,'sm')}${M.btn('test',`${I.bolt} Send a test`,'sm p')}</div>${M.toast('copied','Copied')}
+    <div class="m-ping h" data-t="ok"><i></i><span>Last ping just now · test</span><b>1 today</b></div></div>`)}`, false, 'Channels'),
+  'jv-feed-bot': () => JV(`<b class="m-h1">Just joined</b><div class="m-card">${M.person('Mia','@recipebox_help_bot · TT_Spark_Creators · now','','n1',1)}${M.person('Leo','@recipebox_help_bot · Lookalike_1pct · 6m ago','')}</div>`, 'overview', 'Overview'),
+  'jv-ov': () => JV(`<div class="m-stl"><i></i>Tracking live · 4 channels · <b>128</b> joins today</div><div class="m-k4">${[['Joins from ads','1,284','lilac'],['Deposits','96','mint'],['Cost per deposit','$18.40','cream'],['Revenue','$9,120','sky']].map(([l,v,t])=>`<span class="m-k t-${t}"><small>${l}</small><b>${v}</b></span>`).join('')}</div>
+    <div class="m-card m-next"><small>WHAT TO DO NEXT</small><b>Get this summary every morning</b><span class="m-btn p sm">Turn it on →</span></div>`, 'overview', 'Overview'),
+  'jv-more': () => JV(`<b class="m-h1">More</b><div class="m-card m-list">${M.row(I.team,'Team','Invite media buyers and managers',`<span class="m-chev">${I.chevr}</span>`,'team')}${M.row(I.report,'Daily report','Yesterday’s numbers in Telegram',`<span class="m-chev">${I.chevr}</span>`,'report')}${M.row(I.wallet,'Credits & billing','Top up, plan',`<span class="m-chev">${I.chevr}</span>`)}${M.row(I.play,'Help & tutorials','Short videos',`<span class="m-chev">${I.chevr}</span>`)}</div>`, 'more', 'More'),
+  'jv-team': () => JV(`<b class="m-h1">Team</b><div class="m-card m-seat"><b>1 of 3 seats</b><small class="m-mut">$5/mo per extra seat</small>${M.btn('invite',`${I.plus} Invite`,'p sm')}<span class="m-bar"><i style="width:33%"></i></span></div><div class="m-card">${M.person('Mia','mia@studio.co · All channels','')}</div>`, 'more', 'Team'),
+  'jv-team2': () => JV(`<b class="m-h1">Team</b><div class="m-card m-seat" data-t="seats"><b>2 of 3 seats</b><small class="m-mut">$5/mo per extra seat</small>${M.btn('',`${I.plus} Invite`,'p sm')}<span class="m-bar"><i style="width:66%"></i></span></div><div class="m-card">${M.person('Mia','Manager · All channels','')}${M.person('Ben','Media buyer · Fit in 30 · Invited','')}</div>`, 'more', 'Team'),
+  'jv-invite': () => JV(`<div class="m-card">${M.person('Mia','mia@studio.co','')}</div>${M.sheet('Invite to your team','1 of 3 seats used',`<div class="m-shb">${M.lab('Their email')}${M.inp('email','buyer@example.com')}${M.lab('Role')}<div class="m-aps" data-t="roles">
+    <span class="m-ap on" data-t="rb"><span class="m-rad"></span><b>Media buyer</b><small>Sees only the channels you pick</small></span><span class="m-ap" data-t="rm"><span class="m-rad"></span><b>Manager</b><small>Sees every channel. Never billing.</small></span></div>
+    <div class="m-chs h" data-t="chs"><span class="m-cp" data-t="ch1">Fit in 30</span><span class="m-cp">Daily Deals Club</span><span class="m-cp">Creator Studio</span></div>${M.btn('send','Send invite','p wide')}</div>`)}`, false, 'Team'),
+  'jv-lb': () => JV(`<b class="m-h1">Results</b>${M.tabs('team',[['sum','Summary'],['people','People'],['team','Team']])}<div class="m-card m-lb">${[['Ben','Media buyer',412,31,'$14.20',1],['Alex','Owner',590,38,'$18.90'],['Mia','Manager',282,19,'$22.60']].map(([n,r,j,d,c,b])=>`<div class="m-lbr${b?' best':''}" ${b?'data-t="best"':''}><span class="m-pav" style="${avStyle(n.length*9)}">${n[0]}</span><span class="m-rt"><b>${n}${b?' <em class="m-chip g">Cheapest</em>':''}</b><small>${r} · ${j} joins · ${d} dep.</small></span><b class="m-cpf">${c}</b></div>`).join('')}</div>`, 'results', 'Results'),
+  'jv-res': () => JV(`${M.tabs('sum',[['sum','Summary'],['people','People'],['camp','Campaigns'],['dep','Deposits']])}<div class="m-k4">${[['Joins from ads','1,284','lilac','k1'],['Deposits','96','mint','k2'],['Cost per deposit','$18.40','cream','k3'],['Revenue','$9,120','sky','k4']].map(([l,v,t,k])=>`<span class="m-k t-${t}" data-t="${k}"><small>${l}</small><b>${v}</b></span>`).join('')}</div>
+    <div class="m-card m-spc"><b>Ad spend</b>${M.btn('addsp',`${I.plus} Add spend`,'sm')}<small class="m-mut">Add spend to see cost per join and ROAS</small></div>`, 'results', 'Results'),
+  'jv-spend': () => JV(`<div class="m-k4">${[['Joins from ads','1,284','lilac'],['Deposits','96','mint']].map(([l,v,t])=>`<span class="m-k t-${t}"><small>${l}</small><b>${v}</b></span>`).join('')}</div>${M.sheet('Ad spend','Cost per join, cost per deposit and ROAS',`<div class="m-shb">${M.lab('Campaign')}<span class="m-inp has"><span class="m-v">Lookalike_1pct</span></span>${M.lab('Amount (USD)')}${M.inp('amt','120.50')}${M.btn('save',`${I.plus} Add spend`,'p wide')}
+    <div class="m-calc h" data-t="calc"><span><small>Per join</small><b>$0.33</b></span><span><small>Per deposit</small><b>$4.38</b></span><span><small>ROAS</small><b>2.17×</b></span></div><div class="m-card m-metas"><span>${pm('meta')} Connect Meta ad account</span><em class="m-chip">Coming soon</em></div></div>`)}`, false, 'Results'),
+  'jv-people': () => JV(`${M.tabs('people',[['sum','Summary'],['people','People'],['camp','Campaigns']])}<div class="m-card">${M.person('Lucas','Lookalike_1pct · 🇺🇸 · 2h ago','$120','p1')}${M.person('Sofia','TT_Spark_Creators · 🇬🇧 · 3h ago','')}${M.person('Noah','Spring_Sale_Broad · 🇩🇪 · 5h ago','$50')}${M.person('Yuki','Snap_Story_Promo · 🇯🇵 · 6h ago','')}</div>`, 'results', 'Results'),
+  'tg-report': () => TG(M.tg('Joinvoo Alerts','bot','#5b3df5'), `${M.msg('in rep h',`📊 <b>Joinvoo daily report · Mon 5 Oct</b><br><br>👥 Joins: <b>1,284</b> ↑12%<br>💰 Deposits: <b>96</b> ↑8%<br>💵 Revenue: <b>$9,120</b> ↑15%<br>📉 Spend: <b>$1,766</b> ↓3%<br>🏦 Cost per deposit: <b>$18.40</b><br><br>🏆 Best channel: <b>Daily Deals Club</b>`,'msg')}`),
+  'jv-report': () => JV(`<b class="m-h1">Daily report</b><div class="m-card">${M.row('','Send me a daily report','Every morning at 08:00',M.sw('sw',0))}${M.row(I.report,'Telegram linked','Joinvoo alert bot','')}</div><div class="m-msg in rep">📊 <b>Joinvoo daily report</b><br>👥 Joins: <b>1,284</b> ↑12%<br>💰 Deposits: <b>96</b> ↑8%</div>`, 'more', 'More'),
+};
+const BEATS = {
+  t1:{poster:'tg-bf',b:[
+    {s:'jv-hello',a:[[.35,'hl','st1']]},{a:[[.55,'tap','start']]},{s:'jv-s1',a:[[.3,'hl','howto']]},
+    {s:'tg-search',a:[[.12,'tap','q'],[.2,'type','q','BotFather'],[.55,'on','res'],[.72,'hl','res1'],[.9,'tap','res1']]},
+    {s:'tg-bf',a:[[.1,'tap','startbtn'],[.22,'on','m1'],[.4,'type','comp','/newbot'],[.72,'tap','send'],[.78,'on','m2'],[.78,'type0','comp'],[.92,'on','m3']]},
+    {a:[[.15,'on','m4'],[.42,'on','m5'],[.75,'on','m6']]},{a:[[.2,'on','m7'],[.55,'hl','tok']]},
+    {a:[[.06,'tap','tok'],[.14,'on','copied'],[.3,'screen','jv-s1'],[.42,'tap','tokinp'],[.48,'type','tokinp','7712045533:AAHk3vZq…88xQw'],[.88,'tap','connect']]},
+    {s:'jv-s1ok',a:[[.05,'on','ok']]},{a:[[.3,'hl','next']]}]},
+  t2:{poster:'tg-rights',b:[
+    {s:'jv-s2',a:[[.4,'hl','add']]},
+    {s:'tg-chan-chat',a:[[.55,'tap','head'],[.82,'screen','tg-chan-info']]},
+    {a:[[.15,'tap','admins'],[.4,'screen','tg-admins'],[.72,'tap','addadm']]},
+    {s:'tg-addadm',a:[[.1,'tap','q'],[.15,'type','q','dailydeals_track'],[.55,'on','res'],[.72,'tap','res1'],[.9,'screen','tg-rights']]},
+    {a:[[.12,'hl','invite'],[.82,'tap','save']]},
+    {s:'jv-s2',a:[[.3,'hl','radar']]},{a:[[.45,'on','found'],[.5,'hl','found']]},
+    {s:'jv-s2',a:[[.45,'tap','mbot'],[.5,'on','mbot'],[.5,'off','mch'],[.6,'hl','mbot']]}]},
+  t3:{poster:'meta-ev',b:[
+    {s:'jv-s3',a:[[.4,'hl','pmeta']]},
+    {s:'meta-ev',a:[[.3,'hl','pid'],[.65,'tap','pcopy'],[.75,'on','copied']]},
+    {a:[[.08,'tap','tabset'],[.22,'screen','meta-set'],[.4,'hl','capi'],[.65,'tap','gen'],[.8,'on','tok']]},
+    {s:'jv-s3',a:[[.06,'tap','px'],[.1,'type','px','884210395527140'],[.42,'tap','tk'],[.46,'type','tk','EAAGm0PX4ZCpsBAO…ZBq9'],[.86,'tap','send']]},
+    {a:[[.1,'on','ok'],[.3,'hl','ok']]},
+    {s:'jv-ch',a:[[.15,'tap','copy'],[.25,'on','copied'],[.48,'screen','ads-mgr'],[.62,'tap','url'],[.68,'type','url','https://gojoinly.com/c/deals7Q']]},
+    {s:'meta-joins',a:[[.12,'on','e1'],[.35,'on','e2'],[.58,'on','e3'],[.78,'hl','cnt']]}]},
+  t4:{poster:'jv-person',b:[
+    {s:'jv-ch',a:[[.4,'hl','card']]},{a:[[.4,'hl','set']]},
+    {a:[[.08,'tap','set'],[.28,'screen','jv-cs-join'],[.5,'tap','tab-join'],[.56,'on','tab-join'],[.56,'off','tab-ads'],[.6,'on','pane'],[.85,'tap','jrsw'],[.9,'on','jrsw']]},
+    {a:[[.3,'hl','aps']]},
+    {a:[[.12,'tap','ap1'],[.18,'on','ap1'],[.45,'on','wel']]},
+    {a:[[.38,'tap','ap2'],[.44,'on','ap2'],[.44,'off','ap1'],[.48,'off','wel'],[.58,'on','trk']]},
+    {s:'jv-offer',a:[[.15,'hl','tgid'],[.5,'screen','jv-person'],[.62,'on','ftd'],[.75,'hl','ftd']]}]},
+  t5:{poster:'site',b:[
+    {s:'site',a:[[.35,'hl','page']]},{a:[[.2,'on','keep']]},
+    {s:'jv-cs-web',a:[[.12,'tap','set'],[.4,'tap','tab-web'],[.46,'on','tab-web'],[.46,'off','tab-ads'],[.5,'on','pane']]},
+    {a:[[.12,'hl','m1'],[.42,'tap','m2'],[.48,'on','m2'],[.48,'off','m1'],[.5,'on','code2'],[.75,'hl','code2']]},
+    {a:[[.1,'tap','copy'],[.18,'on','copied'],[.38,'screen','site-code'],[.55,'tap','line'],[.65,'on','paste']]},
+    {s:'site',a:[[.32,'tap','join'],[.58,'screen','tg-joined']]},
+    {s:'jv-feed',a:[[.15,'on','n1'],[.45,'hl','n1']]}]},
+  t6:{poster:'jv-ch-brand',b:[
+    {s:'jv-ch-brand',a:[[.55,'hl','link']]},
+    {s:'jv-ch',a:[[.1,'tap','nav-channels'],[.38,'tap','domrow'],[.55,'screen','jv-dom'],[.66,'tap','dinp'],[.7,'type','dinp','go.dailydeals.shop']]},
+    {a:[[.06,'tap','add'],[.2,'on','recs'],[.45,'hl','recs']]},
+    {s:'dns',a:[[.3,'on','r1'],[.6,'on','r2']]},
+    {s:'jv-dom',a:[[0,'type','dinp','go.dailydeals.shop',1],[0,'on','recs'],[.45,'tap','check'],[.55,'on','spin']]},
+    {a:[[.08,'off','spin'],[.08,'off','pend'],[.1,'on','live'],[.25,'hl','live'],[.6,'screen','jv-ch-brand'],[.7,'hl','link']]},
+    {s:'plans',a:[[.25,'hl','basic']]},{a:[[.25,'hl','pro']]}]},
+  t7:{poster:'jv-cs-ping',b:[
+    {s:'tg-bot',a:[[.5,'hl','start']]},{s:'jv-ch-bot',a:[[.3,'hl','card']]},
+    {a:[[.12,'tap','set'],[.35,'screen','jv-cs-ping'],[.6,'hl','tab-ping']]},
+    {a:[[.12,'tap','copycode'],[.2,'on','copied'],[.5,'tap','lang-nc'],[.56,'on','lang-nc'],[.56,'off','lang-node'],[.56,'off','nodec'],[.58,'on','nc'],[.8,'hl','nc']]},
+    {a:[[.35,'tap','test'],[.62,'on','ok']]},
+    {s:'tg-bot',a:[[.18,'tap','start'],[.32,'on','m1'],[.6,'screen','jv-feed-bot'],[.68,'on','n1'],[.8,'hl','n1']]}]},
+  t8:{poster:'jv-team2',b:[
+    {s:'jv-ov'},
+    {a:[[.08,'tap','nav-more'],[.22,'screen','jv-more'],[.45,'tap','team'],[.6,'screen','jv-team'],[.86,'tap','invite']]},
+    {s:'jv-invite',a:[[.06,'tap','email'],[.12,'type','email','ben@buyers.io'],[.65,'hl','roles']]},
+    {a:[[.15,'tap','rm'],[.22,'on','rm'],[.22,'off','rb'],[.45,'hl','rm']]},
+    {a:[[.12,'tap','rb'],[.18,'on','rb'],[.18,'off','rm'],[.22,'on','chs'],[.52,'tap','ch1'],[.58,'on','ch1']]},
+    {s:'jv-team2',a:[[.3,'hl','seats']]},
+    {a:[[.08,'tap','nav-results'],[.22,'screen','jv-lb'],[.55,'hl','best']]}]},
+  t9:{poster:'jv-res',b:[
+    {s:'jv-ov'},{a:[[.3,'tap','nav-results'],[.55,'screen','jv-res']]},
+    {a:[[.1,'hl','k1'],[.4,'hl','k2'],[.7,'hl','k3']]},
+    {a:[[.12,'tap','addsp'],[.28,'screen','jv-spend'],[.38,'tap','amt'],[.42,'type','amt','420.00'],[.68,'tap','save'],[.8,'on','calc']]},
+    {s:'jv-people',a:[[.32,'tap','p1'],[.52,'screen','jv-person'],[.6,'on','ftd'],[.72,'hl','adrow']]},
+    {s:'tg-report',a:[[.2,'on','msg']]},
+    {s:'jv-more',a:[[.3,'tap','report'],[.48,'screen','jv-report'],[.72,'tap','sw'],[.78,'on','sw']]}]},
+};
+function tutPoster(id){ const b=BEATS[id]; const h=(SCR[b&&b.poster]||SCR['jv-ov'])().replace(/(class="[^"]*)\bh\b/g,'$1h on'); return `<span class="tv-vp poster m-all">${h}</span>`; }
+
+/* ---------- the player ---------- */
+let TP=null;
+const fmtT = s => { s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+function tutOpen(id){
+  const t=TUT.find(x=>x.id===id); if(!t) return; if (TP) tutClose(true);
+  closePop(); const plan=tutPlan(t), opener=document.activeElement;
+  document.body.insertAdjacentHTML('beforeend', `<div class="tvp" role="dialog" aria-modal="true" aria-label="${esc(t.title)}"><div class="tv-scrim" data-act="tut-close"></div>
+    <div class="tv"><div class="tv-top"><span class="tv-eb">${I.play}${tt('tut.eb','Tutorial')}</span><b class="tv-title">${esc(tt('tut.'+t.id,t.title))}</b><button class="tv-x" data-act="tut-close" aria-label="${esc(tt('common.close','Close'))}">${I.x}</button></div>
+      <div class="tv-stage" id="tvs"><div class="tv-side"><span class="tv-mk">${I.mark}<b>Joinvoo</b></span><b class="tv-h">${esc(tt('tut.'+t.id,t.title))}</b><span class="tv-where">${esc(t.where)}</span><span class="tv-chap" id="tvchap"></span></div>
+        <div class="tv-devbox" id="tvdb"><div class="tv-dev" id="tvdev"><div class="tv-vp" id="tvvp"></div></div></div>
+        <span class="tv-finger" id="tvf" aria-hidden="true"><i></i></span>
+        <button class="tv-big" data-act="tut-toggle" aria-label="${esc(tt('tut.play','Play'))}">${I.play}</button>
+        <div class="tv-end" id="tvend" hidden><button class="btn" data-act="tut-replay">${I.refresh} ${tt('tut.replay','Watch again')}</button><button class="btn primary" data-act="tut-close">${tt('common.done','Done')}</button></div></div>
+      <div class="tv-cap" id="tvcap" aria-live="polite"></div>
+      <div class="tv-ctl"><button class="tv-pp" data-act="tut-toggle" aria-label="${esc(tt('tut.play','Play'))}">${I.play}</button>
+        <div class="tv-bar" id="tvbar" role="slider" tabindex="0" aria-label="${esc(tt('tut.seek','Seek'))}" aria-valuemin="0"><div class="tv-track"><i class="tv-fill" id="tvfill"></i></div><span class="tv-dots" id="tvdots"></span><span class="tv-knob" id="tvknob"></span></div>
+        <span class="tv-time num" id="tvtime">0:00</span><span class="tv-cc" id="tvcc" hidden title="${esc(tt('tut.cc.t','No voice-over yet. Captions only.'))}">${I.mute}<span>${tt('tut.cc','Captions')}</span></span><button class="tv-rate" data-act="tut-rate" aria-label="${esc(tt('tut.speed','Speed'))}">1×</button></div></div></div>`);
+  document.body.style.overflow='hidden';
+  const P=TP={id, t:0, D:plan.secs, mode:null, playing:false, want:true, rate:1, plan, cur:-1, done:new Set(), typing:[], opener, last:performance.now(), raf:0, screen:null, seek:true};
+  P.root=$('.tvp'); P.vp=$('#tvvp'); P.stage=$('#tvs'); P.f=$('#tvf');
+  tutStarts(); tutFit(); addEventListener('resize', tutFit);
+  /* voice-over if it exists, else captions on a timer */
+  const a=P.audio=new Audio(); a.preload='auto';
+  const done=m=>{ if(TP!==P||P.mode) return; P.mode=m; if(m==='audio'&&isFinite(a.duration)&&a.duration>3){ P.D=a.duration; } else { P.mode='timer'; } tutStarts(); $('#tvcc').hidden=P.mode!=='timer'; if(P.want) tutPlay(); };
+  a.addEventListener('loadedmetadata',()=>done('audio')); a.addEventListener('error',()=>done('timer')); a.addEventListener('ended',()=>{ if(TP===P) tutEnd(); });
+  a.src=(DEMO?'':'/')+'media/tutorials/'+id+'.mp3';
+  setTimeout(()=>done('timer'), 2500);
+  P.raf=requestAnimationFrame(tutTick);
+  $('.tv-x').focus({preventScroll:true});
+  tutBarBind();
+}
+function tutStarts(){ const P=TP; let c=0; P.starts=P.plan.w.map(w=>{ const s=c; c+=w; return s/P.plan.W*P.D; });
+  const d=$('#tvdots'); if(d) d.innerHTML=P.starts.slice(1).map(s=>`<i style="left:${s/P.D*100}%"></i>`).join(''); const b=$('#tvbar'); if(b) b.setAttribute('aria-valuemax',Math.round(P.D)); }
+function tutFit(){
+  const P=TP; if(!P) return; const db=$('#tvdb'), dev=$('#tvdev'); if(!db||!dev) return;
+  const cs=getComputedStyle(db), H=db.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom), k=Math.max(.3,Math.min(H/560, db.clientWidth*.92/300)); dev.style.setProperty('--k', k.toFixed(4)); dev.style.width=(300*k)+'px'; dev.style.height=(560*k)+'px';
+  if (P.fingerEl) tutFinger(P.fingerEl, true);
+}
+function tutPlay(){
+  const P=TP; if(!P) return; P.want=true; $('#tvend').hidden=true;
+  if (P.t>=P.D-.05) tutSeek(0);
+  if (!P.mode){ tutUI(); return; }
+  if (P.mode==='audio'){ P.audio.playbackRate=P.rate; P.audio.play().then(()=>{ P.playing=true; tutUI(); }).catch(()=>{ P.mode='timer'; $('#tvcc').hidden=false; P.D=P.plan.secs; tutStarts(); P.playing=true; tutUI(); }); return; }
+  P.playing=true; P.last=performance.now(); tutUI();
+}
+function tutPause(){ const P=TP; if(!P) return; P.want=false; P.playing=false; if(P.mode==='audio') P.audio.pause(); tutUI(); }
+function tutUI(){ const P=TP; if(!P) return; const on=P.playing||(P.want&&!P.mode); P.root.classList.toggle('playing',on); $$('.tvp [data-act="tut-toggle"]').forEach(b=>{ b.innerHTML=on?I.pause:I.play; b.setAttribute('aria-label',on?tt('tut.pause','Pause'):tt('tut.play','Play')); }); }
+function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); }
+function tutSeek(t){ const P=TP; if(!P) return; P.t=Math.max(0,Math.min(P.D,t)); if(P.mode==='audio'){ try{ P.audio.currentTime=P.t; }catch{} } P.cur=-1; P.seek=true; $('#tvend').hidden=P.t<P.D-.05; tutUpdate(); }
+function tutClose(quick){
+  const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
+  try{ P.audio.pause(); P.audio.removeAttribute('src'); P.audio.load(); }catch{}
+  const r=P.root; if (quick||reduced) r.remove(); else { r.classList.add('out'); setTimeout(()=>r.remove(),220); }
+  if (!$('.sheet')) document.body.style.overflow='';
+  try{ P.opener && P.opener.focus && P.opener.focus({preventScroll:true}); }catch{}
+}
+function tutTick(now){
+  const P=TP; if(!P) return; const dt=Math.min(.1,(now-P.last)/1000); P.last=now;
+  if (P.playing){ if (P.mode==='audio'){ P.t=P.audio.currentTime; } else { P.t=Math.min(P.D,P.t+dt*P.rate); if(P.t>=P.D){ tutEnd(); } } }
+  tutUpdate();
+  P.raf=requestAnimationFrame(tutTick);
+}
+const sentAt = t => { const s=TP.starts; let i=0; while(i+1<s.length && s[i+1]<=t+1e-6) i++; return i; };
+const beatsOf = id => (BEATS[id]&&BEATS[id].b)||[];
+function absAt(i, frac){ const P=TP, s=P.starts[i], e=i+1<P.starts.length?P.starts[i+1]:P.D; return s+(e-s)*frac; }
+function tutUpdate(){
+  const P=TP; if(!P) return; const B=beatsOf(P.id), i=sentAt(P.t);
+  if (i!==P.cur){
+    if (!P.seek && i===P.cur+1){ tutFlush(P.cur); const b=B[i]; if (b&&b.s&&b.s!==P.screen) tutScreen(b.s,false); P.done=new Set(); }
+    else tutRebuild(i);
+    P.cur=i; P.seek=false; tutCap(i,true);
+  }
+  const b=B[i]; if (b&&b.a) b.a.forEach((x,k)=>{ if(!P.done.has(k) && absAt(i,x[0])<=P.t){ P.done.add(k); tutDo(x,false,i); } });
+  /* typing */
+  P.typing=P.typing.filter(j=>{ const p=Math.min(1,Math.max(0,(P.t-j.t0)/j.d)); tutSetText(j.el, j.txt.slice(0,Math.round(j.txt.length*p))); if(p>=1){ j.el.classList.remove('typing'); return false; } return true; });
+  /* captions + bar */
+  tutCap(i,false);
+  const pc=P.D?P.t/P.D*100:0; $('#tvfill').style.width=pc+'%'; $('#tvknob').style.left=pc+'%'; $('#tvtime').textContent=fmtT(P.t)+' / '+fmtT(P.D); const bar=$('#tvbar'); if(bar) bar.setAttribute('aria-valuenow',Math.round(P.t));
+}
+function tutFlush(i){ const P=TP, b=beatsOf(P.id)[i]; if(!b||!b.a) return; b.a.forEach((x,k)=>{ if(!P.done.has(k)){ P.done.add(k); tutDo(x,true,i); } }); P.typing.forEach(j=>{ tutSetText(j.el,j.txt); j.el.classList.remove('typing'); }); P.typing=[]; }
+function tutRebuild(i){
+  const P=TP, B=beatsOf(P.id); let j=i; while(j>0 && !(B[j]&&B[j].s)) j--;
+  P.typing=[]; tutScreen((B[j]&&B[j].s)||'jv-ov', true); P.done=new Set();
+  for (let k=j;k<=i;k++){ const b=B[k]; if(!b||!b.a) continue; b.a.forEach((x,n)=>{ if (k<i || absAt(k,x[0])<=P.t){ tutDo(x,true,k); if(k===i) P.done.add(n); } }); }
+  if (!P.fingerEl && P.f) P.f.classList.remove('on');
+}
+function tutScreen(name, instant){
+  const P=TP, fn=SCR[name]; if(!fn) return; P.screen=name;
+  if (instant||reduced){ P.vp.innerHTML=`<div class="tv-scr">${fn()}</div>`; }
+  else { $$('.tv-scr',P.vp).forEach(o=>{ o.classList.add('old'); o.querySelectorAll('[data-t]').forEach(x=>x.removeAttribute('data-t')); setTimeout(()=>o.remove(),420); }); P.vp.insertAdjacentHTML('beforeend',`<div class="tv-scr in">${fn()}</div>`); }
+  P.fingerEl=null;
+}
+const tgt = n => TP && TP.vp.querySelector(`[data-t="${n}"]`);
+function tutSetText(el, s){ const v=el.querySelector('.m-v')||el; v.textContent=s; el.classList.toggle('has',!!s); if (v.scrollWidth>v.clientWidth) v.scrollLeft=v.scrollWidth; }
+function tutDo(x, instant, i){
+  const P=TP, [at,op,n,arg,force]=x; instant=instant||reduced;
+  if (op==='screen'){ tutScreen(n, instant); return; }
+  const el=tgt(n); if(!el) return;
+  if (op==='on') el.classList.add('on');
+  else if (op==='off') el.classList.remove('on');
+  else if (op==='hl'){ $$('.hl',P.vp).forEach(e=>e.classList.remove('hl')); el.classList.add('hl'); if(!instant) tutFinger(el,false,true); }
+  else if (op==='type0') tutSetText(el,'');
+  else if (op==='type'){ if (instant||force) tutSetText(el, arg); else { el.classList.add('typing'); const e=i+1<P.starts.length?P.starts[i+1]:P.D; P.typing.push({el, txt:arg, t0:absAt(i,at), d:Math.max(.4,Math.min(arg.length/15, (e-absAt(i,at))*.8))}); } }
+  else if (op==='tap'||op==='move'){ tutFinger(el, instant); if (op==='tap' && !instant){ setTimeout(()=>{ if(TP!==P||!el.isConnected) return; el.classList.add('pressed'); tutRipple(); setTimeout(()=>el.classList.remove('pressed'),260); }, 420); } }
+}
+function tutFinger(el, instant, soft){
+  const P=TP; if(!P||!P.f||!el||!el.isConnected) return; const sr=P.stage.getBoundingClientRect(), r=el.getBoundingClientRect();
+  const x=r.left-sr.left+Math.min(r.width/2, r.width-14), y=r.top-sr.top+r.height/2;
+  if (soft && P.f.classList.contains('on')) return; /* a highlight doesn't drag the finger around */
+  P.fingerEl=el; P.f.classList.toggle('jump', !!instant); P.f.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; P.f.classList.add('on');
+  if (instant) requestAnimationFrame(()=>P.f&&P.f.classList.remove('jump'));
+}
+function tutRipple(){ const P=TP; if(!P||reduced) return; const r=document.createElement('span'); r.className='tv-rip'; r.style.transform=P.f.style.transform; P.stage.appendChild(r); setTimeout(()=>r.remove(),650); }
+function tutCap(i, fresh){
+  const P=TP, el=$('#tvcap'); if(!el) return; const s=P.plan.sents[i]||'';
+  if (fresh || el.dataset.i!==String(i)){ el.dataset.i=i; el.innerHTML=s.split(/\s+/).map(w=>`<span>${esc(w)}</span> `).join(''); const ch=$('#tvchap'); if(ch) ch.textContent=tt('tut.step','Step {a} of {b}',{a:i+1,b:P.plan.sents.length}); }
+  const e=i+1<P.starts.length?P.starts[i+1]:P.D, f=Math.max(0,Math.min(1,(P.t-P.starts[i])/Math.max(.1,e-P.starts[i]))), ws=el.children, n=Math.ceil(ws.length*f);
+  for (let k=0;k<ws.length;k++) ws[k].classList.toggle('sp', k<n);
+}
+function tutBarBind(){
+  const bar=$('#tvbar'); if(!bar) return; let drag=false;
+  const at=e=>{ const r=bar.getBoundingClientRect(); return (Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)))*TP.D; };
+  bar.addEventListener('pointerdown',e=>{ if(!TP) return; drag=true; try{ bar.setPointerCapture(e.pointerId); }catch{} tutSeek(at(e)); });
+  bar.addEventListener('pointermove',e=>{ if(drag&&TP) tutSeek(at(e)); });
+  const up=()=>{ drag=false; }; bar.addEventListener('pointerup',up); bar.addEventListener('pointercancel',up);
+  bar.addEventListener('keydown',e=>{ if(!TP) return; if(e.key==='ArrowRight'){ e.preventDefault(); tutSeek(TP.t+5); } if(e.key==='ArrowLeft'){ e.preventDefault(); tutSeek(TP.t-5); } });
+}
+document.addEventListener('keydown', e=>{
+  if (!TP) return;
+  if (e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); tutClose(); return; }
+  if (e.key===' ' && !/BUTTON|INPUT|TEXTAREA/.test((e.target&&e.target.tagName)||'')){ e.preventDefault(); TP.playing||TP.want&&!TP.mode?tutPause():tutPlay(); }
+  if (e.key==='Tab'){ const f=$$('.tvp button, .tvp [tabindex="0"]').filter(x=>!x.closest('[hidden]')&&x.offsetParent); if(!f.length) return; const a=f[0], z=f[f.length-1]; if(e.shiftKey&&document.activeElement===a){ e.preventDefault(); z.focus(); } else if(!e.shiftKey&&document.activeElement===z){ e.preventDefault(); a.focus(); } }
+}, true);
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'tut': e.preventDefault(); tutOpen(a.dataset.v); break;
+    case 'tut-close': tutClose(); break;
+    case 'tut-toggle': if(TP){ (TP.playing||(TP.want&&!TP.mode))?tutPause():tutPlay(); } break;
+    case 'tut-replay': if(TP){ tutSeek(0); tutPlay(); } break;
+    case 'tut-rate': if(TP){ TP.rate=TP.rate===1?1.25:1; a.textContent=TP.rate===1?'1×':'1.25×'; if(TP.mode==='audio') TP.audio.playbackRate=TP.rate; } break;
+  }
+});
+/* closing any sheet forgets which channel's settings were open */
+const closeSheet0 = closeSheet;
+closeSheet = function(){ closeSheet0(); S.cs=null; S.side=null; S.csJrOpen=false; };

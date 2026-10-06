@@ -24,6 +24,8 @@ const POOL_SIZE = +env.POOL_SIZE || 200;              // ready links kept per ch
 const LINK_INTERVAL_MS = +env.LINK_INTERVAL_MS || 1500; // min gap between link creations per bot
 const RECYCLE_MIN = +env.RECYCLE_MIN || 120;          // unused links go back to the pool after this
 const CLICK_RETENTION_DAYS = +env.CLICK_RETENTION_DAYS || 90; // raw clicks that never joined
+const CLICK_DETAIL_DAYS = +env.CLICK_DETAIL_DAYS || 180;      // after this, a joined click keeps its campaign, country and platform but drops IP, device and click cookies
+const PRUNE_BATCH = +env.PRUNE_BATCH || 2000;                // rows per small step, so clean-up never makes a visitor wait
 const SECURE = BASE_URL.startsWith('https');
 // Most business settings (pricing, feature switches, payment methods, support team, brand) are edited in /admin → Settings
 // and stored in the `settings` table. The environment variables below are only their starting defaults. See SETTING_DEFS.
@@ -177,6 +179,10 @@ for (const sql of [
     cache_read_tokens INTEGER DEFAULT 0, out_tokens INTEGER DEFAULT 0, cost_micros INTEGER DEFAULT 0, credits INTEGER DEFAULT 0, kind TEXT, deep INTEGER DEFAULT 0, guard INTEGER DEFAULT 0, error TEXT)`,
   `CREATE INDEX IF NOT EXISTS joe_answers_u ON joe_answers(user_id, day)`, `CREATE INDEX IF NOT EXISTS joe_answers_at ON joe_answers(at)`,
   `CREATE TABLE IF NOT EXISTS user_notes(id INTEGER PRIMARY KEY, user_id INTEGER, kind TEXT, level TEXT, title TEXT, body TEXT, created_at INTEGER)`, `CREATE INDEX IF NOT EXISTS user_notes_u ON user_notes(user_id, created_at)`,
+  // round 15: who approves join requests (Joinvoo, the customer's own bot, or their bot with Joinvoo as backup)
+  `ALTER TABLE channels ADD COLUMN join_approver TEXT DEFAULT 'joinvoo'`, `ALTER TABLE channels ADD COLUMN approve_after INTEGER DEFAULT 60`,
+  `CREATE TABLE IF NOT EXISTS join_reqs(id INTEGER PRIMARY KEY, channel_id INTEGER, tg_user_id INTEGER, link_id INTEGER, click_id INTEGER, bot_id INTEGER, created_at INTEGER, status TEXT DEFAULT 'pending', done_at INTEGER)`,
+  `CREATE INDEX IF NOT EXISTS join_reqs_u ON join_reqs(channel_id, tg_user_id, status)`, `CREATE INDEX IF NOT EXISTS join_reqs_p ON join_reqs(status, created_at)`,
   // round 11: plan limits, named invite links, VooSquare affiliates + support bridge
   `ALTER TABLE channels ADD COLUMN locked INTEGER DEFAULT 0`, `ALTER TABLE channels ADD COLUMN removed_by_user INTEGER DEFAULT 0`, `ALTER TABLE links ADD COLUMN name TEXT`,
   `ALTER TABLE users ADD COLUMN aff_code TEXT`, `ALTER TABLE users ADD COLUMN aff_sub TEXT`, `ALTER TABLE users ADD COLUMN aff_at INTEGER`,
@@ -190,6 +196,45 @@ for (const sql of [
   `CREATE TABLE IF NOT EXISTS voo_spends(event_id TEXT PRIMARY KEY, user_id INTEGER, cents INTEGER, reversed_cents INTEGER DEFAULT 0, kind TEXT, at INTEGER, created_at INTEGER)`, `CREATE INDEX IF NOT EXISTS voo_spends_u ON voo_spends(user_id, created_at)`,
   `CREATE TABLE IF NOT EXISTS voo_use(user_id INTEGER, day TEXT, cents INTEGER, event_id TEXT, created_at INTEGER, PRIMARY KEY(user_id, day))`,
   `ALTER TABLE deposits ADD COLUMN refunded_cents INTEGER DEFAULT 0`, `ALTER TABLE deposits ADD COLUMN charged_back_at INTEGER`,
+  // round 16: customer link domains (go.theirbrand.com), own-landing-page snippet, bot /start ping stats (all additive)
+  `CREATE TABLE IF NOT EXISTS custom_domains(id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, host TEXT UNIQUE NOT NULL, status TEXT DEFAULT 'pending', verify_token TEXT, created_at INTEGER,
+    verified_at INTEGER, last_check_at INTEGER, last_error TEXT, channel_id INTEGER, cname_ok INTEGER DEFAULT 0, cf_id TEXT, ssl_status TEXT)`,
+  `CREATE INDEX IF NOT EXISTS custom_domains_owner ON custom_domains(owner_id)`,
+  `CREATE TABLE IF NOT EXISTS domain_trash(cf_id TEXT PRIMARY KEY, host TEXT, created_at INTEGER)`,
+  // a customer account deleted by any means (admin tool, SQL by hand) takes its domains with it; the HTTPS hostname is removed from Cloudflare by the domain job
+  `CREATE TRIGGER IF NOT EXISTS custom_domains_owner_gone AFTER DELETE ON users BEGIN
+    INSERT OR IGNORE INTO domain_trash(cf_id, host, created_at) SELECT cf_id, host, CAST(strftime('%s','now') AS INTEGER) * 1000 FROM custom_domains WHERE owner_id=OLD.id AND cf_id IS NOT NULL;
+    DELETE FROM custom_domains WHERE owner_id=OLD.id; END`,
+  `ALTER TABLE channels ADD COLUMN domain_id INTEGER`, `ALTER TABLE channels ADD COLUMN snip_origins TEXT`,
+  `ALTER TABLE channels ADD COLUMN last_ping_at INTEGER`, `ALTER TABLE channels ADD COLUMN last_ping_test INTEGER DEFAULT 0`, `ALTER TABLE channels ADD COLUMN ping_day TEXT`, `ALTER TABLE channels ADD COLUMN ping_count INTEGER DEFAULT 0`,
+  `ALTER TABLE clicks ADD COLUMN source TEXT`,
+  // round 17: team seats + workspaces, daily Telegram report, channel ban protection, Meta spend sync, dead-link warning (all additive)
+  `ALTER TABLE sessions ADD COLUMN workspace_owner INTEGER`,
+  `ALTER TABLE users ADD COLUMN report_nonce TEXT`, // QA: daily-report link codes are single use
+  `CREATE TABLE IF NOT EXISTS team_members(id INTEGER PRIMARY KEY, owner_id INTEGER NOT NULL, user_id INTEGER, email TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'buyer', status TEXT NOT NULL DEFAULT 'invited',
+    invite_token TEXT, invited_at INTEGER, joined_at INTEGER, pause_reason TEXT, invited_by INTEGER, removed_at INTEGER, daily_report INTEGER DEFAULT 0, report_hour INTEGER)`,
+  `CREATE INDEX IF NOT EXISTS team_members_owner ON team_members(owner_id, status)`, `CREATE INDEX IF NOT EXISTS team_members_user ON team_members(user_id, status)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS team_members_tok ON team_members(invite_token) WHERE invite_token IS NOT NULL`,
+  `CREATE TABLE IF NOT EXISTS team_channel_access(member_id INTEGER NOT NULL, channel_id INTEGER NOT NULL, PRIMARY KEY(member_id, channel_id))`,
+  `ALTER TABLE channels ADD COLUMN created_by INTEGER`,
+  `ALTER TABLE users ADD COLUMN daily_report INTEGER`, `ALTER TABLE users ADD COLUMN report_hour INTEGER`, `ALTER TABLE users ADD COLUMN report_chat_id INTEGER`, `ALTER TABLE users ADD COLUMN report_bot_id INTEGER`,
+  `CREATE TABLE IF NOT EXISTS report_log(user_id INTEGER NOT NULL, scope_owner INTEGER NOT NULL, day TEXT NOT NULL, sent_at INTEGER, ok INTEGER, PRIMARY KEY(user_id, scope_owner, day))`,
+  `ALTER TABLE channels ADD COLUMN backup_channel_id INTEGER`, `ALTER TABLE channels ADD COLUMN auto_failover INTEGER`, `ALTER TABLE channels ADD COLUMN lost_at INTEGER`, `ALTER TABLE channels ADD COLUMN lost_reason TEXT`,
+  `ALTER TABLE channels ADD COLUMN failed_over_to INTEGER`, `ALTER TABLE channels ADD COLUMN fail_streak INTEGER DEFAULT 0`, `ALTER TABLE channels ADD COLUMN recovered_at INTEGER`,
+  `ALTER TABLE channels ADD COLUMN link_host TEXT`, `ALTER TABLE channels ADD COLUMN deadlink_at INTEGER`,
+  `CREATE TABLE IF NOT EXISTS ch_alerts(id INTEGER PRIMARY KEY, owner_id INTEGER, channel_id INTEGER, kind TEXT, incident TEXT, created_at INTEGER, UNIQUE(kind, channel_id, incident))`,
+  `CREATE TABLE IF NOT EXISTS meta_conns(owner_id INTEGER PRIMARY KEY, fb_user_id TEXT, fb_name TEXT, token_enc TEXT, expires_at INTEGER, status TEXT, error TEXT, created_at INTEGER, updated_at INTEGER, last_sync_at INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS meta_accounts(owner_id INTEGER NOT NULL, act_id TEXT NOT NULL, name TEXT, currency TEXT, account_status INTEGER, selected INTEGER DEFAULT 0, last_sync_at INTEGER, last_error TEXT, PRIMARY KEY(owner_id, act_id))`,
+  `CREATE TABLE IF NOT EXISTS meta_campaigns(owner_id INTEGER NOT NULL, campaign_id TEXT NOT NULL, act_id TEXT, name TEXT, channel_id INTEGER, mapped_by TEXT, last_seen TEXT, PRIMARY KEY(owner_id, campaign_id))`,
+  `ALTER TABLE spend ADD COLUMN source TEXT`, `ALTER TABLE spend ADD COLUMN channel_id INTEGER`, `ALTER TABLE spend ADD COLUMN ext_id TEXT`, `ALTER TABLE spend ADD COLUMN act_id TEXT`, `ALTER TABLE spend ADD COLUMN updated_at INTEGER`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS spend_meta ON spend(owner_id, act_id, ext_id, date) WHERE source='meta'`,
+  // a deleted account takes its team rows, Meta connection and alert log with it (any tool, SQL by hand), like custom_domains above
+  `CREATE TRIGGER IF NOT EXISTS r17_owner_gone AFTER DELETE ON users BEGIN
+    DELETE FROM team_channel_access WHERE member_id IN (SELECT id FROM team_members WHERE owner_id=OLD.id OR user_id=OLD.id);
+    DELETE FROM team_members WHERE owner_id=OLD.id OR user_id=OLD.id;
+    DELETE FROM meta_conns WHERE owner_id=OLD.id; DELETE FROM meta_accounts WHERE owner_id=OLD.id; DELETE FROM meta_campaigns WHERE owner_id=OLD.id;
+    DELETE FROM report_log WHERE user_id=OLD.id OR scope_owner=OLD.id; DELETE FROM ch_alerts WHERE owner_id=OLD.id;
+    UPDATE sessions SET workspace_owner=NULL WHERE workspace_owner=OLD.id; END`,
 ]) { try { db.exec(sql); } catch { /* already there */ } }
 const Q = (sql) => { const s = db.prepare(sql); return { get: (...a) => s.get(...a), all: (...a) => s.all(...a), run: (...a) => s.run(...a) }; };
 
@@ -229,10 +274,12 @@ const SETTING_DEFS = {
   'feature.credits_bonus': { def: () => envBool('FEATURE_CREDITS_BONUS', true), v: bool },
   'feature.ranks': { def: () => envBool('FEATURE_RANKS', true), v: bool },
   'feature.enterprise': { def: () => envBool('FEATURE_ENTERPRISE', true), v: bool },
+  'fraud.burst_min': { def: () => envNum('FRAUD_BURST_MIN', 50), v: int(5, 100000) },
   'feature.link_names': { def: () => envBool('FEATURE_LINK_NAMES', true), v: bool },
-  'limits': { def: () => ({ basic: { channels: envNum('BASIC_MAX_CHANNELS', 3), bots: envNum('BASIC_MAX_BOTS', 3) }, pro: { channels: envNum('PRO_MAX_CHANNELS', 0), bots: envNum('PRO_MAX_BOTS', 0) } }),
+  'limits': { def: () => ({ basic: { channels: envNum('BASIC_MAX_CHANNELS', 3), bots: envNum('BASIC_MAX_BOTS', 3), domains: envNum('BASIC_MAX_DOMAINS', 1) }, pro: { channels: envNum('PRO_MAX_CHANNELS', 0), bots: envNum('PRO_MAX_BOTS', 0), domains: envNum('PRO_MAX_DOMAINS', 0) } }),
     v: (x) => { if (!x || typeof x !== 'object') throw new Error('Send the Basic and Pro limits.'); const n = int(0, 100000);
-      const g = (o, name) => { if (!o || typeof o !== 'object') throw new Error(`Add the ${name} limits.`); return { channels: n(o.channels), bots: n(o.bots) }; };
+      const g = (o, name) => { if (!o || typeof o !== 'object') throw new Error(`Add the ${name} limits.`);
+        return { channels: n(o.channels), bots: n(o.bots), domains: o.domains === undefined || o.domains === null ? envNum(name === 'Pro' ? 'PRO_MAX_DOMAINS' : 'BASIC_MAX_DOMAINS', name === 'Pro' ? 0 : 1) : n(o.domains) }; };
       return { basic: g(x.basic, 'Basic'), pro: g(x.pro, 'Pro') }; } },
   'credit.bonus_tiers': { def: () => DEFAULT_BONUS, v: (a) => {
     if (!Array.isArray(a) || a.length > 10) throw new Error('Up to 10 bonus tiers.');
@@ -344,6 +391,21 @@ const SETTING_DEFS = {
   // ----- tracking-link domain: ad links use a separate domain so a block on it never touches the main site -----
   'link.domain': { def: () => (env.LINK_BASE_URL || '').replace(/\/$/, ''), v: (x) => normLinkBase(x) },
   'link.backups': { def: () => [], v: (a) => { if (!Array.isArray(a)) throw new Error('Send a list of backup domains.'); return a.map(normLinkBase).filter(Boolean).slice(0, 10); } },
+  // ----- round 16: customer link domains (go.theirbrand.com). Empty target = the host of the link domain. Cloudflare for SaaS is optional. -----
+  'domains.cname_target': { def: () => normDomain(env.CUSTOM_DOMAIN_TARGET || ''), v: (x) => { const h = normDomain(x); if (h && !isHostName(h)) throw new Error('The CNAME target is a host name like customers.gojoinly.com'); return h; } },
+  'domains.cf_zone_id': { def: () => env.CF_ZONE_ID || '', v: (x) => { x = String(x || '').trim(); if (x && !/^[a-f0-9]{32}$/i.test(x)) throw new Error('The Cloudflare zone ID is 32 letters and numbers (Cloudflare → your domain → Overview → API).'); return x; } },
+  'domains.cf_token': { def: () => env.CF_API_TOKEN || '', v: str(300), secret: true },
+  // ----- round 17: team seats, ban protection, dead-link warning, Meta spend sync -----
+  'team.seat_cents': { def: () => envNum('TEAM_SEAT_CENTS', 500), v: int(0, 1e6) },
+  'team.pro_included': { def: () => envNum('TEAM_PRO_INCLUDED', 3), v: int(0, 1000) },
+  'team.basic_included': { def: () => envNum('TEAM_BASIC_INCLUDED', 0), v: int(0, 1000) },
+  'ban.fail_streak': { def: () => envNum('BAN_FAIL_STREAK', 3), v: int(1, 50) },
+  'deadlink.min_hourly': { def: () => envNum('DEADLINK_MIN_HOURLY', 10), v: int(1, 1e6) },
+  'deadlink.quiet_hours': { def: () => envNum('DEADLINK_QUIET_HOURS', 2), v: int(1, 12) },
+  'deadlink.days': { def: () => envNum('DEADLINK_DAYS', 3), v: int(1, 14) },
+  'deadlink.drop_pct': { def: () => envNum('DEADLINK_DROP_PCT', 5), v: int(0, 90) },
+  'meta.app_id': { def: () => env.META_APP_ID || '', v: str(40, /^\d*$/, 'The Meta app ID is numbers only.') },
+  'meta.app_secret': { def: () => env.META_APP_SECRET || '', v: str(200), secret: true },
 };
 function normLinkBase(x) {
   let v = String(x || '').trim().toLowerCase(); if (!v) return '';
@@ -702,6 +764,7 @@ function changePlan(user, want) {
       Q(`UPDATE users SET plan='pro', plan_pending=NULL, plan_pending_from=NULL WHERE id=?`).run(user.id);
     });
     log('plan upgrade', user.email, 'pro', cost);
+    try { teamSync(user.id); } catch (e) { log('team sync', e.message); } // round 17: members paused by the downgrade come back at once
     notifyUser(user.id, 'pro_welcome', { name: user.name || '', plan: P.pro.name, base_cents: priceFor(user.id, 'pro').base, included: priceFor(user.id, 'pro').included, charged_cents: cost }, { ref: 'pro:' + m });
     return { ok: true, plan: 'pro', charged_cents: cost, change_pending: null, message: cost ? `You’re on ${P.pro.name}. ${cost.toLocaleString('en-US')} credits charged for the rest of this month.` : `You’re on ${P.pro.name}.` };
   }
@@ -993,6 +1056,7 @@ function allowTracking(userId) {
     const upgraded = plan === 'pro' && !!Q(`SELECT 1 FROM ledger WHERE ref=?`).get(`planup:${userId}:${m}`);
     const base = priceFor(userId, upgraded ? 'basic' : plan).base, pname = plansDef()[plan].name;
     tx(() => { if (addLedger(userId, 'plan', -base, `plan:${userId}:${m}`, `${plan === 'pro' ? pname + ' plan' : 'Monthly plan'} · ${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}`)) payCommission(userId, base); });
+    setImmediate(() => { try { teamSync(userId); } catch (e) { log('team seats renew', e.message); } }); // round 17: extra team seats renew with the plan
   }
   if (!st.ok) {
     const u = Q(`SELECT paused_at FROM users WHERE id=?`).get(userId);
@@ -1100,6 +1164,7 @@ function send(res, code, body, headers = {}) {
   // Keep cookies set earlier on this response (the Voo Connect kit's attribution and login cookies) next to ours.
   const pre = res.getHeader('set-cookie'); if (pre && headers['set-cookie']) headers['set-cookie'] = [].concat(pre, headers['set-cookie']);
   if (res._noStore) headers['cache-control'] = 'no-store'; // a response that sets a visitor's cookie is never cached by a CDN
+  if (res._xh) headers = { ...res._xh, ...headers }; // extra headers for this response (CORS for the landing-page snippet)
   res.writeHead(code, { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'referrer-policy': 'strict-origin-when-cross-origin', 'x-frame-options': 'SAMEORIGIN', ...headers });
   res.end(body);
 }
@@ -1129,6 +1194,7 @@ function cookie(name, value, maxAgeSec) {
  * (Caddy on the same machine, Railway's edge); a visitor connecting straight from the internet cannot pick their own address. */
 const TRUST_PROXY = env.TRUST_PROXY == null || String(env.TRUST_PROXY).trim() === '' ? null : Math.max(0, Math.min(10, Math.floor(Number(env.TRUST_PROXY)) || 0));
 function clientIp(req) {
+  if (req._edgeIp) return req._edgeIp; // the visitor's address, passed on by our own signed edge Worker
   // Cloudflare's header if the operator says traffic comes through Cloudflare; otherwise the address our own proxy appended last.
   if (TRUST_CLOUDFLARE && req.headers['cf-connecting-ip']) return String(req.headers['cf-connecting-ip']);
   const peer = String(req.socket.remoteAddress || '');
@@ -1575,12 +1641,14 @@ function recomputeChannel(chId) {
     if (!rows.find((r) => r.bot_id === ch.bot_id && (r.can_invite || !rows.some((x) => x.can_invite)))) primary = good.bot_id;
   }
   Q(`UPDATE channels SET status=?, bot_id=? WHERE id=?`).run(status, primary, chId);
+  if (status === 'active' && ch.lost_at) setImmediate(() => { try { chRecovered(chId); } catch (e) { log('ban recover', e.message); } }); // round 17: a lost channel came back
 }
 
 // Called when we learn a bot's membership in a chat (my_chat_member update or manual add).
 function attachBot(bot, chat, member) {
   if (!['channel', 'supergroup', 'group'].includes(chat.type)) return null;
   let ch = Q(`SELECT * FROM channels WHERE owner_id=? AND chat_id=?`).get(bot.owner_id, chat.id);
+  const prevStatus = ch ? ch.status : null, prevLocked = ch ? !!ch.locked : false; // round 17: was it working before this update?
   const isAdmin = member.status === 'administrator' || member.status === 'creator';
   if (isAdmin) {
     const canInvite = member.status === 'creator' || member.can_invite_users !== false ? 1 : 0;
@@ -1605,6 +1673,10 @@ function attachBot(bot, chat, member) {
     log('bot left channel', bot.username, ch.title);
   }
   if (ch) recomputeChannel(ch.id);
+  if (ch && prevStatus === 'active' && !prevLocked) { // round 17: the bot was kicked / left / lost its rights and no other bot can make links → channel lost
+    const after = Q(`SELECT status, removed_by_user FROM channels WHERE id=?`).get(ch.id);
+    if (after && after.status !== 'active' && !after.removed_by_user) chLost(ch.id, isAdmin ? 'no_invite_rights' : member.status === 'kicked' ? 'bot_kicked' : member.status === 'left' ? 'bot_left' : 'admin_rights_removed');
+  }
   return ch && Q(`SELECT * FROM channels WHERE id=?`).get(ch.id);
 }
 
@@ -1620,8 +1692,11 @@ function handleTgError(botId, channelId, res) {
     for (const r of Q(`SELECT channel_id FROM channel_bots WHERE bot_id=?`).all(botId)) recomputeChannel(r.channel_id);
   } else if (res.error_code === 400 || res.error_code === 403) {
     if (/rights|admin|not found|kicked|not a member|CHAT_ADMIN_REQUIRED/i.test(d) && channelId) {
+      const st0 = Q(`SELECT status FROM channels WHERE id=?`).get(channelId);
+      if (st0 && st0.status === 'active') Q(`UPDATE channels SET fail_streak=COALESCE(fail_streak,0)+1 WHERE id=?`).run(channelId); // round 17: counted towards "channel lost"
       Q(`UPDATE channel_bots SET can_invite=0 WHERE channel_id=? AND bot_id=?`).run(channelId, botId);
       recomputeChannel(channelId);
+      banCheck(channelId, d);
     }
   }
   log('telegram error', botId, res.error_code, d);
@@ -1639,6 +1714,7 @@ async function createLink(row, fallback) {
     ? { chat_id: row.chat_id, name: 'Joinvoo backup link' }
     : req ? { chat_id: row.chat_id, creates_join_request: true, name: 'jv-' + rid(6) } : { chat_id: row.chat_id, member_limit: 1, name: 'joinvoo' });
   if (!res.ok) { handleTgError(row.bot_id, row.channel_id, res); return null; }
+  if (row.channel_id) Q(`UPDATE channels SET fail_streak=0 WHERE id=? AND fail_streak>0`).run(row.channel_id); // round 17: Telegram works for this channel again
   if (fallback) { Q(`UPDATE channels SET fallback_link=? WHERE id=?`).run(res.result.invite_link, row.channel_id); return null; }
   const r = Q(`INSERT INTO links(channel_id,bot_id,url,status,created_at,req) VALUES(?,?,?,'pool',?,?)`).run(row.channel_id, row.bot_id, res.result.invite_link, now(), req ? 1 : 0);
   return { id: Number(r.lastInsertRowid), url: res.result.invite_link };
@@ -1834,11 +1910,13 @@ function joinSuspect(ch, click, user, ts, telegram) {
   const fn = String(user.first_name || '').trim();
   if (/^deleted account$/i.test(fn) || (telegram && !fn && !user.username && !user.last_name)) return 'deleted_account';
   if (Q(`SELECT 1 FROM joins WHERE owner_id=? AND tg_user_id=? AND joined_at>? LIMIT 1`).get(ch.owner_id, user.id, ts - 7 * 864e5)) return 'repeat_user';
-  // Burst: far more ad joins on this channel in 10 seconds than its normal pace (at least 15, and 10× the last day's average).
+  // Burst: far more ad joins on this channel in 10 seconds than its normal pace (at least fraud.burst_min, default 50 = 5 joins a second,
+  // and 10× the last day's average). Kept high so a big real campaign on a fresh channel is never filtered; admin can tune it.
+  const bmin = Math.max(5, +setting('fraud.burst_min') || 50);
   const w = (burstWin.get(ch.id) || []).filter((t) => t > ts - 10000); w.push(ts); burstWin.set(ch.id, w);
-  if (w.length >= 15) {
+  if (w.length >= bmin) {
     const day = Q(`SELECT COALESCE(SUM(joins),0) n FROM hourly WHERE channel_id=? AND hour>=?`).get(ch.id, Math.floor(ts / 3600000) - 24).n;
-    if (w.length > Math.max(15, 10 * day / 8640)) return 'burst';
+    if (w.length > Math.max(bmin, 10 * day / 8640)) return 'burst';
   }
   return '';
 }
@@ -1905,6 +1983,10 @@ async function onBotHook(req, res, key, kind) {
   if (!(tgId > 0)) return send(res, 400, { ok: false, error: 'Add tg_id=<the Telegram user id>' });
   const target = Q(`SELECT * FROM channels WHERE owner_id=? AND type='bot' AND lower(username)=? AND status='active'`).get(owner.id, botName);
   if (!target) return send(res, 404, { ok: false, error: `@${botName} is not set up in Joinvoo. Add it under Channels → Bot subscribers first.` });
+  if (kind === 'start') { // "Last ping" + "pings today" on the dashboard (the test person counts as a ping, not in today's number)
+    const day = new Date().toISOString().slice(0, 10), test = tgId === 1000000001 ? 1 : 0;
+    Q(`UPDATE channels SET last_ping_at=?, last_ping_test=?, ping_count=CASE WHEN ping_day=? THEN COALESCE(ping_count,0)+? ELSE ? END, ping_day=? WHERE id=?`).run(now(), test, day, 1 - test, 1 - test, day, target.id);
+  }
   if (tgId === 1000000001) return send(res, 200, { ok: true, test: true, message: 'Test received. Your bot is connected.' }); // dashboard's "Send a test"
   if (kind === 'blocked') return send(res, 200, { ok: true, left: recordBotBlocked(target, tgId) });
   let payload = String(P.start || P.payload || P.start_param || P.text || '').trim();
@@ -1920,6 +2002,8 @@ async function onUpdate(bot, u) {
     // Never follow redirects (a public URL could bounce the update to an internal address) and re-check where the name points now.
     publicHttpsTarget(target.forward_url).then((ok) => (ok ? fetch(target.forward_url, { method: 'POST', headers: fh, body: JSON.stringify(u), redirect: 'manual', signal: AbortSignal.timeout(10000) }) : log('bot forward skipped: not a public address', target.id))).catch(() => {});
   }
+  { const t17 = u.message && u.message.chat && u.message.chat.type === 'private' && typeof u.message.text === 'string' && /^\/start\s+report-([A-Za-z0-9_-]{4,60})/.exec(u.message.text);
+    if (t17) { tg(bot.token, 'sendMessage', { chat_id: u.message.chat.id, text: reportLink(t17[1], u.message.chat.id, bot) }); return; } } // round 17: daily report through the customer's own tracking bot
   if (target && await onBotUpdate(bot, target, u)) return;
   if (u.my_chat_member) {
     const ch = attachBot(bot, u.my_chat_member.chat, u.my_chat_member.new_chat_member);
@@ -1953,6 +2037,13 @@ async function onUpdate(bot, u) {
         if (link.click_id) click = Q(`SELECT * FROM clicks WHERE id=?`).get(link.click_id);
       }
     }
+    { // approved by the customer's own bot (or an admin): the click comes from the request they made through our link
+      const jq = Q(`SELECT * FROM join_reqs WHERE channel_id=? AND tg_user_id=? AND status IN ('pending','approved') AND created_at>? ORDER BY id DESC LIMIT 1`).get(ch.id, user.id, now() - 7 * 864e5);
+      if (jq) {
+        Q(`UPDATE join_reqs SET status='joined', done_at=? WHERE id=?`).run(now(), jq.id);
+        if (!click && jq.click_id) { click = Q(`SELECT * FROM clicks WHERE id=? AND joined=0`).get(jq.click_id) || null; if (click && jq.link_id) Q(`UPDATE links SET status='used' WHERE id=? AND status<>'used'`).run(jq.link_id); }
+      }
+    }
     if (click) Q(`UPDATE clicks SET joined=1 WHERE id=?`).run(click.id);
     recordJoin(ch, click, user, ts, { telegram: true });
   } else if (wasIn && !isIn) {
@@ -1971,6 +2062,14 @@ async function onJoinRequest(bot, jr) {
   if (link && link.bot_id && link.bot_id !== bot.id) return; // the bot that made the link handles it
   if (!link && ch.bot_id !== bot.id) return;
   const user = jr.from, ts = now();
+  const mode = ['own', 'backup'].includes(ch.join_approver) ? ch.join_approver : 'joinvoo';
+  if (mode !== 'joinvoo') {
+    // The customer's own bot lets people in and sends its own welcome/flow. Joinvoo only remembers which ad click this request came from;
+    // the join is recorded (and sent to Meta) when they are approved. In backup mode Joinvoo approves after approve_after seconds if nobody did.
+    if (!Q(`SELECT 1 FROM join_reqs WHERE channel_id=? AND tg_user_id=? AND status='pending' LIMIT 1`).get(ch.id, user.id))
+      Q(`INSERT INTO join_reqs(channel_id,tg_user_id,link_id,click_id,bot_id,created_at) VALUES(?,?,?,?,?,?)`).run(ch.id, user.id, link ? link.id : null, link && link.click_id ? link.click_id : null, bot.id, ts);
+    return;
+  }
   const ap = await tg(bot.token, 'approveChatJoinRequest', { chat_id: ch.chat_id, user_id: user.id });
   if (!ap.ok && !/USER_ALREADY_PARTICIPANT/i.test(ap.description || '')) { handleTgError(bot.id, ch.id, ap); return; }
   let click = null;
@@ -1987,6 +2086,27 @@ async function onJoinRequest(bot, jr) {
     tg(bot.token, 'sendMessage', p);
   }
 }
+
+/** Backup approver: requests the customer's own bot hasn't handled within approve_after seconds are approved by Joinvoo, so nobody waits forever. */
+let jrSweepBusy = false;
+async function joinReqSweep() {
+  if (jrSweepBusy) return; jrSweepBusy = true;
+  try {
+    Q(`UPDATE join_reqs SET status='expired', done_at=? WHERE status IN ('pending','approved') AND created_at<?`).run(now(), now() - 7 * 864e5);
+    const rows = Q(`SELECT r.*, c.chat_id, c.approve_after, c.join_approver, c.join_mode, b.token, b.status AS bst FROM join_reqs r JOIN channels c ON c.id=r.channel_id LEFT JOIN bots b ON b.id=r.bot_id
+      WHERE r.status='pending' AND c.join_approver='backup' AND r.created_at < ? - MAX(10, COALESCE(c.approve_after,60))*1000 ORDER BY r.id LIMIT 50`).all(now());
+    for (const r of rows) {
+      if (Q(`SELECT 1 FROM joins WHERE channel_id=? AND tg_user_id=? AND left_at IS NULL LIMIT 1`).get(r.channel_id, r.tg_user_id)) { Q(`UPDATE join_reqs SET status='joined', done_at=? WHERE id=?`).run(now(), r.id); continue; }
+      if (!r.token || r.bst !== 'active') continue;
+      const ap = await tg(r.token, 'approveChatJoinRequest', { chat_id: r.chat_id, user_id: r.tg_user_id });
+      if (ap.ok) Q(`UPDATE join_reqs SET status='approved', done_at=? WHERE id=?`).run(now(), r.id); // the chat_member update that follows records the join
+      else if (/USER_ALREADY_PARTICIPANT/i.test(ap.description || '')) Q(`UPDATE join_reqs SET status='approved', done_at=? WHERE id=?`).run(now(), r.id);
+      else if (/HIDE_REQUESTER_MISSING|not found|USER_CHANNELS_TOO_MUCH/i.test(ap.description || '')) Q(`UPDATE join_reqs SET status='gone', done_at=? WHERE id=?`).run(now(), r.id); // declined by them or the request is gone
+      else { handleTgError(r.bot_id, r.channel_id, ap); if (ap.error_code === 429) break; }
+    }
+  } catch (e) { log('join request sweep', e.message); } finally { jrSweepBusy = false; }
+}
+setInterval(joinReqSweep, +env.JOINREQ_SWEEP_MS || 5000).unref();
 
 // ---------- conversions: registrations, deposits (FTD), sales, CPA, chargebacks — reported after the join ----------
 const CONV_EVENTS = {
@@ -2145,7 +2265,7 @@ function suspectReason(req, hits) {
   if (!ua || BOT_UA.test(ua)) return 'bot_ua';
   if (isDatacenter(clientIp(req))) return 'datacenter';
   if (hits > 3) return 'repeat';
-  if (!cookies(req).jv_h) return 'no_js'; // the landing page sets this cookie; scripts that POST straight to /go don't have it
+  if (!cookies(req).jv_h && !req._human) return 'no_js'; // the landing page sets this cookie (the snippet on a customer's page sends a signed token instead); scripts that POST straight to /go have neither
   return '';
 }
 
@@ -2166,6 +2286,7 @@ function recordClick(req, ch, body, t, hits = 1) {
     .run(ch.owner_id, ch.id, t, clientIp(req), String(req.headers['user-agent'] || '').slice(0, 400), country || null,
       fbclid.slice(0, 500), String(fbc).slice(0, 600), String(fbp).slice(0, 200), pageUrl, JSON.stringify(params), ttclid.slice(0, 500), clean(body.ttp, 200), clean(sccid, 200), clean(body.scid, 200));
   bump(ch.id, ch.owner_id, t, 'clicks');
+  if (req._src) Q(`UPDATE clicks SET source=? WHERE id=?`).run(req._src, ins.lastInsertRowid); // 'snippet': came through the script on the customer's own landing page
   const sr = suspectReason(req, hits);
   if (sr) { Q(`UPDATE clicks SET suspect=1, suspect_reason=? WHERE id=?`).run(sr, ins.lastInsertRowid); bump(ch.id, ch.owner_id, t, 'suspect'); }
   return Number(ins.lastInsertRowid);
@@ -2173,7 +2294,7 @@ function recordClick(req, ch, body, t, hits = 1) {
 const goHits = new Map(); // ip|slug -> [count, windowStart]
 setInterval(() => { const t = Date.now(); for (const [k, v] of goHits) if (t - v[1] > 600000) goHits.delete(k); }, 60000).unref();
 async function onClick(req, res, ch) {
-  const body = await readJson(req, 8 * 1024);
+  const body = req._body || await readJson(req, 8 * 1024); // already read when it came from the landing-page snippet
   const fallback = ch.fallback_link || (ch.username ? `https://t.me/${ch.username}` : '');
   if (ch.status !== 'active' || ch.locked) return send(res, 200, { url: fallback });
   // One visitor hammering the link (or a script) shouldn't drain the invite-link pool.
@@ -2215,6 +2336,271 @@ async function onClick(req, res, ch) {
   Q(`UPDATE clicks SET link_id=? WHERE id=?`).run(link.id, clickId);
   queueLinkName(link.id, clickId);
   send(res, 200, { url: link.url }, { 'set-cookie': cookie('jp_' + ch.slug, `${clickId}.${hmac(clickId)}`, RECYCLE_MIN * 60) });
+}
+
+// ---------- round 16: customer link domains (go.theirbrand.com) ----------
+// A customer points a subdomain of their own at Joinvoo (CNAME) and proves it is theirs (TXT _joinvoo.<host>). Ad links then show
+// their domain, so a flag on one shared link domain never touches them. On that host Joinvoo answers ONLY that customer's tracking
+// links (+ the landing-page script, robots.txt and /health); everything else is a plain "Not found" with no Joinvoo branding.
+const dnsP = require('node:dns').promises;
+const CF_API = (env.CF_API_BASE || 'https://api.cloudflare.com/client/v4').replace(/\/$/, ''); // overridable for testing
+const DOMAIN_CHECK_MS = Math.max(5000, +env.DOMAIN_CHECK_MS || 10 * 60000);
+const DOMAIN_CLAIM_HOLD_MS = Math.max(1000, +env.DOMAIN_CLAIM_HOLD_MS || 24 * 3600000); // how long an unverified claim blocks other accounts (tests shorten it)
+function normDomain(x) {
+  return String(x || '').trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, '').replace(/[/?#].*$/, '').replace(/:\d*$/, '').replace(/\.$/, '');
+}
+function isHostName(h) { return h.length <= 253 && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/.test(h); }
+const reqHost = (req) => normDomain(req.headers.host);
+function isJoinvooHost(h) {
+  if (h === normDomain(new URL(BASE_URL).host)) return true;
+  return linkHosts().some((x) => normDomain(x) === h);
+}
+/** Where customers point their CNAME: the admin setting / CUSTOM_DOMAIN_TARGET, else the link domain's host. */
+function cnameTarget() { return setting('domains.cname_target') || normDomain(new URL(linkBase()).host); }
+function ourDomains() { return [...new Set([normDomain(new URL(BASE_URL).host), ...linkHosts().map(normDomain), 'joinvoo.com', 'gojoinly.com', cnameTarget()].filter(Boolean))]; }
+/** '' when the host can be added by this customer, otherwise a friendly reason. */
+function domainProblem(host, uid) {
+  if (!host) return 'Enter the subdomain you want, like go.yourbrand.com';
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':') || host === 'localhost' || host.endsWith('.localhost')) return 'Enter a domain name, not an IP address or localhost. For example go.yourbrand.com';
+  if (!isHostName(host)) return 'That isn’t a valid domain. Use a subdomain like go.yourbrand.com';
+  if (/\.(local|internal|invalid|test|example|onion)$/.test(host)) return 'That domain can’t be reached from the internet. Use a subdomain of your own domain, like go.yourbrand.com';
+  for (const h of ourDomains()) if (host === h || host.endsWith('.' + h)) return 'That domain belongs to Joinvoo. Use a subdomain of your own domain, like go.yourbrand.com';
+  if (host.split('.').length < 3) return `Use a subdomain like go.${host}, not the main domain. Your main website stays untouched.`;
+  const ex = Q(`SELECT owner_id FROM custom_domains WHERE host=?`).get(host);
+  if (ex) return ex.owner_id === uid ? 'You already added this domain.' : 'This domain is already connected to another Joinvoo account.';
+  return '';
+}
+let domCache = null, domCacheAt = 0, domCacheVer = null;
+function domainByHost(host) {
+  const ver = Q(`PRAGMA data_version`).get().data_version; // changes when another connection (a manual SQL fix) wrote to the database
+  if (!domCache || now() - domCacheAt > 30000 || ver !== domCacheVer) { domCache = new Map(Q(`SELECT * FROM custom_domains`).all().map((d) => [d.host, d])); domCacheAt = now(); domCacheVer = ver; }
+  return domCache.get(host) || null;
+}
+const domBust = () => { domCache = null; };
+const ownerDomains = (uid) => Q(`SELECT * FROM custom_domains WHERE owner_id=? ORDER BY id`).all(uid);
+/** Link base for one channel: the domain picked on it (0 = Joinvoo's), else their active domain for this channel / all links, else Joinvoo's link domain. */
+function chanLinkBase(ch, doms) {
+  if (ch.domain_id === 0) return (ch.link_host && joinvooLinkBases().find((b) => new URL(b).host === ch.link_host)) || linkBase(); // round 17: a backup Joinvoo link domain picked after a dead-link warning
+  const act = (doms || ownerDomains(ch.owner_id)).filter((d) => d.status === 'active'), live = act.filter(domainLive);
+  // picked by hand: used once verified; automatic: only once it really serves (CNAME pointing, and HTTPS issued when Cloudflare does HTTPS),
+  // so links shown for new ads never point at a host that doesn't open yet
+  const d = (ch.domain_id > 0 && act.find((x) => x.id === ch.domain_id)) || live.find((x) => x.channel_id === ch.id) || live.find((x) => x.channel_id == null);
+  return d ? 'https://' + d.host : linkBase();
+}
+/** Verified AND reachable: the CNAME points at us, and (with Cloudflare for SaaS) the HTTPS certificate is issued. */
+function domainLive(d) { return d.status === 'active' && !!d.cname_ok && (!cfCfg() || (!!d.cf_id && d.ssl_status === 'active')); }
+function dnsShort(host) { // what most DNS panels want in the "Name" box: the part before the customer's own domain
+  const p = host.split('.'), sld = p.length >= 3 && p[p.length - 1].length === 2 && /^(co|com|org|net|gov|edu|ac|or|ne|go)$/.test(p[p.length - 2]);
+  return p.slice(0, p.length - (sld ? 3 : 2)).join('.');
+}
+function domainView(d) {
+  const short = dnsShort(d.host), cf = !!cfCfg();
+  return { id: d.id, host: d.host, status: d.status, channel_id: d.channel_id ?? null, created_at: d.created_at, verified_at: d.verified_at || null, last_check_at: d.last_check_at || null,
+    last_error: d.last_error || null, pointing: !!d.cname_ok, live: domainLive(d), https: cf ? (d.cf_id ? (d.ssl_status === 'active' ? 'ready' : 'issuing') : 'waiting') : 'manual', url: 'https://' + d.host,
+    dns: { cname: { type: 'CNAME', name: d.host, short, value: cnameTarget() }, txt: { type: 'TXT', name: '_joinvoo.' + d.host, short: '_joinvoo' + (short ? '.' + short : ''), value: d.verify_token } } };
+}
+function domainsView(uid) {
+  return { domains: ownerDomains(uid).map(domainView), target: cnameTarget(), limit: limitsFor(uid).domains, plan: limitsFor(uid).plan };
+}
+/** DNS lookups. DOMAIN_DNS_MOCK=<file.json> ({"TXT":{name:[["v"]]},"CNAME":{name:["x"]},"A":{},"AAAA":{}}) answers from a file instead: tests only. */
+async function dnsLookup(kind, name) {
+  if (env.DOMAIN_DNS_MOCK) {
+    let m = {}; try { m = JSON.parse(fs.readFileSync(env.DOMAIN_DNS_MOCK, 'utf8')); } catch { /* no file yet */ }
+    const v = (m[kind] || {})[name]; if (v === undefined) throw Object.assign(new Error('not found'), { code: 'ENOTFOUND' }); return v;
+  }
+  const fn = { TXT: 'resolveTxt', CNAME: 'resolveCname', A: 'resolve4', AAAA: 'resolve6' }[kind];
+  let t; const timer = new Promise((_, rej) => { t = setTimeout(() => rej(Object.assign(new Error('DNS timeout'), { code: 'ETIMEOUT' })), 6000); });
+  try { return await Promise.race([dnsP[fn](name), timer]); } finally { clearTimeout(t); }
+}
+const ipsOf = async (name) => [...(await dnsLookup('A', name).catch(() => [])), ...(await dnsLookup('AAAA', name).catch(() => []))];
+// ----- optional HTTPS provisioning through Cloudflare for SaaS (custom hostnames) -----
+function cfCfg() { const zone = setting('domains.cf_zone_id'), token = setting('domains.cf_token'); return zone && token ? { zone, token } : null; }
+async function cfCall(method, sub, body) {
+  const c = cfCfg(); if (!c) return { ok: false, status: 0, j: {} };
+  const r = await fetch(`${CF_API}/zones/${encodeURIComponent(c.zone)}/custom_hostnames${sub}`, { method, headers: { authorization: 'Bearer ' + c.token, 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+  const j = await r.json().catch(() => ({}));
+  return { ok: r.ok && j.success !== false, status: r.status, j };
+}
+async function cfCreate(host) {
+  try {
+    const r = await cfCall('POST', '', { hostname: host, ssl: { method: 'http', type: 'dv' } });
+    if (r.ok && r.j.result && r.j.result.id) return { id: String(r.j.result.id), ssl: (r.j.result.ssl || {}).status || '' };
+    const g = await cfCall('GET', '?hostname=' + encodeURIComponent(host)); // already there (added by hand, or a retry): reuse it
+    const ex = g.ok && Array.isArray(g.j.result) && g.j.result.find((x) => x.hostname === host);
+    if (ex) return { id: String(ex.id), ssl: (ex.ssl || {}).status || '' };
+    return { error: ((r.j.errors || [])[0] || {}).message || `Cloudflare answered ${r.status}` };
+  } catch (e) { return { error: e.message }; }
+}
+async function cfDelete(id) {
+  if (!id) return true; if (!cfCfg()) return false;
+  try { const r = await cfCall('DELETE', '/' + encodeURIComponent(id)); return r.ok || r.status === 404; } catch { return false; }
+}
+const domChecks = new Map();
+/** Look up the TXT (ownership) and CNAME/A (pointing) records, then make the domain live. One check per domain at a time. */
+function checkDomain(id) {
+  if (domChecks.has(id)) return domChecks.get(id);
+  const pr = checkDomainNow(id).finally(() => domChecks.delete(id)); domChecks.set(id, pr); return pr;
+}
+async function checkDomainNow(id) {
+  const d = Q(`SELECT * FROM custom_domains WHERE id=?`).get(id); if (!d || d.status === 'disabled') return d;
+  let txtSeen = false, txtOk = false, pointing = false, err = null;
+  try { const vals = (await dnsLookup('TXT', '_joinvoo.' + d.host)).map((r) => [].concat(r).join('').trim()); txtSeen = vals.length > 0; txtOk = vals.includes(d.verify_token); }
+  catch (e) { if (!['ENOTFOUND', 'ENODATA', 'ENOTIMP', 'ESERVFAIL'].includes(e.code)) err = 'We couldn’t reach DNS just now. We’ll try again in a few minutes.'; }
+  try {
+    const tgt = cnameTarget(), cn = await dnsLookup('CNAME', d.host).catch(() => []);
+    pointing = cn.some((x) => normDomain(x) === tgt);
+    if (!pointing) { const [a, b] = await Promise.all([ipsOf(d.host), ipsOf(tgt)]); pointing = a.length > 0 && a.some((x) => b.includes(x)); }
+  } catch { /* reported as "not pointing yet" */ }
+  const set = { last_check_at: now(), cname_ok: pointing ? 1 : 0, status: d.status, last_error: null, verified_at: d.verified_at, cf_id: d.cf_id, ssl_status: d.ssl_status };
+  if (txtOk) {
+    set.verified_at = d.verified_at || now();
+    if (cfCfg()) {
+      if (!set.cf_id) { const c = await cfCreate(d.host); if (c.id) { set.cf_id = c.id; set.ssl_status = c.ssl; } else set.last_error = 'HTTPS setup didn’t finish yet: ' + c.error + '. We’ll retry automatically.'; }
+      else { try { const g = await cfCall('GET', '/' + encodeURIComponent(set.cf_id)); if (g.ok && g.j.result) set.ssl_status = (g.j.result.ssl || {}).status || set.ssl_status; else if (g.status === 404) { set.cf_id = null; set.ssl_status = null; } } catch { /* keep */ } }
+    }
+    set.status = !cfCfg() || set.cf_id || d.status === 'active' ? 'active' : 'pending'; // with Cloudflare: live once the hostname is created there
+  } else if (d.status === 'active') {
+    set.last_error = err || `The TXT record _joinvoo.${d.host} is missing. Your links keep working; add it back so the domain stays verified.`;
+  } else {
+    set.status = txtSeen ? 'failed' : 'pending';
+    set.last_error = err || (txtSeen ? `The TXT record _joinvoo.${d.host} has a different value. Copy the value shown here exactly.` : `No TXT record at _joinvoo.${d.host} yet. DNS changes usually show up within minutes, sometimes a few hours.`);
+  }
+  Q(`UPDATE custom_domains SET last_check_at=?, cname_ok=?, status=?, last_error=?, verified_at=?, cf_id=?, ssl_status=? WHERE id=? AND status<>'disabled'`)
+    .run(set.last_check_at, set.cname_ok, set.status, set.last_error, set.verified_at, set.cf_id, set.ssl_status, d.id);
+  if (set.cf_id && set.cf_id !== d.cf_id) { // created on Cloudflare during this check: never lose its id (removed or switched off meanwhile)
+    const now2 = Q(`SELECT cf_id FROM custom_domains WHERE id=? AND host=?`).get(d.id, d.host);
+    if (!now2) Q(`INSERT OR IGNORE INTO domain_trash(cf_id, host, created_at) VALUES(?,?,?)`).run(set.cf_id, d.host, now());
+    else if (!now2.cf_id) Q(`UPDATE custom_domains SET cf_id=? WHERE id=? AND cf_id IS NULL`).run(set.cf_id, d.id);
+  }
+  if (set.status !== d.status) log('domain', d.host, d.status, '->', set.status);
+  domBust();
+  return Q(`SELECT * FROM custom_domains WHERE id=?`).get(id);
+}
+/** Remove one domain: its Cloudflare hostname (retried later if Cloudflare is down), the row, and any channel that picked it. */
+async function dropDomain(d) {
+  if (d.cf_id && !(await cfDelete(d.cf_id))) Q(`INSERT OR IGNORE INTO domain_trash(cf_id, host, created_at) VALUES(?,?,?)`).run(d.cf_id, d.host, now());
+  Q(`DELETE FROM custom_domains WHERE id=?`).run(d.id);
+  Q(`UPDATE channels SET domain_id=NULL WHERE domain_id=?`).run(d.id);
+  domBust(); log('domain removed', d.host);
+}
+let domainBusy = false, domainLast = null;
+async function domainJob() {
+  if (domainBusy) return; domainBusy = true;
+  try {
+    for (const t of Q(`SELECT * FROM domain_trash ORDER BY created_at LIMIT 50`).all()) if (!cfCfg() || await cfDelete(t.cf_id)) Q(`DELETE FROM domain_trash WHERE cf_id=?`).run(t.cf_id);
+    // rows whose account is gone (deleted before the trigger existed)
+    for (const d of Q(`SELECT * FROM custom_domains WHERE owner_id NOT IN (SELECT id FROM users) LIMIT 50`).all()) await dropDomain(d);
+    const due = Q(`SELECT id FROM custom_domains WHERE status IN ('pending','failed') AND created_at>? AND COALESCE(last_check_at,0)<? ORDER BY COALESCE(last_check_at,0) LIMIT 100`).all(now() - 14 * 864e5, now() - DOMAIN_CHECK_MS / 2)
+      .concat(Q(`SELECT id FROM custom_domains WHERE status='active' AND (COALESCE(last_check_at,0)<? OR ((cname_ok=0 OR ? AND COALESCE(ssl_status,'')<>'active') AND created_at>? AND COALESCE(last_check_at,0)<?))
+        ORDER BY COALESCE(last_check_at,0) LIMIT 100`).all(now() - 6 * 3600000, cfCfg() ? 1 : 0, now() - 14 * 864e5, now() - DOMAIN_CHECK_MS / 2)); // not serving yet (CNAME / HTTPS): checked as often as pending ones
+    for (const r of due) await checkDomain(r.id).catch((e) => log('domain check', r.id, e.message));
+    domainLast = { at: now(), checked: due.length };
+  } catch (e) { log('domain job', e.message); } finally { domainBusy = false; }
+}
+setInterval(domainJob, DOMAIN_CHECK_MS).unref(); setTimeout(domainJob, Math.min(DOMAIN_CHECK_MS, 15000)).unref();
+
+const NEUTRAL_404 = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Not found</title>'
+  + '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px system-ui,-apple-system,sans-serif;color:#667;background:#fff}</style></head><body><p>Not found</p></body></html>';
+/** Admin → Settings → Link domains → Customer domains. */
+function adminDomains() {
+  const cf = !!cfCfg();
+  const rows = Q(`SELECT d.*, u.email FROM custom_domains d LEFT JOIN users u ON u.id=d.owner_id ORDER BY (d.status='active') DESC, d.id DESC LIMIT 1000`).all();
+  return { cf_on: cf, target: cnameTarget(), last_job: domainLast,
+    domains: rows.map((d) => ({ ...domainView(d), owner_id: d.owner_id, email: d.email || '(deleted account)', needs_setup: d.status === 'active' && !cf })) };
+}
+/** Requests on a customer's own link domain. */
+async function onCustomHost(req, res, url, d) {
+  const p = url.pathname; let mm;
+  const nf = () => send(res, 404, NEUTRAL_404, { 'content-type': 'text/html; charset=utf-8' });
+  if (d.status !== 'active' || !Q(`SELECT 1 FROM users WHERE id=?`).get(d.owner_id)) return nf();
+  if (p === '/robots.txt') return send(res, 200, 'User-agent: *\nDisallow: /\n', { 'content-type': 'text/plain' });
+  const own = (slug) => { const ch = Q(`SELECT * FROM channels WHERE slug=?`).get(slug); // only this customer's links (no cross-customer use of a domain)
+    return ch && ch.owner_id === d.owner_id && (d.channel_id == null || d.channel_id === ch.id || ch.domain_id === d.id
+      // smart link: the click page of a channel on this domain posts to its backup channel's /go
+      || Q(`SELECT * FROM channels WHERE redirect_to IS NOT NULL AND owner_id=? AND (id=? OR domain_id=?)`).all(d.owner_id, d.channel_id ?? 0, d.id).some((x) => smartTarget(x).id === ch.id)) ? ch : null; };
+  if ((mm = /^\/r\/([\w-]{3,40})\.js$/.exec(p)) && (req.method === 'GET' || req.method === 'HEAD')) { const ch = own(mm[1]); return ch ? snippetJs(req, res, url, ch) : nf(); }
+  if ((mm = /^\/c\/([\w-]+)(\/go)?$/.exec(p))) { const ch = own(mm[1]); return ch ? await slugRoute(req, res, ch, !!mm[2]) : nf(); }
+  return nf();
+}
+
+// ---------- round 16: tracking link route (Joinvoo's domains and customer domains) + the landing-page snippet ----------
+/** Where a link's visitors go: follows redirect_to (smart link / ban failover). Several hops when a failover lands on a channel that another
+ *  link already points at (X → lost channel → its backup), at most 3, never in a circle. One hop is the old behaviour. */
+function smartTarget(ch0) {
+  let ch = ch0, at = ch0; const seen = new Set([ch0.id]);
+  for (let i = 0; i < 3 && at.redirect_to; i++) {
+    const tgt = Q(`SELECT * FROM channels WHERE id=? AND owner_id=?`).get(at.redirect_to, at.owner_id);
+    if (!tgt || seen.has(tgt.id)) break; seen.add(tgt.id); at = tgt;
+    if (tgt.status !== 'removed') ch = tgt; // a removed channel is never the destination, but its own failover is followed
+  }
+  return ch;
+}
+async function slugRoute(req, res, ch0, isGo) {
+  // Smart link: this link's visitors go into the backup channel (its invite links, its pixel settings, joins counted there).
+  const ch = smartTarget(ch0);
+  if (isGo && req.method === 'OPTIONS') return snipPreflight(req, res, ch0);
+  if (isGo && req.method === 'POST') {
+    const origin = req.headers.origin;
+    if (origin && crossOrigin(req, origin)) { // the snippet on the customer's own landing page (a different site) calls us from the visitor's browser
+      const body = await readJson(req, 8 * 1024);
+      if (body.src === 'snippet') {
+        res._xh = snipCors(origin);
+        if (!originAllowed(ch0, origin)) return send(res, 403, { error: 'This page isn’t on the allowed list for this link.' });
+        req._src = 'snippet';
+        if (snipTokenOk(body.st, ch0.slug)) req._human = true; // same signal as the jv_h cookie our own page sets; no valid token = treated like a script
+      }
+    }
+    return await onClick(req, res, ch);
+  }
+  return send(res, 200, clickPage(ch), { 'content-type': 'text/html; charset=utf-8', 'set-cookie': `jv_h=1; Path=/c/; Max-Age=3600; SameSite=Lax${SECURE ? '; Secure' : ''}` });
+}
+function crossOrigin(req, origin) { try { return new URL(origin).host !== String(req.headers.host || ''); } catch { return true; } }
+const snipCors = (origin) => ({ 'access-control-allow-origin': origin, vary: 'Origin' });
+function snipOrigins(ch) { try { const a = JSON.parse(ch.snip_origins || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } }
+function originAllowed(ch, origin) {
+  const list = snipOrigins(ch); if (!list.length) return true;
+  let h = ''; try { h = new URL(origin).hostname.toLowerCase(); } catch { return false; }
+  return list.some((x) => h === x || h.endsWith('.' + x));
+}
+function snipPreflight(req, res, ch) {
+  const origin = req.headers.origin;
+  if (!origin || !originAllowed(ch, origin)) return send(res, 403, '', { 'content-type': 'text/plain' });
+  return send(res, 204, '', { ...snipCors(origin), 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '600' });
+}
+const snipToken = (slug) => { const t = Math.floor(now() / 1000); return t.toString(36) + '.' + hmac('snip:' + slug + ':' + t); };
+function snipTokenOk(st, slug) {
+  const m = /^([0-9a-z]{1,10})\.([\w-]{16})$/.exec(String(st || '')); if (!m) return false;
+  const t = parseInt(m[1], 36), age = now() / 1000 - t;
+  return age > -300 && age < 12 * 3600 && safeEq(m[2], hmac('snip:' + slug + ':' + t));
+}
+/** /r/<slug>.js — paste on any landing page. Reads the ad click IDs + pixel cookies, asks /c/<slug>/go for this visitor's own
+ * invite link (or bot deep link) and opens Telegram. Options in the script URL: ?mode=instant|button|delay&delay=3&sel=.cta */
+function snippetJs(req, res, url, ch0) {
+  const ch = smartTarget(ch0);
+  const q = url.searchParams, mode = ['button', 'delay'].includes(q.get('mode')) ? q.get('mode') : 'instant';
+  const delay = Math.max(0, Math.min(30, Math.round(+q.get('delay') || 0))), sel = String(q.get('sel') || '').slice(0, 120).replace(/[<>{}]/g, '') || '[data-joinvoo]';
+  const apiUrl = `${SECURE ? 'https' : 'http'}://${String(req.headers.host || new URL(BASE_URL).host)}/c/${ch0.slug}/go`;
+  const fb = ch.fallback_link || (ch.username ? `https://t.me/${ch.username}` : '');
+  const J = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
+  const js = `/* Joinvoo landing-page redirect: ${ch0.slug} */
+(function(){var S=${J(ch0.slug)},API=${J(apiUrl)},FB=${J(fb)},ST=${J(snipToken(ch0.slug))},MODE=${J(mode)},DELAY=${delay},SEL=${J(sel)};
+var K="__joinvoo_"+S;if(window[K])return;window[K]=1;var done=false,busy=false;
+function ck(n){var m=document.cookie.match("(?:^|; )"+n+"=([^;]*)");return m?decodeURIComponent(m[1]):""}
+function qp(n){var m=location.search.match(new RegExp("[?&]"+n+"=([^&#]*)"));try{return m?decodeURIComponent(m[1].replace(/\\+/g," ")):""}catch(e){return m?m[1]:""}}
+function fbc(){var c=ck("_fbc"),id=qp("fbclid");if(!c&&id){c="fb.1."+new Date().getTime()+"."+id;try{document.cookie="_fbc="+encodeURIComponent(c)+";path=/;max-age=7776000;SameSite=Lax"}catch(e){}}return c}
+function go(u){u=u||FB;if(done||!u)return;done=true;try{window.location.href=u}catch(e){}}
+function run(){if(done||busy)return;busy=true;var t=setTimeout(function(){go(FB)},3000);
+var body=JSON.stringify({fbp:ck("_fbp"),fbc:fbc(),ttp:ck("_ttp"),scid:ck("_scid"),url:location.href,ref:document.referrer||"",src:"snippet",st:ST});
+function ok(j){clearTimeout(t);go(j&&j.url)}function bad(){clearTimeout(t);go(FB)}
+try{if(window.fetch){fetch(API,{method:"POST",mode:"cors",credentials:"omit",keepalive:true,headers:{"content-type":"text/plain;charset=UTF-8"},body:body}).then(function(r){return r.json()}).then(ok,bad)}
+else{var x=new XMLHttpRequest();x.open("POST",API,true);x.setRequestHeader("content-type","text/plain;charset=UTF-8");x.onload=function(){try{ok(JSON.parse(x.responseText))}catch(e){bad()}};x.onerror=bad;x.send(body)}}catch(e){bad()}}
+function hit(el){try{return el.matches?el.matches(SEL):el.msMatchesSelector?el.msMatchesSelector(SEL):el.webkitMatchesSelector(SEL)}catch(e){try{return el.hasAttribute("data-joinvoo")}catch(e2){return false}}}
+document.addEventListener("click",function(e){var el=e.target;while(el&&el.nodeType===1){if(hit(el)){e.preventDefault();run();return}el=el.parentNode}},true);
+window.joinvooGo=run;
+if(MODE==="instant")run();else if(MODE==="delay")setTimeout(run,DELAY*1000);})();
+`;
+  return send(res, 200, req.method === 'HEAD' ? '' : js, { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'private, max-age=60', 'access-control-allow-origin': '*', 'cross-origin-resource-policy': 'cross-origin' });
 }
 
 // ---------- invite link names: "Meta · c-0a3f9 · NG", visible in Telegram → channel → Invite links ----------
@@ -2268,23 +2654,25 @@ function parseRange(qs) {
 
 const HOURLY_SUMS = `SUM(clicks) clicks, SUM(joins) joins, SUM(organic) organic, SUM(leaves) leaves, SUM(capi_ok) capi_ok, SUM(capi_fail) capi_fail, SUM(tt_ok) tt_ok, SUM(tt_fail) tt_fail, SUM(sc_ok) sc_ok, SUM(sc_fail) sc_fail, SUM(suspect) suspect, SUM(filtered) filtered`;
 /** Ad spend (credits = cents) between two YYYY-MM-DD dates, optionally per campaign/platform. */
-const spendSum = (uid, d0, d1) => Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM spend WHERE owner_id=? AND date>=? AND date<=?`).get(uid, d0, d1).n;
+const spendSum = (uid, d0, d1, sc = '') => Q(`SELECT COALESCE(SUM(amount_cents),0) n FROM spend WHERE owner_id=? AND date>=? AND date<=?${sc}`).get(uid, d0, d1).n;
+/** Round 17: a media buyer in a team workspace only sees their own channels. '' for everyone else (owners and managers: no change). */
+const SC = (u, col) => (u && Array.isArray(u._scope) ? ` AND ${col} IN (${u._scope.length ? u._scope.map((x) => Math.floor(+x)).join(',') : '-1'})` : '');
 function rangeDays(qs) {
   const today = new Date().toISOString().slice(0, 10);
   const ok = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
   return [ok(qs.get('from')) ? qs.get('from') : new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10), ok(qs.get('to')) ? qs.get('to') : today];
 }
-function convTotals(uid, from, to, channel) {
+function convTotals(uid, from, to, channel, sc = '') {
   const a = [uid, from, to]; if (channel) a.push(channel);
   return Q(`SELECT COALESCE(SUM(event='ftd'),0) ftd, COALESCE(SUM(event='reg'),0) reg, COALESCE(SUM(event='dep'),0) dep, COALESCE(SUM(event='sale'),0) sales,
     COALESCE(SUM(event='qualified'),0) qualified, COALESCE(SUM(event='rejected'),0) rejected, COALESCE(SUM(event='lead'),0) leads, COALESCE(SUM(${REVENUE_SQL}),0) revenue_cents
-    FROM conversions WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''}`).get(...a);
+    FROM conversions WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''}${sc}`).get(...a);
 }
 function stats(user, qs) {
   const { tz, from, to, channel } = parseRange(qs);
   const args = [tz, user.id, Math.floor(from / 3600000), Math.ceil(to / 3600000)];
-  let where = '';
-  if (channel) { where = ' AND channel_id=?'; args.push(channel); }
+  let where = SC(user, 'channel_id');
+  if (channel) { where += ' AND channel_id=?'; args.push(channel); }
   const rows = Q(`SELECT channel_id, (hour*3600 - ?*60)/86400 AS dayn, ${HOURLY_SUMS}
     FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${where} GROUP BY channel_id, dayn`).all(...args);
   const totals = { clicks: 0, joins: 0, organic: 0, leaves: 0, capi_ok: 0, capi_fail: 0, tt_ok: 0, tt_fail: 0, sc_ok: 0, sc_fail: 0, suspect: 0, filtered: 0 };
@@ -2299,19 +2687,19 @@ function stats(user, qs) {
   totals.suspect_clicks = totals.suspect; delete totals.suspect; totals.filtered_joins = totals.filtered; delete totals.filtered;
   const cargs = [tz, user.id, from, to]; if (channel) cargs.push(channel);
   for (const c of Q(`SELECT (created_at/1000 - ?*60)/86400 AS dayn, COALESCE(SUM(event='ftd'),0) ftd, COALESCE(SUM(event='sale'),0) sales, COALESCE(SUM(${REVENUE_SQL}),0) rev FROM conversions
-      WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''} GROUP BY dayn`).all(...cargs)) {
+      WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''}${SC(user, 'channel_id')} GROUP BY dayn`).all(...cargs)) {
     const d = new Date(c.dayn * 864e5).toISOString().slice(0, 10);
     const dd = days.get(d) || { day: d, clicks: 0, joins: 0 }; days.set(d, dd);
     if (c.ftd) dd.ftd = c.ftd; if (c.sales) dd.sales = c.sales; if (c.rev) dd.revenue_cents = c.rev;
   }
   { const la = [user.id, from, to]; if (channel) la.push(channel);
-    totals.leaves_new = cnt(`SELECT COUNT(*) FROM joins WHERE owner_id=? AND joined_at>=? AND joined_at<? AND left_at IS NOT NULL AND left_at<?${channel ? ' AND channel_id=?' : ''}`, la[0], la[1], la[2], la[2], ...la.slice(3));
+    totals.leaves_new = cnt(`SELECT COUNT(*) FROM joins WHERE owner_id=? AND joined_at>=? AND joined_at<? AND left_at IS NOT NULL AND left_at<?${channel ? ' AND channel_id=?' : ''}${SC(user, 'channel_id')}`, la[0], la[1], la[2], la[2], ...la.slice(3));
     totals.leaves_old = Math.max(0, totals.leaves - totals.leaves_new); }
-  const ct = convTotals(user.id, from, to, channel);
+  const ct = convTotals(user.id, from, to, channel, SC(user, 'channel_id'));
   Object.assign(totals, { ftd: ct.ftd, reg: ct.reg, dep: ct.dep, sales: ct.sales, qualified: ct.qualified, rejected: ct.rejected, revenue_cents: ct.revenue_cents });
   const [d0, d1] = rangeDays(qs);
-  totals.spend_cents = channel ? 0 : spendSum(user.id, d0, d1);
-  const chans = Q(`SELECT id, title, status FROM channels WHERE owner_id=?`).all(user.id);
+  totals.spend_cents = channel ? 0 : spendSum(user.id, d0, d1, SC(user, 'channel_id'));
+  const chans = Q(`SELECT id, title, status FROM channels WHERE owner_id=?${SC(user, 'id')}`).all(user.id);
   const titles = new Map(chans.map((c) => [c.id, c.title]));
   const locked = isLocked(user.id), series = [...days.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
   // Basic after the trial: the deposit COUNT stays, the money it made is a Pro detail.
@@ -2323,20 +2711,20 @@ function stats(user, qs) {
     counts: {
       channels: chans.filter((c) => c.status === 'active').length,
       channels_all: chans.length,
-      bots: Q(`SELECT COUNT(*) n FROM bots WHERE owner_id=? AND status='active'`).get(user.id).n,
-      pixels: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND pixel_id IS NOT NULL AND pixel_id<>'' AND capi_token IS NOT NULL AND capi_token<>''`).get(user.id).n,
-      tiktoks: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND tt_pixel IS NOT NULL AND tt_pixel<>'' AND tt_token IS NOT NULL AND tt_token<>''`).get(user.id).n,
-      snaps: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND sc_pixel IS NOT NULL AND sc_pixel<>'' AND sc_token IS NOT NULL AND sc_token<>''`).get(user.id).n,
-      has_conversions: !!Q(`SELECT 1 FROM conversions WHERE owner_id=? LIMIT 1`).get(user.id),
-      has_clicks: !!Q(`SELECT 1 FROM hourly WHERE owner_id=? AND clicks>0 LIMIT 1`).get(user.id),
-      has_spend: !!Q(`SELECT 1 FROM spend WHERE owner_id=? LIMIT 1`).get(user.id),
+      bots: user._scope ? 0 : Q(`SELECT COUNT(*) n FROM bots WHERE owner_id=? AND status='active'`).get(user.id).n,
+      pixels: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND pixel_id IS NOT NULL AND pixel_id<>'' AND capi_token IS NOT NULL AND capi_token<>''${SC(user, 'id')}`).get(user.id).n,
+      tiktoks: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND tt_pixel IS NOT NULL AND tt_pixel<>'' AND tt_token IS NOT NULL AND tt_token<>''${SC(user, 'id')}`).get(user.id).n,
+      snaps: Q(`SELECT COUNT(*) n FROM channels WHERE owner_id=? AND sc_pixel IS NOT NULL AND sc_pixel<>'' AND sc_token IS NOT NULL AND sc_token<>''${SC(user, 'id')}`).get(user.id).n,
+      has_conversions: !!Q(`SELECT 1 FROM conversions WHERE owner_id=?${SC(user, 'channel_id')} LIMIT 1`).get(user.id),
+      has_clicks: !!Q(`SELECT 1 FROM hourly WHERE owner_id=? AND clicks>0${SC(user, 'channel_id')} LIMIT 1`).get(user.id),
+      has_spend: !!Q(`SELECT 1 FROM spend WHERE owner_id=?${SC(user, 'channel_id')} LIMIT 1`).get(user.id),
     },
   };
 }
 
 function joinsQuery(user, qs, limit, offset) {
   const { from, to, channel } = parseRange(qs);
-  const args = [user.id, from, to]; let where = '';
+  const args = [user.id, from, to]; let where = SC(user, 'j.channel_id');
   if (channel) { where += ' AND j.channel_id=?'; args.push(channel); }
   const type = qs.get('type');
   if (type === 'tracked') where += ' AND j.click_id IS NOT NULL';
@@ -2351,7 +2739,7 @@ function joinsQuery(user, qs, limit, offset) {
     args.push(`%${q}%`, `%${q}%`, `%${q}%`, q, ...(cc ? [cc] : []));
   }
   const total = Q(`SELECT COUNT(*) n FROM joins j WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<?${where}`).get(...args).n;
-  const rows = Q(`SELECT j.*, ch.title AS channel_title, c.ts AS click_ts, c.country, c.fbclid, c.fbc, c.fbp, c.ttclid, c.sccid, c.ip, c.ua, c.params, c.page_url, lk.name AS link_name, lk.url AS link_url,
+  const rows = Q(`SELECT j.*, ch.title AS channel_title, c.ts AS click_ts, c.country, c.fbclid, c.fbc, c.fbp, c.ttclid, c.sccid, c.ip, c.ua, c.params, c.page_url, c.source AS click_source, lk.name AS link_name, lk.url AS link_url,
       (SELECT json_group_array(json_object('event',v.event,'value_cents',v.value_cents,'currency',v.currency,'at',v.created_at,'source',v.source)) FROM conversions v WHERE v.join_id=j.id) AS convs
     FROM joins j JOIN channels ch ON ch.id=j.channel_id LEFT JOIN clicks c ON c.id=j.click_id LEFT JOIN links lk ON lk.id=c.link_id
     WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<?${where} ORDER BY j.joined_at DESC LIMIT ? OFFSET ?`).all(...args, limit, offset);
@@ -2379,20 +2767,20 @@ const derivedMetrics = (x) => ({ join_rate: x.clicks ? x.joins / x.clicks : 0, f
   cost_per_join_cents: x.spend_cents && x.joins ? Math.round(x.spend_cents / x.joins) : null, cost_per_ftd_cents: x.spend_cents && x.ftd ? Math.round(x.spend_cents / x.ftd) : null,
   roas: x.spend_cents ? Math.round(x.revenue_cents / x.spend_cents * 100) / 100 : null });
 /** Totals + series for one time range [from, to) grouped by day/week/month. */
-function periodData(uid, from, to, tz, channel, group) {
+function periodData(uid, from, to, tz, channel, group, sc = '') {
   const series = new Map(); const get = (k) => { if (!series.has(k)) series.set(k, Object.fromEntries([['key', k], ...METRICS.map((m) => [m, 0])])); return series.get(k); };
   const ha = [uid, Math.floor(from / 3600000), Math.ceil(to / 3600000)]; if (channel) ha.push(channel);
-  for (const r of Q(`SELECT hour, SUM(clicks) clicks, SUM(joins) joins, SUM(organic) organic, SUM(leaves) leaves, SUM(suspect) suspect FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${channel ? ' AND channel_id=?' : ''} GROUP BY hour`).all(...ha)) {
+  for (const r of Q(`SELECT hour, SUM(clicks) clicks, SUM(joins) joins, SUM(organic) organic, SUM(leaves) leaves, SUM(suspect) suspect FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${channel ? ' AND channel_id=?' : ''}${sc} GROUP BY hour`).all(...ha)) {
     const s = get(periodKey(r.hour * 3600000, tz, group));
     s.clicks += r.clicks || 0; s.joins += r.joins || 0; s.organic += r.organic || 0; s.leaves += r.leaves || 0; s.suspect_clicks += r.suspect || 0;
   }
   const ca = [uid, from, to]; if (channel) ca.push(channel);
-  for (const c of Q(`SELECT created_at, event, value_cents, COALESCE(rejected,0) rejected FROM conversions WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''}`).all(...ca)) {
+  for (const c of Q(`SELECT created_at, event, value_cents, COALESCE(rejected,0) rejected FROM conversions WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<?${channel ? ' AND channel_id=?' : ''}${sc}`).all(...ca)) {
     const s = get(periodKey(c.created_at, tz, group));
     const k = c.event === 'sale' ? 'sales' : c.event; if (k in s && k !== 'key') s[k]++;
     if (['ftd', 'dep', 'sale'].includes(c.event) && !c.rejected) s.revenue_cents += c.value_cents || 0;
   }
-  if (!channel) for (const sp of Q(`SELECT date, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<? GROUP BY date`).all(uid, new Date(from - tz * 60000).toISOString().slice(0, 10), new Date(to - tz * 60000).toISOString().slice(0, 10))) {
+  if (!channel) for (const sp of Q(`SELECT date, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<?${sc} GROUP BY date`).all(uid, new Date(from - tz * 60000).toISOString().slice(0, 10), new Date(to - tz * 60000).toISOString().slice(0, 10))) {
     get(periodKey(Date.parse(sp.date + 'T12:00:00Z') + tz * 60000, tz, group)).spend_cents += sp.n;
   }
   const list = [...series.values()].sort((a, b) => (a.key < b.key ? -1 : 1));
@@ -2408,7 +2796,7 @@ function comparePeriods(user, qs) {
   if ([a0, a1, b0, b1].some((x) => x == null)) return { error: 'Send a_from, a_to, b_from and b_to as YYYY-MM-DD.' };
   const group = ['day', 'week', 'month'].includes(qs.get('group')) ? qs.get('group') : 'day';
   const channel = parseInt(qs.get('channel') || '', 10) || null;
-  const a = periodData(user.id, a0, a1 + 864e5, tz, channel, group), b = periodData(user.id, b0, b1 + 864e5, tz, channel, group);
+  const a = periodData(user.id, a0, a1 + 864e5, tz, channel, group, SC(user, 'channel_id')), b = periodData(user.id, b0, b1 + 864e5, tz, channel, group, SC(user, 'channel_id'));
   const delta = {};
   for (const m of [...METRICS, 'join_rate', 'ftd_rate', 'cost_per_join_cents', 'cost_per_ftd_cents', 'roas']) delta[m] = b.totals[m] ? Math.round((a.totals[m] - b.totals[m]) / b.totals[m] * 1000) / 10 : (a.totals[m] ? null : 0);
   if (isLocked(user.id)) { // the count of deposits stays; their money is a Pro detail
@@ -2486,16 +2874,16 @@ function compareCampaigns(user, qs) {
   const ph = names.map(() => '?').join(','), camp = "COALESCE(json_extract(c.params,'$.utm_campaign'),'(no campaign tag)')";
   const cargs = [user.id, from, to, ...names]; if (channel) cargs.push(channel);
   for (const r of Q(`SELECT c.ts, ${camp} k FROM clicks c LEFT JOIN joins j ON j.id=(SELECT id FROM joins WHERE click_id=c.id ORDER BY id LIMIT 1)
-      WHERE c.owner_id=? AND c.ts>=? AND c.ts<? AND c.joined=1 AND COALESCE(j.suspect,0)=0 AND ${camp} IN (${ph})${channel ? ' AND c.channel_id=?' : ''}`).all(...cargs)) {
+      WHERE c.owner_id=? AND c.ts>=? AND c.ts<? AND c.joined=1 AND COALESCE(j.suspect,0)=0 AND ${camp} IN (${ph})${channel ? ' AND c.channel_id=?' : ''}${SC(user, 'c.channel_id')}`).all(...cargs)) {
     const row = out[r.k] && out[r.k].get(seriesKey(r.ts, tz, group)); if (row) row.joins++;
   }
   for (const r of Q(`SELECT v.created_at, ${camp} k FROM conversions v JOIN joins j ON j.id=v.join_id JOIN clicks c ON c.id=j.click_id
-      WHERE v.owner_id=? AND v.created_at>=? AND v.created_at<? AND v.event='ftd' AND COALESCE(v.rejected,0)=0 AND ${camp} IN (${ph})${channel ? ' AND v.channel_id=?' : ''}`).all(...cargs)) {
+      WHERE v.owner_id=? AND v.created_at>=? AND v.created_at<? AND v.event='ftd' AND COALESCE(v.rejected,0)=0 AND ${camp} IN (${ph})${channel ? ' AND v.channel_id=?' : ''}${SC(user, 'v.channel_id')}`).all(...cargs)) {
     const row = out[r.k] && out[r.k].get(seriesKey(r.created_at, tz, group)); if (row) row.ftd++;
   }
   if (!channel) {
     const d0 = new Date(from - tz * 60000).toISOString().slice(0, 10), d1 = new Date(to - tz * 60000 - 1).toISOString().slice(0, 10);
-    for (const r of Q(`SELECT date, campaign k, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<=? AND campaign IN (${ph}) GROUP BY date, campaign`).all(user.id, d0, d1, ...names)) {
+    for (const r of Q(`SELECT date, campaign k, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<=? AND campaign IN (${ph})${SC(user, 'channel_id')} GROUP BY date, campaign`).all(user.id, d0, d1, ...names)) {
       const row = out[r.k] && out[r.k].get(seriesKey(Date.parse(r.date + 'T12:00:00Z') + tz * 60000, tz, group)); if (row) row.spend_cents += r.n;
     }
   }
@@ -2516,15 +2904,15 @@ function compare(user, qs) {
     if (group === 'month') { const y = d.getUTCFullYear(), m = d.getUTCMonth() - i; start = Date.UTC(y, m, 1); end = Date.UTC(y, m + 1, 1); key = new Date(start).toISOString().slice(0, 7); daysIn = i === 0 ? d.getUTCDate() : new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); }
     else if (group === 'week') { const t0 = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - ((d.getUTCDay() + 6) % 7) * 864e5; start = t0 - i * 7 * 864e5; end = start + 7 * 864e5; key = periodKey(start + tz * 60000, tz, 'week'); daysIn = i === 0 ? ((d.getUTCDay() + 6) % 7) + 1 : 7; }
     else { start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) - i * 864e5; end = start + 864e5; key = new Date(start).toISOString().slice(0, 10); daysIn = 1; }
-    const p = periodData(user.id, start + tz * 60000, end + tz * 60000, tz, channel, group).totals;
+    const p = periodData(user.id, start + tz * 60000, end + tz * 60000, tz, channel, group, SC(user, 'channel_id')).totals;
     buckets.push({ key, month: group === 'month' ? key : undefined, partial: i === 0, days_in: daysIn, clicks: p.clicks, joins: p.joins, organic: p.organic, leaves: p.leaves,
-      sent: sentIn(user.id, start + tz * 60000, end + tz * 60000, channel), ftd: p.ftd, reg: p.reg, sales: p.sales, qualified: p.qualified, rejected: p.rejected, revenue_cents: p.revenue_cents,
+      sent: sentIn(user.id, start + tz * 60000, end + tz * 60000, channel, SC(user, 'channel_id')), ftd: p.ftd, reg: p.reg, sales: p.sales, qualified: p.qualified, rejected: p.rejected, revenue_cents: p.revenue_cents,
       spend_cents: p.spend_cents, suspect_clicks: p.suspect_clicks, join_rate: p.join_rate, ftd_rate: p.ftd_rate });
   }
   return group === 'month' ? { group, months: buckets } : { group, periods: buckets };
 }
-const sentIn = (uid, from, to, channel) => { const a = [uid, Math.floor(from / 3600000), Math.floor(to / 3600000)]; if (channel) a.push(channel);
-  return Q(`SELECT COALESCE(SUM(capi_ok),0)+COALESCE(SUM(tt_ok),0)+COALESCE(SUM(sc_ok),0) n FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${channel ? ' AND channel_id=?' : ''}`).get(...a).n; };
+const sentIn = (uid, from, to, channel, sc = '') => { const a = [uid, Math.floor(from / 3600000), Math.floor(to / 3600000)]; if (channel) a.push(channel);
+  return Q(`SELECT COALESCE(SUM(capi_ok),0)+COALESCE(SUM(tt_ok),0)+COALESCE(SUM(sc_ok),0) n FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${channel ? ' AND channel_id=?' : ''}${sc}`).get(...a).n; };
 const DIMS = {
   campaign: "COALESCE(json_extract(c.params,'$.utm_campaign'),'(no campaign tag)')",
   adset: "COALESCE(json_extract(c.params,'$.adset'),json_extract(c.params,'$.utm_term'),json_extract(c.params,'$.utm_adset'),'(no ad set tag)')",
@@ -2549,11 +2937,11 @@ function breakdown(user, qs) {
     LEFT JOIN joins j ON j.id=(SELECT id FROM joins WHERE click_id=c.id ORDER BY id LIMIT 1)
     LEFT JOIN (SELECT join_id, SUM(event='ftd') ftd, SUM(event='reg') reg, SUM(event='sale') sales, SUM(${REVENUE_SQL}) rev
       FROM conversions WHERE owner_id=? AND join_id IS NOT NULL GROUP BY join_id) v ON v.join_id=j.id
-    WHERE c.owner_id=? AND c.ts>=? AND c.ts<?${channel ? ' AND c.channel_id=?' : ''}${dim === 'lang' ? ' AND c.joined=1' : ''} GROUP BY k ORDER BY joins DESC, clicks DESC LIMIT 100`).all(user.id, ...args)
+    WHERE c.owner_id=? AND c.ts>=? AND c.ts<?${channel ? ' AND c.channel_id=?' : ''}${SC(user, 'c.channel_id')}${dim === 'lang' ? ' AND c.joined=1' : ''} GROUP BY k ORDER BY joins DESC, clicks DESC LIMIT 100`).all(user.id, ...args)
     .map((r) => ({ ...r, key: String(r.k), join_rate: r.clicks ? r.joins / r.clicks : 0 }));
   if ((dim === 'campaign' || dim === 'platform') && !channel) {
     const [d0, d1] = rangeDays(qs);
-    const sp = Q(`SELECT ${dim === 'campaign' ? 'campaign' : 'platform'} AS k, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<=? GROUP BY k`).all(user.id, d0, d1);
+    const sp = Q(`SELECT ${dim === 'campaign' ? 'campaign' : 'platform'} AS k, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<=?${SC(user, 'channel_id')} GROUP BY k`).all(user.id, d0, d1);
     const byKey = new Map(); for (const s of sp) { const k = dim === 'platform' ? SPEND_PLATFORM[s.k] || 'Other / direct' : s.k || '(no campaign tag)'; byKey.set(k, (byKey.get(k) || 0) + s.n); }
     for (const [k] of byKey) if (!rows.some((r) => r.key === k)) rows.push({ k, key: k, clicks: 0, joins: 0, suspect_clicks: 0, ftd: 0, reg: 0, sales: 0, revenue_cents: 0, leaves: 0, join_rate: 0 });
     for (const r of rows) { const s = byKey.get(r.key) || 0; r.spend_cents = s; r.cost_per_join_cents = s && r.joins ? Math.round(s / r.joins) : null; r.cost_per_ftd_cents = s && r.ftd ? Math.round(s / r.ftd) : null; r.roas = s ? Math.round(r.revenue_cents / s * 100) / 100 : null; }
@@ -2567,7 +2955,7 @@ function funnel(user, qs) {
   const { from, to, channel } = parseRange(qs);
   const dim = DIMS[qs.get('dim')] ? qs.get('dim') : null;
   const one = (val) => {
-    const a = [user.id, user.id, from, to]; let w = '';
+    const a = [user.id, user.id, from, to]; let w = SC(user, 'c.channel_id');
     if (channel) { w += ' AND c.channel_id=?'; a.push(channel); }
     if (dim && val != null && val !== '') { w += ` AND ${DIMS[dim]}=?`; a.push(val); }
     const r = Q(`SELECT COUNT(*) clicks, COALESCE(SUM(CASE WHEN c.joined=1 AND COALESCE(j.suspect,0)=0 THEN 1 ELSE 0 END),0) joins, COALESCE(SUM(c.suspect),0) suspect_clicks, COALESCE(SUM(v.reg>0),0) reg, COALESCE(SUM(v.ftd>0),0) ftd, COALESCE(SUM(v.dep>0),0) dep, COALESCE(SUM(v.sales>0),0) sales, COALESCE(SUM(v.rev),0) revenue_cents
@@ -2592,7 +2980,7 @@ function cohorts(user, qs) {
   const a = [user.id, since]; if (channel) a.push(channel);
   const map = new Map();
   for (const r of Q(`SELECT j.joined_at, (SELECT MIN(created_at) FROM conversions v WHERE v.join_id=j.id AND v.event='ftd' AND COALESCE(v.rejected,0)=0) ftd_at
-      FROM joins j WHERE j.owner_id=? AND j.joined_at>=?${channel ? ' AND j.channel_id=?' : ''}`).all(...a)) {
+      FROM joins j WHERE j.owner_id=? AND j.joined_at>=?${channel ? ' AND j.channel_id=?' : ''}${SC(user, 'j.channel_id')}`).all(...a)) {
     const k = periodKey(r.joined_at, tz, 'week');
     const c = map.get(k) || { cohort: k, joins: 0, ftd_d1: 0, ftd_d7: 0, ftd_d30: 0 }; map.set(k, c);
     c.joins++;
@@ -2605,13 +2993,14 @@ function cohorts(user, qs) {
 function conversionsView(user, qs) {
   const limit = Math.min(200, +qs.get('limit') || 50);
   // Basic after the trial: deposits are still matched and sent to the ad platforms; only the list of who/which ad is hidden.
-  if (isLocked(user.id)) return { postback_url: `${linkBase()}/pb/${pbKey(user.id)}`, locked: true, rows: [],
-    locked_count: Q(`SELECT COUNT(*) n FROM conversions WHERE owner_id=? AND matched=1 AND event IN ('ftd','dep','sale')`).get(user.id).n };
+  const pbu = user._member ? null : `${linkBase()}/pb/${pbKey(user.id)}`; // round 17: the postback key is an API key — owners only
+  if (isLocked(user.id)) return { postback_url: pbu, locked: true, rows: [],
+    locked_count: Q(`SELECT COUNT(*) n FROM conversions WHERE owner_id=? AND matched=1 AND event IN ('ftd','dep','sale')${SC(user, 'channel_id')}`).get(user.id).n };
   return {
-    postback_url: `${linkBase()}/pb/${pbKey(user.id)}`,
+    postback_url: pbu,
     rows: Q(`SELECT v.id, v.event, v.value_cents, v.currency, v.txid, v.source, v.matched, v.created_at, v.meta_status, v.tt_status, v.sc_status, v.error, v.tg_user_id,
         COALESCE(v.rejected,0) AS rejected, v.network, j.first_name, j.last_name, j.username, j.click_id, ch.title AS channel_title FROM conversions v LEFT JOIN joins j ON j.id=v.join_id LEFT JOIN channels ch ON ch.id=v.channel_id
-      WHERE v.owner_id=? ORDER BY v.id DESC LIMIT ?`).all(user.id, limit),
+      WHERE v.owner_id=?${SC(user, 'v.channel_id')} ORDER BY v.id DESC LIMIT ?`).all(user.id, limit),
   };
 }
 
@@ -2625,14 +3014,18 @@ function limitsFor(uid) {
   const lim = (proish ? L.pro : L.basic) || {}, mx = (v) => (Number(v) > 0 ? Number(v) : null);
   const used = { channels: cnt(`SELECT COUNT(*) FROM channels WHERE owner_id=? AND status<>'removed' AND COALESCE(locked,0)=0`, uid), bots: cnt(`SELECT COUNT(*) FROM bots WHERE owner_id=? AND status='active'`, uid) };
   const P = plansDef();
+  const domMax = lim.domains === undefined || lim.domains === null ? (proish ? envNum('PRO_MAX_DOMAINS', 0) : envNum('BASIC_MAX_DOMAINS', 1)) : lim.domains; // limits saved before round 16 have no domains number
   return { plan: proish ? 'pro' : 'basic', plan_name: proish ? P.pro.name : P.basic.name, unlimited: !mx(lim.channels) && !mx(lim.bots),
     channels: { used: used.channels, max: mx(lim.channels) }, bots: { used: used.bots, max: mx(lim.bots) },
+    domains: { used: cnt(`SELECT COUNT(*) FROM custom_domains WHERE owner_id=?`, uid), max: mx(domMax) },
     pro_price_usd: Math.round((P.pro.base_cents || 0) / 100), basic_price_usd: Math.round((P.basic.base_cents || 0) / 100) };
 }
 /** null when there is room; otherwise the 402 body. */
 function limitHit(uid, kind) {
   const L = limitsFor(uid), x = L[kind];
   if (!x.max || x.used < x.max) return null;
+  if (kind === 'domains') return { error: `You’ve used ${x.used} of ${x.max} link ${x.max === 1 ? 'domain' : 'domains'} on ${L.plan_name}. Upgrade to Pro for unlimited link domains, or remove one to make room.`,
+    limit: { kind, used: x.used, max: x.max, plan: L.plan } };
   const what = kind === 'bots' ? (x.max === 1 ? 'bot' : 'bots') : (x.max === 1 ? 'channel' : 'channels');
   return { error: `You’ve used ${x.used} of ${x.max} ${what} on ${L.plan_name}. Upgrade to Pro for unlimited channels and bots, or remove one to make room.`,
     limit: { kind, used: x.used, max: x.max, plan: L.plan } };
@@ -2648,25 +3041,38 @@ function unlockChannels(uid) {
 
 function channelsView(user) {
   unlockChannels(user.id);
-  const bots = Q(`SELECT b.id, b.tg_id, b.username, b.status, b.created_at, b.prev_webhook, b.health,
+  const bots = user._scope ? [] : Q(`SELECT b.id, b.tg_id, b.username, b.status, b.created_at, b.prev_webhook, b.health,
       (SELECT COUNT(DISTINCT c.id) FROM channels c LEFT JOIN channel_bots cb ON cb.channel_id=c.id WHERE c.owner_id=b.owner_id AND c.status<>'removed' AND (cb.bot_id=b.id OR c.bot_id=b.id)) AS channels
     FROM bots b WHERE b.owner_id=? AND b.status<>'deleted' ORDER BY b.id`).all(user.id);
   const channels = Q(`SELECT c.*, (SELECT COUNT(*) FROM links l WHERE l.channel_id=c.id AND l.status='pool') AS pool,
       (SELECT group_concat(b.username) FROM channel_bots cb JOIN bots b ON b.id=cb.bot_id WHERE cb.channel_id=c.id AND b.status='active') AS bot_names
-    FROM channels c WHERE c.owner_id=? AND NOT (c.status='removed' AND COALESCE(c.removed_by_user,0)=1) ORDER BY c.id`).all(user.id);
+    FROM channels c WHERE c.owner_id=? AND NOT (c.status='removed' AND COALESCE(c.removed_by_user,0)=1)${SC(user, 'c.id')} ORDER BY c.id`).all(user.id);
+  const doms = ownerDomains(user.id), today = new Date().toISOString().slice(0, 10);
+  const hidden = (id) => !!(id && user._scope && !user._scope.includes(id)); // a media buyer never sees the name of a channel not given to them
+  const titleOf = (id) => (!id ? null : hidden(id) ? 'your backup channel' : (channels.find((x) => x.id === id) || Q(`SELECT title FROM channels WHERE id=? AND owner_id=?`).get(id, user.id) || {}).title || null);
+  const pbk = user._member ? null : pbKey(user.id); // round 17: hook URLs carry the postback key (an API key): owners only
   return {
-    bots, limits: limitsFor(user.id),
+    bots, limits: limitsFor(user.id), domains: user._scope ? [] : doms.map(domainView), domain_target: cnameTarget(), joinvoo_link_base: linkBase(),
+    link_domains: joinvooLinkBases().map((b) => new URL(b).host), team_role: user._member ? user._member.role : 'owner',
     channels: channels.map((c) => ({
       id: c.id, title: c.title, type: c.type, username: c.username, status: c.status, locked: !!c.locked && c.status !== 'removed', pool: c.pool, pool_target: POOL_SIZE,
-      bots: c.bot_names ? c.bot_names.split(',') : (c.type === 'bot' && c.username ? [c.username] : []), tracking_url: `${linkBase()}/c/${c.slug}`,
+      bots: c.bot_names ? c.bot_names.split(',') : (c.type === 'bot' && c.username ? [c.username] : []), tracking_url: `${chanLinkBase(c, doms)}/c/${c.slug}`,
+      domain_id: c.domain_id ?? null, snippet_src: `${chanLinkBase(c, doms)}/r/${c.slug}.js`, snip_origins: snipOrigins(c),
+      last_ping_at: c.last_ping_at || null, last_ping_test: !!c.last_ping_test, pings_today: c.ping_day === today ? c.ping_count || 0 : 0,
       welcome: c.welcome || '', btn_text: c.btn_text || '', btn_url: c.btn_url || '', forward_url: c.forward_url || '', has_forward_secret: !!c.forward_secret,
-      external: !!c.ext, hook_start: c.ext ? `${BASE_URL}/hook/${pbKey(user.id)}/start` : '', hook_blocked: c.ext ? `${BASE_URL}/hook/${pbKey(user.id)}/blocked` : '',
+      external: !!c.ext, hook_start: c.ext && pbk ? `${BASE_URL}/hook/${pbk}/start` : '', hook_blocked: c.ext && pbk ? `${BASE_URL}/hook/${pbk}/blocked` : '',
       pixel_id: c.pixel_id || '', has_token: !!c.capi_token, test_code: c.test_code || '', event_name: c.event_name || 'Subscribe',
       tt_pixel: c.tt_pixel || '', tt_has_token: !!c.tt_token, tt_test_code: c.tt_test_code || '', tt_event: c.tt_event || 'Subscribe',
       sc_pixel: c.sc_pixel || '', sc_has_token: !!c.sc_token, sc_test: !!c.sc_test, sc_event: c.sc_event || 'SUBSCRIBE',
       has_fallback: !!c.fallback_link, landing: c.landing || 'auto',
       join_mode: c.join_mode || 'link', offer_text: c.offer_text || '', offer_btn: c.offer_btn || '', offer_url: c.offer_url || '',
-      redirect_to: c.redirect_to || null, redirect_title: c.redirect_to ? (channels.find((x) => x.id === c.redirect_to) || {}).title || null : null,
+      join_approver: ['own', 'backup'].includes(c.join_approver) ? c.join_approver : 'joinvoo', approve_after: c.approve_after || 60,
+      pending_requests: c.join_mode === 'request' && c.join_approver !== 'joinvoo' && c.join_approver ? cnt(`SELECT COUNT(*) FROM join_reqs WHERE channel_id=? AND status='pending'`, c.id) : 0,
+      redirect_to: c.redirect_to || null, redirect_title: c.redirect_to ? (hidden(c.redirect_to) ? 'your backup channel' : (channels.find((x) => x.id === c.redirect_to) || {}).title || null) : null,
+      // round 17: ban protection, dead-link warning, who added it
+      backup_channel_id: c.backup_channel_id || null, backup_title: titleOf(c.backup_channel_id), auto_failover: c.auto_failover == null ? !!c.backup_channel_id : !!c.auto_failover,
+      lost_at: c.lost_at || null, lost_reason: c.lost_reason || null, failed_over_to: c.failed_over_to || null, failed_over_title: titleOf(c.failed_over_to), recovered_at: c.recovered_at || null,
+      can_switch_back: !!(c.failed_over_to && !c.lost_at && c.redirect_to === c.failed_over_to), deadlink_at: c.deadlink_at || null, link_host: c.link_host || null, created_by: c.created_by || null,
     })),
   };
 }
@@ -3672,6 +4078,7 @@ async function api(req, res, url, user) {
     sendTemplate(email, 'welcome', welcomeData(String(b.name || '').trim(), uid), { userId: uid });
     if (setting('trial.starts') === 'signup') checkTrial(uid);
     log('signup', email, referrer ? 'ref ' + referrer.id : '');
+    if (b.team_token) { const ta = teamAccept(uid, String(b.team_token)); return startSession(res, uid, email, ta.ok && ta.status === 'active' ? ta.owner_id : null, { team: ta }); } // round 17: signed up from a team invite
     return startSession(res, uid, email);
   }
   if (p === '/api/login' && m === 'POST') {
@@ -3684,6 +4091,7 @@ async function api(req, res, url, user) {
     // VooSquare-only mode: password login stays open for staff only (break-glass at /login?local=1)
     if (vooLoginOn() && setting('voo.login_mode') === 'only' && !staffOf(u)) return send(res, 403, { error: 'Log in with VooSquare.', voo_only: true, url: '/auth/voosquare' });
     if (!resendKey() && feature('joe')) notifyUser(u.id, 'meet_joe', {}, { once: true }); // without email, Joe says hi at the first login (it goes to the log)
+    if (b.team_token) { const ta = teamAccept(u.id, String(b.team_token)); return startSession(res, u.id, u.email, ta.ok && ta.status === 'active' ? ta.owner_id : null, { team: ta }); } // round 17: logged in from a team invite
     return startSession(res, u.id, u.email);
   }
   if (p === '/api/logout' && m === 'POST') {
@@ -3789,7 +4197,21 @@ async function api(req, res, url, user) {
   if (p === '/api/sales' && m === 'POST') return salesLead(req, res, user);
   if (p === '/api/blog') return send(res, 200, { posts: blogPosts() }, { 'cache-control': 'public, max-age=300' });
   if ((mm0b = /^\/api\/blog\/([a-z0-9][a-z0-9-]{0,119})$/.exec(p))) { const bp = blogPost(mm0b[1]); return bp ? send(res, 200, bp, { 'cache-control': 'public, max-age=300' }) : send(res, 404, { error: 'Post not found.' }); }
+  if (p === '/api/team/invite-info' && m === 'GET') { const r = teamInviteInfo(String(qs.get('token') || '')); return send(res, r.status || 200, r); } // round 17: public, for the sign-up/login page
   if (!user) return send(res, 401, { error: 'Please log in.' });
+  // ----- round 17: team workspaces. A session can be inside another account's workspace (as a manager or media buyer).
+  // Own-identity routes (profile, password, inbox, admin, workspace switch) always use the logged-in person; everything else
+  // runs as the workspace owner, after the role allow-list (teamGate) and, for media buyers, only on their channels (user._scope).
+  if (p === '/api/workspace') return workspaceApi(req, res, user, m);
+  if (p === '/api/team/accept' && m === 'POST') {
+    const r = teamAccept(user.id, String((await readJson(req)).token || ''));
+    if (r.ok && r.status === 'active') setSessionWs(req, r.owner_id);
+    return send(res, r.status_code || (r.error ? 400 : 200), r);
+  }
+  if (!(p === '/api/me' || p === '/api/verify/resend' || p === '/api/password' || p.startsWith('/api/admin/') || p === '/api/inbox' || p.startsWith('/api/inbox/'))) {
+    const ws = teamCtx(req, user);
+    if (ws !== user) { const deny = teamGate(ws, p, m, qs); if (deny) return send(res, deny.status, deny); user = ws; }
+  }
 
   let mm0;
   if (p === '/api/me' && m === 'PATCH') {
@@ -3815,7 +4237,7 @@ async function api(req, res, url, user) {
     if (e.length) Q(`UPDATE users SET ${e.map(([k]) => k + '=?').join(', ')} WHERE id=?`).run(...e.map(([, v]) => v), user.id);
     return send(res, 200, { ok: true, ...meView(user) });
   }
-  if (p === '/api/me') return send(res, 200, meView(user));
+  if (p === '/api/me') return send(res, 200, { ...meView(user), workspace: workspaceInfo(req, user) });
   if (p === '/api/verify/resend' && m === 'POST') {
     if (limited('verify:' + user.id, 3, 3600)) return send(res, 429, { error: 'We just sent one. Check your inbox and spam, or try again in an hour.' });
     if (!user.verified_at) sendTemplate(user.email, 'welcome', welcomeData(user.name || '', user.id, true), { userId: user.id });
@@ -3914,6 +4336,7 @@ async function api(req, res, url, user) {
   if (p === '/api/conversions/rotate' && m === 'POST') { Q(`UPDATE users SET pb_key=NULL WHERE id=?`).run(user.id); return send(res, 200, { ok: true, postback_url: `${linkBase()}/pb/${pbKey(user.id)}` }); }
   if ((mm0 = /^\/api\/joins\/(\d+)\/convert$/.exec(p)) && m === 'POST') {
     if (!feature('ftd')) return send(res, 403, { error: 'Deposit tracking is switched off right now.', off: true });
+    if (user._scope) { const jj = Q(`SELECT channel_id FROM joins WHERE id=? AND owner_id=?`).get(+mm0[1], user.id); if (!jj || !user._scope.includes(jj.channel_id)) return send(res, 404, { error: 'Person not found.' }); }
     const b = await readJson(req);
     const value = Math.round((parseFloat(b.value) || 0) * 100);
     if (value < 0 || value > 1e9) return send(res, 400, { error: 'Enter the amount in your currency, like 50.' });
@@ -3938,6 +4361,39 @@ async function api(req, res, url, user) {
     return send(res, 200, lines.join('\n'), { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="joinvoo-joins.csv"' });
   }
   if (p === '/api/channels' && m === 'GET') return send(res, 200, channelsView(user));
+  // ----- round 16: the customer's own link domains -----
+  if (p === '/api/domains' && m === 'GET') return send(res, 200, domainsView(user.id));
+  if (p === '/api/domains' && m === 'POST') {
+    const b = await readJson(req), host = normDomain(b.host);
+    { const ex = host && Q(`SELECT * FROM custom_domains WHERE host=?`).get(host); // another account added it but never proved it's theirs: after 24 h it no longer blocks the real owner
+      if (ex && ex.owner_id !== user.id && !ex.verified_at && ex.status !== 'disabled' && ex.created_at < now() - DOMAIN_CLAIM_HOLD_MS && !limitHit(user.id, 'domains')) { await dropDomain(ex); log('domain claim taken over', host, ex.owner_id, '->', user.id); } }
+    const bad = domainProblem(host, user.id); if (bad) return send(res, 400, { error: bad });
+    const lh = limitHit(user.id, 'domains'); if (lh) return send(res, 402, lh);
+    let chId = null;
+    if (b.channel_id) { const c = Q(`SELECT id FROM channels WHERE id=? AND owner_id=? AND status<>'removed'`).get(+b.channel_id, user.id); if (!c) return send(res, 400, { error: 'Pick one of your channels, or use the domain for all your links.' }); chId = c.id; }
+    if (limited('domadd:' + user.id, 30, 3600)) return send(res, 429, { error: 'Too many domains added in the last hour. Try again later.' });
+    let id;
+    try { id = Number(Q(`INSERT INTO custom_domains(owner_id,host,status,verify_token,created_at,channel_id) VALUES(?,?,'pending',?,?,?)`).run(user.id, host, 'joinvoo-verify=' + crypto.randomBytes(12).toString('hex'), now(), chId).lastInsertRowid); }
+    catch { return send(res, 400, { error: 'This domain is already connected to a Joinvoo account.' }); }
+    domBust(); log('domain added', user.id, host);
+    await Promise.race([checkDomain(id).catch(() => {}), new Promise((r) => setTimeout(r, 8000))]); // records are often already there; don't keep them waiting long
+    const nd = Q(`SELECT * FROM custom_domains WHERE id=?`).get(id); if (!nd) return send(res, 404, { error: 'Domain not found.' }); // removed while it was being checked
+    return send(res, 200, { ok: true, domain: domainView(nd), ...domainsView(user.id) });
+  }
+  if ((mm0b = /^\/api\/domains\/(\d+)(\/check)?$/.exec(p))) {
+    const d = Q(`SELECT * FROM custom_domains WHERE id=? AND owner_id=?`).get(+mm0b[1], user.id);
+    if (!d) return send(res, 404, { error: 'Domain not found.' });
+    if (mm0b[2] && m === 'POST') {
+      if (d.status === 'disabled') return send(res, 400, { error: 'This domain was switched off by Joinvoo support. Write to us in the chat.' });
+      if (limited('domchk:' + user.id, 40, 600)) return send(res, 429, { error: 'Too many checks. Wait a few minutes and try again.' });
+      const d2 = await checkDomain(d.id);
+      if (!d2) return send(res, 404, { error: 'Domain not found.' }); // removed while it was being checked
+      return send(res, 200, { ok: true, domain: domainView(d2), ...domainsView(user.id) });
+    }
+    if (!mm0b[2] && m === 'DELETE') {
+      if (d.status === 'disabled') return send(res, 400, { error: 'This domain was switched off by Joinvoo support. Write to us in the chat.' }); // else delete + add again would undo it
+      await dropDomain(d); return send(res, 200, { ok: true, ...domainsView(user.id) }); }
+  }
   if (p === '/api/bots' && m === 'POST') { const r = await connectBot(user, (await readJson(req)).token); return send(res, r.limit ? 402 : r.error ? 400 : 200, r); }
   let mm;
   if ((mm = /^\/api\/bots\/(\d+)$/.exec(p)) && m === 'DELETE') {
@@ -3956,7 +4412,13 @@ async function api(req, res, url, user) {
     const bot = Q(`SELECT * FROM bots WHERE id=? AND owner_id=? AND status='active'`).get(+b.bot_id, user.id);
     if (!bot) return send(res, 400, { error: 'Connect the bot first.' });
     { const ex = Q(`SELECT status, locked FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, bot.tg_id); if (!ex || ex.status === 'removed') { const lh = limitHit(user.id, 'channels'); if (lh) return send(res, 402, lh); } }
-    const fw = String(b.forward_url || '').trim();
+    let fw = String(b.forward_url || '').trim();
+    if (user._member) { // round 17: where the bot's updates are passed on (and the secret sent with them) is the owner's call only
+      const ex = Q(`SELECT forward_url, forward_secret FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, bot.tg_id) || {};
+      if ((b.forward_url !== undefined && fw !== (ex.forward_url || '')) || (b.forward_secret !== undefined && String(b.forward_secret ?? '').trim() && String(b.forward_secret).trim() !== (ex.forward_secret || '')))
+        return send(res, 403, { error: 'Only the account owner can change where this bot’s messages are passed on.', team_denied: true });
+      fw = ex.forward_url || ''; delete b.forward_secret;
+    }
     if (fw && !publicHttpsUrl(fw)) return send(res, 400, { error: 'The forwarding address must be a public https:// address.' });
     const fsec = String(b.forward_secret ?? '').trim();
     if (fsec && !/^[A-Za-z0-9_-]{1,256}$/.test(fsec)) return send(res, 400, { error: 'The secret token can only have letters, numbers, _ and -.' });
@@ -3971,6 +4433,7 @@ async function api(req, res, url, user) {
     }
     ch = Q(`SELECT id FROM channels WHERE owner_id=? AND chat_id=?`).get(user.id, bot.tg_id);
     if (b.forward_secret !== undefined) Q(`UPDATE channels SET forward_secret=? WHERE id=?`).run(fsec || null, ch.id);
+    markCreator(ch.id, user);
     return send(res, 200, { ok: true, channel: ch.id });
   }
   if (p === '/api/bot-targets/external' && m === 'POST') {
@@ -3988,22 +4451,56 @@ async function api(req, res, url, user) {
         .run(user.id, null, -(1e15 + crypto.randomInt(1e9)), '@' + un, 'bot', un, rid(5), 'active', now());
       ch = Q(`SELECT * FROM channels WHERE owner_id=? AND type='bot' AND lower(username)=?`).get(user.id, un.toLowerCase());
     } else Q(`UPDATE channels SET status='active', removed_by_user=0 WHERE id=?`).run(ch.id);
-    const k = pbKey(user.id);
+    const k = pbKey(user.id); markCreator(ch.id, user);
+    if (user._member) return send(res, 200, { ok: true, channel: ch.id, hook_start: '', hook_blocked: '' }); // round 17: the hook URLs carry the owner's postback key
     return send(res, 200, { ok: true, channel: ch.id, hook_start: `${BASE_URL}/hook/${k}/start`, hook_blocked: `${BASE_URL}/hook/${k}/blocked` });
   }
-  if (p === '/api/channels' && m === 'POST') { const r = await addChannelManually(user, await readJson(req)); return send(res, r.limit ? 402 : r.error ? 400 : 200, r); }
+  if (p === '/api/channels' && m === 'POST') { const r = await addChannelManually(user, await readJson(req)); if (r.channel) markCreator(r.channel, user); return send(res, r.limit ? 402 : r.error ? 400 : 200, r); }
+  // ----- round 17: switch a failed-over link back, team, leaderboard, daily report, Meta spend, dead-link options, audience guide -----
+  if ((mm = /^\/api\/channels\/(\d+)\/switch-back$/.exec(p)) && m === 'POST') { const r = switchBack(user, +mm[1]); return send(res, r.status || (r.error ? 400 : 200), r); }
+  if (p === '/api/team/leaderboard' && m === 'GET') return send(res, 200, teamLeaderboard(user, qs));
+  if (p === '/api/team' || p.startsWith('/api/team/')) { const r = await teamApi(req, user, p, m); return send(res, r.status || (r.error ? 400 : 200), r); }
+  if (p === '/api/report-settings' || p === '/api/report-settings/test') { const r = await reportSettingsApi(req, user, p, m); return send(res, r.status || (r.error ? 400 : 200), r); }
+  if (p === '/api/meta' || p.startsWith('/api/meta/')) { const r = await metaApi(req, user, p, m); const { http, ...out } = r; return send(res, http || (r.error ? 400 : 200), out); }
+  if (p === '/api/deadlink/options' && m === 'GET') { const r = deadlinkOptions(user, +qs.get('channel_id') || 0); return send(res, r.status || (r.error ? 400 : 200), r); }
+  if (p === '/api/audience-guide' && m === 'GET') return send(res, 200, audienceGuide(user));
   if ((mm = /^\/api\/channels\/(\d+)(\/test)?$/.exec(p))) {
     const ch = Q(`SELECT * FROM channels WHERE id=? AND owner_id=?`).get(+mm[1], user.id);
     if (!ch) return send(res, 404, { error: 'Channel not found.' });
+    if (user._scope && !user._scope.includes(ch.id)) return send(res, 404, { error: 'Channel not found.' }); // round 17: media buyers only see their channels
     const plat = qs.get('platform');
     if (mm[2] && m === 'POST' && ((plat === 'tiktok' && !feature('tiktok')) || (plat === 'snap' && !feature('snapchat')))) return send(res, 403, { error: `${plat === 'tiktok' ? 'TikTok' : 'Snapchat'} is switched off right now.`, off: true });
     if (mm[2] && m === 'POST') { const r = await ({ tiktok: testTikTok, snap: testSnap }[qs.get('platform')] || testCapi)(ch); return send(res, r.error ? 400 : 200, r); }
     if (m === 'PATCH') {
       const b = await readJson(req);
+      if (b.backup_channel_id !== undefined || b.auto_failover !== undefined || b.link_host !== undefined) { // round 17: ban protection + backup link domain
+        const r = channelR17Patch(user, ch, b); if (r.error) return send(res, r.status || 400, r);
+        if (Object.keys(b).every((k) => ['backup_channel_id', 'auto_failover', 'link_host'].includes(k))) return send(res, 200, r);
+      }
+      if (b.domain_id !== undefined || b.snip_origins !== undefined) { // round 16: which domain this channel's links show; which sites may use the landing-page script
+        if (b.domain_id !== undefined) {
+          const v = b.domain_id === null || b.domain_id === '' || b.domain_id === 'auto' ? null : Math.round(Number(b.domain_id));
+          if (v !== null && !(v >= 0)) return send(res, 400, { error: 'Pick Joinvoo’s domain or one of your link domains.' });
+          if (v > 0 && !Q(`SELECT 1 FROM custom_domains WHERE id=? AND owner_id=?`).get(v, user.id)) return send(res, 400, { error: 'Pick one of your own link domains.' });
+          Q(`UPDATE channels SET domain_id=? WHERE id=?`).run(v, ch.id);
+        }
+        if (b.snip_origins !== undefined) {
+          const raw = Array.isArray(b.snip_origins) ? b.snip_origins : String(b.snip_origins || '').split(/[\s,]+/);
+          const list = [...new Set(raw.map(normDomain).filter(Boolean))];
+          const badO = list.find((h) => !isHostName(h) && h !== 'localhost');
+          if (badO) return send(res, 400, { error: `“${badO}” isn’t a website address. Enter domains like mybrand.com, one per line.` });
+          if (list.length > 20) return send(res, 400, { error: 'Up to 20 websites.' });
+          Q(`UPDATE channels SET snip_origins=? WHERE id=?`).run(list.length ? JSON.stringify(list) : null, ch.id);
+        }
+        if (Object.keys(b).every((k) => k === 'domain_id' || k === 'snip_origins')) {
+          const c2 = Q(`SELECT * FROM channels WHERE id=?`).get(ch.id), base = chanLinkBase(c2);
+          return send(res, 200, { ok: true, domain_id: c2.domain_id ?? null, tracking_url: `${base}/c/${c2.slug}`, snippet_src: `${base}/r/${c2.slug}.js`, snip_origins: snipOrigins(c2) });
+        }
+      }
       if (b.redirect_to !== undefined) { // smart link: send this link's visitors into a backup channel without touching the ads
         if (b.redirect_to === null || b.redirect_to === '' || +b.redirect_to === 0) { Q(`UPDATE channels SET redirect_to=NULL WHERE id=?`).run(ch.id); return send(res, 200, { ok: true, redirect_to: null }); }
         const tgt = Q(`SELECT * FROM channels WHERE id=? AND owner_id=? AND status<>'removed'`).get(+b.redirect_to, user.id);
-        if (!tgt || tgt.id === ch.id) return send(res, 400, { error: 'Pick one of your other channels.' });
+        if (!tgt || tgt.id === ch.id || (user._scope && !user._scope.includes(tgt.id))) return send(res, 400, { error: 'Pick one of your other channels.' });
         if (tgt.type === 'bot' || ch.type === 'bot') return send(res, 400, { error: 'Backup channels work between channels and groups, not bots.' });
         if (tgt.redirect_to) return send(res, 400, { error: `${tgt.title || 'That channel'} already sends its traffic somewhere else. Pick a channel that receives its own traffic.` });
         Q(`UPDATE channels SET redirect_to=? WHERE id=?`).run(tgt.id, ch.id);
@@ -4033,6 +4530,14 @@ async function api(req, res, url, user) {
           .run(tp || null, tk || null, String(b.tt_test_code ?? ch.tt_test_code ?? '').trim() || null, tev, ch.id);
         return send(res, 200, { ok: true });
       }
+      if (b.join_approver !== undefined || b.approve_after !== undefined) {
+        const ja = b.join_approver === undefined ? (ch.join_approver || 'joinvoo') : String(b.join_approver);
+        if (!['joinvoo', 'own', 'backup'].includes(ja)) return send(res, 400, { error: 'Choose who lets new members in: Joinvoo, your own bot, or your bot with Joinvoo as backup.' });
+        const aa = b.approve_after === undefined ? (ch.approve_after || 60) : Math.round(Number(b.approve_after));
+        if (!(aa >= 10 && aa <= 3600)) return send(res, 400, { error: 'The backup wait is between 10 seconds and 1 hour.' });
+        Q(`UPDATE channels SET join_approver=?, approve_after=? WHERE id=?`).run(ja, aa, ch.id);
+        if (!['join_mode', 'offer_text', 'offer_btn', 'offer_url', 'pixel_id', 'capi_token', 'landing'].some((k) => b[k] !== undefined)) return send(res, 200, { ok: true, join_approver: ja, approve_after: aa });
+      }
       if (['join_mode', 'offer_text', 'offer_btn', 'offer_url'].some((k) => b[k] !== undefined)) {
         const jm = b.join_mode === undefined ? (ch.join_mode || 'link') : b.join_mode === 'request' ? 'request' : 'link';
         if (jm === 'request' && !feature('join_requests')) return send(res, 403, { error: 'Join-request mode is switched off right now.', off: true });
@@ -4052,6 +4557,7 @@ async function api(req, res, url, user) {
     if (m === 'DELETE') {
       Q(`UPDATE channels SET status='removed', locked=0, removed_by_user=1 WHERE id=?`).run(ch.id);
       Q(`DELETE FROM channel_bots WHERE channel_id=?`).run(ch.id);
+      for (const d of Q(`SELECT * FROM custom_domains WHERE owner_id=? AND channel_id=? AND status<>'disabled'`).all(user.id, ch.id)) await dropDomain(d); // a link domain made only for this channel goes with it
       Q(`UPDATE links SET status='dead' WHERE channel_id=? AND status IN ('pool','assigned')`).run(ch.id);
       return send(res, 200, { ok: true });
     }
@@ -4114,8 +4620,8 @@ function billing(user) {
     balance_cents: u.balance_cents || 0,
     free_joins_left: (Q(`SELECT free_joins FROM users WHERE id=?`).get(user.id) || {}).free_joins || 0, free_joins_gift: C.FREE_JOINS,
     deposited_cents: sum('deposit'), credit_cents: sum('refcredit') + sum('welcome') + sum('adjust') + sum('bonus') + sum('gift'), welcome_cents: sum('welcome'),
-    used_cents: -(sum('plan') + sum('joins') + sum('ftds') + sum('joe')),
-    credits: { balance: u.balance_cents || 0, bought: sum('deposit'), bonus: sum('bonus'), gift: sum('gift'), used: -(sum('plan') + sum('joins') + sum('ftds') + sum('joe')), joe: -sum('joe') },
+    used_cents: -(sum('plan') + sum('joins') + sum('ftds') + sum('joe') + sum('seats')),
+    credits: { balance: u.balance_cents || 0, bought: sum('deposit'), bonus: sum('bonus'), gift: sum('gift'), used: -(sum('plan') + sum('joins') + sum('ftds') + sum('joe') + sum('seats')), joe: -sum('joe'), seats: -sum('seats') },
     plan: planView(user.id), plans: plansDef(), trial: trialInfo(user.id),
     rank: rankFor(user.id), bonus_tiers: feature('credits_bonus') ? setting('credit.bonus_tiers') : [], ranks: setting('credit.ranks'),
     custom_pricing: cp, promo: fp ? { code: fp.code, bonus_pct: fp.bonus_pct, extra_cents: fp.extra_cents, min_cents: fp.min_cents, ends_at: fp.ends_at } : null,
@@ -4480,13 +4986,14 @@ function spendRow(uid, x) {
   let amt = parseFloat(String(x.amount ?? '').replace(/[, $₦]/g, ''));
   if (!Number.isFinite(amt) || amt < 0 || amt > 1e8) return { error: 'Enter the amount spent, like 123.45.' };
   if (cur === 'NGN') amt = amt / C.NGN_PER_USD; else if (cur !== 'USD') return { error: 'Use USD or NGN for spend.' };
-  const r = Q(`INSERT INTO spend(owner_id,date,platform,campaign,amount_cents,currency,created_at) VALUES(?,?,?,?,?,?,?)`).run(uid, date, platform, String(x.campaign || '').trim().slice(0, 120) || '(no campaign tag)', Math.round(amt * 100), cur, now());
+  const chId = x.channel_id ? (Q(`SELECT id FROM channels WHERE id=? AND owner_id=?`).get(+x.channel_id, uid) || {}).id || null : null; // round 17: optional, for per-buyer results
+  const r = Q(`INSERT INTO spend(owner_id,date,platform,campaign,amount_cents,currency,created_at,channel_id) VALUES(?,?,?,?,?,?,?,?)`).run(uid, date, platform, String(x.campaign || '').trim().slice(0, 120) || '(no campaign tag)', Math.round(amt * 100), cur, now(), chId);
   return { ok: true, id: Number(r.lastInsertRowid) };
 }
 async function spendApi(req, user, p, m, qs) {
   if (p === '/api/spend' && m === 'GET') {
     const [d0, d1] = rangeDays(qs);
-    const rows = Q(`SELECT id, date, platform, campaign, amount_cents, currency, created_at FROM spend WHERE owner_id=? AND date>=? AND date<=? ORDER BY date DESC, id DESC LIMIT 2000`).all(user.id, d0, d1);
+    const rows = Q(`SELECT id, date, platform, campaign, amount_cents, currency, created_at, COALESCE(source,'manual') AS source, channel_id FROM spend WHERE owner_id=? AND date>=? AND date<=?${SC(user, 'channel_id')} ORDER BY date DESC, id DESC LIMIT 2000`).all(user.id, d0, d1);
     return { from: d0, to: d1, rows, total_cents: rows.reduce((a, r) => a + r.amount_cents, 0) };
   }
   if (p === '/api/spend' && m === 'POST') return spendRow(user.id, await readJson(req));
@@ -4567,6 +5074,7 @@ function onAlertUpdate(u) {
   const msg = u.message; if (!msg || !msg.text || msg.chat.type !== 'private') return;
   const m = /^\/start(?:\s+([A-Za-z0-9_-]{6,20}))?/.exec(msg.text);
   const say = (text) => tg(ALERT_BOT_TOKEN, 'sendMessage', { chat_id: msg.chat.id, text });
+  { const rm = /^\/start\s+report-([A-Za-z0-9_-]{4,60})/.exec(msg.text); if (rm) return say(reportLink(rm[1], msg.chat.id, null)); } // round 17: daily report via the alert bot
   let L = normLang(msg.from && msg.from.language_code);
   if (m && m[1]) {
     const usr = Q(`SELECT id, lang FROM users WHERE alert_code=?`).get(m[1]);
@@ -4613,7 +5121,7 @@ function alertJobs() {
     if (usual >= 3) alertUser(c.owner_id, 'no_joins_2h', tr(userLang(c.owner_id), 'alert.no_joins_2h', { title: c.title, usual }), { every: 6 * 3600000 });
   }
   const camp = "COALESCE(json_extract(c.params,'$.utm_campaign'),'(no campaign tag)')";
-  for (const u of Q(`SELECT id, tz, alert_chat_id FROM users WHERE status='active' AND EXISTS(SELECT 1 FROM channels c WHERE c.owner_id=users.id)`).all()) {
+  for (const u of Q(`SELECT id, tz, alert_chat_id, daily_report FROM users WHERE status='active' AND EXISTS(SELECT 1 FROM channels c WHERE c.owner_id=users.id)`).all()) {
     const lc = localClock(u.tz, t), L = userLang(u.id), locked = isLocked(u.id);
     const y0 = lc.dayStart - 864e5;
     // A campaign with first deposits yesterday has none by 18:00 local today (Pro detail: which campaign).
@@ -4625,7 +5133,8 @@ function alertJobs() {
       if (quiet) alertUser(u.id, 'no_ftd_campaign', tr(L, 'alert.no_ftd_campaign', { campaign: quiet[0], n: quiet[1] }), { every: 20 * 3600000 });
     }
     // Morning summary at 08:00 local: yesterday's joins, FTDs, revenue, spend, ROAS and cost per FTD (Telegram only).
-    if (!u.alert_chat_id || !feature('alerts') || lc.hour < 8 || Q(`SELECT 1 FROM email_log WHERE user_id=? AND kind='tg:daily_report' AND sent_at>=?`).get(u.id, lc.dayStart)) continue;
+    if (u.daily_report != null || !u.alert_chat_id || !feature('alerts') || lc.hour < 8 || // round 17: the new daily report replaces this one once the customer sets it up
+ Q(`SELECT 1 FROM email_log WHERE user_id=? AND kind='tg:daily_report' AND sent_at>=?`).get(u.id, lc.dayStart)) continue;
     const x = periodData(u.id, y0, lc.dayStart, lc.off, null, 'day').totals;
     alertUser(u.id, 'daily_report', [tr(L, 'alert.daily_title', { date: new Date(y0 - lc.off * 60000).toISOString().slice(0, 10) }),
       tr(L, 'alert.daily_joins', { joins: $num(x.joins) }) + ` · ` + tr(L, 'alert.daily_clicks', { clicks: $num(x.clicks) }) + (x.suspect_clicks ? tr(L, 'alert.daily_fake', { n: x.suspect_clicks }) : ''),
@@ -4666,13 +5175,17 @@ function adminSettings() {
       billing: joeBill(), prices: setting('joe.prices'), price_used: joePrice(joeModel(), joeProvider()), deep_price: joePrice(joeBill().deep_model, joeProvider()),
       playbooks: allPlaybooks(), custom_playbooks: (setting('joe.playbooks') || []).map((x) => ({ name: x.name, use_when: x.use_when, chars: x.body.length, updated_at: x.updated_at })) },
     links: { domain: setting('link.domain'), backups: setting('link.backups') || [], main: BASE_URL, from_env: !!env.LINK_BASE_URL && !changed.has('link.domain'), active: linkBase() },
+    domains: { cname_target: setting('domains.cname_target'), cname_effective: cnameTarget(), cf_zone_id: setting('domains.cf_zone_id'), cf_token: mask(setting('domains.cf_token')), cf_on: !!cfCfg() },
     sister: { ...setting('sister'), live: sisterPublic().enabled, url_out: sisterUrl(setting('sister')), clicks: setting('sister.clicks') || 0 },
     apps: (setting('apps') || []).map((a) => ({ ...a, logo_url: appLogoUrl(a), url_out: appUrl(a), clicks: (setting('apps.clicks') || {})[a.id] || 0 })), builtin_app_logos: APP_LOGOS,
     voo: { login_mode: setting('voo.login_mode'), active: vooLoginOn(), issuer: setting('voo.issuer'), client_id: setting('voo.client_id'), client_secret: mask(setting('voo.client_secret')), redirect_uri: setting('voo.redirect_uri'),
       callback_url: vooRedirect(), service_key: mask(setting('voo.service_key')), webhook_secret: mask(setting('voo.webhook_secret')), events_url: setting('voo.events_url'), home: setting('voo.home'), referrals: setting('voo.referrals'),
       summary_url: `${BASE_URL}/api/voosquare/summary`, outbox: vooOutboxStats(), api_key: mask(setting('voo.api_key')), support_bridge: !!setting('voo.support_bridge'),
       support_webhook_url: `${BASE_URL}/hooks/voosquare/support`, logout_return_url: BASE_URL + '/', affiliate_url: setting('voo.affiliate_url'), support_out: vooSupportStats(), widget: !!setting('voo.widget') },
-    limits: setting('limits'),
+    limits: setting('limits'), fraud: { burst_min: setting('fraud.burst_min') },
+    round17: { seat_cents: setting('team.seat_cents'), pro_included: setting('team.pro_included'), basic_included: setting('team.basic_included'), ban_fail_streak: setting('ban.fail_streak'),
+      deadlink_min_hourly: setting('deadlink.min_hourly'), deadlink_quiet_hours: setting('deadlink.quiet_hours'), deadlink_days: setting('deadlink.days'), deadlink_drop_pct: setting('deadlink.drop_pct'),
+      meta_app_id: setting('meta.app_id'), meta_app_secret: mask(setting('meta.app_secret')), meta_available: metaAvailable(), meta_redirect_uri: `${BASE_URL}/auth/meta/callback` },
     keys: { anthropic_key: mask(joeKey()), anthropic_set: !!joeKey(), anthropic_from_env: !!env.ANTHROPIC_API_KEY && !changed.has('joe.api_key'),
       openai_key: mask(setting('joe.openai_key')), openai_set: !!setting('joe.openai_key'), openai_from_env: !!env.OPENAI_API_KEY && !changed.has('joe.openai_key'), openai_base: setting('joe.openai_base'),
       resend_key: mask(resendKey()), resend_set: !!resendKey(), resend_from_env: !!RESEND_ENV_KEY && !changed.has('email.resend_key') },
@@ -4884,7 +5397,7 @@ const ADMIN_ROUTES = [
   [/^\/api\/admin\/joe\/usage$/, '*', ['overview.view', 'audit.view']], [/^\/api\/admin\/users\/\d+\/joe-bonus$/, '*', 'users.credits'],
   [/^\/api\/admin\/joe\/playbooks/, 'GET', ['settings.view', 'settings.edit', 'marketing.manage']], [/^\/api\/admin\/joe\/playbooks/, '*', ['marketing.manage', 'settings.edit']],
   [/^\/api\/admin\/broadcasts$/, 'GET', 'broadcasts.view'], [/^\/api\/admin\/broadcasts\/preview$/, '*', ['broadcasts.view', 'broadcasts.send']], [/^\/api\/admin\/broadcasts/, '*', 'broadcasts.send'],
-  [/^\/api\/admin\/voo\/test$/, '*', 'keys.manage'], [/^\/api\/admin\/apps\/logo$/, '*', 'marketing.manage'],
+  [/^\/api\/admin\/voo\/test$/, '*', 'keys.manage'], [/^\/api\/admin\/domains/, '*', 'keys.manage'], [/^\/api\/admin\/apps\/logo$/, '*', 'marketing.manage'],
   [/^\/api\/admin\/(staff|roles)/, '*', 'staff.manage'], [/^\/api\/admin\/audit$/, '*', 'audit.view'],
 ];
 function adminPerm(p, m) {
@@ -4893,7 +5406,8 @@ function adminPerm(p, m) {
 }
 /** Settings groups → the permission each needs (PUT /api/admin/settings). */
 function settingsPerm(group, key) {
-  if (group === 'keys' || group === 'links' || group === 'voo' || (group === 'joe' && (key === 'api_key' || key === 'openai_key'))) return 'keys.manage';
+  if (group === 'round17' && (key === 'meta_app_id' || key === 'meta_app_secret')) return 'keys.manage';
+  if (group === 'keys' || group === 'links' || group === 'domains' || group === 'voo' || (group === 'joe' && (key === 'api_key' || key === 'openai_key'))) return 'keys.manage';
   if (group === 'payments') return 'payments.manage';
   if (group === 'sister' || group === 'apps' || (group === 'joe' && (key === 'persona' || key === 'knowledge'))) return 'marketing.manage';
   return 'settings.edit';
@@ -5140,7 +5654,7 @@ async function adminApi(req, res, url, admin, st) {
       bots: Q(`SELECT id, username, status, health, created_at FROM bots WHERE owner_id=? AND status<>'deleted'`).all(u.id),
       channels: Q(`SELECT id, title, type, username, status, slug, (pixel_id IS NOT NULL AND capi_token IS NOT NULL) AS meta, (tt_pixel IS NOT NULL AND tt_token IS NOT NULL) AS tiktok, (sc_pixel IS NOT NULL AND sc_token IS NOT NULL) AS snap,
         (SELECT COUNT(*) FROM links l WHERE l.channel_id=channels.id AND l.status='pool') AS pool FROM channels WHERE owner_id=?`).all(u.id),
-      deposits: Q(`SELECT id, provider, amount_cents, status, tx, created_at FROM deposits WHERE user_id=? ORDER BY id DESC LIMIT 30`).all(u.id) });
+      deposits: Q(`SELECT id, provider, amount_cents, status, tx, created_at FROM deposits WHERE user_id=? ORDER BY id DESC LIMIT 30`).all(u.id), team: adminTeamInfo(u.id) });
   }
   if ((mm = /^\/api\/admin\/users\/(\d+)\/pricing$/.exec(p)) && (m === 'POST' || m === 'PUT' || m === 'DELETE')) {
     if (!Q(`SELECT 1 FROM users WHERE id=?`).get(+mm[1])) return send(res, 404, { error: 'No such user.' });
@@ -5187,6 +5701,7 @@ async function adminApi(req, res, url, admin, st) {
       if (!['basic', 'pro'].includes(b.plan)) return send(res, 400, { error: 'Pick basic or pro.' });
       Q(`UPDATE users SET plan=?, plan_pending=NULL, plan_pending_from=NULL WHERE id=?`).run(b.plan, uid);
       log('admin plan', admin.email, uid, b.plan);
+      try { teamSync(uid); } catch (e) { log('team sync', e.message); } // round 17: a downgrade pauses team members at once, an upgrade brings them back
     } else { // reset: a fresh trial starts again (at the next attributed FTD, or now if trials start at sign-up)
       if (b.action === 'end') Q(`UPDATE users SET trial_ended_at=? WHERE id=? AND trial_started_at IS NOT NULL`).run(now(), uid);
       else { Q(`UPDATE users SET trial_started_at=NULL, trial_ended_at=NULL, trial_blocked=0, trial_reset_at=? WHERE id=?`).run(now(), uid); Q(`DELETE FROM trial_keys WHERE user_id=?`).run(uid); checkTrial(uid); }
@@ -5271,7 +5786,7 @@ async function adminApi(req, res, url, admin, st) {
     return send(res, 200, { ok: true });
   }
   if (p === '/api/admin/health') {
-    return send(res, 200, {
+    return send(res, 200, { storage: storageStats(),
       bots: Q(`SELECT b.id, b.username, b.status, b.health, b.cooldown_until, u.email FROM bots b JOIN users u ON u.id=b.owner_id WHERE b.status IN ('active','invalid') ORDER BY b.id DESC LIMIT 300`).all()
         .map((b) => ({ ...b, health: b.health ? JSON.parse(b.health) : null })),
       broken_channels: Q(`SELECT c.id, c.title, c.status, u.email FROM channels c JOIN users u ON u.id=c.owner_id WHERE c.status='no_rights' ORDER BY c.id DESC LIMIT 100`).all(),
@@ -5372,6 +5887,20 @@ async function adminApi(req, res, url, admin, st) {
     }
   }
   // ----- settings -----
+  // ----- round 16: customers' own link domains (Settings → Link domains → Customer domains) -----
+  if (p === '/api/admin/domains' && m === 'GET') return send(res, 200, adminDomains());
+  if ((mm = /^\/api\/admin\/domains\/(\d+)$/.exec(p)) && (m === 'POST' || m === 'DELETE')) {
+    const d = Q(`SELECT d.*, u.email FROM custom_domains d LEFT JOIN users u ON u.id=d.owner_id WHERE d.id=?`).get(+mm[1]);
+    if (!d) return send(res, 404, { error: 'Domain not found.' });
+    if (m === 'DELETE') { await dropDomain(d); audit(req, st, 'domains.delete', d.host, { owner: d.email }); return send(res, 200, { ok: true, ...adminDomains() }); }
+    const a = String((await readJson(req)).action || '');
+    if (a === 'disable') { Q(`UPDATE custom_domains SET status='disabled' WHERE id=?`).run(d.id); domBust(); }
+    else if (a === 'enable') { Q(`UPDATE custom_domains SET status=CASE WHEN verified_at IS NOT NULL THEN 'active' ELSE 'pending' END WHERE id=?`).run(d.id); domBust(); await checkDomain(d.id).catch(() => {}); }
+    else if (a === 'recheck') { if (d.status === 'disabled') return send(res, 400, { error: 'Switch the domain on first.' }); await checkDomain(d.id); }
+    else return send(res, 400, { error: 'Action is enable, disable or recheck.' });
+    audit(req, st, 'domains.' + a, d.host, { owner: d.email });
+    return send(res, 200, { ok: true, ...adminDomains() });
+  }
   if (p === '/api/admin/settings' && m === 'GET') return send(res, 200, adminSettings());
   if (p === '/api/admin/settings' && (m === 'PUT' || m === 'POST')) {
     const b = await readJson(req, 64 * 1024);
@@ -5383,6 +5912,10 @@ async function adminApi(req, res, url, admin, st) {
       joe: (k) => ({ ai: 'joe.ai', model: 'joe.model', daily_limit: 'joe.daily_limit', api_key: 'joe.api_key', persona: 'joe.persona', knowledge: 'joe.knowledge', provider: 'joe.provider', openai_base: 'joe.openai_base', openai_key: 'joe.openai_key', openai_model: 'joe.openai_model', billing: 'joe.billing', prices: 'joe.prices' }[k]),
       keys: (k) => ({ anthropic_key: 'joe.api_key', resend_key: 'email.resend_key', openai_key: 'joe.openai_key', openai_base: 'joe.openai_base' }[k]),
       links: (k) => ({ domain: 'link.domain', backups: 'link.backups' }[k]),
+      domains: (k) => ({ cname_target: 'domains.cname_target', cf_zone_id: 'domains.cf_zone_id', cf_token: 'domains.cf_token' }[k]),
+      fraud: (k) => ({ burst_min: 'fraud.burst_min' }[k]),
+      round17: (k) => ({ seat_cents: 'team.seat_cents', pro_included: 'team.pro_included', basic_included: 'team.basic_included', ban_fail_streak: 'ban.fail_streak', deadlink_min_hourly: 'deadlink.min_hourly',
+        deadlink_quiet_hours: 'deadlink.quiet_hours', deadlink_days: 'deadlink.days', deadlink_drop_pct: 'deadlink.drop_pct', meta_app_id: 'meta.app_id', meta_app_secret: 'meta.app_secret' }[k]),
       voo: (k) => ({ login_mode: 'voo.login_mode', issuer: 'voo.issuer', client_id: 'voo.client_id', client_secret: 'voo.client_secret', redirect_uri: 'voo.redirect_uri', service_key: 'voo.service_key',
         webhook_secret: 'voo.webhook_secret', events_url: 'voo.events_url', home: 'voo.home', referrals: 'voo.referrals', api_key: 'voo.api_key', support_bridge: 'voo.support_bridge', affiliate_url: 'voo.affiliate_url', widget: 'voo.widget' }[k]),
       payments: (k) => ({ paystack_secret: 'pay.paystack_secret', paystack_currency: 'pay.paystack_currency', flw_secret: 'pay.flw_secret', flw_webhook_hash: 'pay.flw_webhook_hash', flw_currency: 'pay.flw_currency' }[k]) };
@@ -5631,7 +6164,8 @@ async function adminApi(req, res, url, admin, st) {
   if (p === '/api/admin/jobs/run' && m === 'POST') {
     const job = (await readJson(req)).job;
     const jobs = { levels: levelJobs, alerts: alertJobs, trials: trialJobs, meet_joe: meetJoeJobs, inbox_daily: inboxDailyJobs, blog: blogJobs, voo_use: vooUseJob, voo_flush: vooFlush };
-    if (!jobs[job]) return send(res, 400, { error: 'Jobs: ' + Object.keys(jobs).join(', ') });
+    if (R17_JOBS[job]) { await R17_JOBS[job](); return send(res, 200, { ok: true, job }); } // round 17 jobs run to the end before answering
+    if (!jobs[job]) return send(res, 400, { error: 'Jobs: ' + [...Object.keys(jobs), ...Object.keys(R17_JOBS)].join(', ') });
     jobs[job](); return send(res, 200, { ok: true, job });
   }
   if (p === '/api/admin/retry-failed' && m === 'POST') {
@@ -5693,10 +6227,10 @@ function blogPage(req, res, file) {
   return sendStatic(req, res, path.join(PUBLIC, 'blog', file), 'text/html; charset=utf-8', { maxAge: 300, fill: true, wrap: true,
     notFound: () => send(res, 404, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found · Joinvoo</title><meta name="robots" content="noindex"></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,-apple-system,sans-serif;background:#f6f5fb;color:#16132b"><main style="text-align:center;padding:24px"><h1 style="margin:0 0 8px">Page not found</h1><p style="color:#5f5a7a;margin:0 0 20px">This article isn’t here (yet).</p><a href="/blog" style="color:#5b3df5;font-weight:700">Back to the blog</a> · <a href="/" style="color:#5b3df5;font-weight:700">Joinvoo home</a></main></body></html>`, { 'content-type': 'text/html; charset=utf-8' }) });
 }
-function startSession(res, userId, email) {
+function startSession(res, userId, email, ws = null, more = null) {
   const token = rid(24);
-  Q(`INSERT INTO sessions(token,user_id,expires_at) VALUES(?,?,?)`).run(token, userId, now() + 30 * 864e5);
-  send(res, 200, { ok: true, email }, { 'set-cookie': cookie('jp_session', token, 30 * 86400) });
+  Q(`INSERT INTO sessions(token,user_id,expires_at,workspace_owner) VALUES(?,?,?,?)`).run(token, userId, now() + 30 * 864e5, ws || null);
+  send(res, 200, { ok: true, email, ...(more || {}) }, { 'set-cookie': cookie('jp_session', token, 30 * 86400) });
 }
 
 // ---------- VooSquare: Voo ID login, affiliate hand-off, money events, support (the Voo Connect kit, see VOOSQUARE-CONNECT.md) ----------
@@ -6068,13 +6602,840 @@ function vooOutboxStats() {
 for (const u of Q(`SELECT id FROM users WHERE voo_id IS NOT NULL AND voo_linked_at IS NULL`).all()) Q(`UPDATE users SET voo_linked_at=?, voo_spent_cents=? WHERE id=?`).run(now(), vooFunded(u.id), u.id);
 
 const seenUpdates = new Map();
+// ---------- round 17: team seats + workspaces, daily Telegram report, channel ban protection, Meta spend sync, dead-link warning, audience guide ----------
+const R17_INVITE_MS = 7 * 864e5;
+const TEAM_ROLES = ['manager', 'buyer'];
+const tokHash = (t) => crypto.createHash('sha256').update('team:' + String(t)).digest('hex');
+const actorOf = (u) => (u && u._actor) || u;
+const monthLabel = (m = monthKey()) => new Date(m + '-01T00:00:00Z').toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+const roleName = (r) => (r === 'manager' ? 'Manager' : r === 'buyer' ? 'Media buyer' : 'Owner');
+/** Joinvoo's own ad-link domains (the link domain + backups), as bases like https://gojoinly.com. */
+const joinvooLinkBases = () => [setting('link.domain'), ...(setting('link.backups') || [])].filter(Boolean);
+const baseHost = (b) => { try { return normDomain(new URL(b).host); } catch { return ''; } };
+
+// Secrets at rest (Meta access tokens): AES-256-GCM, key derived from APP_SECRET. "v1:" + base64url(iv | tag | ciphertext).
+const BOX_KEY = crypto.createHash('sha256').update('joinvoo-box:' + APP_SECRET).digest();
+function boxSeal(s) {
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', BOX_KEY, iv);
+  const ct = Buffer.concat([c.update(String(s), 'utf8'), c.final()]);
+  return 'v1:' + Buffer.concat([iv, c.getAuthTag(), ct]).toString('base64url');
+}
+function boxOpen(s) {
+  try { const b = Buffer.from(String(s || '').slice(3), 'base64url'), d = crypto.createDecipheriv('aes-256-gcm', BOX_KEY, b.subarray(0, 12));
+    d.setAuthTag(b.subarray(12, 28)); return Buffer.concat([d.update(b.subarray(28)), d.final()]).toString('utf8'); } catch { return null; }
+}
+/** One English email in Joinvoo's layout, logged in email_log (kind r17:<what>). Without an email provider it is written to the log. */
+function sendPlainMail(userId, to, kind, b) {
+  if (!to) return false;
+  const m = renderMail({ subject: b.subject, preheader: b.preheader || '', title: b.title, lead: b.lead, paras: b.paras, cta: b.cta || null, link: !!b.cta, icon: b.icon, callout: b.callout }, 'en');
+  const id = Number(Q(`INSERT INTO email_log(user_id,kind,ref,to_addr,subject,ok,sent_at) VALUES(?,?,?,?,?,NULL,?)`).run(userId || null, kind, b.ref || null, to, m.subject, now()).lastInsertRowid);
+  sendMail(to, m.subject, m.html, m.text).then((ok) => Q(`UPDATE email_log SET ok=? WHERE id=?`).run(ok ? 1 : 0, id)).catch(() => {});
+  return true;
+}
+/** Team actions go into the audit log (area "team", target owner:<id>) so the owner's Team page and Admin → Audit log both show them. */
+function teamAudit(req, actor, ownerId, action, email, summary = {}) {
+  try {
+    Q(`INSERT INTO audit(at,actor_id,actor_email,action,area,target,summary,ip) VALUES(?,?,?,?,?,?,?,?)`).run(now(), actor ? actor.id : null, actor ? actor.email : 'system', action, 'team', 'owner:' + ownerId,
+      JSON.stringify(auditClean({ member: email || undefined, ...summary })).slice(0, 2000), req ? clientIp(req) : null);
+  } catch (e) { log('team audit', e.message); }
+}
+
+// ----- seats -----
+/** Pro, the Pro trial, admins and BILLING=off count as Pro (same rule as plan limits). */
+const teamPro = (ownerId) => limitsFor(ownerId).plan === 'pro';
+function seatInfo(ownerId) {
+  const pro = teamPro(ownerId), m = monthKey();
+  const included = pro ? setting('team.pro_included') : setting('team.basic_included');
+  const used = cnt(`SELECT COUNT(*) FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?))`, ownerId, now() - R17_INVITE_MS);
+  return { plan: pro ? 'pro' : 'basic', included, used, extra: Math.max(0, used - included), extra_paid_this_month: cnt(`SELECT COUNT(*) FROM ledger WHERE user_id=? AND kind='seats' AND ref LIKE ?`, ownerId, `seat:${ownerId}:${m}:%`),
+    paused: cnt(`SELECT COUNT(*) FROM team_members WHERE owner_id=? AND status='paused'`, ownerId), seat_cents: setting('team.seat_cents'), can_buy_extra: pro, pro_included: setting('team.pro_included'), month: m };
+}
+/** Extra seat number n for month m: charged once (ledger ref is the lock). Free for admins, BILLING=off and a $0 seat price. */
+function seatCharge(ownerId, n, m = monthKey()) {
+  const ref = `seat:${ownerId}:${m}:${n}`;
+  if (Q(`SELECT 1 FROM ledger WHERE ref=?`).get(ref)) return { ok: true, already: true, charged_cents: 0 };
+  const u = Q(`SELECT id, email, verified_at, balance_cents FROM users WHERE id=?`).get(ownerId), cost = setting('team.seat_cents');
+  if (!u) return { error: 'Account not found.' };
+  if (!BILLING || isAdmin(u) || cost <= 0) return { ok: true, free: true, charged_cents: 0 };
+  if ((u.balance_cents || 0) < cost) return { error: `An extra team seat is ${$usd(cost)} a month. Top up at least ${$usd(cost - Math.max(0, u.balance_cents || 0))} to add one.`, topup: true, need_cents: cost - Math.max(0, u.balance_cents || 0), cost_cents: cost };
+  const ok = addLedger(ownerId, 'seats', -cost, ref, `Extra team seat ${n} · ${monthLabel(m)}`);
+  return { ok: true, charged_cents: ok ? cost : 0 };
+}
+const teamSyncAt = new Map();
+/**
+ * Keep a team in line with the owner's plan and wallet (every 10 minutes, at plan renewal, on admin plan changes and lazily when a member
+ * opens the workspace): a plan without seats pauses members (newest first) and their sessions lose the workspace; extra seats are charged
+ * for the month (one ledger row per seat per month); members come back as soon as the plan / wallet allows it.
+ */
+function teamSync(ownerId) {
+  teamSyncAt.set(ownerId, now());
+  if (!Q(`SELECT 1 FROM team_members WHERE owner_id=? AND status IN ('active','invited','paused') LIMIT 1`).get(ownerId)) return;
+  const owner = Q(`SELECT id, email, status FROM users WHERE id=?`).get(ownerId); if (!owner) return;
+  const pro = teamPro(ownerId) && owner.status !== 'suspended', included = pro ? setting('team.pro_included') : setting('team.basic_included');
+  const live = () => Q(`SELECT * FROM team_members WHERE owner_id=? AND (status='active' OR (status='invited' AND invited_at>?)) ORDER BY id`).all(ownerId, now() - R17_INVITE_MS);
+  const pause = (rows, why) => {
+    if (!rows.length) return;
+    for (const r of rows) Q(`UPDATE team_members SET status='paused', pause_reason=? WHERE id=?`).run(why, r.id);
+    Q(`UPDATE sessions SET workspace_owner=NULL WHERE workspace_owner=? AND user_id IN (${rows.map((r) => Math.floor(+r.user_id || 0)).join(',')})`).run(ownerId);
+    teamAudit(null, null, ownerId, 'team.pause', null, { why, members: rows.map((r) => r.email) });
+    const list = rows.map((r) => r.email).join(', ');
+    inboxAdd(ownerId, why === 'plan'
+      ? { kind: 'account', title: 'Team members paused', body: `Your plan includes ${included} team ${included === 1 ? 'seat' : 'seats'}, so ${rows.length === 1 ? 'this member is' : 'these members are'} paused until you upgrade to Pro: ${list}. Nothing is deleted.`, cta_label: 'Upgrade to Pro', cta_url: '#tab:wallet', tag: `team_paused:${rows.map((r) => r.id).join(',')}:${monthKey()}` }
+      : { kind: 'alert', title: 'Top up to keep your team seats', body: `Extra team seats are ${$usd(setting('team.seat_cents'))} a month each and your wallet couldn’t cover them, so ${list} ${rows.length === 1 ? 'is' : 'are'} paused. Top up and they come back by themselves.`, cta_label: 'Top up', cta_url: '#tab:wallet', important: 1, tag: `team_unpaid:${rows.map((r) => r.id).join(',')}:${monthKey()}` });
+  };
+  const rows = live();
+  if (!pro) pause(rows.slice(included), 'plan');
+  else {
+    const extra = Math.max(0, rows.length - included); let paid = 0;
+    for (let n = 1; n <= extra; n++) { if (seatCharge(ownerId, n).error) break; paid = n; }
+    if (paid < extra) pause(rows.slice(rows.length - (extra - paid)), 'unpaid');
+  }
+  for (const r of Q(`SELECT * FROM team_members WHERE owner_id=? AND status='paused' ORDER BY id`).all(ownerId)) { // bring paused members back while there is room
+    const used = live().length;
+    if (!pro && used >= included) break;
+    if (pro && used + 1 > included && seatCharge(ownerId, used + 1 - included).error) break;
+    const back = r.user_id ? 'active' : 'invited';
+    Q(`UPDATE team_members SET status=?, pause_reason=NULL, invited_at=CASE WHEN ?='invited' THEN ? ELSE invited_at END WHERE id=?`).run(back, back, now(), r.id);
+    teamAudit(null, null, ownerId, 'team.resume', r.email, {});
+  }
+}
+
+// ----- workspaces -----
+const memberChannels = (memberId, ownerId) => Q(`SELECT a.channel_id FROM team_channel_access a JOIN channels c ON c.id=a.channel_id WHERE a.member_id=? AND c.owner_id=? ORDER BY a.channel_id`).all(memberId, ownerId).map((r) => r.channel_id);
+function setSessionWs(req, ownerId) { const t = cookies(req).jp_session; if (t) Q(`UPDATE sessions SET workspace_owner=? WHERE token=?`).run(ownerId || null, t); }
+/** The account this request works on: the logged-in person, or (inside a team workspace) the owner's account with the member's role and channel scope. */
+function teamCtx(req, actor) {
+  const t = cookies(req).jp_session; if (!t || !actor) return actor;
+  const s = Q(`SELECT workspace_owner FROM sessions WHERE token=?`).get(t), ws = s && s.workspace_owner;
+  if (!ws || ws === actor.id) return actor;
+  if (now() - (teamSyncAt.get(ws) || 0) > 60000) { try { teamSync(ws); } catch (e) { log('team sync', e.message); } }
+  const mbr = Q(`SELECT * FROM team_members WHERE owner_id=? AND user_id=? AND status='active' ORDER BY id DESC LIMIT 1`).get(ws, actor.id);
+  const o = mbr && Q(`SELECT id, email, name, status, last_seen, verified_at FROM users WHERE id=?`).get(ws);
+  if (!mbr || !o || o.status === 'suspended') { Q(`UPDATE sessions SET workspace_owner=NULL WHERE token=?`).run(t); return actor; }
+  return { ...o, _actor: actor, _member: { id: mbr.id, role: mbr.role, user_id: actor.id, owner_id: ws }, _scope: mbr.role === 'buyer' ? memberChannels(mbr.id, ws) : null };
+}
+/** What managers and media buyers may call inside a team workspace (everything else answers 403). Owners are never gated. */
+const TEAM_ROUTES = [
+  ['GET', /^\/api\/(stats|compare|compare\/periods|compare\/insights|compare\/campaigns|funnel|cohorts|breakdown|conversions|joins|joins\.csv|channels|spend|audience-guide|team\/leaderboard|report-settings)$/, ['manager', 'buyer']],
+  ['PATCH', /^\/api\/report-settings$/, ['manager', 'buyer']], ['POST', /^\/api\/report-settings\/test$/, ['manager', 'buyer']],
+  ['PATCH', /^\/api\/channels\/\d+$/, ['manager', 'buyer']], ['POST', /^\/api\/channels\/\d+\/(test|switch-back)$/, ['manager', 'buyer']],
+  ['POST', /^\/api\/joins\/\d+\/convert$/, ['manager', 'buyer']],
+  ['GET', /^\/api\/(domains|meta|meta\/campaigns|deadlink\/options)$/, ['manager']],
+  ['POST', /^\/api\/(channels|bots|bot-targets|bot-targets\/external)$/, ['manager']], ['DELETE', /^\/api\/channels\/\d+$/, ['manager']],
+  ['POST', /^\/api\/spend(\/import)?$/, ['manager']], ['DELETE', /^\/api\/spend\/\d+$/, ['manager']],
+  ['PATCH', /^\/api\/meta\/campaigns\/[\w.-]+$/, ['manager']],
+];
+function teamGate(u, p, m, qs) {
+  const role = u._member.role, meth = m === 'HEAD' ? 'GET' : m;
+  if (p === '/api/deadlink/options' && role === 'buyer') return null; // scoped to their channels inside
+  if (!TEAM_ROUTES.some(([mm, re, roles]) => mm === meth && re.test(p) && roles.includes(role)))
+    return { status: 403, error: `${roleName(role)}s can’t do this in a team workspace (billing, wallet, team, API keys and account settings stay with the owner). Switch to your own workspace, or ask the owner.`, team_role: role, team_denied: true };
+  const ch = parseInt(qs.get('channel') || '', 10);
+  if (u._scope && ch && !u._scope.includes(ch)) return { status: 403, error: 'You don’t have access to this channel.', team_role: role, team_denied: true };
+  return null;
+}
+function workspaceInfo(req, actor) {
+  const ws = teamCtx(req, actor), me = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(actor.id) || actor;
+  const list = [{ owner_id: actor.id, own: true, role: 'owner', status: 'active', name: displayName(me), email: me.email }];
+  for (const r of Q(`SELECT t.owner_id, t.role, t.status, t.pause_reason, u.email, u.name, u.nickname FROM team_members t JOIN users u ON u.id=t.owner_id WHERE t.user_id=? AND t.status IN ('active','paused') ORDER BY t.id`).all(actor.id))
+    list.push({ owner_id: r.owner_id, own: false, role: r.role, status: r.status, pause_reason: r.pause_reason || null, name: displayName(r), email: r.email });
+  const cur = ws === actor ? list[0] : list.find((x) => !x.own && x.owner_id === ws.id) || list[0];
+  return { current: { ...cur, channel_ids: ws === actor ? null : ws._scope }, workspaces: list };
+}
+async function workspaceApi(req, res, actor, m) {
+  if (m === 'GET') return send(res, 200, workspaceInfo(req, actor));
+  if (m !== 'POST') return send(res, 405, { error: 'Use GET or POST.' });
+  const b = await readJson(req), oid = Math.floor(+b.owner_id || 0);
+  if (!oid || oid === actor.id) { setSessionWs(req, null); return send(res, 200, { ok: true, ...workspaceInfo(req, actor) }); }
+  teamSync(oid);
+  const mbr = Q(`SELECT status FROM team_members WHERE owner_id=? AND user_id=? AND status IN ('active','paused') ORDER BY id DESC LIMIT 1`).get(oid, actor.id);
+  if (!mbr) return send(res, 403, { error: 'You’re not on that team.' });
+  if (mbr.status !== 'active') return send(res, 403, { error: 'This team workspace is paused until the owner upgrades their plan or tops up.', paused: true });
+  setSessionWs(req, oid);
+  return send(res, 200, { ok: true, ...workspaceInfo(req, actor) });
+}
+/** Who added a channel (for per-buyer results). Set once. */
+function markCreator(chId, user) { const a = actorOf(user); if (chId && a) Q(`UPDATE channels SET created_by=? WHERE id=? AND created_by IS NULL`).run(a.id, chId); }
+
+// ----- team API (owner only) -----
+function cleanChannelIds(ownerId, ids) {
+  const want = [...new Set((Array.isArray(ids) ? ids : []).map((x) => Math.floor(+x)).filter((x) => x > 0))].slice(0, 1000);
+  if (!want.length) return [];
+  return Q(`SELECT id FROM channels WHERE owner_id=? AND status<>'removed' AND id IN (${want.join(',')})`).all(ownerId).map((r) => r.id);
+}
+function setAccess(memberId, ownerId, ids) {
+  const list = cleanChannelIds(ownerId, ids);
+  tx(() => { Q(`DELETE FROM team_channel_access WHERE member_id=?`).run(memberId); for (const c of list) Q(`INSERT OR IGNORE INTO team_channel_access(member_id,channel_id) VALUES(?,?)`).run(memberId, c); });
+  return list;
+}
+function memberView(r) {
+  const u = r.user_id ? Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(r.user_id) : null;
+  const expired = r.status === 'invited' && now() - (r.invited_at || 0) > R17_INVITE_MS;
+  return { id: r.id, email: r.email, role: r.role, role_name: roleName(r.role), status: expired ? 'expired' : r.status, pause_reason: r.pause_reason || null, user_id: r.user_id || null,
+    account_email: u ? u.email : null, name: u ? displayName(u) : null, invited_at: r.invited_at || null, joined_at: r.joined_at || null,
+    invite_expires_at: r.status === 'invited' ? (r.invited_at || 0) + R17_INVITE_MS : null, channel_ids: memberChannels(r.id, r.owner_id), all_channels: r.role === 'manager', daily_report: !!r.daily_report };
+}
+function teamView(owner) {
+  return { seats: seatInfo(owner.id), email_on: !!resendKey(), invite_days: R17_INVITE_MS / 864e5,
+    members: Q(`SELECT * FROM team_members WHERE owner_id=? AND status<>'removed' ORDER BY id`).all(owner.id).map(memberView),
+    channels: Q(`SELECT id, title, type, status FROM channels WHERE owner_id=? AND NOT (status='removed' AND COALESCE(removed_by_user,0)=1) ORDER BY id`).all(owner.id),
+    roles: [{ id: 'manager', name: 'Manager', can: 'All channels and results; add and edit channels. No billing, wallet, withdrawals, team, API keys or account deletion.' },
+      { id: 'buyer', name: 'Media buyer', can: 'Only the channels you give them, and only those channels’ joins, people, clicks, deposits, comparisons and exports.' }],
+    log: Q(`SELECT at, actor_email, action, summary FROM audit WHERE area='team' AND target=? ORDER BY id DESC LIMIT 50`).all('owner:' + owner.id).map((x) => ({ ...x, summary: pj(x.summary, {}) })) };
+}
+function sendTeamInvite(owner, email, role, url) {
+  const by = displayName(Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(owner.id) || owner), to = Q(`SELECT id FROM users WHERE email=?`).get(email);
+  return sendPlainMail(to ? to.id : null, email, 'r17:team_invite', { subject: `${by} invited you to their Joinvoo team`, preheader: `Join as ${roleName(role)}`, icon: '🤝', title: `Join ${by}’s team on Joinvoo`,
+    lead: `${esc(by)} (${esc(owner.email)}) added you to their Joinvoo workspace as <b>${roleName(role)}</b>.`,
+    paras: [role === 'manager' ? 'You’ll see all their channels and results and can add and edit channels. Billing, the wallet and the team stay with the owner.' : 'You’ll see the channels they give you: joins, people, clicks, deposits and comparisons for those channels.',
+      to ? 'Log in with your Joinvoo account and you can switch between your own workspace and this team any time.' : 'Create a free Joinvoo login with this link (any email works), and you land straight in the team workspace.'],
+    cta: { text: 'Join the team', url }, callout: { tone: 'amber', html: 'This link works for 7 days. If you weren’t expecting it, you can ignore this email.' } });
+}
+async function teamInvite(req, owner, b) {
+  const email = String(b.email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 200) return { error: 'Enter a valid email.' };
+  const role = TEAM_ROLES.includes(b.role) ? b.role : null; if (!role) return { error: 'Pick a role: manager or buyer.' };
+  if (email === String(owner.email || '').toLowerCase()) return { error: 'That’s you: you already own this workspace.' };
+  if (Q(`SELECT 1 FROM team_members WHERE owner_id=? AND email=? AND status<>'removed'`).get(owner.id, email)) return { error: 'This person is already on your team or invited. Use “Resend” to send the link again.' };
+  if (limited('teaminv:' + owner.id, 40, 3600)) return { status: 429, error: 'Too many invites in the last hour. Try again later.' };
+  teamSync(owner.id);
+  const S = seatInfo(owner.id), lim = { kind: 'seats', used: S.used, max: S.included, plan: S.plan };
+  if (S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: lim,
+    error: S.included ? `You’ve used ${S.used} of ${S.included} team seats on Basic. Upgrade to Pro for ${S.pro_included} seats plus extra seats at ${$usd(S.seat_cents)} a month.` : `Team seats are a Pro feature. Upgrade to Pro: ${S.pro_included} seats included, extra seats ${$usd(S.seat_cents)} a month each.` };
+  let charged = 0;
+  if (S.used + 1 > S.included) { const c = seatCharge(owner.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents, limit: lim }; charged = c.charged_cents || 0; }
+  const token = rid(24);
+  const id = Number(Q(`INSERT INTO team_members(owner_id,email,role,status,invite_token,invited_at,invited_by) VALUES(?,?,?,'invited',?,?,?)`).run(owner.id, email, role, tokHash(token), now(), actorOf(owner).id).lastInsertRowid);
+  const chans = setAccess(id, owner.id, b.channel_ids);
+  const url = `${BASE_URL}/join-team/${token}`;
+  sendTeamInvite(owner, email, role, url);
+  teamAudit(req, owner, owner.id, 'team.invite', email, { role, channels: chans, charged_cents: charged });
+  log('team invite', owner.id, email, role);
+  return { ok: true, member: memberView(Q(`SELECT * FROM team_members WHERE id=?`).get(id)), invite_url: url, emailed: !!resendKey(), charged_cents: charged, seats: seatInfo(owner.id) };
+}
+async function teamApi(req, user, p, m) {
+  if (user._member) return { status: 403, error: 'Only the account owner manages the team.', team_denied: true };
+  let mm;
+  if (p === '/api/team' && m === 'GET') return teamView(user);
+  if (p === '/api/team/invite' && m === 'POST') return teamInvite(req, user, await readJson(req));
+  if ((mm = /^\/api\/team\/(\d+)(\/resend)?$/.exec(p))) {
+    const r = Q(`SELECT * FROM team_members WHERE id=? AND owner_id=? AND status<>'removed'`).get(+mm[1], user.id);
+    if (!r) return { status: 404, error: 'Team member not found.' };
+    if (mm[2] && m === 'POST') {
+      if (r.status !== 'invited' && !(r.status === 'paused' && !r.user_id)) return { error: 'They already joined. Resend only works for open invites.' };
+      if (limited('teamresend:' + user.id, 30, 3600)) return { status: 429, error: 'Too many resends. Try again later.' };
+      let charged = 0;
+      if (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS) { // an expired invite didn't hold a seat: it needs one again
+        const S = seatInfo(user.id);
+        if (S.used + 1 > S.included && !S.can_buy_extra) return { status: 402, upgrade: true, limit: { kind: 'seats', used: S.used, max: S.included, plan: S.plan }, error: `Team seats are full on your plan. Upgrade to Pro for ${S.pro_included} seats.` };
+        if (S.used + 1 > S.included) { const c = seatCharge(user.id, S.used + 1 - S.included); if (c.error) return { status: 402, topup: true, error: c.error, need_cents: c.need_cents, cost_cents: c.cost_cents }; charged = c.charged_cents || 0; }
+      }
+      const token = rid(24);
+      Q(`UPDATE team_members SET invite_token=?, invited_at=? WHERE id=?`).run(tokHash(token), now(), r.id);
+      const url = `${BASE_URL}/join-team/${token}`;
+      sendTeamInvite(user, r.email, r.role, url);
+      teamAudit(req, user, user.id, 'team.resend', r.email, { charged_cents: charged });
+      return { ok: true, member: memberView(Q(`SELECT * FROM team_members WHERE id=?`).get(r.id)), invite_url: url, emailed: !!resendKey(), charged_cents: charged };
+    }
+    if (!mm[2] && m === 'PATCH') {
+      const b = await readJson(req), before = { role: r.role, channels: memberChannels(r.id, user.id) };
+      if (b.role !== undefined) { if (!TEAM_ROLES.includes(b.role)) return { error: 'Pick a role: manager or buyer.' }; Q(`UPDATE team_members SET role=? WHERE id=?`).run(b.role, r.id); }
+      if (b.channel_ids !== undefined) setAccess(r.id, user.id, b.channel_ids);
+      const after = Q(`SELECT * FROM team_members WHERE id=?`).get(r.id);
+      teamAudit(req, user, user.id, 'team.update', r.email, { before, after: { role: after.role, channels: memberChannels(r.id, user.id) } });
+      return { ok: true, member: memberView(after) };
+    }
+    if (!mm[2] && m === 'DELETE') {
+      tx(() => {
+        Q(`UPDATE team_members SET status='removed', removed_at=?, invite_token=NULL, daily_report=0 WHERE id=?`).run(now(), r.id);
+        Q(`DELETE FROM team_channel_access WHERE member_id=?`).run(r.id);
+        if (r.user_id) Q(`UPDATE sessions SET workspace_owner=NULL WHERE workspace_owner=? AND user_id=?`).run(user.id, r.user_id);
+      });
+      if (r.user_id) inboxAdd(r.user_id, { kind: 'account', title: 'You left a team workspace', body: `${user.email} removed you from their Joinvoo team. Your own account and data aren’t affected.`, tag: `team_removed:${r.id}` });
+      teamAudit(req, user, user.id, 'team.remove', r.email, { role: r.role, status: r.status });
+      return { ok: true, seats: seatInfo(user.id) };
+    }
+  }
+  return { status: 404, error: 'Not found' };
+}
+/** Accept an invite as this account (any email may accept: the link is the secret, and it's bound to whoever accepts it). */
+function teamAccept(actorId, token) {
+  const r = token ? Q(`SELECT * FROM team_members WHERE invite_token=?`).get(tokHash(token)) : null;
+  if (!r || r.status === 'removed' || r.status === 'active') return { error: 'This invite link isn’t valid any more. Ask the team owner to send a new one.', code: 'invalid', status_code: 404 };
+  if (r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS) return { error: 'This invite expired. Ask the team owner to resend it.', code: 'expired', status_code: 410 };
+  if (r.owner_id === actorId) return { error: 'This is an invite to your own workspace.', code: 'own', status_code: 400 };
+  if (Q(`SELECT 1 FROM team_members WHERE owner_id=? AND user_id=? AND status IN ('active','paused') AND id<>?`).get(r.owner_id, actorId, r.id)) return { error: 'You’re already on this team.', code: 'member', status_code: 400 };
+  const owner = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(r.owner_id); if (!owner) return { error: 'This team no longer exists.', code: 'invalid', status_code: 404 };
+  const st = r.status === 'paused' ? 'paused' : 'active';
+  Q(`UPDATE team_members SET user_id=?, status=?, joined_at=?, invite_token=NULL WHERE id=?`).run(actorId, st, now(), r.id);
+  const who = Q(`SELECT id, email FROM users WHERE id=?`).get(actorId);
+  teamAudit(null, who, r.owner_id, 'team.accept', r.email, { account: who && who.email, role: r.role });
+  inboxAdd(r.owner_id, { kind: 'account', title: `${who ? who.email : r.email} joined your team`, body: `They joined as ${roleName(r.role)}.`, cta_label: 'Team', cta_url: '#tab:team', tag: `team_joined:${r.id}` });
+  log('team accept', r.owner_id, actorId, r.role);
+  return { ok: true, owner_id: r.owner_id, owner_name: displayName(owner), role: r.role, status: st, paused: st === 'paused' };
+}
+function teamInviteInfo(token) {
+  const r = token ? Q(`SELECT * FROM team_members WHERE invite_token=?`).get(tokHash(token)) : null;
+  if (!r || r.status === 'removed' || r.status === 'active') return { status: 404, ok: false, valid: false, error: 'This invite link isn’t valid any more.' };
+  const owner = Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(r.owner_id) || {};
+  const expired = r.status === 'invited' && now() - r.invited_at > R17_INVITE_MS;
+  return { ok: !expired, valid: !expired, expired, status: expired ? 410 : 200, email: r.email, role: r.role, role_name: roleName(r.role), owner_name: displayName(owner), owner_email: owner.email || null,
+    account_exists: !!Q(`SELECT 1 FROM users WHERE email=?`).get(r.email) };
+}
+/** /join-team/<token>: logged in → the dashboard asks "Join X's team?" (POST /api/team/accept, so a link alone never moves anyone);
+ *  logged out → sign-up (or login, when that email has an account) with the token, which accepts it in the same step. */
+function joinTeamRoute(req, res, token) {
+  const info = teamInviteInfo(token), me = currentUser(req), nc = { 'cache-control': 'no-store' };
+  if (!info.valid) return send(res, 302, '', { location: (me ? '/app' : '/login') + '?team_error=' + (info.expired ? 'expired' : 'invalid'), ...nc });
+  const q = `team=${encodeURIComponent(token)}&email=${encodeURIComponent(info.email)}`;
+  if (me) return send(res, 302, '', { location: '/app?' + q, ...nc });
+  return send(res, 302, '', { location: (info.account_exists ? '/login?' : '/signup?') + q, ...nc });
+}
+/** GET /api/team/leaderboard: results per person (owner + members) from the channels they added or were given. */
+function teamLeaderboard(user, qs) {
+  const ownerId = user.id, { from, to } = parseRange(qs), [d0, d1] = rangeDays(qs);
+  const per = new Map(), g = (id) => { if (!per.has(id)) per.set(id, { clicks: 0, joins: 0, ftds: 0, revenue_cents: 0, spend_cents: 0 }); return per.get(id); };
+  for (const r of Q(`SELECT channel_id, SUM(clicks) c, SUM(joins) j FROM hourly WHERE owner_id=? AND hour>=? AND hour<? GROUP BY channel_id`).all(ownerId, Math.floor(from / 3600000), Math.ceil(to / 3600000))) { const x = g(r.channel_id); x.clicks += r.c || 0; x.joins += r.j || 0; }
+  for (const r of Q(`SELECT channel_id, COALESCE(SUM(event='ftd' AND COALESCE(rejected,0)=0),0) f, COALESCE(SUM(${REVENUE_SQL}),0) rev FROM conversions WHERE owner_id=? AND matched=1 AND created_at>=? AND created_at<? AND channel_id IS NOT NULL GROUP BY channel_id`).all(ownerId, from, to)) { const x = g(r.channel_id); x.ftds += r.f; x.revenue_cents += r.rev; }
+  for (const r of Q(`SELECT channel_id, SUM(amount_cents) n FROM spend WHERE owner_id=? AND date>=? AND date<=? AND channel_id IS NOT NULL GROUP BY channel_id`).all(ownerId, d0, d1)) g(r.channel_id).spend_cents += r.n || 0;
+  const chans = Q(`SELECT id, created_by FROM channels WHERE owner_id=? AND NOT (status='removed' AND COALESCE(removed_by_user,0)=1) ORDER BY id`).all(ownerId);
+  const owner = Q(`SELECT id, email, name, nickname FROM users WHERE id=?`).get(ownerId) || { email: '' };
+  const members = Q(`SELECT * FROM team_members WHERE owner_id=? AND user_id IS NOT NULL AND status IN ('active','paused') ORDER BY id`).all(ownerId);
+  const memberIds = new Set(members.map((r) => r.user_id)), locked = isLocked(ownerId);
+  const mk = (base, ids) => {
+    const t = { clicks: 0, joins: 0, ftds: 0, revenue_cents: 0, spend_cents: 0 };
+    for (const id of ids) { const x = per.get(id); if (x) for (const k in t) t[k] += x[k]; }
+    return { ...base, channels: ids.length, channel_ids: ids, ...t, revenue_cents: locked ? null : t.revenue_cents, cost_per_join_cents: t.spend_cents && t.joins ? Math.round(t.spend_cents / t.joins) : null,
+      cost_per_ftd_cents: locked ? null : t.spend_cents && t.ftds ? Math.round(t.spend_cents / t.ftds) : null };
+  };
+  const rows = [mk({ member_id: null, user_id: ownerId, email: owner.email, name: displayName(owner), role: 'owner', status: 'active' }, chans.filter((c) => !c.created_by || c.created_by === ownerId || !memberIds.has(c.created_by)).map((c) => c.id))];
+  for (const mbr of members) {
+    const u = Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(mbr.user_id) || { email: mbr.email };
+    rows.push(mk({ member_id: mbr.id, user_id: mbr.user_id, email: u.email, name: displayName(u), role: mbr.role, status: mbr.status },
+      [...new Set([...chans.filter((c) => c.created_by === mbr.user_id).map((c) => c.id), ...memberChannels(mbr.id, ownerId)])].sort((a, b) => a - b)));
+  }
+  const out = user._member && user._member.role === 'buyer' ? rows.filter((r) => r.member_id === user._member.id) : rows;
+  out.sort((a, b) => b.ftds - a.ftds || b.joins - a.joins || b.clicks - a.clicks);
+  return { from: d0, to: d1, locked, rows: out };
+}
+function adminTeamInfo(uid) {
+  const members = Q(`SELECT t.id, t.email, t.role, t.status, t.joined_at, u.email AS account_email FROM team_members t LEFT JOIN users u ON u.id=t.user_id WHERE t.owner_id=? AND t.status<>'removed' ORDER BY t.id`).all(uid);
+  const memberOf = Q(`SELECT t.owner_id, u.email AS owner_email, t.role, t.status FROM team_members t JOIN users u ON u.id=t.owner_id WHERE t.user_id=? AND t.status<>'removed' ORDER BY t.id`).all(uid);
+  return { size: 1 + members.filter((x) => x.status === 'active').length, members, member_of: memberOf, seats: seatInfo(uid) };
+}
+
+// ----- daily Telegram report -----
+/** "report-<code>" in a /start link: <account id>-<issued at>-<signature over both and a nonce saved on the account>. Valid for 24 hours and
+ *  single use: linking a chat replaces the nonce, so every code issued before stops working. Codes in the old (round 17 launch) format are refused. */
+const REPORT_CODE_MS = 24 * 3600 * 1000;
+const reportSig = (uid, ts, nonce) => crypto.createHmac('sha256', APP_SECRET).update(`report2:${uid}:${ts}:${nonce || ''}`).digest('hex').slice(0, 16);
+function reportCode(uid) {
+  const ts = Math.floor(now() / 1000).toString(36), u = Q(`SELECT report_nonce FROM users WHERE id=?`).get(uid) || {};
+  return Number(uid).toString(36) + '-' + ts + '-' + reportSig(uid, ts, u.report_nonce);
+}
+function reportCodeUser(code) {
+  const m = /^([0-9a-z]{1,12})-([0-9a-z]{1,10})-([0-9a-f]{16})$/.exec(String(code || '')); if (!m) return null;
+  const uid = parseInt(m[1], 36), age = now() - parseInt(m[2], 36) * 1000, u = Q(`SELECT report_nonce FROM users WHERE id=?`).get(uid);
+  if (!u || age > REPORT_CODE_MS || age < -300000 || !safeEq(m[3], reportSig(uid, m[2], u.report_nonce))) return null;
+  return uid;
+}
+/** /start report-<code> sent to the alert bot (bot = null) or to one of the customer's own tracking bots. Returns the reply text. */
+function reportLink(code, chatId, bot) {
+  const uid = reportCodeUser(code), u = uid && Q(`SELECT id, status FROM users WHERE id=?`).get(uid);
+  if (!u || u.status === 'suspended') return 'This link has expired. Open Joinvoo → Daily report and tap “Connect Telegram” again.';
+  if (bot && bot.owner_id !== uid && !Q(`SELECT 1 FROM team_members WHERE owner_id=? AND user_id=? AND status='active'`).get(bot.owner_id, uid)) return 'This bot belongs to another Joinvoo account. Use the link from your own dashboard.';
+  Q(`UPDATE users SET report_chat_id=?, report_bot_id=?, daily_report=COALESCE(daily_report,1), report_nonce=? WHERE id=?`).run(chatId, bot ? bot.id : null, rid(12), uid); // new nonce: this link (and any older one) is used up
+  log('daily report linked', uid, bot ? 'bot ' + bot.id : 'alert bot');
+  return '✅ Connected! Your Joinvoo daily report will arrive here every morning. Change the time or switch it off in Joinvoo → Daily report.';
+}
+/** Where this person's Telegram messages go: the chat they linked for the report, else the alert-bot chat they linked for alerts. */
+function reportChat(uid) {
+  const u = Q(`SELECT report_chat_id, report_bot_id, alert_chat_id FROM users WHERE id=?`).get(uid); if (!u) return null;
+  if (u.report_chat_id) {
+    if (u.report_bot_id) { const b = Q(`SELECT token, owner_id FROM bots WHERE id=? AND status='active'`).get(u.report_bot_id);
+      // a team owner's bot only while this person is still on that team (removed / paused members stop using it)
+      if (b && b.token && (b.owner_id === uid || Q(`SELECT 1 FROM team_members WHERE owner_id=? AND user_id=? AND status='active'`).get(b.owner_id, uid))) return { token: b.token, chat_id: u.report_chat_id, via: 'tracking_bot', bot_id: u.report_bot_id }; }
+    else if (ALERT_BOT_TOKEN) return { token: ALERT_BOT_TOKEN, chat_id: u.report_chat_id, via: 'alert_bot' };
+  }
+  if (feature('alerts') && u.alert_chat_id) return { token: ALERT_BOT_TOKEN, chat_id: u.alert_chat_id, via: 'alert_bot' };
+  return null;
+}
+async function tgNotify(uid, text) { const c = reportChat(uid); if (!c) return false; const r = await tg(c.token, 'sendMessage', { chat_id: c.chat_id, text, disable_web_page_preview: true }); return !!(r && r.ok); }
+/** Yesterday (in the reader's time zone) vs the day before, for the whole account or a media buyer's channels. */
+function buildReport(ownerId, scope, tz, teamName) {
+  const lc = localClock(tz), y0 = lc.dayStart - 864e5, b0 = y0 - 864e5, sv = { _scope: scope || undefined };
+  const sc = SC(sv, 'channel_id'), X = periodData(ownerId, y0, lc.dayStart, lc.off, null, 'day', sc).totals, P = periodData(ownerId, b0, y0, lc.off, null, 'day', sc).totals;
+  const locked = isLocked(ownerId), usd = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const vs = (a, b) => (a == null || b == null ? '' : !b ? (a ? ' (new)' : '') : a === b ? ' (=)' : ` (${a > b ? '↑' : '↓'}${Math.abs(Math.round((a - b) / b * 100))}%)`);
+  const cpj = (x) => (x.spend_cents && x.joins ? Math.round(x.spend_cents / x.joins) : null), cpf = (x) => (x.spend_cents && x.ftd ? Math.round(x.spend_cents / x.ftd) : null);
+  const ha = [ownerId, Math.floor(y0 / 3600000), Math.floor(lc.dayStart / 3600000)];
+  let best = Q(`SELECT channel_id, COUNT(*) n FROM conversions WHERE owner_id=? AND event='ftd' AND COALESCE(rejected,0)=0 AND matched=1 AND created_at>=? AND created_at<?${sc} GROUP BY channel_id ORDER BY n DESC LIMIT 1`).get(ownerId, y0, lc.dayStart);
+  let bestWhat = 'FTDs';
+  if (!best || !best.n) { best = Q(`SELECT channel_id, SUM(joins) n FROM hourly WHERE owner_id=? AND hour>=? AND hour<?${sc} GROUP BY channel_id ORDER BY n DESC LIMIT 1`).get(...ha); bestWhat = 'joins'; }
+  const bestCh = best && best.n ? Q(`SELECT title FROM channels WHERE id=?`).get(best.channel_id) : null;
+  const camp = "json_extract(c.params,'$.utm_campaign')";
+  let bc = locked ? null : Q(`SELECT ${camp} k, COUNT(*) n FROM conversions v JOIN joins j ON j.id=v.join_id JOIN clicks c ON c.id=j.click_id WHERE v.owner_id=? AND v.event='ftd' AND COALESCE(v.rejected,0)=0 AND v.created_at>=? AND v.created_at<?${SC(sv, 'v.channel_id')} AND ${camp} IS NOT NULL GROUP BY k ORDER BY n DESC LIMIT 1`).get(ownerId, y0, lc.dayStart);
+  let bcWhat = 'FTDs';
+  if (!locked && (!bc || !bc.n)) { bc = Q(`SELECT ${camp} k, COUNT(*) n FROM clicks c WHERE c.owner_id=? AND c.ts>=? AND c.ts<? AND c.joined=1${SC(sv, 'c.channel_id')} AND ${camp} IS NOT NULL GROUP BY k ORDER BY n DESC LIMIT 1`).get(ownerId, y0, lc.dayStart); bcWhat = 'joins'; }
+  const day = new Date(y0 - lc.off * 60000).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const lines = [`📊 Joinvoo daily report · ${day}${teamName ? ` · ${teamName}’s team` : ''}`, '',
+    `👆 Clicks: ${$num(X.clicks)}${vs(X.clicks, P.clicks)}`, `👥 Joins: ${$num(X.joins)}${vs(X.joins, P.joins)}`, `💰 Deposits (FTDs): ${$num(X.ftd)}${vs(X.ftd, P.ftd)}`];
+  if (!locked) lines.push(`💵 Revenue: ${usd(X.revenue_cents)}${vs(X.revenue_cents, P.revenue_cents)}`);
+  if (X.spend_cents || P.spend_cents) {
+    lines.push(`📣 Spend: ${usd(X.spend_cents)}${vs(X.spend_cents, P.spend_cents)}`);
+    lines.push(`🎯 Cost per join: ${cpj(X) != null ? usd(cpj(X)) : '—'}${vs(cpj(X), cpj(P))}`);
+    if (!locked) lines.push(`🎯 Cost per deposit: ${cpf(X) != null ? usd(cpf(X)) : '—'}${vs(cpf(X), cpf(P))}`);
+  } else lines.push('📣 Spend: not added yet (connect Meta or add it in Spend for cost per join and per deposit)');
+  if (bestCh) lines.push('', `🏆 Best channel: ${bestCh.title || 'Channel'} (${$num(best.n)} ${bestWhat})`);
+  if (bc && bc.n) lines.push(`${bestCh ? '' : '\n'}🚀 Best campaign: ${String(bc.k).slice(0, 80)} (${$num(bc.n)} ${bcWhat})`);
+  if (locked) lines.push('', 'Revenue and which campaigns drove deposits are Pro details.');
+  lines.push('', '↑↓ = vs the day before');
+  return { text: lines.join('\n'), totals: { clicks: X.clicks, joins: X.joins, ftd: X.ftd, revenue_cents: locked ? null : X.revenue_cents, spend_cents: X.spend_cents, cost_per_join_cents: cpj(X), cost_per_ftd_cents: locked ? null : cpf(X) },
+    previous: { clicks: P.clicks, joins: P.joins, ftd: P.ftd, revenue_cents: locked ? null : P.revenue_cents, spend_cents: P.spend_cents }, best_channel: bestCh ? { id: best.channel_id, title: bestCh.title, n: best.n, by: bestWhat } : null,
+    best_campaign: bc && bc.n ? { name: bc.k, n: bc.n, by: bcWhat } : null, day: new Date(y0 - lc.off * 60000).toISOString().slice(0, 10) };
+}
+let reportBusy = false;
+/** Every 15 minutes: at the chosen local hour (default 08:00; UTC when no time zone is saved), once per day per person (report_log is the lock). */
+async function reportJob() {
+  if (reportBusy) return; reportBusy = true;
+  try {
+    const t = now(), jobs = [];
+    for (const u of Q(`SELECT id, tz, report_hour FROM users WHERE daily_report=1 AND status='active'`).all()) jobs.push({ uid: u.id, owner: u.id, scope: null, tz: u.tz, hour: u.report_hour });
+    for (const r of Q(`SELECT t.id, t.owner_id, t.user_id, t.role, t.report_hour, u.tz, o.email AS oemail, o.name AS oname, o.nickname AS onick FROM team_members t JOIN users u ON u.id=t.user_id JOIN users o ON o.id=t.owner_id
+        WHERE t.daily_report=1 AND t.status='active' AND u.status='active'`).all())
+      jobs.push({ uid: r.user_id, owner: r.owner_id, scope: r.role === 'buyer' ? memberChannels(r.id, r.owner_id) : null, tz: r.tz, hour: r.report_hour, team: displayName({ email: r.oemail, name: r.oname, nickname: r.onick }) });
+    for (const j of jobs) {
+      const lc = localClock(j.tz, t);
+      if (lc.hour < (j.hour == null ? 8 : j.hour)) continue;
+      if (Q(`SELECT 1 FROM report_log WHERE user_id=? AND scope_owner=? AND day=?`).get(j.uid, j.owner, lc.date)) continue;
+      const chat = reportChat(j.uid); if (!chat) continue;
+      if (!Q(`INSERT OR IGNORE INTO report_log(user_id,scope_owner,day,sent_at,ok) VALUES(?,?,?,?,0)`).run(j.uid, j.owner, lc.date, t).changes) continue;
+      const rep = buildReport(j.owner, j.scope, j.tz, j.team);
+      const r = await tg(chat.token, 'sendMessage', { chat_id: chat.chat_id, text: rep.text, disable_web_page_preview: true });
+      Q(`UPDATE report_log SET ok=? WHERE user_id=? AND scope_owner=? AND day=?`).run(r && r.ok ? 1 : 0, j.uid, j.owner, lc.date);
+    }
+  } catch (e) { log('report job', e.message); } finally { reportBusy = false; }
+}
+async function reportSettingsApi(req, user, p, m) {
+  const actor = actorOf(user), team = !!user._member;
+  const view = () => {
+    const a = Q(`SELECT tz, daily_report, report_hour FROM users WHERE id=?`).get(actor.id) || {};
+    const tm = team ? Q(`SELECT daily_report, report_hour FROM team_members WHERE id=?`).get(user._member.id) || {} : null;
+    const chat = reportChat(actor.id), code = reportCode(actor.id), opts = [];
+    if (feature('alerts') && alertBot.username) opts.push({ via: 'alert_bot', username: alertBot.username, url: `https://t.me/${alertBot.username}?start=report-${code}` });
+    // a media buyer gets the alert bot when there is one, else one deep link through one of the team's bots (not the whole list)
+    const buyer = !!(user._member && user._member.role === 'buyer');
+    if (!(buyer && opts.length)) for (const b of Q(`SELECT id, username FROM bots WHERE owner_id=? AND status='active' AND username IS NOT NULL ORDER BY id${buyer ? ' LIMIT 1' : ''}`).all(user.id))
+      opts.push(buyer ? { via: 'tracking_bot', username: b.username, url: `https://t.me/${b.username}?start=report-${code}` } : { via: 'tracking_bot', bot_id: b.id, username: b.username, url: `https://t.me/${b.username}?start=report-${code}` });
+    const hour = team ? tm.report_hour : a.report_hour, last = Q(`SELECT day, sent_at, ok FROM report_log WHERE user_id=? AND scope_owner=? ORDER BY day DESC LIMIT 1`).get(actor.id, user.id);
+    return { scope: team ? 'team' : 'own', enabled: team ? !!tm.daily_report : !!a.daily_report, hour: hour == null ? 8 : hour, tz: a.tz || null, hour_note: a.tz ? null : 'No time zone saved in your profile, so the hour is UTC.',
+      linked: !!chat, via: chat ? chat.via : null, link_options: opts, last_sent: last ? { day: last.day, at: last.sent_at, ok: !!last.ok } : null };
+  };
+  if (p === '/api/report-settings' && m === 'GET') return view();
+  if (p === '/api/report-settings' && (m === 'PATCH' || m === 'POST')) {
+    const b = await readJson(req);
+    let hour; if (b.hour !== undefined && b.hour !== null) { hour = Math.round(Number(b.hour)); if (!(hour >= 0 && hour <= 23)) return { error: 'Pick an hour from 0 to 23.' }; }
+    if (team) {
+      if (b.enabled !== undefined) Q(`UPDATE team_members SET daily_report=? WHERE id=?`).run(b.enabled ? 1 : 0, user._member.id);
+      if (hour !== undefined || b.hour === null) Q(`UPDATE team_members SET report_hour=? WHERE id=?`).run(hour ?? null, user._member.id);
+    } else {
+      if (b.enabled !== undefined) Q(`UPDATE users SET daily_report=? WHERE id=?`).run(b.enabled ? 1 : 0, actor.id);
+      if (hour !== undefined || b.hour === null) Q(`UPDATE users SET report_hour=? WHERE id=?`).run(hour ?? null, actor.id);
+    }
+    if (b.disconnect) Q(`UPDATE users SET report_chat_id=NULL, report_bot_id=NULL WHERE id=?`).run(actor.id);
+    return { ok: true, ...view() };
+  }
+  if (p === '/api/report-settings/test' && m === 'POST') {
+    if (limited('reptest:' + actor.id, 20, 3600)) return { status: 429, error: 'Too many test reports. Try again in an hour.' };
+    const a = Q(`SELECT tz FROM users WHERE id=?`).get(actor.id) || {}, chat = reportChat(actor.id);
+    const rep = buildReport(user.id, user._scope || null, a.tz, team ? displayName(Q(`SELECT email, name, nickname FROM users WHERE id=?`).get(user.id) || {}) : null);
+    if (!chat) return { error: 'Connect Telegram first: open one of the links and press Start.', not_linked: true, text: rep.text, report: rep, link_options: view().link_options };
+    const r = await tg(chat.token, 'sendMessage', { chat_id: chat.chat_id, text: rep.text, disable_web_page_preview: true });
+    return r && r.ok ? { ok: true, sent: true, via: chat.via, text: rep.text, report: rep } : { status: 502, error: 'Telegram didn’t accept the message: ' + ((r && r.description) || 'unknown error'), text: rep.text };
+  }
+  return { status: 404, error: 'Not found' };
+}
+
+// ----- alerts for the customer: inbox (always), Telegram (report / alert chat), email (when an email provider is set). One per incident. -----
+function alertCustomer(ownerId, kind, channelId, incident, a) {
+  try {
+    if (!Q(`INSERT OR IGNORE INTO ch_alerts(owner_id,channel_id,kind,incident,created_at) VALUES(?,?,?,?,?)`).run(ownerId, channelId || 0, kind, String(incident), now()).changes) return false;
+    const link = a.cta ? `${BASE_URL}/app#${a.cta}` : `${BASE_URL}/app`;
+    inboxAdd(ownerId, { kind: 'alert', title: a.title, body: a.body, cta_label: a.cta_label || null, cta_url: a.cta ? '#tab:' + a.cta : null, important: 1, tag: `${kind}:${channelId || 0}:${incident}` });
+    tgNotify(ownerId, `${a.icon || '⚠️'} ${a.title}\n\n${a.body}${a.cta_label ? `\n\n👉 ${a.cta_label}: ${link}` : ''}`).catch(() => {});
+    const u = Q(`SELECT email, status FROM users WHERE id=?`).get(ownerId);
+    if (resendKey() && u && u.status !== 'suspended' && notifyPrefs(ownerId).alert.email !== false)
+      sendPlainMail(ownerId, u.email, 'r17:' + kind, { subject: a.title, icon: a.icon || '⚠️', title: a.title, lead: esc(a.body), cta: a.cta_label ? { text: a.cta_label, url: link } : null, ref: `${kind}:${channelId || 0}:${incident}` });
+    log('customer alert', kind, ownerId, channelId || '', a.title);
+    return true;
+  } catch (e) { log('customer alert failed', kind, e.message); return false; }
+}
+
+// ----- channel ban protection -----
+const LOST_REASONS = { bot_kicked: 'the bot was removed from it', bot_left: 'the bot left it', admin_rights_removed: 'the bot is no longer an admin there', no_invite_rights: 'the bot can’t create invite links there any more',
+  chat_not_found: 'Telegram says the channel no longer exists (deleted or banned)', forbidden: 'Telegram refuses the bot access', invite_failed: 'Telegram keeps refusing to create invite links' };
+const lostReasonOf = (d) => (/chat not found|deleted|deactivated/i.test(d) ? 'chat_not_found' : /kicked/i.test(d) ? 'bot_kicked' : /CHAT_ADMIN_REQUIRED|rights|admin/i.test(d) ? 'admin_rights_removed' : /forbidden|not a member/i.test(d) ? 'forbidden' : 'invite_failed');
+/** After a refused invite link: N refusals in a row (setting ban.fail_streak, default 3: the first one plus re-checks) → lost. */
+function banCheck(chId, desc) {
+  const c = Q(`SELECT status, fail_streak, lost_at FROM channels WHERE id=?`).get(chId);
+  if (c && !c.lost_at && c.status !== 'active' && (c.fail_streak || 0) >= setting('ban.fail_streak')) chLost(chId, lostReasonOf(desc));
+}
+/** Mark a channel lost (once per incident), point its link at the backup channel when auto-failover is on, and tell the customer. */
+function chLost(chId, reason) {
+  const ch = Q(`SELECT * FROM channels WHERE id=?`).get(chId);
+  if (!ch || ch.lost_at || ch.type === 'bot' || ch.removed_by_user) return false;
+  const t = now();
+  if (!Q(`UPDATE channels SET lost_at=?, lost_reason=?, deadlink_at=NULL WHERE id=? AND lost_at IS NULL`).run(t, reason, chId).changes) return false;
+  const why = LOST_REASONS[reason] || reason, name = ch.title || 'Your channel';
+  let to = null;
+  if (ch.redirect_to) to = Q(`SELECT id, title FROM channels WHERE id=?`).get(ch.redirect_to); // a smart link already sends this link's traffic elsewhere
+  else if (ch.backup_channel_id && (ch.auto_failover == null || ch.auto_failover)) {
+    const bk = Q(`SELECT * FROM channels WHERE id=? AND owner_id=? AND status='active' AND COALESCE(locked,0)=0 AND lost_at IS NULL AND redirect_to IS NULL AND type<>'bot'`).get(ch.backup_channel_id, ch.owner_id);
+    if (bk && bk.id !== ch.id) { Q(`UPDATE channels SET redirect_to=?, failed_over_to=? WHERE id=?`).run(bk.id, bk.id, ch.id); to = bk; log('ban failover', ch.id, '->', bk.id); }
+  }
+  log('channel lost', ch.id, reason);
+  alertCustomer(ch.owner_id, 'channel_lost', ch.id, t, to
+    ? { title: `“${name}” was lost: ads now go to “${to.title}”`, body: `Joinvoo lost access to “${name}”: ${why}. Your tracking link now sends people to your backup channel “${to.title}”, so the ads that are running keep working. Add the bot back as an admin to get “${name}” back; we’ll ask before switching back.`, cta_label: 'Open channel', cta: `channels/${ch.id}` }
+    : { title: `“${name}” was lost: pick a backup channel`, body: `Joinvoo lost access to “${name}”: ${why}. People clicking your ads can’t get in right now. Pick a backup channel in one tap and your link sends them there, without touching your ads.`, cta_label: 'Pick a backup channel', cta: `channels/backup/${ch.id}` });
+  return true;
+}
+/** The bot is an admin again: say so, and offer to switch the link back (never automatic). */
+function chRecovered(chId) {
+  const ch = Q(`SELECT * FROM channels WHERE id=?`).get(chId);
+  if (!ch || !ch.lost_at || ch.status !== 'active') return false;
+  Q(`UPDATE channels SET lost_at=NULL, lost_reason=NULL, recovered_at=?, fail_streak=0 WHERE id=?`).run(now(), chId);
+  const name = ch.title || 'Your channel', via = ch.failed_over_to && ch.redirect_to === ch.failed_over_to ? Q(`SELECT title FROM channels WHERE id=?`).get(ch.failed_over_to) : null;
+  log('channel back', ch.id);
+  alertCustomer(ch.owner_id, 'channel_back', ch.id, ch.lost_at, via
+    ? { icon: '✅', title: `“${name}” is back`, body: `The bot is an admin in “${name}” again. Your link still sends people to “${via.title}”. Switch back whenever you’re ready; we never switch on our own.`, cta_label: 'Switch back', cta: `channels/switch-back/${ch.id}` }
+    : { icon: '✅', title: `“${name}” is back`, body: `The bot is an admin in “${name}” again and tracking has restarted.`, cta_label: 'Open channel', cta: `channels/${ch.id}` });
+  return true;
+}
+function switchBack(user, id) {
+  const ch = Q(`SELECT * FROM channels WHERE id=? AND owner_id=?`).get(id, user.id);
+  if (!ch || (user._scope && !user._scope.includes(ch.id))) return { status: 404, error: 'Channel not found.' };
+  if (ch.lost_at) return { error: `“${ch.title}” is still lost. Add the bot back as an admin first.` };
+  if (!ch.failed_over_to || ch.redirect_to !== ch.failed_over_to) { if (ch.failed_over_to) Q(`UPDATE channels SET failed_over_to=NULL WHERE id=?`).run(ch.id); return { error: 'This link isn’t switched to a backup channel.' }; }
+  Q(`UPDATE channels SET redirect_to=NULL, failed_over_to=NULL WHERE id=?`).run(ch.id);
+  log('ban switch back', ch.id);
+  return { ok: true, redirect_to: null, failed_over_to: null };
+}
+/** PATCH /api/channels/:id {backup_channel_id, auto_failover, link_host}. Picking a backup for a channel that is already lost switches to it at once. */
+function channelR17Patch(user, ch, b) {
+  const out = { ok: true };
+  if (b.backup_channel_id !== undefined) {
+    if (b.backup_channel_id === null || b.backup_channel_id === '' || +b.backup_channel_id === 0) Q(`UPDATE channels SET backup_channel_id=NULL WHERE id=?`).run(ch.id);
+    else {
+      const t = Q(`SELECT * FROM channels WHERE id=? AND owner_id=? AND status<>'removed'`).get(+b.backup_channel_id, user.id);
+      if (!t || t.id === ch.id || (user._scope && !user._scope.includes(t.id))) return { error: 'Pick one of your other channels as the backup.' };
+      if (t.type === 'bot' || ch.type === 'bot') return { error: 'Backup channels work between channels and groups, not bots.' };
+      Q(`UPDATE channels SET backup_channel_id=? WHERE id=?`).run(t.id, ch.id);
+      if (ch.lost_at && !ch.redirect_to && t.status === 'active' && !t.redirect_to && !t.lost_at) { Q(`UPDATE channels SET redirect_to=?, failed_over_to=? WHERE id=?`).run(t.id, t.id, ch.id); out.switched = true; log('ban failover (picked)', ch.id, '->', t.id); }
+    }
+  }
+  if (b.auto_failover !== undefined) Q(`UPDATE channels SET auto_failover=? WHERE id=?`).run(b.auto_failover === null ? null : b.auto_failover ? 1 : 0, ch.id);
+  if (b.link_host !== undefined) {
+    if (b.link_host === null || b.link_host === '') Q(`UPDATE channels SET link_host=NULL WHERE id=?`).run(ch.id);
+    else { const h = normDomain(b.link_host); if (!h || !joinvooLinkBases().some((x) => baseHost(x) === h)) return { error: 'Pick one of Joinvoo’s link domains.' }; Q(`UPDATE channels SET link_host=?, domain_id=0, deadlink_at=NULL WHERE id=?`).run(h, ch.id); }
+  }
+  const c = Q(`SELECT * FROM channels WHERE id=?`).get(ch.id);
+  return { ...out, backup_channel_id: c.backup_channel_id || null, auto_failover: c.auto_failover == null ? !!c.backup_channel_id : !!c.auto_failover, link_host: c.link_host || null, domain_id: c.domain_id ?? null,
+    tracking_url: `${chanLinkBase(c)}/c/${c.slug}`, redirect_to: c.redirect_to || null, failed_over_to: c.failed_over_to || null, lost_at: c.lost_at || null };
+}
+let banBusy = false;
+/** Every 2 minutes: re-check channels whose invite links were refused. Admin again → tracking restarts; refused again → counts toward "lost". */
+async function banJob() {
+  if (banBusy) return; banBusy = true;
+  try {
+    for (const c of Q(`SELECT c.id, c.chat_id, c.bot_id, c.fail_streak, b.token, b.tg_id FROM channels c JOIN bots b ON b.id=c.bot_id WHERE c.lost_at IS NULL AND COALESCE(c.fail_streak,0)>0 AND c.status<>'active'
+        AND c.type<>'bot' AND COALESCE(c.removed_by_user,0)=0 AND b.status='active' ORDER BY c.id LIMIT 200`).all()) {
+      const r = await tg(c.token, 'getChatMember', { chat_id: c.chat_id, user_id: c.tg_id });
+      const st = r && r.ok && r.result ? r.result.status : null;
+      if (st === 'creator' || (st === 'administrator' && r.result.can_invite_users !== false)) {
+        Q(`UPDATE channel_bots SET can_invite=1 WHERE channel_id=? AND bot_id=?`).run(c.id, c.bot_id); Q(`UPDATE channels SET fail_streak=0 WHERE id=?`).run(c.id);
+        recomputeChannel(c.id); setImmediate(fillPools); log('channel rights confirmed again', c.id); continue;
+      }
+      const d = r && r.ok ? '' : String((r && r.description) || '');
+      if (!(r && r.ok) && !/rights|admin|not found|kicked|not a member|CHAT_ADMIN_REQUIRED|forbidden|deleted|deactivated/i.test(d)) continue; // network trouble or an unknown answer: no verdict
+      Q(`UPDATE channels SET fail_streak=COALESCE(fail_streak,0)+1 WHERE id=?`).run(c.id);
+      if ((c.fail_streak || 0) + 1 >= setting('ban.fail_streak')) chLost(c.id, r && r.ok ? (st === 'administrator' ? 'no_invite_rights' : st === 'kicked' ? 'bot_kicked' : 'admin_rights_removed') : lostReasonOf(d));
+    }
+  } catch (e) { log('ban job', e.message); } finally { banBusy = false; }
+}
+
+// ----- flagged-domain / dead-link warning -----
+let deadBusy = false;
+/**
+ * Every 15 minutes: a channel whose clicks fell to (almost) nothing for the last N full hours (deadlink.quiet_hours, default 2) while the same
+ * hours on each of the previous days (deadlink.days, default 3) were steady (average ≥ deadlink.min_hourly clicks an hour, default 10, and
+ * every day at least half of that), and — when Meta spend is synced — spend is still running today. Night-time lulls don't trigger it: the
+ * same hours on the previous days must have been busy. One warning per episode (channels.deadlink_at, cleared when clicks come back),
+ * grouped per link domain. Never switches anything by itself.
+ */
+function deadlinkJob() {
+  if (deadBusy) return; deadBusy = true;
+  try {
+    const t = now(), hNow = Math.floor(t / 3600000), QH = setting('deadlink.quiet_hours'), D = setting('deadlink.days'), minH = setting('deadlink.min_hourly'), pct = setting('deadlink.drop_pct');
+    // per channel through the hourly primary key (channel_id, hour): a handful of tiny range reads, no table scan and no new index
+    const sq = db.prepare(`SELECT COALESCE(SUM(clicks),0) n FROM hourly WHERE channel_id=? AND hour>=? AND hour<?`), win = (id, k) => sq.get(id, hNow - QH - 24 * k, hNow - 24 * k).n;
+    const need = minH * QH, base = new Map(), usual = (id) => { if (!base.has(id)) { let a = 0, steady = true; for (let k = 1; k <= D; k++) { const n = win(id, k); a += n; if (n < need / 2) { steady = false; break; } } base.set(id, steady ? a / D : 0); } return base.get(id); };
+    // episodes that ended: clicks are back (or there's no busy baseline any more after a day)
+    for (const c of Q(`SELECT id, deadlink_at FROM channels WHERE deadlink_at IS NOT NULL`).all()) {
+      const u = usual(c.id), r = win(c.id, 0);
+      if ((u >= need && r > u * pct / 100) || (u < need && (r > 0 || t - c.deadlink_at > 864e5))) Q(`UPDATE channels SET deadlink_at=NULL WHERE id=?`).run(c.id);
+    }
+    const flagged = Q(`SELECT c.id FROM channels c JOIN users u ON u.id=c.owner_id WHERE c.status='active' AND u.status='active' AND c.deadlink_at IS NULL AND c.lost_at IS NULL AND c.redirect_to IS NULL AND COALESCE(c.locked,0)=0`).all()
+      .map((c) => c.id).filter((id) => win(id, 1) >= need / 2 && usual(id) >= need && win(id, 0) <= usual(id) * pct / 100);
+    if (!flagged.length) return;
+    const rows = Q(`SELECT c.* FROM channels c JOIN users u ON u.id=c.owner_id WHERE c.id IN (${flagged.map((x) => Math.floor(x)).join(',')}) AND c.status='active' AND c.redirect_to IS NULL AND c.lost_at IS NULL
+      AND c.deadlink_at IS NULL AND COALESCE(c.locked,0)=0 AND u.status='active'`).all();
+    const groups = new Map();
+    for (const c of rows) {
+      // spend still running? Only knowable with synced Meta spend; hand-entered spend rarely has today's numbers, so it doesn't block the warning.
+      const u = Q(`SELECT tz FROM users WHERE id=?`).get(c.owner_id) || {}, today = new Date(t).toISOString().slice(0, 10), localToday = localClock(u.tz, t).date;
+      const synced = Q(`SELECT 1 FROM spend WHERE owner_id=? AND source='meta' AND date>=? LIMIT 1`).get(c.owner_id, new Date(t - 3 * 864e5).toISOString().slice(0, 10));
+      if (synced && !Q(`SELECT 1 FROM spend WHERE owner_id=? AND source='meta' AND date IN (?,?) AND amount_cents>0 AND (channel_id=? OR channel_id IS NULL) LIMIT 1`).get(c.owner_id, today, localToday, c.id)) continue;
+      const host = baseHost(chanLinkBase(c)), k = c.owner_id + '|' + host;
+      if (!groups.has(k)) groups.set(k, { owner: c.owner_id, host, list: [], synced: !!synced });
+      groups.get(k).list.push(c);
+    }
+    for (const g of groups.values()) {
+      for (const c of g.list) Q(`UPDATE channels SET deadlink_at=? WHERE id=?`).run(t, c.id);
+      const names = g.list.map((c) => `“${c.title || 'Channel'}”`).join(', '), per = Math.round(g.list.reduce((a, c) => a + usual(c.id), 0) / QH);
+      alertCustomer(g.owner, 'deadlink', g.list[0].id, `${g.host}:${t}`, { title: 'Your ad link may be blocked or paused',
+        body: `Clicks on ${names} dropped to almost zero in the last ${QH} hours (usually about ${$num(per)} an hour at this time)${g.synced ? ', while your Meta ads are still spending today' : ''}. Check that your ads are running and approved. If the link domain ${g.host} was blocked, switch to a backup link domain in one tap: links already in your ads keep working.`,
+        cta_label: 'Switch link domain', cta: `channels/link-domain/${g.list[0].id}` });
+    }
+  } catch (e) { log('dead-link job', e.message); } finally { deadBusy = false; }
+}
+/** GET /api/deadlink/options?channel_id=: the link domains this channel can switch to (Joinvoo's link + backup domains, the customer's live domains). */
+function deadlinkOptions(user, chId) {
+  const ch = chId ? Q(`SELECT * FROM channels WHERE id=? AND owner_id=?`).get(chId, user.id) : null;
+  if (chId && (!ch || (user._scope && !user._scope.includes(ch.id)))) return { status: 404, error: 'Channel not found.' };
+  const cur = baseHost(ch ? chanLinkBase(ch) : linkBase()), opts = [];
+  for (const b of joinvooLinkBases()) { const h = baseHost(b); opts.push({ type: 'joinvoo', host: h, current: h === cur, patch: { link_host: h } }); }
+  if (!user._scope) for (const d of ownerDomains(user.id).filter((d) => d.status === 'active')) opts.push({ type: 'custom', domain_id: d.id, host: d.host, live: domainLive(d), current: d.host === cur, patch: { domain_id: d.id } });
+  return { channel_id: ch ? ch.id : null, current_host: cur, deadlink_at: ch ? ch.deadlink_at || null : null, options: opts, note: 'Links already running in your ads keep working on every domain; new links use the one you pick.' };
+}
+
+// ----- Meta ad spend sync (OAuth, ads_read). Built and tested against a fake Graph API; live once the Meta app is approved. -----
+const META_GRAPH = (env.META_GRAPH || 'https://graph.facebook.com/v21.0').replace(/\/$/, '');
+const META_DIALOG = env.META_DIALOG || 'https://www.facebook.com/v21.0/dialog/oauth';
+const metaApp = () => ({ id: String(setting('meta.app_id') || ''), secret: String(setting('meta.app_secret') || '') });
+function metaAvailable() { const a = metaApp(); return !!(a.id && a.secret); }
+const META_OFF = { available: false, reason: 'Waiting for Meta app approval' };
+const metaRedirect = () => `${BASE_URL}/auth/meta/callback`;
+async function metaGet(pathq, token) {
+  const u = new URL(META_GRAPH + pathq);
+  if (token) { u.searchParams.set('access_token', token); u.searchParams.set('appsecret_proof', crypto.createHmac('sha256', metaApp().secret).update(token).digest('hex')); }
+  try {
+    const r = await fetch(u, { signal: AbortSignal.timeout(20000) }), j = await r.json().catch(() => ({}));
+    return !r.ok || j.error ? { ok: false, status: r.status, error: j.error || { message: 'HTTP ' + r.status } } : { ok: true, data: j };
+  } catch (e) { return { ok: false, net: true, error: { message: e.message } }; }
+}
+/** Expired, revoked or password-changed tokens: Graph error 190 (and friends). */
+const metaAuthError = (e) => !!e && (e.code === 190 || e.code === 102 || e.code === 463 || e.code === 467 || (e.type === 'OAuthException' && /token|session|authori[sz]/i.test(e.message || '')));
+function metaStart(req, res) {
+  const me = currentUser(req), nc = { 'cache-control': 'no-store' };
+  if (!me) return send(res, 302, '', { location: '/login', ...nc });
+  if (teamCtx(req, me) !== me) return send(res, 302, '', { location: '/app?meta_error=owner_only#spend', ...nc });
+  if (!metaAvailable()) return send(res, 302, '', { location: '/app?meta=unavailable#spend', ...nc });
+  const nonce = rid(12), exp = now() + 15 * 60000, state = `${me.id}.${exp}.${nonce}.${hmac('meta:' + me.id + ':' + exp + ':' + nonce)}`;
+  const u = new URL(META_DIALOG);
+  for (const [k, v] of Object.entries({ client_id: metaApp().id, redirect_uri: metaRedirect(), state, scope: 'ads_read', response_type: 'code' })) u.searchParams.set(k, v);
+  return send(res, 302, '', { location: u.toString(), 'set-cookie': cookie('jv_meta', nonce, 900), ...nc });
+}
+async function metaCallback(req, res, url) {
+  const back = (q) => send(res, 302, '', { location: '/app?' + q + '#spend', 'set-cookie': cookie('jv_meta', '', 0), 'cache-control': 'no-store' });
+  const me = currentUser(req); if (!me) return back('meta_error=login');
+  const [uid, exp, nonce, sig] = String(url.searchParams.get('state') || '').split('.');
+  if (+uid !== me.id || !nonce || sig !== hmac('meta:' + uid + ':' + exp + ':' + nonce) || +exp < now() || !safeEq(cookies(req).jv_meta, nonce)) return back('meta_error=state');
+  if (url.searchParams.get('error')) return back('meta_error=denied');
+  if (!metaAvailable()) return back('meta=unavailable');
+  const code = url.searchParams.get('code'); if (!code) return back('meta_error=code');
+  const A = metaApp(), e = encodeURIComponent;
+  const t1 = await metaGet(`/oauth/access_token?client_id=${e(A.id)}&redirect_uri=${e(metaRedirect())}&client_secret=${e(A.secret)}&code=${e(code)}`);
+  if (!t1.ok || !t1.data.access_token) { log('meta oauth exchange failed', me.id, t1.error && t1.error.message); return back('meta_error=exchange'); }
+  const t2 = await metaGet(`/oauth/access_token?grant_type=fb_exchange_token&client_id=${e(A.id)}&client_secret=${e(A.secret)}&fb_exchange_token=${e(t1.data.access_token)}`); // long-lived (~60 days)
+  const tok = t2.ok && t2.data.access_token ? t2.data.access_token : t1.data.access_token, expIn = +((t2.ok ? t2.data : t1.data).expires_in) || 0;
+  const who = await metaGet('/me?fields=id,name', tok);
+  Q(`INSERT INTO meta_conns(owner_id,fb_user_id,fb_name,token_enc,expires_at,status,error,created_at,updated_at) VALUES(?,?,?,?,?,'connected',NULL,?,?)
+    ON CONFLICT(owner_id) DO UPDATE SET fb_user_id=excluded.fb_user_id, fb_name=excluded.fb_name, token_enc=excluded.token_enc, expires_at=excluded.expires_at, status='connected', error=NULL, updated_at=excluded.updated_at`)
+    .run(me.id, who.ok ? String(who.data.id || '') : null, who.ok ? String(who.data.name || '').slice(0, 120) : null, boxSeal(tok), expIn ? now() + expIn * 1000 : null, now(), now());
+  await metaAccounts(me.id, tok);
+  log('meta connected', me.id);
+  setImmediate(() => metaSync(me.id).catch((x) => log('meta sync', x.message)));
+  return back('meta=connected');
+}
+/** Refresh the list of ad accounts the token can read. One account → picked automatically. */
+async function metaAccounts(ownerId, tok) {
+  const r = await metaGet('/me/adaccounts?fields=account_id,name,currency,account_status&limit=200', tok);
+  if (!r.ok) { if (metaAuthError(r.error)) { metaReconnect(ownerId, r.error.message); return { reconnect: true }; } return { error: r.error.message }; }
+  const list = (r.data.data || []).filter((a) => /^\d{1,30}$/.test(String(a.account_id || '').replace(/^act_/, '')));
+  for (const a of list) Q(`INSERT INTO meta_accounts(owner_id,act_id,name,currency,account_status) VALUES(?,?,?,?,?) ON CONFLICT(owner_id,act_id) DO UPDATE SET name=excluded.name, currency=excluded.currency, account_status=excluded.account_status`)
+    .run(ownerId, String(a.account_id).replace(/^act_/, ''), String(a.name || '').slice(0, 120), String(a.currency || 'USD').toUpperCase().slice(0, 5), +a.account_status || null);
+  if (list.length === 1 && !Q(`SELECT 1 FROM meta_accounts WHERE owner_id=? AND selected=1`).get(ownerId)) Q(`UPDATE meta_accounts SET selected=1 WHERE owner_id=?`).run(ownerId);
+  return { ok: true, n: list.length };
+}
+function metaReconnect(ownerId, msg) {
+  const c = Q(`SELECT * FROM meta_conns WHERE owner_id=?`).get(ownerId); if (!c) return;
+  Q(`UPDATE meta_conns SET status='reconnect_needed', error=?, updated_at=? WHERE owner_id=?`).run(String(msg || 'Meta connection expired').slice(0, 300), now(), ownerId);
+  log('meta reconnect needed', ownerId, msg);
+  alertCustomer(ownerId, 'meta_reconnect', 0, c.updated_at || c.created_at, { title: 'Reconnect your Meta ad account', body: 'Joinvoo can’t read your ad spend from Meta any more (the connection expired or was removed). Reconnect it in one tap; the spend already synced stays.', cta_label: 'Reconnect Meta', cta: 'spend' });
+}
+/** utm_campaign (or campaign_id in the link) → the channel with most clicks for it in the last 14 days. */
+function metaCampaignChannels(ownerId) {
+  const m = new Map();
+  for (const r of Q(`SELECT json_extract(params,'$.utm_campaign') k, json_extract(params,'$.campaign_id') k2, channel_id, COUNT(*) n FROM clicks WHERE owner_id=? AND ts>? GROUP BY k, k2, channel_id ORDER BY n DESC`).all(ownerId, now() - 14 * 864e5)) {
+    if (r.k && !m.has(String(r.k))) m.set(String(r.k), r.channel_id);
+    if (r.k2 && !m.has(String(r.k2))) m.set(String(r.k2), r.channel_id);
+  }
+  return m;
+}
+const metaBusy = new Set();
+/** Last 7 days of spend per campaign per day from every picked ad account → spend rows with source 'meta' (hand-entered rows are never touched). */
+async function metaSync(ownerId) {
+  if (metaBusy.has(ownerId)) return { busy: true }; metaBusy.add(ownerId);
+  try {
+    const c = Q(`SELECT * FROM meta_conns WHERE owner_id=?`).get(ownerId);
+    if (!c || c.status !== 'connected' || !metaAvailable()) return { ok: false, skipped: true };
+    const tok = boxOpen(c.token_enc);
+    if (!tok || (c.expires_at && c.expires_at < now())) { metaReconnect(ownerId, tok ? 'The Meta connection expired.' : 'The saved Meta connection can’t be read.'); return { ok: false, reconnect: true }; }
+    const acc = await metaAccounts(ownerId, tok); if (acc.reconnect) return { ok: false, reconnect: true };
+    const map = metaCampaignChannels(ownerId), gpath = new URL(META_GRAPH).pathname.replace(/\/$/, ''), gorigin = new URL(META_GRAPH).origin;
+    let rows = 0; const errors = [];
+    for (const a of Q(`SELECT * FROM meta_accounts WHERE owner_id=? AND selected=1`).all(ownerId)) {
+      const cur = String(a.currency || 'USD').toUpperCase();
+      if (cur !== 'USD' && cur !== 'NGN') { const msg = `Spend in ${cur} isn’t supported yet. Use a USD or NGN ad account.`; Q(`UPDATE meta_accounts SET last_error=? WHERE owner_id=? AND act_id=?`).run(msg, ownerId, a.act_id); errors.push(msg); continue; }
+      let next = `/act_${a.act_id}/insights?level=campaign&time_increment=1&fields=campaign_name,campaign_id,spend,date_start&date_preset=last_7d&limit=500`, pages = 0, err = null;
+      while (next && pages++ < 20) {
+        const r = await metaGet(next, tok);
+        if (!r.ok) { if (metaAuthError(r.error)) { metaReconnect(ownerId, r.error.message); return { ok: false, reconnect: true, rows }; } err = (r.error && r.error.message) || 'Meta error'; break; }
+        tx(() => {
+          for (const x of r.data.data || []) {
+            const date = String(x.date_start || ''), cid = String(x.campaign_id || '').slice(0, 40), amt = Number(x.spend);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !cid || !Number.isFinite(amt) || amt < 0) continue;
+            const cents = Math.round((cur === 'NGN' ? amt / C.NGN_PER_USD : amt) * 100), name = String(x.campaign_name || cid).slice(0, 120);
+            Q(`INSERT INTO meta_campaigns(owner_id,campaign_id,act_id,name,last_seen) VALUES(?,?,?,?,?) ON CONFLICT(owner_id,campaign_id) DO UPDATE SET name=excluded.name, act_id=excluded.act_id,
+              last_seen=CASE WHEN COALESCE(last_seen,'')<excluded.last_seen THEN excluded.last_seen ELSE last_seen END`).run(ownerId, cid, a.act_id, name, date);
+            const mc = Q(`SELECT channel_id, mapped_by FROM meta_campaigns WHERE owner_id=? AND campaign_id=?`).get(ownerId, cid);
+            let chId = mc.channel_id || null;
+            if (mc.mapped_by !== 'user') { const auto = map.get(name) || map.get(cid) || null; if (auto !== chId) { Q(`UPDATE meta_campaigns SET channel_id=?, mapped_by=? WHERE owner_id=? AND campaign_id=?`).run(auto, auto ? 'auto' : null, ownerId, cid); chId = auto; } }
+            Q(`INSERT INTO spend(owner_id,date,platform,campaign,amount_cents,currency,created_at,source,channel_id,ext_id,act_id,updated_at) VALUES(?,?,'meta',?,?,?,?,'meta',?,?,?,?)
+              ON CONFLICT(owner_id,act_id,ext_id,date) WHERE source='meta' DO UPDATE SET amount_cents=excluded.amount_cents, campaign=excluded.campaign, channel_id=excluded.channel_id, currency=excluded.currency, updated_at=excluded.updated_at`)
+              .run(ownerId, date, name, cents, cur, now(), chId, cid, a.act_id, now());
+            rows++;
+          }
+        });
+        next = null;
+        const nx = r.data.paging && r.data.paging.next;
+        if (nx) { try { const nu = new URL(nx); if (nu.origin === gorigin && nu.pathname.startsWith(gpath + '/')) { nu.searchParams.delete('access_token'); nu.searchParams.delete('appsecret_proof'); next = nu.pathname.slice(gpath.length) + nu.search; } } catch { /* stop paging */ } }
+      }
+      if (err) errors.push(err);
+      Q(`UPDATE meta_accounts SET last_sync_at=?, last_error=? WHERE owner_id=? AND act_id=?`).run(now(), err, ownerId, a.act_id);
+    }
+    Q(`UPDATE meta_conns SET last_sync_at=?, error=? WHERE owner_id=?`).run(now(), errors[0] || null, ownerId);
+    return { ok: true, rows, errors };
+  } finally { metaBusy.delete(ownerId); }
+}
+function metaView(uid) {
+  if (!metaAvailable()) return { ...META_OFF, connected: false, status: 'unavailable' };
+  const c = Q(`SELECT * FROM meta_conns WHERE owner_id=?`).get(uid);
+  return { available: true, connected: !!c && c.status === 'connected', status: c ? c.status : 'not_connected', status_label: !c ? 'Not connected' : c.status === 'connected' ? 'Connected' : 'Reconnect needed',
+    fb_name: c ? c.fb_name : null, connected_at: c ? c.created_at : null, expires_at: c ? c.expires_at : null, last_sync_at: c ? c.last_sync_at : null, last_error: c ? c.error : null,
+    connect_url: '/auth/meta/start', redirect_uri: metaRedirect(),
+    accounts: Q(`SELECT * FROM meta_accounts WHERE owner_id=? ORDER BY name`).all(uid).map((a) => ({ id: 'act_' + a.act_id, account_id: a.act_id, name: a.name, currency: a.currency, account_status: a.account_status,
+      selected: !!a.selected, supported: ['USD', 'NGN'].includes(String(a.currency).toUpperCase()), last_sync_at: a.last_sync_at || null, last_error: a.last_error || null })) };
+}
+async function metaApi(req, user, p, m) {
+  if (!metaAvailable()) return { ...META_OFF, connected: false, status: 'unavailable' };
+  let mm;
+  if (p === '/api/meta' && m === 'GET') return metaView(user.id);
+  if (p === '/api/meta/campaigns' && m === 'GET') {
+    const since = new Date(now() - 7 * 864e5).toISOString().slice(0, 10);
+    return { campaigns: Q(`SELECT mc.*, ch.title AS channel_title, (SELECT COALESCE(SUM(amount_cents),0) FROM spend s WHERE s.owner_id=mc.owner_id AND s.source='meta' AND s.ext_id=mc.campaign_id AND s.date>=?) AS spend_7d_cents
+        FROM meta_campaigns mc LEFT JOIN channels ch ON ch.id=mc.channel_id WHERE mc.owner_id=? ORDER BY mc.last_seen DESC, mc.name LIMIT 500`).all(since, user.id)
+      .map((x) => ({ campaign_id: x.campaign_id, name: x.name, account_id: x.act_id, channel_id: x.channel_id || null, channel_title: x.channel_title || null, mapped_by: x.mapped_by || null, last_seen: x.last_seen, spend_7d_cents: x.spend_7d_cents })) };
+  }
+  if ((mm = /^\/api\/meta\/campaigns\/([\w.-]{1,40})$/.exec(p)) && m === 'PATCH') {
+    const b = await readJson(req), mc = Q(`SELECT * FROM meta_campaigns WHERE owner_id=? AND campaign_id=?`).get(user.id, mm[1]);
+    if (!mc) return { http: 404, error: 'Campaign not found. It appears after the first sync.' };
+    let chId = null;
+    if (b.channel_id) { const c = Q(`SELECT id FROM channels WHERE id=? AND owner_id=? AND status<>'removed'`).get(+b.channel_id, user.id); if (!c) return { error: 'Pick one of your channels.' }; chId = c.id; }
+    Q(`UPDATE meta_campaigns SET channel_id=?, mapped_by=? WHERE owner_id=? AND campaign_id=?`).run(chId, b.channel_id === undefined ? mc.mapped_by : 'user', user.id, mc.campaign_id);
+    const n = Q(`UPDATE spend SET channel_id=? WHERE owner_id=? AND source='meta' AND ext_id=?`).run(chId, user.id, mc.campaign_id).changes;
+    return { ok: true, campaign_id: mc.campaign_id, channel_id: chId, spend_rows_updated: n };
+  }
+  if (user._member) return { http: 403, error: 'Only the account owner connects Meta.', team_denied: true };
+  if (p === '/api/meta/accounts' && (m === 'PATCH' || m === 'POST')) {
+    const b = await readJson(req), want = new Set((Array.isArray(b.selected) ? b.selected : []).map((x) => String(x).replace(/^act_/, '')));
+    tx(() => { for (const a of Q(`SELECT act_id FROM meta_accounts WHERE owner_id=?`).all(user.id)) Q(`UPDATE meta_accounts SET selected=? WHERE owner_id=? AND act_id=?`).run(want.has(a.act_id) ? 1 : 0, user.id, a.act_id); });
+    return { ok: true, ...metaView(user.id) };
+  }
+  if (p === '/api/meta/sync' && m === 'POST') {
+    if (limited('metasync:' + user.id, 30, 3600)) return { http: 429, error: 'Synced a lot already. Spend also syncs every hour by itself.' };
+    const r = await metaSync(user.id);
+    return { ok: !!r.ok, sync: r, ...metaView(user.id) };
+  }
+  if (p === '/api/meta' && m === 'DELETE') {
+    const purge = new URL(req.url, BASE_URL).searchParams.get('purge') === '1';
+    tx(() => { Q(`DELETE FROM meta_conns WHERE owner_id=?`).run(user.id); Q(`DELETE FROM meta_accounts WHERE owner_id=?`).run(user.id); if (purge) { Q(`DELETE FROM spend WHERE owner_id=? AND source='meta'`).run(user.id); Q(`DELETE FROM meta_campaigns WHERE owner_id=?`).run(user.id); } });
+    log('meta disconnected', user.id, purge ? '(spend removed)' : '');
+    return { ok: true, ...metaView(user.id) };
+  }
+  return { http: 404, error: 'Not found' };
+}
+let metaJobBusy = false;
+async function metaJob() {
+  if (metaJobBusy || !metaAvailable()) return; metaJobBusy = true;
+  try { for (const c of Q(`SELECT owner_id FROM meta_conns WHERE status='connected'`).all()) { try { await metaSync(c.owner_id); } catch (e) { log('meta sync', c.owner_id, e.message); } } }
+  finally { metaJobBusy = false; }
+}
+
+// ----- depositor audience: deposits (FTD) already go to Meta's Conversions API as "Purchase" with value + currency when the postback has an amount -----
+function audienceGuide(user) {
+  const since = now() - 30 * 864e5;
+  const chans = Q(`SELECT id, title, type, pixel_id, (capi_token IS NOT NULL AND capi_token<>'') AS has_token, event_name FROM channels WHERE owner_id=? AND NOT (status='removed' AND COALESCE(removed_by_user,0)=1)${SC(user, 'id')} ORDER BY id`).all(user.id);
+  const by = new Map(Q(`SELECT channel_id, COUNT(*) n, COALESCE(SUM(meta_status='sent'),0) sent, COALESCE(SUM(value_cents>0),0) valued FROM conversions WHERE owner_id=? AND event='ftd' AND COALESCE(rejected,0)=0 AND matched=1 AND created_at>=?${SC(user, 'channel_id')} GROUP BY channel_id`).all(user.id, since).map((r) => [r.channel_id, r]));
+  const rows = chans.map((c) => { const x = by.get(c.id) || { n: 0, sent: 0, valued: 0 }; return { channel_id: c.id, title: c.title, pixel_id: c.pixel_id || null, has_token: !!c.has_token, join_event: c.event_name || 'Subscribe', ftd_30d: x.n, ftd_sent_30d: x.sent, ftd_with_value_30d: x.valued }; });
+  const sent = rows.reduce((a, r) => a + r.ftd_sent_30d, 0), pixels = [...new Set(rows.filter((r) => r.pixel_id && r.has_token).map((r) => r.pixel_id))];
+  return { event_name: CONV_EVENTS.ftd.meta, repeat_deposit_event: CONV_EVENTS.dep.meta, registration_event: CONV_EVENTS.reg.meta, value_sent: true,
+    value_note: 'Deposits are sent as Purchase with value and currency whenever your postback includes the amount (e.g. &amount=50&currency=USD). Without an amount, Purchase is sent without a value.',
+    has_ftd_events_last_30d: sent > 0, count: sent, ftd_30d: rows.reduce((a, r) => a + r.ftd_30d, 0), lookalike_min: 100, ready_for_lookalike: sent >= 100, pixels, channels: rows,
+    steps: ['Open Meta Ads Manager → Audiences → Create audience → Custom audience.', `Source: Website. Pick your pixel${pixels.length === 1 ? ` (${pixels[0]})` : ''}.`,
+      `Events: choose “${CONV_EVENTS.ftd.meta}” (your depositors). Retention: 180 days. Name it “Depositors 180d” and create it.`,
+      'Then Create audience → Lookalike audience → source “Depositors 180d” → your country → 1%. Meta needs at least 100 people in the source.',
+      'Use the lookalike in a new ad set (and exclude “Depositors 180d” to find new people only).'] };
+}
+
+// ----- round 17 background jobs -----
+setInterval(() => { try { for (const r of Q(`SELECT DISTINCT owner_id FROM team_members WHERE status IN ('active','invited','paused')`).all()) teamSync(r.owner_id); } catch (e) { log('team job', e.message); } }, Math.max(1000, +env.TEAM_JOB_MS || 10 * 60000)).unref();
+setInterval(reportJob, Math.max(300, +env.REPORT_JOB_MS || 15 * 60000)).unref();
+setInterval(banJob, Math.max(200, +env.BAN_JOB_MS || 120000)).unref();
+setInterval(deadlinkJob, Math.max(200, +env.DEADLINK_JOB_MS || 15 * 60000)).unref();
+setInterval(metaJob, Math.max(1000, +env.META_SYNC_MS || 3600000)).unref();
+const R17_JOBS = { team_seats: () => { for (const r of Q(`SELECT DISTINCT owner_id FROM team_members WHERE status IN ('active','invited','paused')`).all()) teamSync(r.owner_id); }, daily_report: reportJob, ban_check: banJob, dead_links: deadlinkJob, meta_sync: metaJob };
+
 // ---------- router ----------
 const server = http.createServer(async (req, res) => {
   try {
+    // Edge proxy (Cloudflare Worker in front of Railway, see UPGRADE.md round 16): Railway only accepts hosts it knows, so the
+    // Worker sends Host=the Railway domain and passes the customer's real host in x-jv-orig-host, signed with EDGE_SECRET.
+    if (env.EDGE_SECRET && req.headers['x-jv-orig-host']) {
+      if (safeEq(req.headers['x-jv-edge-secret'], env.EDGE_SECRET)) {
+        req.headers.host = String(req.headers['x-jv-orig-host']).slice(0, 255);
+        const ip = String(req.headers['x-jv-client-ip'] || '').trim(); if (/^[0-9a-fA-F:.]{3,45}$/.test(ip)) req._edgeIp = ip;
+      }
+      delete req.headers['x-jv-orig-host']; delete req.headers['x-jv-client-ip']; delete req.headers['x-jv-edge-secret'];
+    }
     const url = new URL(req.url, BASE_URL);
     const p = url.pathname;
     let mm;
     if (p === '/health') return send(res, 200, { ok: true });
+    { // a customer's own link domain (go.theirbrand.com): only their tracking links, nothing else of Joinvoo
+      const h = reqHost(req);
+      if (h && !isJoinvooHost(h)) { const cd = domainByHost(h); if (cd) return await onCustomHost(req, res, url, cd); }
+    }
     if ((p === '/auth/voosquare' || p === '/auth/voosquare/callback') && req.method === 'GET' && limited('voo:' + clientIp(req), 120, 600)) // each callback costs a call to VooSquare
       return send(res, 302, '', { location: '/login?voo_error=unavailable', 'cache-control': 'no-store' });
     if (p === '/auth/voosquare' && req.method === 'GET') return await vooStart(req, res, url);
@@ -6187,16 +7548,21 @@ const server = http.createServer(async (req, res) => {
     { const host = String(req.headers.host || '').toLowerCase();
       if (host && host !== new URL(BASE_URL).host && linkHosts().includes(host)) {
         if (p === '/robots.txt') return send(res, 200, 'User-agent: *\nDisallow: /\n', { 'content-type': 'text/plain' });
-        if (p !== '/health' && !/^\/c\/[\w-]+(\/go)?$/.test(p)) return send(res, 302, '', { location: BASE_URL + (p === '/' ? '/' : p) + (url.search || '') });
+        if (p !== '/health' && !/^\/c\/[\w-]+(\/go)?$/.test(p) && !/^\/r\/[\w-]{3,40}\.js$/.test(p)) return send(res, 302, '', { location: BASE_URL + (p === '/' ? '/' : p) + (url.search || '') });
       } }
     if ((mm = /^\/c\/([\w-]+)(\/go)?$/.exec(p))) {
-      let ch = Q(`SELECT * FROM channels WHERE slug=?`).get(mm[1]);
+      const ch = Q(`SELECT * FROM channels WHERE slug=?`).get(mm[1]);
       if (!ch) return send(res, 404, 'Link not found', { 'content-type': 'text/plain' });
-      // Smart link: this link's visitors go into the backup channel (its invite links, its pixel settings, joins counted there).
-      if (ch.redirect_to) { const tgt = Q(`SELECT * FROM channels WHERE id=? AND owner_id=? AND status<>'removed'`).get(ch.redirect_to, ch.owner_id); if (tgt) ch = tgt; }
-      if (mm[2] && req.method === 'POST') return await onClick(req, res, ch);
-      return send(res, 200, clickPage(ch), { 'content-type': 'text/html; charset=utf-8', 'set-cookie': `jv_h=1; Path=/c/; Max-Age=3600; SameSite=Lax${SECURE ? '; Secure' : ''}` });
+      return await slugRoute(req, res, ch, !!mm[2]);
     }
+    if ((mm = /^\/r\/([\w-]{3,40})\.js$/.exec(p)) && (req.method === 'GET' || req.method === 'HEAD')) { // the redirect script for customers' own landing pages
+      const ch = Q(`SELECT * FROM channels WHERE slug=?`).get(mm[1]);
+      if (!ch) return send(res, 404, '/* Joinvoo: link not found */', { 'content-type': 'application/javascript; charset=utf-8', 'access-control-allow-origin': '*' });
+      return snippetJs(req, res, url, ch);
+    }
+    if ((mm = /^\/join-team\/([A-Za-z0-9_-]{16,64})$/.exec(p)) && req.method === 'GET') return joinTeamRoute(req, res, mm[1]); // round 17: team invite link
+    if (p === '/auth/meta/start' && req.method === 'GET') return metaStart(req, res, url); // round 17: connect a Meta ad account (ads_read)
+    if (p === '/auth/meta/callback' && req.method === 'GET') return await metaCallback(req, res, url);
     if (p.startsWith('/api/')) {
       // Block cross-site form posts to the API (login CSRF and friends).
       if (req.method !== 'GET' && req.headers.origin) { try { if (new URL(req.headers.origin).host !== req.headers.host) return send(res, 403, { error: 'Cross-site request blocked.' }); } catch { return send(res, 403, { error: 'Bad origin.' }); } }
@@ -6254,13 +7620,14 @@ const server = http.createServer(async (req, res) => {
     if ((mm = /^\/blog\/tag\/([\w-]{1,60})\/?$/.exec(p))) return blogPage(req, res, `tag-${mm[1].toLowerCase()}.html`);
     if ((mm = /^\/blog\/([a-z0-9][a-z0-9-]{0,119})\/?$/i.exec(p))) return blogPage(req, res, `${mm[1].toLowerCase()}.html`);
     if (p === '/sitemap.xml' || p === '/rss.xml') return sendStatic(req, res, path.join(PUBLIC, p.slice(1)), p === '/rss.xml' ? 'application/rss+xml; charset=utf-8' : 'application/xml; charset=utf-8', { maxAge: 3600, fill: true });
-    if ((mm = /^\/media\/([\w.-]+\.(mp4|webm|jpg|jpeg|png|webp|vtt))$/.exec(p))) {
+    if ((mm = /^\/media\/((?:tutorials\/)?[\w-][\w.-]*\.(mp4|webm|jpg|jpeg|png|webp|vtt|mp3))$/.exec(p)) && !mm[1].includes('..')) { // tutorials/ = voiceovers for the video tutorials
       const f = path.join(PUBLIC, 'media', mm[1]);
-      if (!fs.existsSync(f)) return send(res, 404, 'Not found', { 'content-type': 'text/plain' });
-      const type = { mp4: 'video/mp4', webm: 'video/webm', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', vtt: 'text/vtt' }[mm[2]];
+      if (!fs.existsSync(f) || !fs.statSync(f).isFile()) return send(res, 404, 'Not found', { 'content-type': 'text/plain' });
+      const type = { mp4: 'video/mp4', webm: 'video/webm', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', vtt: 'text/vtt', mp3: 'audio/mpeg' }[mm[2]];
       const size = fs.statSync(f).size, range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
       if (range) { // videos need range requests to seek on phones
-        const start = range[1] ? +range[1] : 0, end = range[2] ? Math.min(+range[2], size - 1) : size - 1;
+        const suffix = !range[1] && range[2]; // bytes=-N: the last N bytes
+        const start = suffix ? Math.max(0, size - +range[2]) : range[1] ? +range[1] : 0, end = suffix ? size - 1 : range[2] ? Math.min(+range[2], size - 1) : size - 1;
         if (start >= size || start > end) { res.writeHead(416, { 'content-range': `bytes */${size}` }); return res.end(); }
         res.writeHead(206, { 'content-type': type, 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes', 'content-length': end - start + 1, 'cache-control': 'public, max-age=86400' });
         return fs.createReadStream(f, { start, end }).pipe(res);
@@ -6284,12 +7651,51 @@ setInterval(vooFlush, Math.max(200, +env.VOO_OUTBOX_MS || 5000)).unref(); // Voo
 setInterval(() => { try { vooUseJob(); } catch (e) { log('voo use job', e.message); } }, Math.max(1000, +env.VOO_USE_JOB_MS || 3600000)).unref(); setTimeout(() => { try { vooUseJob(); } catch (e) { log('voo use job', e.message); } }, 20000).unref();
 setInterval(() => { // links handed out but not used are retired, never re-used, so a late joiner is still credited to the right click
   Q(`UPDATE links SET status='expired' WHERE status='assigned' AND assigned_at<?`).run(now() - RECYCLE_MIN * 60000);
-  Q(`DELETE FROM links WHERE status IN ('expired','dead') AND created_at<?`).run(now() - 30 * 864e5);
+  Q(`DELETE FROM links WHERE id IN (SELECT id FROM links WHERE status IN ('expired','dead') AND created_at<? LIMIT 5000)`).run(now() - 30 * 864e5); // small slices every minute
 }, 60000);
-setInterval(() => { // housekeeping
-  Q(`DELETE FROM clicks WHERE joined=0 AND ts<?`).run(now() - CLICK_RETENTION_DAYS * 864e5);
+// Storage clean-up in small steps with pauses in between: the website, tracking links and dashboards keep answering while it runs.
+let pruneBusy = false, pruneLast = null;
+async function prune() {
+  if (pruneBusy) return; pruneBusy = true; const t0 = now(), done = {};
+  const pause = () => new Promise((r) => setTimeout(r, +env.PRUNE_PAUSE_MS || 30));
+  const loop = async (name, fn) => { let n = 0; for (let i = 0; i < 2000; i++) { const c = fn(); n += c; if (c < PRUNE_BATCH) break; await pause(); } done[name] = n; };
+  try {
+    const old = now() - CLICK_RETENTION_DAYS * 864e5, slimBefore = now() - CLICK_DETAIL_DAYS * 864e5;
+    await loop('clicks_deleted', () => Q(`DELETE FROM clicks WHERE id IN (SELECT id FROM clicks WHERE ts<? AND joined=0 LIMIT ?)`).run(old, PRUNE_BATCH).changes);
+    { // joined clicks past the detail window: keep campaign (params), country and which platform; drop IP, device, page URL and click cookies
+      const wm = () => { const r = Q(`SELECT value FROM settings WHERE key='prune.slim_id'`).get(); return r ? +JSON.parse(r.value) || 0 : 0; };
+      let n = 0;
+      for (let i = 0; i < 2000; i++) {
+        const ids = Q(`SELECT id FROM clicks WHERE id>? AND ts<? ORDER BY id LIMIT ?`).all(wm(), slimBefore, PRUNE_BATCH).map((r) => r.id);
+        if (!ids.length) break;
+        const lo = ids[0], hi = ids[ids.length - 1];
+        n += Q(`UPDATE clicks SET ip=NULL, ua=NULL, page_url=NULL, fbc=NULL, fbp=NULL, ttp=NULL, scid=NULL,
+          fbclid=CASE WHEN COALESCE(fbclid,'')<>'' THEN '1' ELSE fbclid END, ttclid=CASE WHEN COALESCE(ttclid,'')<>'' THEN '1' ELSE ttclid END,
+          sccid=CASE WHEN COALESCE(sccid,'')<>'' THEN '1' ELSE sccid END WHERE id>=? AND id<=? AND ts<?`).run(lo, hi, slimBefore).changes;
+        Q(`INSERT INTO settings(key,value,updated_at) VALUES('prune.slim_id',?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`).run(JSON.stringify(hi), now());
+        if (ids.length < PRUNE_BATCH) break; await pause();
+      }
+      done.clicks_slimmed = n;
+    }
+    await loop('links_deleted', () => Q(`DELETE FROM links WHERE id IN (SELECT id FROM links WHERE status IN ('used','expired','dead') AND COALESCE(assigned_at, created_at)<? LIMIT ?)`).run(slimBefore, PRUNE_BATCH).changes);
+    await loop('queue_deleted', () => Q(`DELETE FROM capi_queue WHERE id IN (SELECT id FROM capi_queue WHERE (status='sent' AND created_at<?) OR (status='failed' AND created_at<?) LIMIT ?)`).run(now() - 7 * 864e5, now() - 30 * 864e5, PRUNE_BATCH).changes);
+    await loop('outbox_deleted', () => Q(`DELETE FROM voo_outbox WHERE id IN (SELECT id FROM voo_outbox WHERE (sent_at IS NOT NULL OR failed=1) AND created_at<? LIMIT ?)`).run(now() - 30 * 864e5, PRUNE_BATCH).changes
+      + Q(`DELETE FROM voo_support_out WHERE id IN (SELECT id FROM voo_support_out WHERE (sent_at IS NOT NULL OR failed=1) AND created_at<? LIMIT ?)`).run(now() - 30 * 864e5, PRUNE_BATCH).changes);
+    try { db.exec('PRAGMA wal_checkpoint(PASSIVE)'); } catch { /* busy: next time */ }
+    pruneLast = { at: now(), ms: now() - t0, ...done };
+    if (Object.values(done).some((x) => x > 0)) log('storage clean-up', JSON.stringify(pruneLast));
+  } catch (e) { log('prune', e.message); } finally { pruneBusy = false; }
+}
+setTimeout(prune, +env.PRUNE_FIRST_MS || 5 * 60000).unref();
+setInterval(prune, +env.PRUNE_EVERY_MS || 6 * 3600000).unref();
+function storageStats() {
+  const sz = (f) => { try { return fs.statSync(path.join(DATA_DIR, f)).size; } catch { return 0; } };
+  const n = (t) => cnt(`SELECT COUNT(*) FROM ${t}`);
+  return { db_mb: Math.round((sz('joinvoo.db') + sz('joinvoo.db-wal')) / 1048576 * 10) / 10, clicks: n('clicks'), joins: n('joins'), links: n('links'),
+    retention: { unjoined_click_days: CLICK_RETENTION_DAYS, click_detail_days: CLICK_DETAIL_DAYS }, last_cleanup: pruneLast };
+}
+setInterval(() => { // housekeeping (big tables are cleaned in small steps by prune())
   Q(`DELETE FROM sessions WHERE expires_at<?`).run(now());
-  Q(`DELETE FROM capi_queue WHERE status='sent' AND created_at<?`).run(now() - 7 * 864e5);
   Q(`DELETE FROM hits WHERE reset_at<?`).run(now());
   Q(`DELETE FROM resets WHERE expires_at<?`).run(now());
   Q(`DELETE FROM deposits WHERE status='awaiting' AND created_at<?`).run(now() - 3 * 864e5);

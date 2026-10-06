@@ -8,6 +8,8 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 B = os.path.join(ROOT, 'build'); PUB = os.path.join(ROOT, 'public'); DIST = os.path.join(ROOT, 'dist')
 SHARED = open(os.path.join(B, 'shared.css')).read()
+TOPFIX = "<script>/* open every page at the top (no leftover scroll from the last page) unless a #section was asked for */(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}if(location.hash)return;var t=function(){window.scrollTo(0,0);var f=document.body&&document.body.firstElementChild;if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'start'})}catch(e){}};var n=0,u=function(){n=1},w=function(){if(!n)t()};addEventListener('touchstart',u,{passive:true,once:true});addEventListener('wheel',u,{passive:true,once:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();addEventListener('load',w);setTimeout(w,80);setTimeout(w,300);setTimeout(w,800);addEventListener('pageshow',w)})();</script>"
+def _topfix(s): return s if 'scrollRestoration' in s else s + TOPFIX  # page fragments have no </body>: append at the end
 STAGE = open(os.path.join(B, '_stage.html')).read()
 SUPPORT = open(os.path.join(B, '_support.html')).read()
 VOO = open(os.path.join(B, '_voo.html')).read()          # 'Continue with VooSquare' (login + signup), off unless /api/config voo.login says otherwise
@@ -70,7 +72,7 @@ EN = {}
 COUNTRIES_JSON = open(os.path.join(PUB, 'countries.json')).read() if os.path.exists(os.path.join(PUB, 'countries.json')) else '[]'
 def parts(s):
     s = s.replace('/*COUNTRIES*/[]', json.dumps(json.loads(COUNTRIES_JSON), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/'))  # signup country picker, inlined so it works offline
-    return s.replace('{{VOOFOOT}}', VOOFOOT).replace('{{VOO}}', VOO).replace('{{SUPPORT}}', SUPPORT).replace('{{STAGE}}', STAGE).replace('/*SHARED*/', SHARED).replace('{{LOGO}}', LOGO)
+    return _topfix(s).replace('{{VOOFOOT}}', VOOFOOT).replace('{{VOO}}', VOO).replace('{{SUPPORT}}', SUPPORT).replace('{{STAGE}}', STAGE).replace('/*SHARED*/', SHARED).replace('{{LOGO}}', LOGO)
 for src, live, demo, flag in PAGES:
     s = read(B, src)
     if src != 'admin.html':  # website pages get keys for translation + the i18n runtime (admin is English-only)

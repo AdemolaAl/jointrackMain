@@ -5,7 +5,10 @@
 # e2e-round8.js fakes Paystack + Stripe on :4300 (PAYSTACK_API_BASE / STRIPE_API_BASE); e2e-voo.js runs a fake VooSquare
 # (OIDC provider + events receiver, tests/oidcmock.js) on :4400; e2e-joe2.js fakes Anthropic (:4500) and an OpenAI-compatible
 # API (:4600) and writes playbook fixtures into tests/.run/playbooks (JOE_PLAYBOOKS_DIR); e2e-round11.js fakes Gatevoo and VooSquare's own OAuth/events/support
-# on :4700; e2e-vooconnect.js runs a fake VooSquare (OAuth, events, support: tests/oidcmock.js) on :4410 for the Voo Connect kit.
+# on :4700; e2e-vooconnect.js runs a fake VooSquare (OAuth, events, support: tests/oidcmock.js) on :4410 for the Voo Connect kit;
+# e2e-round16.js fakes Cloudflare for SaaS on :4800 (CF_API_BASE) and answers DNS from tests/.run/dns.json (DOMAIN_DNS_MOCK).
+# e2e-round17.js tests team seats and roles; e2e-round17b.js fakes Meta's Graph API on :4900 (META_GRAPH, META_DIALOG) and writes synthetic hourly clicks into the test database;
+# e2e-round17c.js (QA regressions) also fakes Meta on :4900 and briefly writes public/media/tutorials/zz-qa-test.mp3 (removed at the end).
 # Nothing touches the internet.
 #
 #   bash tests/runall.sh                  # every suite
@@ -14,10 +17,10 @@
 # Output: every ok/FAIL line, then a total. Exit code 1 if anything failed. Logs: tests/.run/
 T="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(dirname "$T")"; RUN="$T/.run"
 mkdir -p "$RUN"; cd "$ROOT" || exit 1
-SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js)
+SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js e2e-round15.js e2e-round16.js e2e-round16b.js e2e-round17.js e2e-round17b.js e2e-round17c.js)
 
 busy() { node -e "const s=require('net').connect($1,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"; }
-for port in 3999 4200 4300 4400 4410 4500 4600 4700; do if busy $port; then echo "Port $port is already in use. Stop whatever is listening there and run again."; exit 2; fi; done
+for port in 3999 4200 4300 4400 4410 4500 4600 4700 4800 4900; do if busy $port; then echo "Port $port is already in use. Stop whatever is listening there and run again."; exit 2; fi; done
 
 MOCK=""; PAYMOCK=""
 if ! curl -s localhost:4000/__state >/dev/null 2>&1; then node "$T/mock.js" > "$RUN/mock.log" 2>&1 & MOCK=$!; fi
@@ -34,13 +37,19 @@ for t in "${SUITES[@]}"; do
     e2e-trial.js) extra=(FREE_JOINS=3) ;;
     e2e-bill.js) extra=(PRICE_INCLUDED=3 FREE_JOINS=0 WELCOME_CREDIT_CENTS=3000) ;;
     e2e-pay.js) extra=(WELCOME_CREDIT_CENTS=3000 PAYSTACK_SECRET=sk_test_x PAYSTACK_API=http://localhost:4100 FLW_SECRET=flw_test_x FLW_WEBHOOK_HASH=flwhash FLW_API=http://localhost:4100) ;;
-    e2e-round6.js) extra=(ALERT_BOT_TOKEN=999001:alertbottokenxxxxxxxxxxxxxxxxxxxxxxx ANTHROPIC_API_BASE=http://localhost:4200) ;;
+    e2e-round6.js) extra=(FRAUD_BURST_MIN=15 ALERT_BOT_TOKEN=999001:alertbottokenxxxxxxxxxxxxxxxxxxxxxxx ANTHROPIC_API_BASE=http://localhost:4200) ;;
     e2e-round7.js) extra=(BLOG_DIR="$RUN/blog") ;;
     e2e-joe3.js) extra=(ANTHROPIC_API_BASE=http://localhost:4500 JOE_PLAYBOOKS_DIR="$RUN/playbooks") ;;
     e2e-joe2.js) extra=(ANTHROPIC_API_BASE=http://localhost:4500 JOE_PLAYBOOKS_DIR="$RUN/playbooks") ;;
     e2e-voo.js) extra=(VOO_ISSUER=http://localhost:4400 VOO_CLIENT_ID=joinvoo-test VOO_CLIENT_SECRET=cs_test_secret VOO_LOGIN_MODE=both VOO_SERVICE_KEY=svc_test_key_123 VOO_WEBHOOK_SECRET=whsec_voo_test_456 VOO_EVENTS_URL=http://localhost:4400/events VOO_HOME=https://voosquare.test VOO_OUTBOX_MS=250 VOO_BACKOFF_MS=300) ;;
     e2e-round11.js) extra=(VOO_ISSUER=http://localhost:4700 VOO_CLIENT_ID=joinvoo-native VOO_CLIENT_SECRET=cs_native_secret VOO_LOGIN_MODE=both VOO_API_KEY=voo_api_key_r11 VOO_SUPPORT_BRIDGE=1 VOO_OUTBOX_MS=250 VOO_BACKOFF_MS=300 LINK_INTERVAL_MS=30 POOL_SIZE=5) ;;
     e2e-vooconnect.js) extra=(VOO_BASE=http://localhost:4410 VOO_CLIENT_ID=vsc_joinvoo VOO_CLIENT_SECRET=vss_kit_secret VOO_API_KEY=vsk_kit_test_key VOO_LOGIN_MODE=both VOO_OUTBOX_MS=150 VOO_BACKOFF_MS=200 FREE_JOINS=0 WELCOME_CREDIT_CENTS=1000) ;;
+    e2e-round15.js) extra=(JOINREQ_SWEEP_MS=500) ;;
+    e2e-round16.js) rm -f "$RUN/dns.json"; extra=(CF_API_BASE=http://localhost:4800/client/v4 DOMAIN_DNS_MOCK="$RUN/dns.json" DOMAIN_CHECK_MS=2000 POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
+    e2e-round16b.js) rm -f "$RUN/dns.json"; extra=(EDGE_SECRET=edge-secret-16b CF_API_BASE=http://localhost:4800/client/v4 DOMAIN_DNS_MOCK="$RUN/dns.json" DOMAIN_CHECK_MS=2000 DOMAIN_CLAIM_HOLD_MS=1500 POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
+    e2e-round17.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30) ;;
+    e2e-round17b.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30 BAN_JOB_MS=300 BAN_FAIL_STREAK=3 META_APP_ID=1234567890 META_APP_SECRET=meta_test_secret META_GRAPH=http://localhost:4900/v21.0 META_DIALOG=http://localhost:4900/dialog/oauth) ;;
+    e2e-round17c.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30 META_APP_ID=1234567890 META_APP_SECRET=meta_test_secret META_GRAPH=http://localhost:4900/v21.0 META_DIALOG=http://localhost:4900/dialog/oauth) ;;
     e2e-round8.js) extra=(PAYSTACK_API_BASE=http://localhost:4300 STRIPE_API_BASE=http://localhost:4300) ;;
   esac
   env PORT=3999 DATA_DIR="$RUN/data" TG_API=http://localhost:4000 GRAPH_API=http://localhost:4000 TIKTOK_API=http://localhost:4000 SNAP_API=http://localhost:4000 \

@@ -142,7 +142,22 @@ p{text-wrap:pretty}
 .lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
 .lsw-m i{margin-left:auto;font-style:normal}
 .lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
-@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+@media (max-width:560px){.lsw-b{height:44px;min-width:44px;justify-content:center;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}.lsw-m button{min-height:44px}.lsw-m{max-width:calc(100vw - 32px)}}
+@media (max-width:400px){.lsw-b{padding:0;width:44px}.lsw-b svg{display:none}}
+/* phones: never scroll sideways, comfortable tap targets, nothing hidden behind fixed bars */
+img,video{max-width:100%}
+pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+h1,h2,h3{overflow-wrap:break-word}
+@media (max-width:900px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  header a.logo,footer a.logo{min-height:44px}
+  header .btn,header nav a{min-height:44px}
+  footer a:not(.btn):not(.logo),.vfoot a,.fl a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}
+}
+/* small pills and inline nav links keep their look but get a 44px hit area */
+.hit44{position:relative}
+.hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
 
 /* Layout: the affiliate page. Same light, violet Joinvoo site, with VooSquare green as the partner accent.
    Hero (copy + a live "commission every month" card) → how it works (3 steps on a moving rail) → why Joinvoo converts (dark panel, live event stream)
@@ -252,7 +267,8 @@ section.blk{padding-block:100px}
 @keyframes bl{50%{opacity:0}}
 .mini-acc{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:var(--sunk);font-size:13px;font-weight:700}
 .mini-acc svg{width:22px;height:22px;flex:none}
-.mini-acc em{margin-left:auto;font-style:normal;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-weight:800}
+.mini-acc span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-acc em{flex:none;margin-left:auto;font-style:normal;font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--voo-soft);color:var(--voo-text);font-weight:800}
 .mini-months{display:flex;gap:5px;align-items:flex-end;height:46px;padding:0 4px}
 .mini-months i{flex:1;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--voo),color-mix(in srgb,var(--voo) 50%,#5b3df5));transform-origin:bottom;animation:grow 2.8s cubic-bezier(.2,.8,.2,1) infinite}
 .mini-months i:nth-child(1){height:58%;animation-delay:0s}.mini-months i:nth-child(2){height:66%;animation-delay:.12s}.mini-months i:nth-child(3){height:72%;animation-delay:.24s}.mini-months i:nth-child(4){height:80%;animation-delay:.36s}.mini-months i:nth-child(5){height:88%;animation-delay:.48s}.mini-months i:nth-child(6){height:96%;animation-delay:.6s}
@@ -399,11 +415,14 @@ footer.site nav a:hover{color:var(--ink)}
   .chip{font-size:13px;gap:8px;padding-right:12px}
   .ctas .btn{flex:1 1 100%}
 }
+
+@media (max-width:900px){.hcopy a.chip{min-height:44px}}
+@media (max-width:560px){body.mcta-on:has(#spLaunch) .mcta{right:74px}}
 </style>
 
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="/" aria-label="Joinvoo home"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a>
-  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="6llf5i" class="plain" href="#why">Why it converts</a><a data-i18n="hfim9n" class="plain" href="#faq">FAQ</a><a data-i18n="yrlwfv" class="plain" href="/">Joinvoo</a><div class="lsw" data-lsw></div><a data-i18n="6917zp" class="btn violet navbtn" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Join now</a></nav>
+  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="hfim9n" class="plain" href="#faq">FAQ</a><a data-i18n="yrlwfv" class="plain" href="/">Joinvoo</a><div class="lsw" data-lsw></div><a data-i18n="6917zp" class="btn violet navbtn" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Join now</a></nav>
 </div></header>
 
 <main>
@@ -448,39 +467,7 @@ footer.site nav a:hover{color:var(--ink)}
   </div>
 </div></section>
 
-<section class="blk" id="why" style="padding-top:0"><div class="wrap">
-  <div class="show reveal">
-    <div class="show-copy">
-      <span data-i18n="ytsu8b" class="kick">Why Joinvoo converts</span>
-      <h2 data-i18n="1seb31f">Your audience <span>already needs it.</span></h2>
-      <p data-i18n="kl808b">If someone buys ads that send people to Telegram, they’re flying blind without tracking. <b>Joinvoo is the fix they go looking for.</b></p>
-      <ul class="why">
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#c9bfff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#c9bfff"/></svg></i><div data-i18n="d7fgl7"><b>Media buyers need it</b><span>Ad platforms count clicks. Buyers pay for real joiners and depositors, so tracking isn’t optional.</span></div></li>
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#7ff0b8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></i><div data-i18n="1rch24e"><b>Tracks Telegram joins and FTDs</b><span>Every real join to a channel, group or bot, plus first deposits from the buyer’s postback.</span></div></li>
-        <li><i><svg viewBox="0 0 24 24" fill="none" stroke="#9fe6ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h12M12 6l6 6-6 6"/></svg></i><div data-i18n="yt06yr"><b>Sends them to Meta, TikTok and Snap</b><span>So their campaigns learn from real people, not noise, and buy more of the users who stay.</span></div></li>
-      </ul>
-    </div>
-    <div class="stream" aria-hidden="true">
-      <div data-i18n-t="gbesk" class="lb"><i></i>What a Joinvoo customer sees</div>
-      <div class="evs" id="evs"></div>
-    </div>
-  </div>
-</div></section>
 
-<section class="blk" id="get" style="padding-top:0"><div class="wrap center">
-  <span data-i18n="120sha0" class="kick reveal">What you get</span>
-  <h2 data-i18n="qqpon9" class="h2 reveal">Everything a serious <span>affiliate expects.</span></h2>
-  <div class="gets">
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><h3 data-i18n="zu0hf7">Tracking links with sub IDs</h3><p data-i18n="f1v4f">One link per placement, with sub IDs to split traffic by video, channel or campaign.</p>
-      <div class="vis" aria-hidden="true"><div data-i18n="18qg802" class="subid">?aff=you&amp;sub1=<b id="sub1">tiktok_ugc_3</b></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></span><h3 data-i18n="1tb0wvt">Postbacks</h3><p data-i18n="unde6j">Get sign-ups and payments sent to your own tracker, so your numbers live where you work.</p>
-      <div class="vis" aria-hidden="true"><div class="pbk"><span data-i18n="vk6j5c">VooSquare</span><span class="wire"><i></i></span><em data-i18n="7g4eou">Your tracker</em></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></span><h3 data-i18n="kctafh">Creatives &amp; brand kit</h3><p data-i18n="1dbcf2u">Logos, screenshots, videos and copy you can use as they are, or remix for your audience.</p>
-      <div class="vis" aria-hidden="true"><div class="kit"><i style="background:#5b3df5"></i><i style="background:#8f7bff"></i><i style="background:#0fae6b"></i><i style="background:#c6f45a"></i><i style="background:#141413"></i></div></div></article>
-    <article class="get reveal"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></span><h3 data-i18n="mhznzk">Affiliate managers</h3><p data-i18n="tovbts">Real people who help you pick angles, get creatives and grow your volume.</p>
-      <div class="vis" aria-hidden="true"><div class="mgr"><span class="av">VS</span><span class="bub"><i></i><i></i><i></i></span></div></div></article>
-  </div>
-</div></section>
 
 <section class="blk" id="terms" style="padding-top:0"><div class="wrap">
   <div class="terms reveal">
@@ -497,7 +484,6 @@ footer.site nav a:hover{color:var(--ink)}
   <div class="faq reveal">
     <details open><summary data-i18n="fek76w">Who can join?</summary><p data-i18n="1c4nmig">Media buyers, creators, educators, agencies and community owners whose audience runs ads or Telegram funnels. You apply on VooSquare, and the program terms say who qualifies.</p></details>
     <details><summary data-i18n="120iqfk">How much can I earn?</summary><p data-i18n="vqr7c5">Up to <b>50% recurring commission</b> on what the customers you bring pay. Your exact rate depends on the program’s conditions. The current rates are in the terms on <a href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>affiliate.voosquare.com</a>.</p></details>
-    <details><summary data-i18n="9s5p3w">What does “for life” mean?</summary><p data-i18n="1p0qcog">You keep earning <b>every month a customer you referred keeps paying</b>, on Joinvoo and on any other Zedapex tool they use, as long as the program conditions are met.</p></details>
     <details><summary data-i18n="1ho3vo0">How do you know a customer came from me?</summary><p data-i18n="11iq8eh">Your tracking link remembers the visitor, and the account they create is tied to you when they sign up. Sub IDs show which link or piece of content brought them, and postbacks can send each event to your own tracker.</p></details>
     <details><summary data-i18n="1ixgk5z">When and how do I get paid?</summary><p data-i18n="1wrew22">Commission is paid monthly. Payout methods, minimums and any holding period are in the program terms on VooSquare.</p></details>
   </div>
@@ -513,7 +499,7 @@ footer.site nav a:hover{color:var(--ink)}
 <div data-i18n="1z2pxk" class="mcta" id="mcta"><a class="btn violet" href="https://affiliate.voosquare.com" target="_blank" rel="noopener" data-aff>Become an affiliate</a></div>
 <footer class="site"><div class="wrap">
   <div class="fby"><a class="logo" href="/" style="font-size:18px"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a><span data-i18n="ajk1wb">© <span id="yr">2026</span> Joinvoo · By <b>Zedapex</b> company</span></div>
-  <nav aria-label="Footer"><a data-i18n="n0mxf2" href="/">Home</a><a data-i18n="jue0h7" href="/guide">Guide</a><a data-i18n="1jdup01" href="/blog">Blog</a><a data-i18n="1r3xpvp" href="/affiliates" aria-current="page">Affiliates</a><a data-i18n="154fb2k" href="/terms">Terms</a><a data-i18n="1th4hrb" href="/privacy">Privacy</a><a data-i18n="3dw11v" href="/referral-terms">Referral terms</a><a data-i18n="idklxs" href="/login">Log in</a><a data-i18n="fr3k4j" href="/signup">Start free</a></nav>
+  <nav aria-label="Footer"><a data-i18n="n0mxf2" href="/">Home</a><a data-i18n="1f8350a" href="/guide">Help</a><a data-i18n="1jdup01" href="/blog">Blog</a><a data-i18n="1r3xpvp" href="/affiliates" aria-current="page">Affiliates</a><a data-i18n="154fb2k" href="/terms">Terms</a><a data-i18n="1th4hrb" href="/privacy">Privacy</a><a data-i18n="3dw11v" href="/referral-terms">Referral terms</a><a data-i18n="idklxs" href="/login">Log in</a><a data-i18n="fr3k4j" href="/signup">Start free</a></nav>
 <div class="vfoot"><style>
 .vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
 .vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
@@ -607,6 +593,14 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   .sp-launch .sp-dot{left:30px;top:8px}
   .sp-launch{padding:0 10px 0 8px}.sp-launch .sp-lt{display:none}
   .sp-launch[aria-expanded="true"]{display:none}
+  .sp-form textarea,.sp-form input{font-size:16px}
+  .sp-launch{transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .25s,bottom .45s cubic-bezier(.2,.8,.2,1)}
+  body.sp-rest .sp-launch{transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none}
+  body.sp-pad{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  /* with the page's sticky CTA bar up, the launcher shrinks to one face and sits in the same row (the bar makes room), so the two never stack over the content */
+  body.mcta-on .sp-launch{bottom:calc(16px + env(safe-area-inset-bottom,0px));right:12px;width:54px;padding:0;justify-content:center}
+  body.mcta-on .sp-launch .sp-faces .sp-av:not(:first-child){display:none}
+  body.mcta-on .sp-launch .sp-dot{left:36px;top:6px}
   .sp{inset:0;width:auto;height:auto;border-radius:0;border:0;transform:translateY(24px);transform-origin:bottom}
   body.mcta-on .sp{bottom:0;height:auto}
   .sp-hd{padding-top:calc(16px + env(safe-area-inset-top,0px))}
@@ -653,6 +647,12 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const $=id=>document.getElementById(id);
   const launch=$('spLaunch'), panel=$('spPanel'), body=$('spBody'), form=$('spForm'), text=$('spText'), emRow=$('spEmailRow'), em=$('spEmail'), err=$('spErr');
   if(!launch||!panel) return;
+  /* phones: keep the launcher off the first screen (it would sit on the hero buttons) and leave room for it at the end of the page */
+  (function(){ const mq=matchMedia('(max-width:560px)'); let t=0;
+    const upd=()=>{ const tall=document.documentElement.scrollHeight>innerHeight*1.6;
+      document.body.classList.toggle('sp-rest', mq.matches && tall && scrollY<innerHeight*.55 && launch.getAttribute('aria-expanded')!=='true');
+      document.body.classList.toggle('sp-pad', mq.matches); };
+    addEventListener('scroll',()=>{ if(!t) t=requestAnimationFrame(()=>{ t=0; upd(); }); },{passive:true}); addEventListener('resize',upd); upd(); })();
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
@@ -742,7 +742,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 
   /* header + sticky mobile CTA */
   const mcta=$('#mcta');
-  const onScroll=()=>{ $('#top').classList.toggle('scrolled',scrollY>10); mcta.classList.toggle('up',scrollY>innerHeight*.8 && innerHeight+scrollY<document.documentElement.scrollHeight-260); };
+  const onScroll=()=>{ $('#top').classList.toggle('scrolled',scrollY>10); const up=scrollY>innerHeight*.8 && innerHeight+scrollY<document.documentElement.scrollHeight-260; mcta.classList.toggle('up',up); document.body.classList.toggle('mcta-on',up && matchMedia('(max-width:900px)').matches); };
   addEventListener('scroll',onScroll,{passive:true}); onScroll();
 
   /* the affiliate link can be changed in admin (VooSquare → affiliate link); /api/config carries it */
@@ -778,3 +778,4 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
     if(!reduced) setInterval(()=>{ if(vis()) add(); },2000); })();
 })();
 </script>
+<script>JVI();/* open every page at the top (no leftover scroll from the last page) unless a #section was asked for */(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}if(location.hash)return;var t=function(){window.scrollTo(0,0);var f=document.body&&document.body.firstElementChild;if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'start'})}catch(e){}};var n=0,u=function(){n=1},w=function(){if(!n)t()};addEventListener('touchstart',u,{passive:true,once:true});addEventListener('wheel',u,{passive:true,once:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();addEventListener('load',w);setTimeout(w,80);setTimeout(w,300);setTimeout(w,800);addEventListener('pageshow',w)})();</script>

@@ -40,7 +40,6 @@
 <meta name="theme-color" content="#f7f6f2">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
-<script src="joomoji.js"></script>
 <style>
 :root{
   --bg:#f7f6f2; --surface:#ffffff; --sunk:#f1efe9; --ink:#141413; --muted:#67665f; --faint:#a19f98; --line:#e9e7e1;
@@ -143,7 +142,22 @@ p{text-wrap:pretty}
 .lsw-m li[aria-selected="true"] button{background:var(--lilac);color:var(--brand-text);font-weight:800}
 .lsw-m i{margin-left:auto;font-style:normal}
 .lnote{max-width:720px;margin:24px auto 0;padding:12px 16px;border-radius:14px;background:var(--cream);color:var(--gold);font-weight:700;font-size:14.5px}
-@media (max-width:560px){.lsw-b{height:38px;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}}
+@media (max-width:560px){.lsw-b{height:44px;min-width:44px;justify-content:center;padding:0 9px;gap:4px}.lsw-b .lsw-n{display:none}.lsw-m button{min-height:44px}.lsw-m{max-width:calc(100vw - 32px)}}
+@media (max-width:400px){.lsw-b{padding:0;width:44px}.lsw-b svg{display:none}}
+/* phones: never scroll sideways, comfortable tap targets, nothing hidden behind fixed bars */
+img,video{max-width:100%}
+pre{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+h1,h2,h3{overflow-wrap:break-word}
+@media (max-width:900px){
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  header a.logo,footer a.logo{min-height:44px}
+  header .btn,header nav a{min-height:44px}
+  footer a:not(.btn):not(.logo),.vfoot a,.fl a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
+  input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:max(16px,1em)}
+}
+/* small pills and inline nav links keep their look but get a 44px hit area */
+.hit44{position:relative}
+.hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
 
 /* Layout: the former split screen. Left: a violet panel that keeps selling (rotating benefit, three facts, platform chips).
    Right: the four-step form on warm off-white. Phones: form only, with a slim progress bar. */
@@ -212,6 +226,9 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
 .back:hover{color:var(--ink)}
 .err{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--blush);color:var(--rose);font-size:14px;font-weight:600}
 .gift{display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:var(--mint);color:var(--green);font-weight:700;font-size:14.5px}
+.terms{margin:-4px 0 0;font-size:13.5px;color:var(--faint);text-align:center}.terms a{color:var(--muted);font-weight:700}
+.link{border:0;background:none;padding:10px 0;min-height:44px;align-self:flex-start;font:700 15px var(--f);color:var(--brand-text);cursor:pointer}
+.btn.full{width:100%}
 .have{text-align:center;color:var(--muted);font-size:15px;margin:2px 0 0}
 .have a{color:var(--ink);font-weight:800;text-decoration:none;border-bottom:2px solid color-mix(in srgb,#5b3df5 45%,transparent)}
 .done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;margin:auto;max-width:520px;padding-block:20px;animation:sin .5s}
@@ -289,6 +306,16 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
 }
 @media (max-width:480px){.sfoot .fl{justify-content:flex-start}.topline .hm{display:none}.topline span a{padding:9px 16px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}}
 @media (max-width:560px){.opts{grid-template-columns:1fr}.opts.four{grid-template-columns:1fr 1fr}.opt{padding:14px}}
+
+/* phones: 44px tap targets */
+@media (max-width:900px){
+  .topline a.logo{min-height:44px}
+  .pw button{min-height:44px;min-width:56px}
+  .topline a{position:relative}
+  .topline a:not(.logo)::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+  .topline span a{display:inline-flex;align-items:center;min-height:44px}
+}
+@media (max-width:374px){html:not([lang=en]) .topline .mlogo{font-size:0!important;gap:0;min-width:44px}.topline{gap:8px}.topline span a{white-space:nowrap;padding:9px 12px}}
 </style>
 
 <div class="shell">
@@ -308,7 +335,7 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
   <section class="main">
     <div class="topline"><a class="logo mlogo" href="index.html" style="font-size:19px"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a><a data-i18n="1jdup01" href="blog/index.html" style="color:var(--muted);font-weight:700">Blog</a><span data-i18n="1yfak3m"><span class="hm">Already have an account? </span><a href="login.html">Log in</a></span><div class="lsw" data-lsw></div></div>
     <div id="flow"></div>
-    <div class="sfoot"><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="1bq4igq" class="fl"><a href="guide.html">Guide</a><a href="blog/index.html">Blog</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="refunds.html">Refunds</a><a href="acceptable-use.html">Acceptable use</a><a href="cookies.html">Cookies</a><a href="referral-terms.html">Referral terms</a></span><div class="vfoot"><style>
+    <div class="sfoot"><span data-i18n="cedd5y">© Joinvoo · By Zedapex company</span><span data-i18n="c4gcyx" class="fl"><a href="guide.html">Help</a><a href="blog/index.html">Blog</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="refunds.html">Refunds</a><a href="acceptable-use.html">Acceptable use</a><a href="cookies.html">Cookies</a><a href="referral-terms.html">Referral terms</a></span><div class="vfoot"><style>
 .vfoot{flex:1 1 100%;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px 18px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--faint);line-height:1.5}
 .vfoot a{color:var(--muted);text-decoration:none;font-weight:600}.vfoot a:hover{color:var(--ink)}
 .vfoot .vpart{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-weight:500}.vfoot .vpart b{color:var(--ink);font-weight:700}
@@ -376,23 +403,18 @@ window.JVVoo=(function(){
     snap:'<svg viewBox="0 0 24 24"><path d="M12 3.5c3 0 5 2.3 5 5.2v2.1l1.7.5c.5.2.5.8 0 1l-1.7.7c.5 1.5 1.7 2.7 3.3 3.1-.3.8-1.5 1.1-2.7 1.2l-.4 1.2c-1.3-.3-2.4.1-3.4.8-.6.4-1.1.6-1.8.6s-1.2-.2-1.8-.6c-1-.7-2.1-1.1-3.4-.8l-.4-1.2c-1.2-.1-2.4-.4-2.7-1.2 1.6-.4 2.8-1.6 3.3-3.1l-1.7-.7c-.5-.2-.5-.8 0-1l1.7-.5V8.7c0-2.9 2-5.2 5-5.2z" fill="#fff" stroke="#111" stroke-width="1.5"/></svg>',
     google:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M9 5l-5 13" stroke="#FBBC04"/><path d="M14 5l5 13" stroke="#4285F4"/><circle cx="5" cy="18" r="1.6" fill="#34A853" stroke="none"/></svg>'};
   const refFromUrl=(()=>{ try{ return new URLSearchParams(location.search).get('ref')||''; }catch{ return ''; } })();
+  /* Team invite link (/join-team/<token> → /signup?team=<token>&email=<email>): the new account joins that team in the same step. */
+  const TEAM=(()=>{ try{ const t=new URLSearchParams(location.search).get('team')||''; return /^[A-Za-z0-9_-]{16,64}$/.test(t)?t:''; }catch{ return ''; } })();
+  const teamEmail=(()=>{ try{ return TEAM?(new URLSearchParams(location.search).get('email')||''):''; }catch{ return ''; } })();
   let FEAT={signup:true,referrals:true,snapchat:true,tiktok:true};
-  const F={step:1,name:'',email:'',password:'',country:'',countryAuto:false,track:['channel'],ads:['meta'],spend:'',ref:refFromUrl,agree:false,gender:'surprise',avatar:null,nickname:''};
+  const F={step:1,email:teamEmail,password:'',country:'',countryAuto:false,ref:refFromUrl,showRef:false};
 
   // side panel rotation
-  const LINES=[_t('Meta, TikTok and Snapchat can’t see who joins your Telegram. In 10 minutes, they will.'),_t('Track every lead. Kill every fake.'),_t('Send first deposits back, so your ads find buyers, not browsers.'),_t('Know which campaign and ad brought every lead.'),_t('If you buy traffic, tracking is non-negotiable.')];
+  const LINES=[_t('Meta, TikTok and Snapchat can’t see who joins your Telegram. In 10 minutes, they will.'),_t('Send first deposits back, so your ads find buyers, not browsers.'),_t('Know which campaign and ad brought every lead.'),_t('If you buy traffic, tracking is non-negotiable.')];
   { const r0=$('#rot'); if(r0) r0.textContent=LINES[0]; }
   let li=0; setInterval(()=>{ const r=$('#rot'); if(!r) return; r.style.opacity=0; r.style.transform='translateY(6px)'; setTimeout(()=>{ li=(li+1)%LINES.length; r.textContent=LINES[li]; r.style.opacity=1; r.style.transform='none'; },400); },3600);
 
   let VM='off';  // VooSquare sign-up: 'off' (default, unchanged) | 'both' | 'only'
-  const STEPS=5;
-  const prog=n=>`<div class="prog">${Array.from({length:STEPS},(_,i)=>`<i class="${i+1<=n?'on':''}"></i>`).join('')}</div><span class="stepno">${_t('Step')} ${n} ${_t('of')} ${STEPS}</span>`;
-  const back=`<button type="button" class="back" data-back>← ${_t('Back')}</button>`;
-  const cont=`<button class="btn violet lg wide" type="submit">${_t('Continue')} ${arrow}</button>`;
-  /* Joomoji: the animated face the user picks (renderer: /joomoji.js, shared with the dashboard) */
-  const HAS_J=()=>!!(window.Joomoji&&Joomoji.svg&&Joomoji.random);
-  function face(size){ if(!HAS_J()) return `<span class="jph" style="width:${size}px;height:${size}px">${esc((F.nickname||F.name||'J').trim().charAt(0).toUpperCase()||'J')}</span>`; return Joomoji.svg(F.avatar,{size,animate:!reduced}); }
-  function shuffle(){ if(!HAS_J()) return; const g=F.gender==='surprise'?(['female','male','other'][Math.floor(Math.random()*3)]):F.gender; F.avatar=Joomoji.random(g,Date.now()+'-'+Math.random()); }
   /* ---------- country picker ---------- */
   const CP=(()=>{
     const RAW=[{"code":"AF","name":"Afghanistan","flag":"🇦🇫"},{"code":"AX","name":"Åland Islands","flag":"🇦🇽"},{"code":"AL","name":"Albania","flag":"🇦🇱"},{"code":"DZ","name":"Algeria","flag":"🇩🇿"},{"code":"AS","name":"American Samoa","flag":"🇦🇸"},{"code":"AD","name":"Andorra","flag":"🇦🇩"},{"code":"AO","name":"Angola","flag":"🇦🇴"},{"code":"AI","name":"Anguilla","flag":"🇦🇮"},{"code":"AQ","name":"Antarctica","flag":"🇦🇶"},{"code":"AG","name":"Antigua and Barbuda","flag":"🇦🇬"},{"code":"AR","name":"Argentina","flag":"🇦🇷"},{"code":"AM","name":"Armenia","flag":"🇦🇲"},{"code":"AW","name":"Aruba","flag":"🇦🇼"},{"code":"AU","name":"Australia","flag":"🇦🇺"},{"code":"AT","name":"Austria","flag":"🇦🇹"},{"code":"AZ","name":"Azerbaijan","flag":"🇦🇿"},{"code":"BS","name":"Bahamas","flag":"🇧🇸"},{"code":"BH","name":"Bahrain","flag":"🇧🇭"},{"code":"BD","name":"Bangladesh","flag":"🇧🇩"},{"code":"BB","name":"Barbados","flag":"🇧🇧"},{"code":"BY","name":"Belarus","flag":"🇧🇾"},{"code":"BE","name":"Belgium","flag":"🇧🇪"},{"code":"BZ","name":"Belize","flag":"🇧🇿"},{"code":"BJ","name":"Benin","flag":"🇧🇯"},{"code":"BM","name":"Bermuda","flag":"🇧🇲"},{"code":"BT","name":"Bhutan","flag":"🇧🇹"},{"code":"BO","name":"Bolivia","flag":"🇧🇴"},{"code":"BA","name":"Bosnia and Herzegovina","flag":"🇧🇦"},{"code":"BW","name":"Botswana","flag":"🇧🇼"},{"code":"BV","name":"Bouvet Island","flag":"🇧🇻"},{"code":"BR","name":"Brazil","flag":"🇧🇷"},{"code":"IO","name":"British Indian Ocean Territory","flag":"🇮🇴"},{"code":"VG","name":"British Virgin Islands","flag":"🇻🇬"},{"code":"BN","name":"Brunei","flag":"🇧🇳"},{"code":"BG","name":"Bulgaria","flag":"🇧🇬"},{"code":"BF","name":"Burkina Faso","flag":"🇧🇫"},{"code":"BI","name":"Burundi","flag":"🇧🇮"},{"code":"KH","name":"Cambodia","flag":"🇰🇭"},{"code":"CM","name":"Cameroon","flag":"🇨🇲"},{"code":"CA","name":"Canada","flag":"🇨🇦"},{"code":"CV","name":"Cape Verde","flag":"🇨🇻"},{"code":"BQ","name":"Caribbean Netherlands","flag":"🇧🇶"},{"code":"KY","name":"Cayman Islands","flag":"🇰🇾"},{"code":"CF","name":"Central African Republic","flag":"🇨🇫"},{"code":"TD","name":"Chad","flag":"🇹🇩"},{"code":"CL","name":"Chile","flag":"🇨🇱"},{"code":"CN","name":"China","flag":"🇨🇳"},{"code":"CX","name":"Christmas Island","flag":"🇨🇽"},{"code":"CC","name":"Cocos (Keeling) Islands","flag":"🇨🇨"},{"code":"CO","name":"Colombia","flag":"🇨🇴"},{"code":"KM","name":"Comoros","flag":"🇰🇲"},{"code":"CG","name":"Congo","flag":"🇨🇬"},{"code":"CD","name":"Congo (DRC)","flag":"🇨🇩"},{"code":"CK","name":"Cook Islands","flag":"🇨🇰"},{"code":"CR","name":"Costa Rica","flag":"🇨🇷"},{"code":"CI","name":"Côte d’Ivoire","flag":"🇨🇮"},{"code":"HR","name":"Croatia","flag":"🇭🇷"},{"code":"CU","name":"Cuba","flag":"🇨🇺"},{"code":"CW","name":"Curaçao","flag":"🇨🇼"},{"code":"CY","name":"Cyprus","flag":"🇨🇾"},{"code":"CZ","name":"Czechia","flag":"🇨🇿"},{"code":"DK","name":"Denmark","flag":"🇩🇰"},{"code":"DJ","name":"Djibouti","flag":"🇩🇯"},{"code":"DM","name":"Dominica","flag":"🇩🇲"},{"code":"DO","name":"Dominican Republic","flag":"🇩🇴"},{"code":"EC","name":"Ecuador","flag":"🇪🇨"},{"code":"EG","name":"Egypt","flag":"🇪🇬"},{"code":"SV","name":"El Salvador","flag":"🇸🇻"},{"code":"GQ","name":"Equatorial Guinea","flag":"🇬🇶"},{"code":"ER","name":"Eritrea","flag":"🇪🇷"},{"code":"EE","name":"Estonia","flag":"🇪🇪"},{"code":"SZ","name":"Eswatini","flag":"🇸🇿"},{"code":"ET","name":"Ethiopia","flag":"🇪🇹"},{"code":"FK","name":"Falkland Islands","flag":"🇫🇰"},{"code":"FO","name":"Faroe Islands","flag":"🇫🇴"},{"code":"FJ","name":"Fiji","flag":"🇫🇯"},{"code":"FI","name":"Finland","flag":"🇫🇮"},{"code":"FR","name":"France","flag":"🇫🇷"},{"code":"GF","name":"French Guiana","flag":"🇬🇫"},{"code":"PF","name":"French Polynesia","flag":"🇵🇫"},{"code":"TF","name":"French Southern Territories","flag":"🇹🇫"},{"code":"GA","name":"Gabon","flag":"🇬🇦"},{"code":"GM","name":"Gambia","flag":"🇬🇲"},{"code":"GE","name":"Georgia","flag":"🇬🇪"},{"code":"DE","name":"Germany","flag":"🇩🇪"},{"code":"GH","name":"Ghana","flag":"🇬🇭"},{"code":"GI","name":"Gibraltar","flag":"🇬🇮"},{"code":"GR","name":"Greece","flag":"🇬🇷"},{"code":"GL","name":"Greenland","flag":"🇬🇱"},{"code":"GD","name":"Grenada","flag":"🇬🇩"},{"code":"GP","name":"Guadeloupe","flag":"🇬🇵"},{"code":"GU","name":"Guam","flag":"🇬🇺"},{"code":"GT","name":"Guatemala","flag":"🇬🇹"},{"code":"GG","name":"Guernsey","flag":"🇬🇬"},{"code":"GN","name":"Guinea","flag":"🇬🇳"},{"code":"GW","name":"Guinea-Bissau","flag":"🇬🇼"},{"code":"GY","name":"Guyana","flag":"🇬🇾"},{"code":"HT","name":"Haiti","flag":"🇭🇹"},{"code":"HM","name":"Heard and McDonald Islands","flag":"🇭🇲"},{"code":"HN","name":"Honduras","flag":"🇭🇳"},{"code":"HK","name":"Hong Kong","flag":"🇭🇰"},{"code":"HU","name":"Hungary","flag":"🇭🇺"},{"code":"IS","name":"Iceland","flag":"🇮🇸"},{"code":"IN","name":"India","flag":"🇮🇳"},{"code":"ID","name":"Indonesia","flag":"🇮🇩"},{"code":"IR","name":"Iran","flag":"🇮🇷"},{"code":"IQ","name":"Iraq","flag":"🇮🇶"},{"code":"IE","name":"Ireland","flag":"🇮🇪"},{"code":"IM","name":"Isle of Man","flag":"🇮🇲"},{"code":"IL","name":"Israel","flag":"🇮🇱"},{"code":"IT","name":"Italy","flag":"🇮🇹"},{"code":"JM","name":"Jamaica","flag":"🇯🇲"},{"code":"JP","name":"Japan","flag":"🇯🇵"},{"code":"JE","name":"Jersey","flag":"🇯🇪"},{"code":"JO","name":"Jordan","flag":"🇯🇴"},{"code":"KZ","name":"Kazakhstan","flag":"🇰🇿"},{"code":"KE","name":"Kenya","flag":"🇰🇪"},{"code":"KI","name":"Kiribati","flag":"🇰🇮"},{"code":"XK","name":"Kosovo","flag":"🇽🇰"},{"code":"KW","name":"Kuwait","flag":"🇰🇼"},{"code":"KG","name":"Kyrgyzstan","flag":"🇰🇬"},{"code":"LA","name":"Laos","flag":"🇱🇦"},{"code":"LV","name":"Latvia","flag":"🇱🇻"},{"code":"LB","name":"Lebanon","flag":"🇱🇧"},{"code":"LS","name":"Lesotho","flag":"🇱🇸"},{"code":"LR","name":"Liberia","flag":"🇱🇷"},{"code":"LY","name":"Libya","flag":"🇱🇾"},{"code":"LI","name":"Liechtenstein","flag":"🇱🇮"},{"code":"LT","name":"Lithuania","flag":"🇱🇹"},{"code":"LU","name":"Luxembourg","flag":"🇱🇺"},{"code":"MO","name":"Macao","flag":"🇲🇴"},{"code":"MG","name":"Madagascar","flag":"🇲🇬"},{"code":"MW","name":"Malawi","flag":"🇲🇼"},{"code":"MY","name":"Malaysia","flag":"🇲🇾"},{"code":"MV","name":"Maldives","flag":"🇲🇻"},{"code":"ML","name":"Mali","flag":"🇲🇱"},{"code":"MT","name":"Malta","flag":"🇲🇹"},{"code":"MH","name":"Marshall Islands","flag":"🇲🇭"},{"code":"MQ","name":"Martinique","flag":"🇲🇶"},{"code":"MR","name":"Mauritania","flag":"🇲🇷"},{"code":"MU","name":"Mauritius","flag":"🇲🇺"},{"code":"YT","name":"Mayotte","flag":"🇾🇹"},{"code":"MX","name":"Mexico","flag":"🇲🇽"},{"code":"FM","name":"Micronesia","flag":"🇫🇲"},{"code":"MD","name":"Moldova","flag":"🇲🇩"},{"code":"MC","name":"Monaco","flag":"🇲🇨"},{"code":"MN","name":"Mongolia","flag":"🇲🇳"},{"code":"ME","name":"Montenegro","flag":"🇲🇪"},{"code":"MS","name":"Montserrat","flag":"🇲🇸"},{"code":"MA","name":"Morocco","flag":"🇲🇦"},{"code":"MZ","name":"Mozambique","flag":"🇲🇿"},{"code":"MM","name":"Myanmar","flag":"🇲🇲"},{"code":"NA","name":"Namibia","flag":"🇳🇦"},{"code":"NR","name":"Nauru","flag":"🇳🇷"},{"code":"NP","name":"Nepal","flag":"🇳🇵"},{"code":"NL","name":"Netherlands","flag":"🇳🇱"},{"code":"NC","name":"New Caledonia","flag":"🇳🇨"},{"code":"NZ","name":"New Zealand","flag":"🇳🇿"},{"code":"NI","name":"Nicaragua","flag":"🇳🇮"},{"code":"NE","name":"Niger","flag":"🇳🇪"},{"code":"NG","name":"Nigeria","flag":"🇳🇬"},{"code":"NU","name":"Niue","flag":"🇳🇺"},{"code":"NF","name":"Norfolk Island","flag":"🇳🇫"},{"code":"KP","name":"North Korea","flag":"🇰🇵"},{"code":"MK","name":"North Macedonia","flag":"🇲🇰"},{"code":"MP","name":"Northern Mariana Islands","flag":"🇲🇵"},{"code":"NO","name":"Norway","flag":"🇳🇴"},{"code":"OM","name":"Oman","flag":"🇴🇲"},{"code":"PK","name":"Pakistan","flag":"🇵🇰"},{"code":"PW","name":"Palau","flag":"🇵🇼"},{"code":"PS","name":"Palestine","flag":"🇵🇸"},{"code":"PA","name":"Panama","flag":"🇵🇦"},{"code":"PG","name":"Papua New Guinea","flag":"🇵🇬"},{"code":"PY","name":"Paraguay","flag":"🇵🇾"},{"code":"PE","name":"Peru","flag":"🇵🇪"},{"code":"PH","name":"Philippines","flag":"🇵🇭"},{"code":"PN","name":"Pitcairn Islands","flag":"🇵🇳"},{"code":"PL","name":"Poland","flag":"🇵🇱"},{"code":"PT","name":"Portugal","flag":"🇵🇹"},{"code":"PR","name":"Puerto Rico","flag":"🇵🇷"},{"code":"QA","name":"Qatar","flag":"🇶🇦"},{"code":"RE","name":"Réunion","flag":"🇷🇪"},{"code":"RO","name":"Romania","flag":"🇷🇴"},{"code":"RU","name":"Russia","flag":"🇷🇺"},{"code":"RW","name":"Rwanda","flag":"🇷🇼"},{"code":"BL","name":"Saint Barthélemy","flag":"🇧🇱"},{"code":"SH","name":"Saint Helena","flag":"🇸🇭"},{"code":"KN","name":"Saint Kitts and Nevis","flag":"🇰🇳"},{"code":"LC","name":"Saint Lucia","flag":"🇱🇨"},{"code":"MF","name":"Saint Martin","flag":"🇲🇫"},{"code":"PM","name":"Saint Pierre and Miquelon","flag":"🇵🇲"},{"code":"VC","name":"Saint Vincent and the Grenadines","flag":"🇻🇨"},{"code":"WS","name":"Samoa","flag":"🇼🇸"},{"code":"SM","name":"San Marino","flag":"🇸🇲"},{"code":"ST","name":"São Tomé and Príncipe","flag":"🇸🇹"},{"code":"SA","name":"Saudi Arabia","flag":"🇸🇦"},{"code":"SN","name":"Senegal","flag":"🇸🇳"},{"code":"RS","name":"Serbia","flag":"🇷🇸"},{"code":"SC","name":"Seychelles","flag":"🇸🇨"},{"code":"SL","name":"Sierra Leone","flag":"🇸🇱"},{"code":"SG","name":"Singapore","flag":"🇸🇬"},{"code":"SX","name":"Sint Maarten","flag":"🇸🇽"},{"code":"SK","name":"Slovakia","flag":"🇸🇰"},{"code":"SI","name":"Slovenia","flag":"🇸🇮"},{"code":"SB","name":"Solomon Islands","flag":"🇸🇧"},{"code":"SO","name":"Somalia","flag":"🇸🇴"},{"code":"ZA","name":"South Africa","flag":"🇿🇦"},{"code":"GS","name":"South Georgia and the South Sandwich Islands","flag":"🇬🇸"},{"code":"KR","name":"South Korea","flag":"🇰🇷"},{"code":"SS","name":"South Sudan","flag":"🇸🇸"},{"code":"ES","name":"Spain","flag":"🇪🇸"},{"code":"LK","name":"Sri Lanka","flag":"🇱🇰"},{"code":"SD","name":"Sudan","flag":"🇸🇩"},{"code":"SR","name":"Suriname","flag":"🇸🇷"},{"code":"SJ","name":"Svalbard and Jan Mayen","flag":"🇸🇯"},{"code":"SE","name":"Sweden","flag":"🇸🇪"},{"code":"CH","name":"Switzerland","flag":"🇨🇭"},{"code":"SY","name":"Syria","flag":"🇸🇾"},{"code":"TW","name":"Taiwan","flag":"🇹🇼"},{"code":"TJ","name":"Tajikistan","flag":"🇹🇯"},{"code":"TZ","name":"Tanzania","flag":"🇹🇿"},{"code":"TH","name":"Thailand","flag":"🇹🇭"},{"code":"TL","name":"Timor-Leste","flag":"🇹🇱"},{"code":"TG","name":"Togo","flag":"🇹🇬"},{"code":"TK","name":"Tokelau","flag":"🇹🇰"},{"code":"TO","name":"Tonga","flag":"🇹🇴"},{"code":"TT","name":"Trinidad and Tobago","flag":"🇹🇹"},{"code":"TN","name":"Tunisia","flag":"🇹🇳"},{"code":"TR","name":"Türkiye","flag":"🇹🇷"},{"code":"TM","name":"Turkmenistan","flag":"🇹🇲"},{"code":"TC","name":"Turks and Caicos Islands","flag":"🇹🇨"},{"code":"TV","name":"Tuvalu","flag":"🇹🇻"},{"code":"UM","name":"U.S. Outlying Islands","flag":"🇺🇲"},{"code":"VI","name":"U.S. Virgin Islands","flag":"🇻🇮"},{"code":"UG","name":"Uganda","flag":"🇺🇬"},{"code":"UA","name":"Ukraine","flag":"🇺🇦"},{"code":"AE","name":"United Arab Emirates","flag":"🇦🇪"},{"code":"GB","name":"United Kingdom","flag":"🇬🇧"},{"code":"US","name":"United States","flag":"🇺🇸"},{"code":"UY","name":"Uruguay","flag":"🇺🇾"},{"code":"UZ","name":"Uzbekistan","flag":"🇺🇿"},{"code":"VU","name":"Vanuatu","flag":"🇻🇺"},{"code":"VA","name":"Vatican City","flag":"🇻🇦"},{"code":"VE","name":"Venezuela","flag":"🇻🇪"},{"code":"VN","name":"Vietnam","flag":"🇻🇳"},{"code":"WF","name":"Wallis and Futuna","flag":"🇼🇫"},{"code":"EH","name":"Western Sahara","flag":"🇪🇭"},{"code":"YE","name":"Yemen","flag":"🇾🇪"},{"code":"ZM","name":"Zambia","flag":"🇿🇲"},{"code":"ZW","name":"Zimbabwe","flag":"🇿🇼"}];
@@ -446,36 +468,20 @@ window.JVVoo=(function(){
     const f=$('#flow'); let h='';
     if(F.step===1&&VM==='only') h=`<form class="step" id="s"><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Create your account. No card needed. Your first 500 joins are on us.')}</p>
       ${JVVoo.block(false)}<p class="have">${_t('Already have an account?')} <a href="login.html">${_t('Log in')}</a></p></form>`;
-    else if(F.step===1) h=`${prog(1)}<form class="step" id="s"><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Create your account. No card needed. Your first 500 joins are on us.')}</p>
-      ${VM==='both'?JVVoo.block(true):''}<div class="field"><label for="nm">${_t('Your name')}</label><input class="inp" id="nm" autocomplete="name" value="${esc(F.name)}" placeholder="Alex Morgan" required></div>
-      <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" value="${esc(F.email)}" placeholder="you@company.com" required></div>
+    else if(F.step===1) h=`<form class="step" id="s" novalidate><h1>${_t('Start <span>free.</span>')}</h1><p class="lede">${_t('Your first 500 joins are on us. No card needed.')}</p>
+      ${VM==='both'?JVVoo.block(true):''}
+      <div class="field"><label for="em">${_t('Email')}</label><input class="inp" id="em" type="email" autocomplete="email" inputmode="email" value="${esc(F.email)}" placeholder="you@company.com" required></div>
       <div class="field"><label for="pw">${_t('Password')}</label><div class="pw"><input class="inp" id="pw" type="password" autocomplete="new-password" minlength="8" value="${esc(F.password)}" placeholder="${_t('At least 8 characters')}" required><button type="button" id="pwt">${_t('Show')}</button></div><div class="meter"><i id="pm"></i></div></div>
       <div class="field cfield"><label id="ctyl" for="cty">${_t('Country')}</label>${CP.trigger()}<span class="cnote"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/></svg>${_t('We use this to show payment methods available in your country.')}</span></div>
-      <div id="err"></div><div class="row">${cont}</div><p class="have">${_t('Already have an account?')} <a href="login.html">${_t('Log in')}</a></p></form>`;
-    if(F.step===2) h=`${prog(2)}<form class="step" id="s"><h1>${_t('What are you <span>growing?</span>')}</h1><p class="lede">${_t('Pick all that apply. You can add more later.')}</p>
-      <div class="opts">${[['channel',IC.channel,_t('Channel'),_t('People who join')],['group',IC.group,_t('Group'),_t('Members who join')],['bot',IC.bot,_t('Bot'),_t('People who press Start')]].map(([k,e,t,s])=>`<button type="button" class="opt" data-g="track" data-v="${k}" aria-pressed="${F.track.includes(k)}"><span class="e">${e}</span>${t}<small>${s}</small></button>`).join('')}</div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`;
-    if(F.step===3) h=`${prog(3)}<form class="step" id="s"><h1>${_t('Where do you run <span>ads?</span>')}</h1><p class="lede">${_t('We’ll send every real join, and every first deposit, back to these platforms.')}</p>
-      <div class="opts four">${[['meta',IC.meta,'Meta',_t('Facebook & Instagram'),0,'#0866FF'],['tiktok',IC.tiktok,'TikTok',_t('TikTok Ads'),0,'#0B0B12'],['snap',IC.snap,'Snapchat',_t('Snapchat Ads'),0,'#FFFC00'],['google',IC.google,'Google Ads',_t('Coming soon'),1,'var(--sunk)']].filter(([k])=>!(k==='tiktok'&&!FEAT.tiktok)&&!(k==='snap'&&!FEAT.snapchat)).map(([k,e,t,s,dis,bg])=>`<button type="button" class="opt" data-g="ads" data-v="${k}" aria-pressed="${F.ads.includes(k)}" ${dis?'disabled':''}><span class="e" style="background:${bg}">${e}</span>${t}<small>${s}</small></button>`).join('')}</div>
-      <div class="field"><label>${_t('Monthly ad spend')}</label><div class="chips">${[['Under $500',_t('Under $500')],['$500–$2k','$500–$2k'],['$2k–$10k','$2k–$10k'],['$10k+','$10k+']].map(([v,l])=>`<button type="button" class="chip" data-spend="${v}" aria-pressed="${F.spend===v}">${l}</button>`).join('')}</div><span class="hint">${_t('Helps us tailor your setup.')}</span></div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`;
-    if(F.step===4){ if(!F.avatar&&HAS_J()) shuffle();
-      h=`${prog(4)}<form class="step" id="s"><h1>${_t('Your <span>Joomoji.</span>')}</h1><p class="lede">${_t('Pick the face that greets you in your dashboard. Shuffle until it’s you.')}</p>
-      <div class="jpick"><div class="jface" id="jface">${face(132)}</div>
-        <div class="jctl"><div class="chips" role="group" aria-label="${_t('Style')}">${[['female',_t('Female')],['male',_t('Male')],['surprise',_t('Surprise me')]].map(([v,l])=>`<button type="button" class="chip" data-gender="${v}" aria-pressed="${F.gender===v}">${l}</button>`).join('')}</div>
-        <button type="button" class="btn" id="jshuf"${HAS_J()?'':' disabled'}>${_t('Shuffle')} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button></div></div>
-      <div class="field"><label for="nk">${_t('Nickname')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="nk" maxlength="24" value="${esc(F.nickname)}" placeholder="${_t('What should Joe call you?')}" autocomplete="nickname"><span class="hint">${_t('2–24 characters. Letters, numbers, spaces and _ - .')}</span></div>
-      <div id="err"></div><div class="row">${back}${cont}</div></form>`; }
-    if(F.step===5) h=`${prog(5)}<form class="step" id="s"><h1>${_t('Almost <span>there.</span>')}</h1><p class="lede">${_t('Got a referral code from a friend? Add it so they get credit.')}</p>
-      ${FEAT.referrals?`<div class="field"><label for="rf">${_t('Referral code')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="rf" value="${esc(F.ref)}" placeholder="${_t('e.g. em7k2q')}" autocomplete="off" spellcheck="false"></div>
-      `:''}${F.ref&&FEAT.referrals?`<div class="gift">🎁 ${_t('Your friend’s code is applied.')}</div>`:''}<div class="gift" style="background:var(--lilac);color:var(--brand-text)">✦ ${_t('Confirm your email after sign-up to unlock your first 500 tracked joins free, plus a 7-day deposit-tracking trial.')}</div>
-      <label class="check"><input type="checkbox" id="ag" ${F.agree?'checked':''}><span>${(()=>{ let k=0; const L=['<a href="terms.html" data-legal="Terms of Service">','<a href="privacy.html" data-legal="Privacy Policy">']; return _t('I agree to the [Terms] and [Privacy Policy].').replace(/\[([^\]]+)\]/g,(m,x)=>(L[k++]||'<a>')+x+'</a>'); })()}</span></label>
-      <div id="err"></div><div class="row">${back}<button class="btn violet lg wide" type="submit" id="go">${_t('Create my account')} ${arrow}</button></div></form>`;
-    if(F.step===6){ const P={meta:'Meta',tiktok:'TikTok',snap:'Snapchat'}; const plats=F.ads.filter(a=>P[a]).map(a=>P[a]); const pl=plats.length>1?plats.slice(0,-1).join(', ')+' '+_t('or')+' '+plats[plats.length-1]:(plats[0]||_t('your ad platform'));
-      const nm=(F.nickname||F.name).trim().split(' ')[0]||_t('friend');
-      h=`<div class="done"><div class="jdone">${HAS_J()?face(150):''}</div>
-      <h1>${_t('You’re in,')} <span>${esc(nm)}.</span></h1><p>${_t('Your account is ready. Three quick steps and your ads can see every real join.')}</p>
-      <ul class="checklist"><li><span>1</span>${_t('Make a bot with @BotFather')}<small>2 min</small></li><li><span>2</span>${F.track.includes('bot')&&F.track.length===1?_t('Connect your bot'):_t('Connect your channel or group')}<small>2 min</small></li><li><span>3</span>${_t('Connect')} ${esc(pl)} ${_t('and swap your ad link')}<small>6 min</small></li></ul>
+      ${FEAT.referrals?(F.ref||F.showRef?`<div class="field"><label for="rf">${_t('Referral code')} <span style="color:var(--faint);font-weight:500">(${_t('optional')})</span></label><input class="inp" id="rf" value="${esc(F.ref)}" placeholder="${_t('e.g. em7k2q')}" autocomplete="off" spellcheck="false"></div>${F.ref?`<div class="gift">🎁 ${_t('Your friend’s code is applied.')}</div>`:''}`:`<button type="button" class="link" id="showRef">${_t('Have a referral code?')}</button>`):''}
+      <div id="err"></div><button class="btn violet lg full" type="submit" id="go">${_t('Create my account')} ${arrow}</button>
+      <p class="terms">${(()=>{ let k=0; const L=['<a href="terms.html" data-legal="Terms of Service">','<a href="privacy.html" data-legal="Privacy Policy">']; return _t('By creating an account you agree to the [Terms] and [Privacy Policy].').replace(/\[([^\]]+)\]/g,(m,x)=>(L[k++]||'<a>')+x+'</a>'); })()}</p>
+      <p class="have">${_t('Already have an account?')} <a href="login.html">${_t('Log in')}</a></p></form>`;
+    if(F.step===6){ 
+      
+      h=`<div class="done">
+      <h1>${_t('You’re <span>in.</span>')}</h1><p>${_t('Your account is ready. Three quick steps and your ads can see every real join.')}</p>
+      <ul class="checklist"><li><span>1</span>${_t('Make a bot with @BotFather')}<small>2 min</small></li><li><span>2</span>${_t('Add it to your channel, group or bot')}<small>2 min</small></li><li><span>3</span>${_t('Connect Meta, TikTok or Snapchat and put your link in your ad')}<small>6 min</small></li></ul>
       <a class="btn violet lg" href="${APP}" style="width:100%">${_t('Start setup · about 10 min')} ${arrow}</a></div>`; }
     f.innerHTML=h; bind();
     if(F.step===6) confetti();
@@ -484,34 +490,29 @@ window.JVVoo=(function(){
   function err(m){ $('#err').innerHTML=`<div class="err" role="alert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex:none"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>${esc(m)}</div>`; }
   function bind(){
     const s=$('#s'); if(!s) return;
-    document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{ save(); F.step--; draw(); });
-    document.querySelectorAll('.opt[data-g]').forEach(b=>b.onclick=()=>{ const g=F[b.dataset.g], v=b.dataset.v; const i=g.indexOf(v); i>=0?g.splice(i,1):g.push(v); b.setAttribute('aria-pressed',g.includes(v)); });
-    document.querySelectorAll('[data-spend]').forEach(b=>b.onclick=()=>{ F.spend=b.dataset.spend; document.querySelectorAll('[data-spend]').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
-    document.querySelectorAll('[data-gender]').forEach(b=>b.onclick=()=>{ F.gender=b.dataset.gender; document.querySelectorAll('[data-gender]').forEach(x=>x.setAttribute('aria-pressed',x===b)); shuffle(); const jf=$('#jface'); if(jf){ jf.innerHTML=face(132); jf.classList.remove('pop'); void jf.offsetWidth; jf.classList.add('pop'); } });
-    const js=$('#jshuf'); if(js) js.onclick=()=>{ shuffle(); const jf=$('#jface'); jf.innerHTML=face(132); jf.classList.remove('pop'); void jf.offsetWidth; jf.classList.add('pop'); };
     const pw=$('#pw'); if(pw){ const m=$('#pm'); const upd=()=>{ const v=pw.value; const sc=(v.length>=8)+(v.length>=12)+/[A-Z]/.test(v)+/[0-9]/.test(v)+/[^\w]/.test(v); m.style.width=(sc*20)+'%'; m.style.background=sc<2?'var(--rose)':sc<4?'#e6b866':'var(--green)'; }; pw.oninput=upd; upd();
       $('#pwt').onclick=()=>{ pw.type=pw.type==='password'?'text':'password'; $('#pwt').textContent=pw.type==='password'?_t('Show'):_t('Hide'); }; }
     CP.bind();
     const rf=$('#rf'); if(rf) rf.oninput=()=>{ F.ref=rf.value.trim(); };
+    const sr=$('#showRef'); if(sr) sr.onclick=()=>{ save(); F.showRef=true; draw(); const r=$('#rf'); if(r) r.focus(); };
     s.onsubmit=async e=>{ e.preventDefault(); save();
-      if(F.step===1){ if(!F.name.trim()) return err(_t('Enter your name.')); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(F.email)) return err(_t('Enter a valid email.')); if(F.password.length<8) return err(_t('Use at least 8 characters for your password.')); if(!F.country){ err(_t('Choose your country.')); CP.open(); return; } }
-      if(F.step===2 && !F.track.length) return err(_t('Pick at least one.'));
-      if(F.step===3 && !F.ads.length) return err(_t('Pick at least one ad platform.'));
-      if(F.step===4 && F.nickname && !/^[\p{L}\p{N} _.\-]{2,24}$/u.test(F.nickname)) return err(_t('Nicknames are 2–24 characters: letters, numbers, spaces and _ - .'));
-      if(F.step===5){ if(!F.agree) return err(_t('Please agree to the Terms to continue.')); const b=$('#go'); b.disabled=true; b.textContent=_t('Creating your account…');
-        try { await create(); } catch(x){ b.disabled=false; b.innerHTML=_t('Create my account')+' '+arrow; return err(x.message); } }
-      F.step++; draw(); };
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(F.email)){ $('#em').focus(); return err(_t('Enter a valid email.')); }
+      if(F.password.length<8){ $('#pw').focus(); return err(_t('Use at least 8 characters for your password.')); }
+      if(!F.country){ err(_t('Choose your country.')); CP.open(); return; }
+      const b=$('#go'); b.disabled=true; b.textContent=_t('Creating your account…');
+      let cr; try { cr=await create(); } catch(x){ b.disabled=false; b.innerHTML=_t('Create my account')+' '+arrow; return err(x.message); }
+      if(cr&&cr.team){ location.href=APP+(cr.team.error&&/^(expired|invalid)$/.test(cr.team.code)?'?team_error='+cr.team.code:''); return; } // joined a team: straight into its workspace
+      F.step=6; draw(); };
   }
   function save(){ const g=id=>{ const el=document.getElementById(id); return el?el.value:null; };
-    if(g('nm')!==null) F.name=g('nm'); if(g('em')!==null) F.email=g('em').trim(); if(g('pw')!==null) F.password=g('pw'); if(g('rf')!==null) F.ref=g('rf').trim(); if(g('nk')!==null) F.nickname=g('nk').trim();
-    const ag=$('#ag'); if(ag) F.agree=ag.checked; }
+    if(g('em')!==null) F.email=g('em').trim(); if(g('pw')!==null) F.password=g('pw'); if(g('rf')!==null) F.ref=g('rf').trim();
+  }
   async function create(){
     if(DEMO){ await new Promise(r=>setTimeout(r,900)); return; }
-    const gender=F.gender==='female'?'female':F.gender==='male'?'male':'other';
-    const body={name:F.name,email:F.email,password:F.password,ref:F.ref,profile:{track:F.track,ads:F.ads,spend:F.spend},gender,lang:window.JV_LANG||'en',country:F.country};
-    if(F.avatar) body.avatar=F.avatar; if(F.nickname) body.nickname=F.nickname;
+    const body={email:F.email,password:F.password,ref:F.ref,lang:window.JV_LANG||'en',country:F.country,...(TEAM?{team_token:TEAM}:{})};
     const r=await fetch('/api/signup',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Something went wrong. Try again.'));
+    return j;
   }
   function confetti(){ if(reduced) return; const cv=$('#confetti'), ctx=cv.getContext('2d'), dpr=Math.min(2,devicePixelRatio||1), w=innerWidth, h=innerHeight; cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
     const cols=['#5b3df5','#8f7bff','#c8f169','#7ee0a6','#e6b866','#ff5c8a']; const ps=Array.from({length:140},()=>({x:w/2+(Math.random()-.5)*120,y:h*.35,vx:(Math.random()-.5)*13,vy:-Math.random()*13-4,r:Math.random()*7+4,c:cols[Math.floor(Math.random()*cols.length)],a:Math.random()*6,va:(Math.random()-.5)*.3}));
@@ -521,8 +522,8 @@ window.JVVoo=(function(){
   JVVoo.mode(m=>{ if(m!==VM){ VM=m; if(F.step===1){ save(); draw(); } } });
   if(!DEMO) fetch('/api/config',{credentials:'same-origin'}).then(r=>(r.headers.get('content-type')||'').includes('json')?r.json():null).then(c=>{ const f=c&&c.features; if(!f) return;
     ['signup','referrals','snapchat','tiktok'].forEach(k=>{ if(f[k]===false) FEAT[k]=false; });
-    if(!FEAT.snapchat) F.ads=F.ads.filter(a=>a!=='snap'); if(!FEAT.tiktok) F.ads=F.ads.filter(a=>a!=='tiktok'); if(!FEAT.referrals) F.ref='';
-    if(!FEAT.signup) closed(); else if(F.step>1) draw(); }).catch(()=>{});
+    if(!FEAT.referrals) F.ref='';
+    if(!FEAT.signup) closed(); else if(F.step===1&&!FEAT.referrals){ save(); draw(); } }).catch(()=>{});
 })();
 </script>
 
@@ -565,4 +566,4 @@ window.JVVoo=(function(){
   },true);
 })();
 </script>
-</body></html>
+<script>JVI();/* open every page at the top (no leftover scroll from the last page) unless a #section was asked for */(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}if(location.hash)return;var t=function(){window.scrollTo(0,0);var f=document.body&&document.body.firstElementChild;if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'start'})}catch(e){}};var n=0,u=function(){n=1},w=function(){if(!n)t()};addEventListener('touchstart',u,{passive:true,once:true});addEventListener('wheel',u,{passive:true,once:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();addEventListener('load',w);setTimeout(w,80);setTimeout(w,300);setTimeout(w,800);addEventListener('pageshow',w)})();</script></body></html>

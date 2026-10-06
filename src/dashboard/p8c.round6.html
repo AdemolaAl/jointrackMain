@@ -125,14 +125,16 @@ function joeStart(){ clearInterval(JOE.t); if(!FEAT('joe')) return; setTimeout(j
 const QUICK=[['q1','How are my ads doing?'],['q2','Which campaign should I scale?'],['q3','Why is my cost per FTD up?'],['q4','What should I fix today?']];
 function md(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^(\d+)\. /gm,'<span class="mdn">$1.</span> ').replace(/^• /gm,'<span class="mdb">•</span> ').replace(/\n/g,'<br>'); }
 async function viewJoe(){
-  S.redraw=[]; dismissJoe();
+  S.redraw=[]; dismissJoe(); document.body.classList.toggle('jdm', !!JOE.wantDM && joePhone());
   if (!FEAT('joe')){ $('#view').innerHTML=`<div class="view"><section class="card"><div class="empty">${joeFace(96,{mood:'calm'})}<h3>${tt('joe.off','Joe is switched off')}</h3><p>${tt('joe.off.p','Your admin has turned the assistant off for now.')}</p></div></section></div>`; return; }
   $('#view').innerHTML=`<div class="view joe-page" id="joepage"><section class="joe-hero mood-calm" id="joehero"><div class="jh-copy"><span class="jh-eb">${tt('joe.meet','Meet Joe · your media-buying assistant')}</span><h1 class="sk" style="height:40px;width:70%;border-radius:12px"></h1></div><div class="jh-stage"><div class="jh-joe" id="jhjoe">${joeFace(170,{mood:'calm'})}</div></div></section>
+    <section class="joe-cta" id="joecta"></section>
     <section class="joe-ins" id="joeins">${'<div class="card jcard"><div class="sk" style="height:120px"></div></div>'.repeat(3)}</section>
     <section class="card joe-chat" id="joechat"><div class="sk" style="height:300px;margin:18px"></div></section></div>`;
   const [d,c]=await Promise.all([joeInsights(true), api('GET','/api/joe/chat').catch(e=>({enabled:false,error:e.message,messages:[]}))]);
   if (S.page!=='joe') return; JOE.chat=c||{messages:[]};
   drawJoeHero(d); drawJoeIns(d); drawJoeChat();
+  if (JOE.wantDM){ const m=JOE.wantDM; JOE.wantDM=null; joeDM(true, m!=='replace'); }
 }
 function drawJoeHero(d){
   const el=$('#joehero'); if(!el) return; const mood=(d&&d.mood)||'calm', m=MOODS[mood]||MOODS.calm;
@@ -149,7 +151,7 @@ function drawJoeIns(d){
   const el=$('#joeins'); if(!el) return; const items=(d&&d.items)||[];
   if (!items.length){ el.innerHTML=`<div class="card jcard lv-info"><b>${tt('joe.none','Nothing to flag right now.')}</b><p>${tt('joe.none.p','I check your numbers all day. Ask me anything below.')}</p></div>`; return; }
   const ico={good:I.checkc,warn:I.bolt,bad:I.x,info:I.sparkles};
-  el.innerHTML=items.map((it,i)=>`<article class="card jcard lv-${esc(it.level)}" style="animation-delay:${i*60}ms"><span class="jc-i">${ico[it.level]||I.sparkles}</span><b>${esc(it.title)}</b><p>${esc(it.body)}</p>
+  el.innerHTML=items.map((it,i)=>`<article class="card jcard lv-${esc(it.level)}" data-id="${esc(String(it.id||''))}" style="animation-delay:${i*60}ms"><span class="jc-i">${ico[it.level]||I.sparkles}</span><b>${esc(it.title)}</b><p>${esc(it.body)}</p>
     ${it.metric?`<div class="jc-m"><span>${esc(it.metric.name)}</span><strong>${/cost|\$/i.test(it.metric.name)?money(it.metric.value):fmt(it.metric.value)}</strong>${it.metric.delta_pct!=null?`<span class="delta ${(it.metric.delta_pct>=0)!==/cost/i.test(it.metric.name)?'up':'dn'}">${it.metric.delta_pct>=0?I.up:I.dn}${Math.abs(it.metric.delta_pct)}%</span>`:''}</div>`:''}
     ${it.action?`<button class="btn sm" data-act="joe-go" data-v="${esc(it.action.tab)}">${esc(it.action.label)} ${I.arrow}</button>`:''}${it.dismiss?`<button class="ib-x jc-x" data-act="sis-joe-x" aria-label="${tt('common.close','Close')}">${I.x}</button>`:''}</article>`).join('');
 }
@@ -173,7 +175,7 @@ const crs = n => tt('jb.cr','{n} credits',{n:fmt(n)});
 function jbRing(left,total){ const p=total?Math.max(0,Math.min(1,left/total)):0, r=7, c=2*Math.PI*r; return `<svg class="jb-ring" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="${r}" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="2.6"/><circle cx="9" cy="9" r="${r}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(2)} ${c.toFixed(2)}" ${p?'':'stroke-opacity="0"'} transform="rotate(-90 9 9)"/></svg>`; }
 function jbPill(){ const b=JB(); if(!b) return '';
   const [lo,hi]=b.est_range||[3,8];
-  if ((b.free_left||0)>0) return `<button class="jb-pill free" data-act="joe-set" title="${esc(tt('jb.settings','Chat settings'))}">${jbRing(b.free_left,b.free_daily)}<span>${tt('jb.free','{n} free chats left today',{n:b.free_left})}</span></button>`;
+  if ((b.free_left||0)>0) return `<button class="jb-pill free" data-act="joe-set" title="${esc(tt('jb.settings','Chat settings'))}">${jbRing(b.free_left,b.free_daily)}<span>${b.free_left===1?tt('jb.free1','1 free chat left today'):tt('jb.free','{n} free chats left today',{n:b.free_left})}</span></button>`;
   if (b.monthly_cap===0) return `<button class="jb-pill off" data-act="joe-set">${I.lock}<span>${tt('jb.offpill','Free chats used · paid answers off')}</span></button>`;
   return `<button class="jb-pill paid" data-act="joe-set">${I.coin}<span>${tt('jb.paid','Paid answers · {a}–{b} credits',{a:lo,b:hi})}</span></button>`; }
 function jbBal(){ const b=JB(), bal=b&&b.balance_credits!=null?b.balance_credits:(S.bill?credOf(S.bill):null); if(bal==null) return ''; return `<button class="jb-bal" data-act="nav" data-p="wallet" title="${esc(tt('credits.title','Credits'))}">${I.wallet}<b class="num">${shortCr(bal)}</b></button>`; }
@@ -192,23 +194,91 @@ function jmsg(m){
 }
 function jcHint(){ const b=JB(); if(!b) return '';
   if (JOE.deep) { const [a,z]=b.deep_est||[10,40]; return `<span class="jh-est deep">✨ ${tt('jb.deepest','Deep answer · about {a}–{b} credits',{a,b:z})}</span>`; }
-  if ((b.free_left||0)>0) return `<span class="jh-est">${tt('jb.freehint','Free · {n} of {t} left today',{n:b.free_left,t:b.free_daily})}</span>`;
-  const [lo,hi]=b.est_range||[3,8]; return `<span class="jh-est">${tt('jb.paidhint','About {a}–{b} credits per answer',{a:lo,b:hi})}</span>`; }
+  const use=t=>`<button type="button" class="jh-est jc-use" data-act="joe-set" title="${esc(tt('jb.settings','Chat settings'))}">${t}</button>`;
+  if ((b.free_left||0)>0) return use(`${jbRing(b.free_left,b.free_daily)}<span>${b.free_daily===1?tt('jb.freehint1','{n} of 1 free chat left today',{n:b.free_left}):tt('jb.freehint','{n} of {t} free chats left today',{n:b.free_left,t:b.free_daily})}</span>`);
+  if (b.monthly_cap===0) return use(`${I.lock}<span>${tt('jb.offpill','Free chats used · paid answers off')}</span>`);
+  const [lo,hi]=b.est_range||[3,8]; return use(`${I.coin}<span>${tt('jb.paidhint','About {a}–{b} credits per answer',{a:lo,b:hi})}</span>`); }
+/* Joe header ⋯ menu: settings, credits, Deep (Pro) and clear, instead of a row of pills and icon buttons */
+function joeMenu(a){
+  const b=JB(), msgs=((JOE.chat&&JOE.chat.messages)||[]).length, bal=b&&b.balance_credits!=null?b.balance_credits:(S.bill?credOf(S.bill):null);
+  const p=openPop(a, `${b?`<button class="pi" data-act="joe-set">${I.gear} ${tt('jb.settings','Chat settings')}</button>`:''}
+    ${bal!=null?`<button class="pi" data-act="nav" data-p="wallet">${I.wallet} ${tt('credits.title','Credits')}<span class="jm-r num">${shortCr(bal)}</span></button>`:''}
+    ${b&&!b.deep_allowed?`<button class="pi" data-act="joe-set">✨ ${tt('jb.deep.t2','Deep answers')}<em class="jm-pro">PRO</em></button>`:''}
+    ${msgs?`<button class="pi jm-del" data-act="joe-clear">${I.trash} ${tt('joe.clear2','Clear chat')}</button>`:''}`, 'jcm-pop');
+  p.style.width='232px';
+}
+/* phones: the Joe tab opens on the hero; a "Chat with Joe" button opens the chat as a full-screen DM (own history entry, so back returns to the hero) */
+const joePhone = () => matchMedia('(max-width:900px)').matches;
+function joePlain(t){ return String(t||'').replace(/```[\s\S]*?```/g,' ').replace(/\|/g,' ').replace(/[*_`#>]+/g,'').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/\s+/g,' ').trim(); }
+function drawJoeCta(){
+  const el=$('#joecta'); if(!el) return; const c=JOE.chat||{};
+  if (c.enabled===false){ el.innerHTML=''; return; }
+  const msgs=(c.messages||[]).filter(m=>m.text&&!m.kind), last=msgs[msgs.length-1], today=new Date().toDateString();
+  const cont=!!last && (!last.at || new Date(+last.at||last.at).toDateString()===today);
+  const prev=cont?`${last.role==='user'?`<em>${tt('joe.you','You')}:</em> `:''}${esc(joePlain(last.text).slice(0,140))}`:esc(tt('joe.cta.p','Ask about your joins, deposits and ads, in plain words.'));
+  el.innerHTML=`<button class="jcta" data-act="joe-dm"><span class="jcta-av">${joeFace(44,{animate:false,mood:(JOE.ins&&JOE.ins.mood)||'good'})}${cont?'':'<i class="jc-on"></i>'}</span><span class="jcta-t"><b>${cont?tt('joe.cta.cont','Continue chat with Joe'):tt('joe.cta','Chat with Joe')}</b><small>${prev}</small></span><span class="jcta-go">${I.arrow}</span></button>`;
+}
+function joeDM(on, push=true){
+  if (!$('#joepage')) return;
+  if (!joePhone()){ document.body.classList.remove('jdm'); if(on){ const c=$('#joechat'); if(c) c.scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'}); } return; }
+  const want=on?'#joe/chat':'#joe';
+  if (location.hash!==want){ try{ if(on&&push) history.pushState({jdm:1},'',want); else history.replaceState(on?{jdm:1}:null,'',want); }catch{} }
+  document.body.classList.toggle('jdm',!!on); closePop();
+  if (on){ joeFit(); const m=$('#jcmsgs'); if(m) m.scrollTop=m.scrollHeight; }
+  else { const i=$('#jcin'); if(i) i.blur(); document.body.classList.remove('jkb'); scrollTo(0,0); }
+}
+(function(){
+  addEventListener('popstate',()=>{ const h=location.hash;
+    if (S.page==='joe' && $('#joepage')) joeDM(h==='#joe/chat',false);
+    else if (h==='#joe/chat' && $('#shell') && PAGES.joe){ JOE.wantDM='replace'; go('joe',true); } });
+  // "Ask Joe" entry points open the DM directly (capture runs before the page's own click handlers)
+  document.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('[data-act="joe-ask"],[data-act="joe-dm"],[data-act="joe-back"]'); if(!a) return;
+    const act=a.dataset.act;
+    if (act==='joe-back'){ if (history.state&&history.state.jdm) history.back(); else joeDM(false,false); return; }
+    if (S.page==='joe' && $('#joepage')) joeDM(true); else JOE.wantDM='push'; }, true);
+})();
+const deepLinkJ = deepLink; // #joe/chat (e.g. a shared or emailed link) opens the chat directly
+deepLink = function(h){ if (/^joe\/chat$/.test(h||'') && PAGES.joe){ if (S.page!=='joe'){ JOE.wantDM='push'; go('joe'); } else joeDM(true); return true; } return deepLinkJ(h); };
+const ibNavJ = ibNav;
+ibNav = function(u){ if (/^#(tab:)?joe\/chat$/.test(u||'')){ closePop(); if(S.page==='joe') joeDM(true); else { JOE.wantDM='push'; go('joe'); } return; } return ibNavJ(u); };
+/* phones: the Joe page is a fixed, full-height chat between the top bar and the bottom nav; keeps the composer above the on-screen keyboard */
+function joeFit(){
+  const pg=$('#joepage'), R=document.documentElement;
+  if (!pg || !joePhone() || !document.body.classList.contains('jdm')){ document.body.classList.remove('jkb'); return; }
+  const v=$('#view'), tb=$('.topbar'), bb=$('.bbar'), vv=window.visualViewport, H=innerHeight;
+  let top=0, bot=0;
+  const kbH=vv?Math.max(0,H-(vv.offsetTop+vv.height)):0, typing=document.activeElement&&document.activeElement.id==='jcin';
+  const W=innerWidth; if (JOE.fitW!==W){ JOE.fitW=W; JOE.fitH=H; } JOE.fitH=Math.max(JOE.fitH||0,H);
+  /* keyboard open: iOS overlays it (visual viewport shrinks), Android usually resizes the page (innerHeight shrinks) */
+  const kb=typing&&(kbH>80||H<JOE.fitH-120); document.body.classList.toggle('jkb',kb);
+  if (kb){ bot=kbH; top=vv?vv.offsetTop:0; }
+  if (tb && !tb._jfit && window.ResizeObserver){ tb._jfit=1; new ResizeObserver(()=>window._joeFitQ&&window._joeFitQ()).observe(tb); }
+  const m=$('#jcmsgs'), atEnd=m&&m.scrollHeight-m.scrollTop-m.clientHeight<48;
+  R.style.setProperty('--jv-top',Math.round(top)+'px'); R.style.setProperty('--jv-bot',Math.round(bot)+'px');
+  if (m&&atEnd) m.scrollTop=m.scrollHeight;
+}
+(function(){ let raf=0; const q=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(joeFit); };
+  addEventListener('resize',q); if (window.visualViewport){ visualViewport.addEventListener('resize',q); visualViewport.addEventListener('scroll',q); }
+  document.addEventListener('focusin',e=>{ if(e.target&&e.target.id==='jcin'){ q(); setTimeout(q,320); } });
+  document.addEventListener('focusout',e=>{ if(e.target&&e.target.id==='jcin') setTimeout(q,60); });
+  document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('.jcm-pop .pi')) setTimeout(closePop,0); });
+  window._joeFitQ=q; })();
 function drawJoeChat(keepInput){
   const el=$('#joechat'); if(!el) return; const c=JOE.chat||{};
   if (c.enabled===false){ el.innerHTML=`<div class="empty">${joeFace(72,{mood:'calm'})}<h3>${tt('joe.chatoff','Chat with Joe is off')}</h3><p>${esc(c.error||tt('joe.chatoff.p','Insights above still update all day.'))}</p></div>`; return; }
   const msgs=c.messages||[], b=JB(), mood=(JOE.ins&&JOE.ins.mood)||'good', prev=keepInput&&$('#jcin')?$('#jcin').value:'';
   const sugg=JOE.sugg&&JOE.sugg.length?JOE.sugg:msgs.length?[]:QUICK.map(([k,q])=>tt('joe.'+k,q));
-  el.innerHTML=`<div class="jc-head"><div class="jc-who"><span class="jc-av">${joeFace(40,{mood,talking:JOE.busy})}<i class="jc-on"></i></span><span><b>${tt('joe.ask','Ask Joe')}</b><small>${JOE.busy?tt('jb.typing','Joe is typing…'):c.ai?tt('joe.ai','Reads your live numbers'):tt('joe.rules','Answers from your numbers and our guide')}</small></span></div>
-      <div class="jc-tools">${jbPill()}${jbBal()}${b?`<button class="icon-btn sm" data-act="joe-set" aria-label="${tt('jb.settings','Chat settings')}">${I.gear}</button>`:''}${msgs.length?`<button class="icon-btn sm" data-act="joe-clear" aria-label="${tt('joe.clear','Clear')}" title="${tt('joe.clear','Clear')}">${I.trash}</button>`:''}</div></div>
+  el.innerHTML=`<div class="jc-head"><button class="jc-back" data-act="joe-back" aria-label="${esc(tt('common.back','Back'))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div class="jc-who"><span class="jc-av">${joeFace(40,{mood,talking:JOE.busy})}<i class="jc-on"></i></span><span><b>${tt('joe.ask','Ask Joe')}</b><small>${JOE.busy?tt('jb.typing','Joe is typing…'):c.ai?tt('joe.ai','Reads your live numbers'):tt('joe.rules','Answers from your numbers and our guide')}</small></span></div>
+      <div class="jc-tools">${b||msgs.length?`<button class="jc-more" data-act="joe-menu" aria-haspopup="menu" aria-label="${esc(tt('jb.more','Chat options'))}" title="${esc(tt('jb.more','Chat options'))}">${DOTS}</button>`:''}</div></div>
     ${c.ai===false?`<div class="note" style="margin:12px 18px 0">${tt('joe.aioff','Joe is answering from your numbers and our help guide right now. Smarter AI answers switch on soon.')}</div>`:''}
     <div class="jc-msgs" id="jcmsgs" aria-live="polite">${msgs.length?'':`<div class="jc-empty">${joeFace(88,{mood})}<b>${tt('joe.empty','Ask me about your campaigns')}</b><span>${tt('joe.empty.p','I look at your joins, deposits, spend and channels, and tell you what I’d do.')}</span></div>`}
       ${msgs.map(jmsg).join('')}${JOE.busy?`<div class="jmr them typing-row"><span class="jav">${joeFace(32,{talking:true})}</span><div class="jtyping ${JOE.busyDeep?'deep':''}"><span class="jt-dots"><i></i><i></i><i></i></span><small>${JOE.busyDeep?tt('jb.digging','Digging deeper…'):tt('jb.thinking','Reading your numbers…')}</small></div></div>`:''}</div>
-    <div class="jc-dock">${sugg.length?`<div class="jc-sugg">${sugg.map(q=>`<button class="jq" data-act="joe-ask" data-v="${esc(q)}">${I.sparkles}<span>${esc(q)}</span></button>`).join('')}</div>`:''}
+    <div class="jc-dock${msgs.length?' started':''}">${sugg.length?`<div class="jc-sugg">${sugg.map(q=>`<button class="jq" data-act="joe-ask" data-v="${esc(q)}">${I.sparkles}<span>${esc(q)}</span></button>`).join('')}</div>`:''}
     <form class="jc-comp" id="jcf">${b?(b.deep_allowed?`<button type="button" class="jc-deep" data-act="joe-deep" aria-pressed="${!!JOE.deep}" title="${esc(tt('jb.deep.t','Deep answer: a stronger model that digs further'))}">✨<span>${tt('jb.deep','Deep')}</span></button>`
-        :`<button type="button" class="jc-deep locked" data-act="joe-deep-lock" title="${esc(tt('jb.deeplock','Deep answers are on Pro'))}">${I.lock}<span>${tt('jb.deep','Deep')}</span><em>PRO</em></button>`):''}
+        :''):''}
       <input class="inp" id="jcin" maxlength="500" autocomplete="off" enterkeyhint="send" placeholder="${tt('joe.ph2','Ask Joe anything…')}"><button class="send" type="submit" aria-label="${tt('joe.send','Send')}" ${JOE.busy?'disabled':''}>${I.send}</button></form>
     <div class="jc-hint">${jcHint()}</div></div>`;
+  drawJoeCta(); joeFit();
   const box=$('#jcmsgs'), bh=JOE.smooth&&!reduced?'smooth':'auto';
   if (box){ box.scrollTo({top:box.scrollHeight,behavior:bh}); if (JOE.smooth && matchMedia('(max-width:700px)').matches){ const last=box.lastElementChild; if(last) last.scrollIntoView({block:'end',behavior:bh}); } }
   JOE.smooth=true;
@@ -264,6 +334,7 @@ document.addEventListener('click', e=>{
   const a=e.target.closest('[data-act]'); if(!a) return;
   switch(a.dataset.act){
     case 'joe-set': openJoeSettings(); break;
+    case 'joe-menu': joeMenu(a); break;
     case 'joe-deep': JOE.deep=!JOE.deep; a.setAttribute('aria-pressed',JOE.deep); { const h=$('.jc-hint'); if(h) h.innerHTML=jcHint(); } break;
     case 'joe-deep-lock': toast(tt('jb.deeplock','Deep answers are on Pro')); break;
     case 'joe-confirm': joeConfirm(a); break;

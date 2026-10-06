@@ -1,0 +1,701 @@
+
+/* ================= Round 17 UI: simpler navigation, short channel cards + Channel settings, Results, More, Team, Daily report,
+   ban protection, dead-link warning, Meta spend, depositor audience. Every older page and data-act handler still works;
+   this file only regroups them (Results tabs = the old Analytics pages, More = the old Account pages). ================= */
+Object.assign(I,{
+  results:sv('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
+  more:sv('<rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/>'),
+  team:sv('<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.2 6-5.2s5.4 1.9 6 5.2"/><circle cx="17" cy="9.5" r="2.5"/><path d="M16.5 14.4c2.4.2 4 1.9 4.5 4.6"/>'),
+  report:sv('<path d="M20.5 4.5 3.6 11.1c-.8.3-.8 1.4 0 1.7l4.1 1.4 1.6 5c.2.7 1.1.9 1.6.4l2.3-2.2 4.3 3.2c.6.4 1.4.1 1.6-.6l2.8-13.4c.2-.8-.6-1.4-1.4-1.1z"/>'),
+  gear:sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/>',1.6),
+  alert:sv('<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.1" stroke-width="2.2"/>'),
+  play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 001.5.9l10.4-6.5a1 1 0 000-1.8L9.5 4.6A1 1 0 008 5.5z" fill="currentColor"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/><rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="currentColor"/></svg>',
+  mute:sv('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>'),
+  swap:sv('<path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/>'),
+});
+const R17 = { role:'owner', ws:null, rep:null, team:null, meta:null, aud:null, today:{}, init:false };
+const myRole = () => R17.role || 'owner';
+const isOwner = () => myRole()==='owner';
+const watchBtn = (id, label) => `<button type="button" class="watch" data-act="tut" data-v="${id}"><span class="w-ic">${I.play}</span><span>${label||tt('tut.watch','Watch how')}</span><em>${tutLen(id)}</em></button>`;
+const sw = (act, on, label, extra='') => `<button type="button" class="switch" role="switch" data-act="${act}" aria-checked="${!!on}" aria-label="${esc(label)}" ${extra}></button>`;
+const chById = id => ((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id));
+const centsOr = (v,d='—') => v==null||!isFinite(v)?d:money(v);
+function setRole(){
+  const ws=(S.me&&S.me.workspace)||R17.ws; if (ws) R17.ws=ws;
+  R17.role=(ws&&ws.current&&ws.current.role)||(S.chans&&S.chans.team_role)||'owner';
+  const r=document.documentElement; ['owner','manager','buyer'].forEach(k=>r.classList.toggle('role-'+k, R17.role===k));
+}
+
+/* ---------- pages + navigation ---------- */
+Object.assign(PAGES,{
+  results:{t:'Results',f:'range',fn:()=>viewResults()},
+  leaderboard:{t:'Team results',fn:()=>viewLeaderboard()},
+  more:{t:'More',fn:()=>viewMore()},
+  team:{t:'Team',fn:()=>viewTeam()},
+  report:{t:'Daily report',fn:()=>viewReport()},
+});
+PAGES.help.t='Help & tutorials'; PAGES.wallet.t='Credits & billing';
+const RES_TABS = () => [['results',tt('res.t.sum','Summary')],['people',tt('res.t.people','People')],['campaigns',tt('res.t.camp','Campaigns')],FEAT('ftd')&&['conversions',tt('res.t.dep','Deposits')],['compare',tt('res.t.cmp','Compare')],teamOn()&&['leaderboard',tt('res.t.team','Team')]].filter(Boolean);
+const RES_SET = new Set(['results','people','campaigns','conversions','compare','leaderboard']);
+const MORE_SET = new Set(['more','team','report','wallet','earn','help','me','levels','learn','apps','replyvoo']);
+const teamOn = () => !isOwner() || !!(R17.team&&R17.team.members&&R17.team.members.some(m=>m.status==='active'));
+function allowPage(p){
+  if (!isOwner() && ['wallet','earn','team','apps'].includes(p)) return 'more';
+  if (!isOwner() && p==='joe') return 'overview';
+  return p;
+}
+function setNav(){
+  NAV.splice(0, NAV.length, ['Menu',['overview','channels','results',isOwner()&&'joe','more'].filter(Boolean)]);
+  BBAR.splice(0, BBAR.length, ...['overview','channels','results',isOwner()&&'joe','more'].filter(Boolean));
+}
+const renderApp0 = renderApp;
+renderApp = function(){
+  setRole(); setNav();
+  renderApp0();
+  const bb=$('.bbar'); if (bb){ const d=bb.querySelector('[data-act="drawer"]'); if(d) d.remove(); const m=bb.querySelector('[data-p="more"]'); if(m && !m.querySelector('.nb')) m.insertAdjacentHTML('beforeend','<i class="nb" data-unread hidden></i>'); bb.style.gridTemplateColumns=`repeat(${bb.children.length},1fr)`; }
+  const v=$('#view'); if (v && !$('#subnav')) v.insertAdjacentHTML('beforebegin','<nav class="subnav" id="subnav" aria-label="Results" hidden></nav>');
+  navMark(S.page); drawSubnav(S.page); drawUnread();
+  wsChip();
+  r17Boot();
+};
+const go0 = go;
+go = function(page, first){
+  page = allowPage(PAGES[page]?page:'overview');
+  go0(page, first); navMark(S.page); drawSubnav(S.page);
+};
+function navMark(page){
+  const root = RES_SET.has(page)?'results':MORE_SET.has(page)?'more':page;
+  $$('.nav-a[data-act="nav"], .bbar [data-act="nav"]').forEach(b=>b.dataset.p===root?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));
+  const sh=$('#shell'); if (sh){ sh.classList.toggle('in-results', RES_SET.has(page)); sh.classList.toggle('in-more', MORE_SET.has(page)&&page!=='more'); }
+}
+function drawSubnav(page){
+  const el=$('#subnav'); if(!el) return;
+  if (RES_SET.has(page)){
+    el.hidden=false; el.setAttribute('aria-label',tt('res.t','Results'));
+    el.innerHTML=`<div class="sn-in"><h1 class="sn-h">${tt('res.t','Results')}</h1><div class="seg res-seg" role="tablist">${RES_TABS().map(([k,l])=>`<button role="tab" data-act="nav" data-p="${k}" aria-pressed="${k===page}" aria-selected="${k===page}">${esc(l)}</button>`).join('')}</div></div>`;
+    const on=el.querySelector('[aria-pressed="true"]'); if(on&&on.scrollIntoView) { const s=el.querySelector('.res-seg'); if(s) s.scrollLeft=Math.max(0,on.offsetLeft-24); }
+  } else if (MORE_SET.has(page) && page!=='more'){
+    el.hidden=false; el.setAttribute('aria-label',tt('nav.more','More'));
+    el.innerHTML=`<div class="sn-in sn-back"><button class="link" data-act="nav" data-p="more">${I.chevl} ${tt('nav.more','More')}</button></div>`;
+  } else { el.hidden=true; el.innerHTML=''; }
+}
+function wsChip(){
+  const ws=R17.ws, tb=$('#tbt'); if (!ws || !ws.workspaces || ws.workspaces.length<2) return;
+  const c=ws.current||{}; const sp=$('.tb-sp'); if(!sp||$('#wschip')) return;
+  sp.insertAdjacentHTML('beforebegin',`<button class="wschip" id="wschip" data-act="ws-pop" aria-haspopup="menu">${c.own?I.user:I.team}<span>${c.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(c.name||'Team')})}</span>${I.chev}</button>`);
+}
+function wsPop(a){
+  const ws=R17.ws||{}, cur=ws.current||{};
+  const p=openPop(a, `<div class="ph2">${tt('ws.h','Workspace')}</div>${(ws.workspaces||[]).map(w=>`<button class="pi" data-act="ws-go" data-id="${w.owner_id}" aria-pressed="${w.owner_id===cur.owner_id}">${w.own?I.user:I.team}<span class="ws-l"><b>${w.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(w.name||'Team')})}</b><small>${w.own?tt('ws.owner','Owner'):esc(w.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))}${w.status==='paused'?' · '+tt('ws.paused','paused'):''}</small></span>${w.owner_id===cur.owner_id?`<span class="ck">${I.check}</span>`:''}</button>`).join('')}`,'wsp');
+  p.style.width='260px';
+}
+async function wsGo(id){
+  closePop(); try { const r=await api('POST','/api/workspace',{owner_id:+id}); R17.ws=r; S.me.workspace=r; R17.team=null; R17.rep=null; R17.meta=null; R17.aud=null;
+    await refreshChans(); setRole(); S.page='overview'; S.channel=''; renderApp(); toast(r.current&&r.current.own?tt('ws.sw.own','Back in your workspace'):tt('ws.sw','Now working in {n}’s team',{n:(r.current&&r.current.name)||'the'})); }
+  catch(e){ toast(e.body&&e.body.paused?tt('ws.paused.t','That team is paused until its owner upgrades.'):e.message,false); }
+}
+const accountPop0 = accountPop;
+accountPop = function(a){
+  accountPop0(a);
+  const p=$('.pop'), ws=R17.ws; if(!p||!ws||!ws.workspaces||ws.workspaces.length<2) return;
+  const c=ws.current||{};
+  p.querySelector('hr') && p.querySelector('hr').insertAdjacentHTML('afterend',`<button class="pi" data-act="ws-pop-in">${I.swap}${tt('ws.switch','Switch workspace')}<small class="faint" style="margin-left:auto">${c.own?tt('ws.own.s','Yours'):esc(c.name||'')}</small></button>`);
+};
+
+/* ---------- More ---------- */
+function viewMore(){
+  S.redraw=[];
+  const me=S.me||{}, ws=R17.ws, cur=(ws&&ws.current)||{}, own=isOwner();
+  const row=(act,p,ic,t,sub,extra='')=>`<button class="mrow17" data-act="${act}" ${p?`data-p="${p}"`:''}><span class="mr-ic">${ic}</span><span class="mr-t"><b>${t}</b><small>${sub}</small></span>${extra}<span class="mr-go">${I.chevr}</span></button>`;
+  const grp=(h,rows)=>{ const r=rows.filter(Boolean).join(''); return r?`<section class="mgrp"><h2>${h}</h2><div class="card mlist">${r}</div></section>`:''; };
+  $('#view').innerHTML=`<div class="view more17"><div class="ph"><div><h1>${tt('nav.more','More')}</h1><p>${own?tt('more.p','Your team, reports, billing and help, all in one place.'):tt('more.p2','You’re working in {n}’s team as {r}.',{n:esc(cur.name||''),r:esc(cur.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))})}</p></div></div>
+    ${ws&&ws.workspaces&&ws.workspaces.length>1?`<button class="card ws-card" data-act="ws-pop"><span class="mr-ic">${I.swap}</span><span class="mr-t"><b>${cur.own?tt('ws.own','Your workspace'):tt('ws.team','{n}’s team',{n:esc(cur.name||'')})}</b><small>${tt('ws.tap','Tap to switch workspace')}</small></span><span class="mr-go">${I.chev}</span></button>`:''}
+    ${grp(tt('more.g.work','Work'),[
+      own&&row('nav','team',I.team,tt('more.team','Team'),tt('more.team.s','Invite media buyers and managers')),
+      row('nav','report',I.report,tt('more.report','Daily report'),tt('more.report.s','Yesterday’s numbers in Telegram every morning')),
+      own&&row('alerts','',I.bolt,tt('menu.alerts','Telegram alerts'),tt('more.alerts.s','Get pinged when something needs you')),
+      row('ib-prefs','',I.bell,tt('menu.notif','Notifications'),tt('more.notif.s','Choose what lands in your inbox')),
+    ])}
+    ${grp(tt('more.g.money','Money'),[
+      own&&row('nav','wallet',I.wallet,tt('more.wallet','Credits & billing'),tt('more.wallet.s','Top up, plan and invoices'),S.bill?`<span class="mr-v num">${esc(crTxt(credOf(S.bill)))}</span>`:''),
+      own&&FEAT('referrals')&&row('nav','earn',I.earn,tt('more.earn','Earn'),tt('more.earn.s','Invite friends and earn from their top-ups')),
+      own&&row('aff-open','',I.sparkles,tt('aff.nav','Earn as an affiliate'),tt('more.aff.s','Up to 50% for life on every VooSquare tool')),
+    ])}
+    ${grp(tt('more.g.help','Help'),[
+      row('nav','help',I.play.replace('<svg','<svg style="width:15px;height:15px"'),tt('more.help','Help & tutorials'),tt('more.help.s','Short videos for every step, and real people in chat')),
+      row('chat','',I.chat,tt('menu.support','Support chat'),tt('more.chat.s','We usually reply in minutes')),
+      row('nav','learn',I.book,tt('nav.learn','Learn'),tt('more.learn.s','Media buying tips from our team')),
+    ])}
+    ${grp(tt('more.g.acc','Account'),[
+      row('nav','me',I.user,tt('nav.me','My profile'),esc(me.email||'')),
+      lvOn&&lvOn()&&row('nav','levels',I.levels,tt('menu.level','My level'),tt('more.lv.s','Your rank as a media buyer')),
+      own&&appsOn()&&row('nav','apps',I.more,tt('nav.apps','Zedapex apps'),tt('more.apps.s','More tools for your Telegram business')),
+      own&&sister()&&row('nav','replyvoo',I.chat,sisName?sisName():'Replyvoo',tt('more.sis.s','AI that answers your chats')),
+      !DEMO&&row('change-pass','',I.key,tt('menu.pass','Change password'),tt('more.pass.s','Keep your account safe')),
+      me.admin&&`<a class="mrow17" href="${DEMO?'admin.html':'/admin'}"><span class="mr-ic">${I.shield}</span><span class="mr-t"><b>${tt('menu.admin','Admin panel')}</b><small>${tt('more.admin.s','Staff only')}</small></span><span class="mr-go">${I.chevr}</span></a>`,
+    ])}
+    ${DEMO?'':`<button class="btn wide more-out" data-act="logout">${I.logout} ${tt('menu.logout','Log out')}</button>`}
+    <p class="more-foot"><a href="${HOME_LINK}terms">Terms</a> · <a href="${HOME_LINK}privacy">Privacy</a> · By Zedapex</p></div>`;
+}
+
+/* ---------- Overview: status line, alerts, period, the full KPI grid (p5's KPI_DEF/kpiSkel/drawKpis), one next step, chart, recent joins ---------- */
+const viewOverview0 = viewOverview;
+const big = (k,l,tone) => `<section class="big t-${tone}" data-k="${k}"><span class="bl">${l}</span><span class="bn"><span class="sk" style="height:34px;width:70%;display:block"></span></span><span class="bd"></span></section>`;
+viewOverview = async function(){
+  if (!setupState().done) return viewOverview0();
+  S.redraw=[];
+  const hr=new Date().getHours(), greet=hr<5?tt('greet.evening','Good evening'):hr<12?tt('greet.morning','Good morning'):hr<17?tt('greet.afternoon','Good afternoon'):tt('greet.evening','Good evening'), nm=dispName();
+  $('#view').innerHTML=`<div class="view ov17">
+    <div class="ov-head"><div class="ov-hi">${meFace(30,true)}<span>${greet}${nm?', '+esc(nm):''}</span></div><p class="ov-status" id="ovst"><i class="dot"></i><span class="sk" style="height:14px;width:220px;display:inline-block"></span></p></div>
+    <div id="ovalerts" class="alerts17"></div>
+    <div id="ctryban" hidden></div>
+    <div class="ov-range">${rangePills()}<button class="btn sm ov-cmp" data-act="nav" data-p="compare">${I.compare} ${tt('ov.cmp','Compare months')}</button></div>
+    <div class="kpis" id="kpis">${kpiSkel()}</div>
+    <section class="card next17" id="ovnext"><div class="sk" style="height:64px;margin:16px"></div></section>
+    <div class="ov-grid"><section class="card ov-chart"><div class="card-h"><h2>${tt('ov.daily','Day by day')}</h2><div class="legend"><span><i style="background:var(--c-click)"></i>${tt('ov.clicks','Clicks')}</span><span><i style="background:var(--c-join)"></i>${tt('ov.j','Joins')}</span><span><i style="background:var(--c-ftd)"></i>${tt('ov.d','Deposits')}</span></div></div><div class="chart" id="chart"><div class="sk" style="height:220px;margin:10px"></div></div></section>
+    <section class="card ov-feed"><div class="card-h"><h2>${tt('ov.recent','Just joined')}</h2><button class="link" data-act="nav" data-p="people">${tt('ov.all','See everyone')} ${I.arrow}</button></div><div class="plist" id="feed">${Array.from({length:4},()=>`<div class="prow" style="cursor:default"><span class="sk" style="width:36px;height:36px;border-radius:50%"></span><span><span class="sk" style="display:block;height:12px;width:60%"></span><span class="sk" style="display:block;height:10px;width:40%;margin-top:6px"></span></span></div>`).join('')}</div></section></div>
+    <div class="ov-low"><div id="sistercard" hidden></div><div id="blognew" hidden></div>${showcaseHtml()}</div>
+  </div>`;
+  drawBlogNew(); drawCountryBanner(); drawSisterCard(); showcaseStart(); drawOvAlerts();
+  await loadOv(true);
+  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')&&!$('.tvp')) loadOv(false); });
+};
+let seen17=new Set();
+async function loadOv(first){
+  const t=new Date(), [pf,pt]=prevRange(), td=ymd(t);
+  let st, prev, feed, today;
+  try { [st,prev,feed,today]=await Promise.all([api('GET','/api/stats?'+rq()), first||!S.ovPrev?api('GET',`/api/stats?from=${pf}&to=${pt}&${tzq()}${chq()}`):Promise.resolve(S.ovPrev),
+    api('GET',`/api/joins?from=${ymd(addDays(t,-6))}&to=${td}&${tzq()}${chq()}&limit=5`), S.preset==='today'?Promise.resolve(null):api('GET',`/api/stats?from=${td}&to=${td}&${tzq()}${chq()}`).catch(()=>null)]); } catch { return; }
+  if (S.page!=='overview' || !$('#kpis') || !$('#ovst')) return;
+  S.ovPrev=prev; const TD=(today||st).totals;
+  const {T}=drawKpis(st,prev,first);
+  /* status line */
+  const ch=visChans(S.chans).filter(c=>c.status!=='removed'), lost=ch.filter(c=>c.lost_at).length, bad=ch.filter(c=>c.status==='no_rights'||c.locked).length, b=S.bill;
+  const paused=b&&b.billing_on&&b.tracking===false;
+  const stl=$('#ovst'); if (stl){ const tone=paused||lost?'bad':bad?'warn':'ok';
+    stl.className='ov-status '+tone;
+    stl.innerHTML=`<i class="dot"></i><span>${paused?tt('ov.st.paused','Tracking is paused'):lost?tt('ov.st.lost','{n} needs your attention',{n:nNoun(lost,'channel','channels')}):bad?tt('ov.st.warn','{n} not tracking',{n:nNoun(bad,'channel','channels')}):tt('ov.st.ok','Tracking live')} · ${nNoun(ch.length,tt('ov.ch1','channel'),tt('ov.chn','channels'))} · <b>${fmt(TD.joins)}</b> ${tt('ov.today','joins today')}</span>`; }
+  const draw=()=>drawPerf($('#chart'), st.series, false); drawPerf($('#chart'), st.series, first); S.redraw=[draw];
+  const fe=$('#feed'); if (fe){ fe.innerHTML = feed.rows.length ? feed.rows.map((r,i)=>personRow(r,'f'+i,seen17.size&&!seen17.has(r.id))).join('') : `<div class="empty"><span class="ei">${I.people}</span><h3>${tt('ov.quiet','Quiet for now')}</h3><p>${tt('ov.quiet.p','New people show up here the moment they join.')}</p></div>`; S.feed=feed.rows; seen17=new Set(feed.rows.map(r=>r.id)); }
+  if (first) drawNext(T, st.counts||{});
+}
+function fillBig(T,P,vl,first,root=document){
+  const sp=FEAT('spend')&&T.spend_cents>0, cpf=sp&&T.ftd?T.spend_cents/T.ftd:null, pcpf=P&&P.ftd&&P.spend_cents?P.spend_cents/P.ftd:null;
+  const C={joins:[fmt(T.joins),T.joins,'',deltaChip(T.joins,P.joins,true,vl),`${pctS(T.joins,T.clicks)} ${tt('ov.ofclicks','of clicks')}`],
+    ftd:[fmt(T.ftd),T.ftd,'',deltaChip(T.ftd,P.ftd||0,true,vl),T.joins?`${pctS(T.ftd,T.joins)} ${tt('ov.ofjoins','of joins')}`:''],
+    cpf:[cpf!=null?money(cpf):'—',cpf||0,'mc',cpf&&pcpf?deltaChip(cpf,pcpf,false,vl):'',sp?`${money0(T.spend_cents)} ${tt('ov.spent','spent')}`:`<button class="link" data-act="spend">${tt('ov.addspend','Add your ad spend')}</button>`],
+    rev:[money0(T.revenue_cents),T.revenue_cents,'m',deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl),sp?`ROAS ${(T.revenue_cents/T.spend_cents).toFixed(2)}×`:T.ftd?`${money0(T.revenue_cents/T.ftd)} ${tt('ov.avg','avg deposit')}`:'']};
+  for (const k in C){ const el=root.querySelector(`.big[data-k="${k}"]`); if(!el) continue; const [v,raw,kind,d,s]=C[k];
+    if (T.ftd_locked && (k==='ftd'||k==='rev'||k==='cpf')){ el.querySelector('.bn').innerHTML=I.lock; el.querySelector('.bd').innerHTML=`<button class="link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button>`; continue; }
+    const n=el.querySelector('.bn'); n.innerHTML=`<span class="kn num">${v}</span>`; el.querySelector('.bd').innerHTML=`${d}<span class="bs">${s}</span>`;
+    if (first && !reduced && kind!=='mc' && raw) count(n.querySelector('.kn'), raw, kind==='m'?'m':''); }
+}
+/* adding spend on the Overview refreshes the tiles (Ad spend / Cost per FTD appear) */
+const spendChanged0 = spendChanged;
+spendChanged = function(){ if (S.page==='overview' && $('#ovst')) return loadOv(false); return spendChanged0(); };
+/* the single most useful next step */
+async function drawNext(T, counts){
+  const el=$('#ovnext'); if(!el) return;
+  const ch=visChans(S.chans).filter(c=>c.status!=='removed'), real=ch.filter(c=>c.type!=='bot'||c.external||true);
+  const lostNo=ch.find(c=>c.lost_at&&!c.failed_over_to), noAds=ch.find(c=>!PLATS().some(p=>platOn(c,p))), chans=ch.filter(c=>c.type!=='bot');
+  let rep=R17.rep; if (!rep){ rep=await api('GET','/api/report-settings').catch(()=>null); R17.rep=rep; }
+  if (S.page!=='overview' || !$('#ovnext')) return;
+  const A = lostNo ? {ic:I.alert,tone:'bad',h:tt('nx.lost.h','“{t}” was lost',{t:esc(lostNo.title)}),p:tt('nx.lost.p','Pick a backup channel so your running ads keep bringing people in.'),b:tt('nx.lost.b','Pick a backup'),act:`data-act="cs-open" data-id="${lostNo.id}" data-tab="backup"`}
+    : noAds ? {ic:pm('meta',1),h:tt('nx.ads.h','Connect Meta to “{t}”',{t:esc(noAds.title)}),p:tt('nx.ads.p','Every join is sent back to your ads, so they learn who really joins.'),b:tt('nx.ads.b','Connect'),act:`data-act="cs-open" data-id="${noAds.id}" data-tab="ads"`,tut:'t3'}
+    : FEAT('ftd')&&!counts.has_conversions&&!T.ftd&&chans.length ? {ic:I.coin,h:tt('nx.ftd.h','See who deposits, not just who joins'),p:tt('nx.ftd.p','Turn on request-to-join and every deposit is matched to the exact person and ad.'),b:tt('nx.ftd.b','Set it up'),act:`data-act="cs-open" data-id="${chans[0].id}" data-tab="join"`,tut:'t4'}
+    : FEAT('spend')&&!T.spend_cents ? {ic:I.wallet,h:tt('nx.sp.h','Add your ad spend'),p:tt('nx.sp.p','Then you see cost per join and cost per deposit for every campaign.'),b:tt('nx.sp.b','Add spend'),act:'data-act="spend"',tut:'t9'}
+    : chans.length>1&&!chans.some(c=>c.backup_channel_id) ? {ic:I.shield,h:tt('nx.bk.h','Protect your ads from a ban'),p:tt('nx.bk.p','Pick a backup channel. If a channel is lost, your ads move there by themselves.'),b:tt('nx.bk.b','Pick a backup'),act:`data-act="cs-open" data-id="${chans[0].id}" data-tab="backup"`}
+    : rep&&!rep.enabled ? {ic:I.report,h:tt('nx.rep.h','Get this summary every morning'),p:tt('nx.rep.p','Yesterday’s joins, deposits and costs, straight to your Telegram.'),b:tt('nx.rep.b','Turn it on'),act:'data-act="nav" data-p="report"'}
+    : {ic:I.sparkles,h:tt('nx.ok.h','You’re all set'),p:tt('nx.ok.p','Everything is tracking. Learn to read your numbers in 30 seconds.'),b:tt('nx.ok.b','Open Results'),act:'data-act="nav" data-p="results"',tut:'t9'};
+  el.className='card next17'+(A.tone?' '+A.tone:'');
+  el.innerHTML=`<span class="nx-eb">${tt('nx.eb','What to do next')}</span><div class="nx-row"><span class="nx-ic">${A.ic}</span><span class="nx-t"><b>${A.h}</b><small>${A.p}</small></span></div>
+    <div class="nx-act"><button class="btn primary" ${A.act}>${A.b} ${I.arrow}</button>${A.tut?watchBtn(A.tut):''}</div>`;
+}
+/* lost channels, "back" channels and dead links: shown on Overview */
+function alertRows(list){
+  const out=[];
+  for (const c of list){
+    if (c.lost_at && c.failed_over_to) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||tt('al.backup','your backup'))})}</b><small>${esc(c.title)} · ${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}</small></span><button class="btn sm" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.details','Details')}</button></div>`);
+    else if (c.lost_at) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost2','“{t}” was lost',{t:esc(c.title)})}</b><small>${esc(lostWhy(c.lost_reason))}. ${tt('al.pick.p','Your ads are still sending people there.')}</small></span><button class="btn sm primary" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.pick','Pick a backup channel')}</button></div>`);
+    else if (c.can_switch_back) out.push(`<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back','“{t}” is back',{t:esc(c.title)})}</b><small>${tt('al.back.p','Your ads still go to {b}. Switch back when you’re ready.',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`);
+    if (c.deadlink_at) out.push(`<div class="al17 warn"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.dl','Your ad link may be blocked')}</b><small>${tt('al.dl.p','Clicks on {t} stopped. Switch to another link domain in one tap.',{t:esc(c.title)})}</small></span><button class="btn sm primary" data-act="dl-open" data-id="${c.id}">${tt('al.dl.b','Switch domain')}</button></div>`);
+  }
+  return out.join('');
+}
+const LOST_WHY={bot_kicked:'Your bot was removed',bot_left:'Your bot left the channel',admin_rights_removed:'Your bot lost its admin rights',no_invite_rights:'Your bot can’t make invite links',chat_not_found:'The channel was deleted or banned',forbidden:'Telegram blocked the bot',invite_failed:'Invite links keep failing'};
+const lostWhy = r => tt('lost.'+(r||'x'), LOST_WHY[r]||'Telegram stopped the bot');
+function drawOvAlerts(){ const el=$('#ovalerts'); if(el) el.innerHTML=alertRows(visChans(S.chans)); }
+
+/* ---------- Results: summary tab ---------- */
+async function viewResults(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view res17">
+    <div class="res-top">${rangePills()}${watchBtn('t9',tt('tut.read','How to read this'))}</div>
+    <div class="big4" id="rbig">${big('joins',tt('ov.joins','Joins from ads'),'lilac')}${big('ftd',tt('ov.ftd','Deposits'),'mint')}${big('cpf',tt('ov.cpf','Cost per deposit'),'cream')}${big('rev',tt('ov.rev','Revenue'),'sky')}</div>
+    <div class="minis" id="rmini"></div>
+    <div class="grid2 res-g">
+      <section class="card best17" id="rbest"><div class="sk" style="height:120px;margin:16px"></div></section>
+      <section class="card spend17" id="rspend"><div class="sk" style="height:120px;margin:16px"></div></section>
+    </div>
+    <section class="card aud17" id="raud"></section>
+    <div id="rrep"></div>
+  </div>`;
+  const [f,t]=range(), [pf,pt]=prevRange();
+  let st,prev,ads; try { [st,prev,ads]=await Promise.all([api('GET','/api/stats?'+rq()), api('GET',`/api/stats?from=${pf}&to=${pt}&${tzq()}${chq()}`), api('GET','/api/breakdown?dim=ad&'+rq()).catch(()=>({rows:[]}))]); } catch(e){ return; }
+  if (S.page!=='results') return;
+  const T=st.totals, P=prev.totals; fillBig(T,P,vsLabel(),true,$('#rbig'));
+  const mi=$('#rmini'); if (mi) mi.innerHTML=[[tt('r.clicks','Clicks'),fmt(T.clicks)],[tt('r.rate','Join rate'),pctS(T.joins,T.clicks)],[tt('r.spend','Ad spend'),T.spend_cents?money0(T.spend_cents):'—'],[tt('r.cpj','Cost per join'),T.spend_cents&&T.joins?money(T.spend_cents/T.joins):'—'],[tt('r.roas','Return on ad spend'),T.spend_cents?(T.revenue_cents/T.spend_cents).toFixed(2)+'×':'—']].map(([l,v])=>`<span class="mini"><small>${l}</small><b class="num">${v}</b></span>`).join('');
+  drawBest(ads.rows||[]); drawSpendCard(T); audBox($('#raud'));
+  const rp=R17.rep||await api('GET','/api/report-settings').catch(()=>null); R17.rep=rp;
+  const rr=$('#rrep'); if (rr && rp && !rp.enabled) rr.innerHTML=`<button class="card row17" data-act="nav" data-p="report"><span class="mr-ic">${I.report}</span><span class="mr-t"><b>${tt('r.rep','Get this every morning in Telegram')}</b><small>${tt('r.rep.p','Joins, deposits and costs, compared with the day before.')}</small></span><span class="mr-go">${I.chevr}</span></button>`;
+}
+function drawBest(rows){
+  const el=$('#rbest'); if(!el) return;
+  const r=rows.filter(x=>!/^\(no /.test(x.key)).sort((a,b)=>(b.ftd||0)-(a.ftd||0)||(b.joins||0)-(a.joins||0));
+  if (!r.length){ el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2></div><div class="best-empty"><p>${tt('r.best.e','Add your ad name to your link to see which ad brings the most deposits.')}</p><button class="btn sm" data-act="nav" data-p="campaigns">${tt('r.best.how','Show me how')} ${I.arrow}</button></div>`; return; }
+  const b=r[0], top=r.slice(1,4), cpf=b.spend_cents&&b.ftd?b.spend_cents/b.ftd:null;
+  el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2><button class="link" data-act="nav" data-p="campaigns">${tt('r.allads','All ads')} ${I.arrow}</button></div>
+    <div class="best-b"><span class="best-crown">${I.sparkles}</span><div class="best-n"><b>${esc(b.key)}</b><small>${fmt(b.joins)} ${tt('r.joins','joins')} · ${fmt(b.ftd||0)} ${tt('r.deps','deposits')}${cpf?` · ${money(cpf)} ${tt('r.perdep','per deposit')}`:''}</small></div></div>
+    ${top.length?`<ol class="best-l">${top.map((x,i)=>`<li><span class="rank">${i+2}</span><span class="bl-k">${esc(x.key)}</span><span class="num">${fmt(x.ftd||0)} ${tt('r.dep','dep.')}</span></li>`).join('')}</ol>`:''}`;
+}
+function drawSpendCard(T){
+  const el=$('#rspend'); if(!el) return;
+  el.innerHTML=`<div class="card-h"><h2>${tt('r.spend','Ad spend')}</h2>${FEAT('spend')?`<button class="btn sm" data-act="spend">${I.plus} ${tt('r.addsp','Add spend')}</button>`:''}</div>
+    <div class="sp-b">${T.spend_cents?`<div class="sp-big"><b class="num">${money0(T.spend_cents)}</b><small>${tt('r.sp.p','{a} per join · {b} per deposit',{a:T.joins?money(T.spend_cents/T.joins):'—',b:T.ftd?money(T.spend_cents/T.ftd):'—'})}</small></div>`:`<p class="muted sp-none">${tt('r.sp.none','Add what you spend and Joinvoo works out your cost per join, cost per deposit and return on ad spend.')}</p>`}
+    <div id="metabox" class="metabox"></div></div>`;
+  metaBox($('#metabox'), true);
+}
+
+/* ---------- Meta ad spend (Coming soon until the Meta app is approved) ---------- */
+async function metaBox(el, full){
+  if(!el) return; el.innerHTML='<div class="sk" style="height:56px"></div>';
+  let m; try { m=await api('GET','/api/meta'); } catch(e){ m={available:false,reason:e.status===403?'':'Waiting for Meta app approval'}; }
+  R17.meta=m; if(!el.isConnected) return;
+  const head=(sub,btn)=>`<div class="mb-h">${pm('meta',1)}<span class="mb-t"><b>${tt('mt.h','Meta ad spend')}</b><small>${sub}</small></span>${btn||''}</div>`;
+  if (!m.available){ el.innerHTML=head(tt('mt.soon.p','Connect your ad account and spend comes in by itself. Waiting for Meta approval.'),`<span class="chip o">${tt('common.soon2','Coming soon')}</span>`)+`<button class="btn sm wide" disabled>${tt('mt.connect','Connect Meta ad account')}</button>`; return; }
+  const own=isOwner();
+  if (!m.connected){ el.innerHTML=head(m.status==='reconnect_needed'?tt('mt.re.p','Your Meta login expired. Reconnect to keep spend coming in.'):tt('mt.nc.p','Spend per campaign comes in every hour. We only read spend, never change your ads.'))+(own?`<a class="btn sm primary wide" href="${esc(m.connect_url||'/auth/meta/start')}" data-act="meta-connect">${m.status==='reconnect_needed'?tt('mt.recon','Reconnect Meta'):tt('mt.connect','Connect Meta ad account')}</a>`:`<p class="hint">${tt('mt.owner','Ask the account owner to connect Meta.')}</p>`); return; }
+  const acc=m.accounts||[];
+  el.innerHTML=head(`${tt('mt.on','Connected')}${m.fb_name?' · '+esc(m.fb_name):''} · ${m.last_sync_at?tt('mt.synced','synced {t}',{t:ago(m.last_sync_at)}):tt('mt.never','not synced yet')}`,`<span class="chip g"><i class="d"></i>${tt('mt.live','Live')}</span>`)
+    +(full?`<div class="mb-acc">${acc.map(a=>`<label class="mb-a${a.supported?'':' off'}"><input type="checkbox" data-meta-acc="${esc(a.id)}" ${a.selected?'checked':''} ${a.supported&&own?'':'disabled'}><span><b>${esc(a.name)}</b><small>${esc(a.currency)}${a.last_error?' · '+esc(a.last_error):''}</small></span></label>`).join('')}</div>
+      <div class="mb-act">${own?`<button class="btn sm" data-act="meta-sync">${I.refresh} ${tt('mt.sync','Sync now')}</button><button class="btn sm ghost" data-act="meta-off">${tt('mt.off','Disconnect')}</button>`:''}<button class="btn sm ghost" data-act="meta-map">${tt('mt.map','Match campaigns to channels')}</button></div><div id="metamap"></div>`
+    :`<button class="btn sm wide" data-act="nav" data-p="results">${tt('mt.manage','Manage in Results')} ${I.arrow}</button>`);
+}
+async function metaMap(){
+  const el=$('#metamap'); if(!el) return; el.innerHTML='<div class="sk" style="height:80px;margin-top:10px"></div>';
+  let r; try { r=await api('GET','/api/meta/campaigns'); } catch(e){ el.innerHTML=`<p class="hint">${esc(e.message)}</p>`; return; }
+  const chs=visChans(S.chans).filter(c=>c.status!=='removed');
+  el.innerHTML=`<div class="mm-l">${(r.campaigns||[]).map(c=>`<div class="mm-r"><span class="mm-n"><b>${esc(c.name)}</b><small>${money0(c.spend_7d_cents||0)} ${tt('mt.7d','last 7 days')}${c.mapped_by==='auto'?' · '+tt('mt.auto','matched by itself'):''}</small></span>
+    <select class="sel" data-meta-camp="${esc(c.campaign_id)}" aria-label="${esc(tt('mt.chan','Channel'))}"><option value="">${tt('mt.none','Not matched')}</option>${chs.map(x=>`<option value="${x.id}" ${x.id===c.channel_id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')||`<p class="hint">${tt('mt.nocamp','No campaigns with spend yet.')}</p>`}</div>`;
+}
+
+/* ---------- depositor audience (lookalike of people who deposited) ---------- */
+async function audBox(el, compact){
+  if(!el) return; let g=R17.aud; if(!g){ try { g=await api('GET','/api/audience-guide'); R17.aud=g; } catch(e){ el.hidden=true; return; } }
+  if(!el.isConnected) return; const n=g.count||0, min=g.lookalike_min||100, px=(g.pixels||[])[0]||'';
+  const line = n>=min ? tt('au.ready','You’ve sent {n} deposits to Meta in 30 days. That’s plenty for a lookalike.',{n:fmt(n)})
+    : n>=20 ? tt('au.start','You’ve sent {n} deposits to Meta in 30 days — enough to start. Get at least {m} for best results.',{n:fmt(n),m:min})
+    : n>0 ? tt('au.few','You’ve sent {n} deposits to Meta in 30 days. You can start now; get at least {m} for best results.',{n:fmt(n),m:min})
+    : tt('au.none','No deposits sent to Meta yet. Connect Meta and track deposits first, then come back.');
+  const pctv=Math.min(100,n/min*100);
+  el.innerHTML=`<div class="au-h"><span class="au-ic">${I.target}</span><span class="au-t"><b>${tt('au.h','Find more depositors like yours')}</b><small>${line}</small></span></div>
+    <div class="au-bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="${min}"><i style="width:${pctv}%"></i><span>${fmt(n)} / ${min}</span></div>
+    <details class="au-d"${compact?'':''}><summary>${tt('au.show','Show me how')} ${I.chev}</summary>
+      <div class="au-keys"><div class="dm-rec"><span class="dm-k">${tt('au.ev','Event')}</span><div class="codebox"><code>${esc(g.event_name||'Purchase')}</code><button class="btn sm" data-act="copy" data-v="${esc(g.event_name||'Purchase')}">${I.copy}</button></div></div>
+        ${px?`<div class="dm-rec"><span class="dm-k">${tt('au.px','Pixel ID')}</span><div class="codebox"><code>${esc(px)}</code><button class="btn sm" data-act="copy" data-v="${esc(px)}">${I.copy}</button></div></div>`:''}</div>
+      <ol class="au-steps">${(g.steps||[]).map((s,i)=>`<li><span class="n">${i+1}</span><span>${esc(s)}</span></li>`).join('')}</ol></details>`;
+}
+
+/* ---------- Results: Team tab (leaderboard) ---------- */
+async function viewLeaderboard(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view lb17"><div class="res-top">${rangePills()}${watchBtn('t8')}</div><section class="card" id="lb"><div class="sk" style="height:220px;margin:16px"></div></section></div>`;
+  const [f,t]=range(); let r; try { r=await api('GET',`/api/team/leaderboard?from=${f}&to=${t}&${tzq()}`); } catch(e){ const el=$('#lb'); if(el) el.innerHTML=`<div class="empty"><h3>${esc(e.message)}</h3></div>`; return; }
+  if (S.page!=='leaderboard') return; const el=$('#lb'); if(!el) return;
+  const rows=(r.rows||[]).slice().sort((a,b)=>(a.cost_per_ftd_cents??1e12)-(b.cost_per_ftd_cents??1e12)), best=rows.find(x=>x.cost_per_ftd_cents!=null);
+  const mj=Math.max(1,...rows.map(x=>x.joins||0));
+  el.innerHTML=`<div class="card-h"><h2>${tt('lb.h','Your buyers side by side')}</h2><span class="sub">${tt('lb.s','Cheapest deposits first')}</span></div>
+    ${rows.length?`<div class="lb-l">${rows.map((x,i)=>`<div class="lb-r${x===best?' top':''}"><span class="lb-av" style="${avStyle(x.user_id||i)}">${esc(((x.name||x.email||'?')[0]||'?').toUpperCase())}</span>
+      <span class="lb-n"><b>${esc(x.name||x.email)}</b>${x===best?`<em class="lb-best">${I.sparkles}${tt('lb.best','Cheapest deposits')}</em>`:''}<small>${esc(x.role==='owner'?tt('ws.owner','Owner'):x.role==='manager'?tt('team.r.m','Manager'):tt('team.r.b','Media buyer'))} · ${nNoun(x.channels||0,'channel','channels')}</small><span class="lb-bar"><i style="width:${(x.joins||0)/mj*100}%"></i></span></span>
+      <span class="lb-k"><small>${tt('lb.j','Joins')}</small><b class="num">${fmt(x.joins)}</b></span><span class="lb-k"><small>${tt('lb.d','Deposits')}</small><b class="num">${x.ftds==null?'—':fmt(x.ftds)}</b></span><span class="lb-k"><small>${tt('lb.c','Per deposit')}</small><b class="num">${centsOr(x.cost_per_ftd_cents)}</b></span></div>`).join('')}</div>`
+    :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('lb.e','No team yet')}</h3><p>${tt('lb.e.p','Invite your media buyers and compare them here.')}</p>${isOwner()?`<button class="btn sm primary" data-act="nav" data-p="team">${tt('lb.inv','Invite your team')}</button>`:''}</div>`}
+    ${r.locked?`<p class="hint" style="padding:0 18px 16px">${tt('lb.locked','Deposits and cost per deposit are a Pro detail.')}</p>`:''}`;
+}
+
+/* ---------- Channels: short cards; everything else lives in Channel settings ---------- */
+viewChannels = async function(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view chv17"><div class="ph"><div><h1>${tt('nav.channels','Channels')}</h1><p>${tt('ch17.p','One ad link per channel. Tap Settings for everything else.')}</p></div><div class="ph-act"><button class="btn primary sm" data-act="add-channel">${I.plus} ${tt('ch17.add','Add channel')}</button></div></div><div id="cl"><div class="chs">${'<div class="card ch17"><div class="sk" style="height:150px"></div></div>'.repeat(2)}</div></div></div>`;
+  await refreshChans(); setRole(); drawChannels();
+  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')||$('.tvp')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
+};
+const CH_TYPE = c => c.type==='bot'?(c.external?tt('ch.botnt','Bot · no token'):tt('ch.bot','Bot')):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group');
+function chPill(c){
+  if (c.lost_at) return `<span class="chip r"><i class="d"></i>${tt('ch.lost','Lost')}</span>`;
+  if (c.locked) return `<span class="chip y">${tt('lim.notrack','Not tracking')}</span>`;
+  return c.status==='active'?`<span class="chip g"><i class="d"></i>${tt('ch.live','Tracking')}</span>`:c.status==='no_rights'?`<span class="chip y"><i class="d"></i>${tt('ch.perm','Needs permission')}</span>`:`<span class="chip r"><i class="d"></i>${tt('ch.removed','Bot removed')}</span>`;
+}
+function chBanner(c){
+  if (c.lost_at && c.failed_over_to) return `<button class="cban bad" data-act="cs-open" data-id="${c.id}" data-tab="backup">${I.alert}<span><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||'')})}</b><small>${esc(lostWhy(c.lost_reason))}</small></span>${I.chevr}</button>`;
+  if (c.lost_at) return `<button class="cban bad" data-act="cs-open" data-id="${c.id}" data-tab="backup">${I.alert}<span><b>${tt('al.lost3','Channel lost')}</b><small>${tt('al.pick','Pick a backup channel')}</small></span>${I.chevr}</button>`;
+  if (c.can_switch_back) return `<div class="cban ok">${I.checkc}<span><b>${tt('al.back2','Channel is back')}</b><small>${tt('al.back3','Ads still go to {b}',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`;
+  if (c.redirect_to) return `<button class="cban info" data-act="cs-open" data-id="${c.id}" data-tab="backup">${I.link}<span><b>${tt('bk.on','Traffic is going to {t}',{t:esc(c.redirect_title||'')})}</b><small>${tt('bk.on.s','Your ad link keeps working')}</small></span>${I.chevr}</button>`;
+  if (c.deadlink_at) return `<button class="cban warn" data-act="dl-open" data-id="${c.id}">${I.alert}<span><b>${tt('al.dl','Your ad link may be blocked')}</b><small>${tt('al.dl.s','Tap to switch link domain')}</small></span>${I.chevr}</button>`;
+  if (c.status==='no_rights') return `<div class="cban warn">${I.alert}<span><b>${tt('ch.perm','Needs permission')}</b><small>${tt('ch.perm.p','In Telegram: channel → Administrators → your bot → turn on “Invite users via link”.')}</small></span></div>`;
+  return '';
+}
+drawChannels = function(){
+  const d=S.chans, el=$('#cl'); if(!d) return; if(!el){ csRefresh(); sideSheetRefresh(); return; } const list=visChans(d);
+  el.innerHTML=`${limitsCard(d)}<div class="chs">${list.map((c,i)=>{ const plats=PLATS().filter(p=>platOn(c,p));
+    return `<article class="card ch17${c.lost_at?' lost':''}${c.locked?' locked':''}" data-ch="${c.id}">
+      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
+      ${chBanner(c)}${c.locked?chLockNote(c):''}
+      <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div></div>
+      <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${tt('ch17.today','joins today')}</span>
+        <span class="c-pl">${plats.length?plats.map(p=>pm(p)).join(''):`<button class="chip y" data-act="cs-open" data-id="${c.id}" data-tab="ads">${tt('ch17.noads','No ad platform')}</button>`}</span>
+        <button class="btn sm c-set" data-act="cs-open" data-id="${c.id}">${I.gear} ${tt('ch17.settings','Settings')}</button></div></article>`; }).join('')}
+    <button class="add-card ch-add" data-act="add-channel"><span class="ei">${I.plus}</span>${list.length?tt('ch17.another','Add another channel or bot'):tt('ch17.first','Connect your first channel')}<small class="faint" style="font-weight:500">${tt('ch17.mins','About 3 minutes')}</small></button></div>
+    <div class="rows17">${domRow17(d)}${botsRow17(d)}</div>`;
+  csRefresh(); sideSheetRefresh(); loadToday();
+};
+async function loadToday(){
+  const t=ymd(new Date()); if (R17.todayAt && Date.now()-R17.todayAt<20000) return; R17.todayAt=Date.now();
+  try { const r=await api('GET',`/api/breakdown?dim=channel&from=${t}&to=${t}&${tzq()}`); R17.today={}; (r.rows||[]).forEach(x=>{ R17.today[x.key]=Math.round(x.joins||0); });
+    visChans(S.chans).forEach(c=>{ if(R17.today[c.title]==null) R17.today[c.title]=0; });
+    $$('[data-today]').forEach(b=>{ const v=R17.today[b.dataset.today]; b.textContent=v==null?'–':fmt(v); }); } catch{}
+}
+function domRow17(d){
+  if (!d || !d.limits) return '';
+  const doms=d.domains||[], act=doms.find(x=>x.status==='active'), pend=doms.find(x=>x.status!=='active');
+  const v = act ? `${esc(act.host)} · <span class="ok">${tt('dm.live2','Live')}</span>` : pend ? `${esc(pend.host)} · ${tt('dm.st.pending','Checking DNS')}` : tt('dm.none','Use your own, like go.yourbrand.com');
+  return `<button class="card row17" data-act="dom-sheet"><span class="mr-ic">${I.globe}</span><span class="mr-t"><b>${tt('dm.title','Your link domain')}</b><small>${v}</small></span><span class="mr-go">${I.chevr}</span></button>`;
+}
+function botsRow17(d){
+  const bots=((d&&d.bots)||[]).filter(b=>b.status!=='deleted'); if(!bots.length) return '';
+  return `<button class="card row17" data-act="bots-sheet"><span class="mr-ic">${I.bot}</span><span class="mr-t"><b>${tt('bots.title','Your bots')}</b><small>${bots.map(b=>'@'+esc(b.username)).slice(0,2).join(', ')}${bots.length>2?' +'+(bots.length-2):''}</small></span><span class="mr-go">${I.chevr}</span></button>`;
+}
+function openDomSheet(){ S.side='dom'; sheet(`<h2>${tt('dm.title','Your link domain')}<small>${tt('dm.sh.s','For every channel')}</small></h2>`, `<div id="sidebody"></div>`); sideSheetRefresh(); }
+function openBotsSheet(){ S.side='bots'; sheet(`<h2>${tt('bots.title','Your bots')}</h2>`, `<div id="sidebody"></div>`); sideSheetRefresh(); }
+function sideSheetRefresh(){
+  const el=$('#sidebody'); if(!el) return; const d=S.chans||{};
+  if (S.side==='dom') el.innerHTML=`${watchBtn('t6')}${domainCard(d)||`<p class="muted">${tt('dm.na','Not available on this account.')}</p>`}`;
+  else if (S.side==='bots') el.innerHTML=botsCard(d)||`<p class="muted">${tt('bots.none','No bots connected.')}</p>`;
+}
+
+/* ---------- Channel settings (full-screen sheet with tabs) ---------- */
+function csTabs(c){
+  const isB=c.type==='bot';
+  return [['ads',tt('cs.ads','Ad platforms')], isB&&c.external?['ping',tt('cs.ping','Bot start ping')]:['join',isB?tt('cs.welcome','Welcome'):tt('cs.join','Join method')], ['web',tt('cs.web','Your own website')], ['domain',tt('cs.dom','Domain')], !isB&&['backup',tt('cs.bk','Backup')]].filter(Boolean);
+}
+function openCS(id, tab){
+  const c=chById(id); if(!c) return; closePop();
+  const tabs=csTabs(c); if (!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
+  S.cs={id:c.id, tab}; S.csPlat=null; S.side=null;
+  sheet(`<h2>${tt('cs.h','Channel settings')}<small>${esc(c.title)}</small></h2>`, `<div class="cs-tabs" role="tablist" id="cstabs"></div><div id="csbody" class="cs-body"></div>`);
+  const sh=$('.sheet'); if (sh) sh.classList.add('cs-sheet');
+  drawCS();
+}
+function drawCS(){
+  const tb=$('#cstabs'), el=$('#csbody'); if(!tb||!el||!S.cs) return; const c=chById(S.cs.id); if(!c){ closeSheet(); return; }
+  const tabs=csTabs(c); if (!tabs.some(t=>t[0]===S.cs.tab)) S.cs.tab=tabs[0][0];
+  tb.innerHTML=tabs.map(([k,l])=>`<button role="tab" data-act="cs-tab" data-v="${k}" aria-selected="${k===S.cs.tab}">${l}</button>`).join('');
+  const on=tb.querySelector('[aria-selected="true"]'); if(on) tb.scrollLeft=Math.max(0,on.offsetLeft-40);
+  el.innerHTML=csBody(c, S.cs.tab); csBind(c, S.cs.tab);
+}
+function csRefresh(){ if ($('#csbody') && S.cs && !($('#csbody').contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) drawCS(); }
+const csHelp = (t,p) => `<div class="cs-intro"><b>${t}</b><small>${p}</small></div>`;
+function csBody(c, tab){
+  const isB=c.type==='bot';
+  if (tab==='ads') return `${csHelp(tt('cs.ads.h','Tell your ads about every join'),tt('cs.ads.p','Each join from this link is sent to the platforms you connect, so your ads learn who really joins.'))}${watchBtn('t3')}
+    <div class="cs-list">${PLATS().map(p=>{ const on=platOn(c,p), open=S.csPlat===p, test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
+      return `<div class="cs-pl${open?' open':''}"><button type="button" class="cs-plh" data-act="cs-plat" data-p="${p}" aria-expanded="${open}">${pm(p,1)}<span class="mr-t"><b>${PLAT[p].name}</b><small>${on?tt('cs.sends','Sends “{e}”',{e:esc(platEvent(c,p))})+(test?' · '+tt('cs.test','test mode'):''):tt('cs.notc','Not connected')}</small></span>${on?`<span class="chip g">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${tt('cs.on','On')}</span>`:`<span class="chip o">${tt('cs.connect','Connect')}</span>`}<span class="cs-chev">${I.chev}</span></button>
+        ${open?`<form id="csmf" class="cs-plf">${platFields(p,c,true)}<div id="csmerr"></div><div class="row-in"><button class="btn primary" type="submit" style="flex:1">${tt('common.save','Save')}</button>${on?`<button class="btn" type="button" data-act="test" data-id="${c.id}" data-p="${p}">${tt('cs.sendtest','Send test')}</button>`:''}</div><a class="link" href="${GUIDE}" target="_blank" rel="noopener">${tt('cs.where','Where do I find these?')} ${I.ext}</a></form>`:''}</div>`; }).join('')}
+      <div class="cs-pl soon"><div class="cs-plh">${pm('google',1)}<span class="mr-t"><b>Google Ads</b><small>${tt('common.soon2','Coming soon')}</small></span></div></div></div>
+    <div class="cs-sub">${tt('cs.spend','Ad spend')}</div><div class="metabox" id="csmeta"></div>`;
+  if (tab==='join' && isB) return `${csHelp(tt('cs.wel.h','What your bot says'),tt('cs.wel.p','When someone presses Start, Joinvoo matches them to their ad and sends this message.'))}
+    <form id="csbf" class="cs-form"><div class="field"><label for="sw1">${tt('cs.wel.m','Welcome message')}</label><textarea class="inp" id="sw1" rows="3" placeholder="Hi {name} 👋 Welcome!">${esc(c.welcome||'')}</textarea><span class="hint">${tt('cs.wel.hint','{name} becomes their first name. Leave empty to send nothing.')}</span></div>
+      <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:140px"><label for="sw2">${tt('cs.btn','Button text')}</label><input class="inp" id="sw2" value="${esc(c.btn_text||'')}" placeholder="Join the group"></div><div class="field" style="flex:2;min-width:180px"><label for="sw3">${tt('cs.btnl','Button link')}</label><input class="inp" id="sw3" value="${esc(c.btn_url||'')}" placeholder="https://t.me/+…"></div></div>
+      <details class="cs-more cs-fw"><summary>${tt('cs.adv','My bot already runs on a server')} ${I.chev}</summary><div class="field"><label for="sw4">${tt('cs.fw','Pass messages on to')}</label><input class="inp" id="sw4" value="${esc(c.forward_url||'')}" placeholder="https://your-server.com/telegram-webhook"><span class="hint">${tt('cs.fw.p','Your bot keeps working as before. Not for bots that fetch their own messages (“polling”).')}</span></div>
+        <div class="field"><label for="sw5">${tt('cs.sec','Secret token (optional)')}</label><input class="inp" id="sw5" type="password" autocomplete="off" placeholder="${c.has_forward_secret?'Saved. Paste a new one to replace it':'Leave empty if you don’t use one'}"></div></details>
+      <div id="bserr"></div><button class="btn primary lg wide" type="submit">${tt('common.save','Save')}</button></form>
+    ${landingRow(c)}`;
+  if (tab==='join'){ const on=jrOn(c), bot='@'+((c.bots&&c.bots[0])||'your_bot'), n=+c.pending_requests||0;
+    return `${csHelp(tt('cs.jr.h','How people get in'),tt('cs.jr.p','Choose how new members enter. Request-to-join lets Joinvoo match every deposit to the exact person and ad.'))}${watchBtn('t4')}
+      <div class="cs-row"><span class="mr-t"><b>${tt('cs.jr.t','Ask people to request to join')}</b><small>${on?tt('cs.jr.on','On. Each request is matched to its ad click.'):tt('cs.jr.off','Off. People join straight from their invite link.')}</small></span>${sw('cs-jr',on,tt('cs.jr.t','Ask people to request to join'),`data-id="${c.id}"`)}</div>
+      ${on&&jrAp(c)!=='joinvoo'&&n>0?`<span class="jr-wait"><i></i>${n===1?tt('jr.wait1','1 waiting for your bot'):tt('jr.waitn','{n} waiting for your bot',{n:fmt(n)})}</span>`:''}
+      ${on||S.csJrOpen?`<form id="jrf" novalidate class="cs-form">${jrApprover(c,bot)}<div id="jrerr"></div><button class="btn primary lg wide" type="submit">${on?tt('common.save','Save'):tt('jr.on','Turn on request-to-join')}</button></form>`:''}
+      ${landingRow(c)}
+      ${c.type!=='bot'?`<div class="cs-row"><span class="mr-t"><b>${tt('cs.pool','Invite links ready')}</b><small>${tt('cs.pool.p','Made ahead of time so nobody waits.')}</small></span><span class="pool-n"><span class="pt"><i style="width:${c.pool_target?Math.min(100,c.pool/c.pool_target*100):0}%"></i></span><b class="num">${fmt(c.pool||0)}</b></span></div>`:''}
+      <section class="aud17 in-cs" id="csaud"></section>`; }
+  if (tab==='ping') return `${csHelp(tt('cs.ping.h','Connect your bot’s Start'),tt('cs.ping.p','Your bot tells Joinvoo when someone presses Start. Your token stays with you.'))}${watchBtn('t7')}${hookPanel(c)}`;
+  if (tab==='web') return `${csHelp(tt('sn.title','Send people from your own website'),tt('cs.web.p','Keep your landing page. Paste one line on it and visitors go from your page into Telegram, still tracked.'))}${watchBtn('t5')}<div class="cs-snip">${snipSection(c)}</div>`;
+  if (tab==='domain') return `${csHelp(tt('cs.dom.h','Which domain your ad link uses'),tt('cs.dom.p','If a link domain gets blocked, pick another one here. Old links keep working.'))}${watchBtn('t6')}
+    <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div></div>
+    <div id="csdl" class="dl-list"><div class="sk" style="height:110px"></div></div>
+    <button class="btn wide" data-act="dom-sheet">${I.globe} ${tt('cs.dom.manage','Add or manage your own domains')}</button>`;
+  if (tab==='backup'){ const others=visChans(S.chans).filter(x=>x.id!==c.id&&x.status!=='removed'&&x.type!=='bot');
+    const state = c.lost_at ? `<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${c.failed_over_to?tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||'')}):tt('al.lost3','Channel lost')}</b><small>${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}. ${c.failed_over_to?tt('bk.fix','Add your bot back as an admin and we’ll tell you.'):tt('bk.pick.now','Pick a backup below and your ads move there right away.')}</small></span></div>`
+      : c.can_switch_back ? `<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back2','Channel is back')}</b><small>${tt('al.back3','Ads still go to {b}',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`
+      : `<div class="al17 ok soft"><span class="al-ic">${I.shield}</span><span class="al-t"><b>${c.backup_channel_id?tt('bk.prot','Protected'):tt('bk.unprot','Not protected yet')}</b><small>${c.backup_channel_id?tt('bk.prot.p','If this channel is banned or your bot is removed, your ads move to {b}.',{b:esc(c.backup_title||'')}):tt('bk.unprot.p','Pick a backup so a ban never stops your ads.')}</small></span></div>`;
+    return `${csHelp(tt('cs.bk.h','If this channel is lost'),tt('cs.bk.p','Choose where your ad link sends people if Telegram bans the channel or your bot is removed.'))}${state}
+      ${others.length?`<div class="field"><label for="csbk">${tt('cs.bk.l','Backup channel')}</label><select class="sel" id="csbk" data-csbk="${c.id}"><option value="">${tt('cs.bk.none','No backup')}</option>${others.map(o=>`<option value="${o.id}" ${o.id===c.backup_channel_id?'selected':''}>${esc(o.title)}</option>`).join('')}</select><span class="hint">${tt('cs.bk.hint','Another channel or group of yours. Its invite links and pixel are used, and joins count there.')}</span></div>
+      <div class="cs-row${c.backup_channel_id?'':' dim'}"><span class="mr-t"><b>${tt('cs.auto','Switch automatically')}</b><small>${tt('cs.auto.p','Move your ads the moment this channel is lost. We always tell you.')}</small></span>${sw('cs-auto',c.backup_channel_id&&c.auto_failover,tt('cs.auto','Switch automatically'),`data-id="${c.id}" ${c.backup_channel_id?'':'disabled'}`)}</div>
+      ${!c.lost_at&&!c.can_switch_back?`<details class="cs-more"${c.redirect_to?' open':''}><summary>${tt('cs.bk.now','Move traffic right now')} ${I.chev}</summary>${backupSection(c)||`<p class="hint">${tt('cs.bk.none2','Add another channel first.')}</p>`}</details>`:''}`
+      :`<div class="note">${tt('cs.bk.add','Add a second channel or group to use it as a backup.')}</div><button class="btn" data-act="add-channel">${I.plus} ${tt('ch17.add','Add channel')}</button>`}`; }
+  return '';
+}
+const landingRow = c => `<div class="cs-row col"><span class="mr-t"><b>${tt('cs.land','When someone taps your ad')}</b><small>${tt('cs.land.p','“Join page” shows a simple page with a Join button. Some ad reviews prefer it.')}</small></span><span class="seg"><button data-act="landing" data-id="${c.id}" data-v="auto" aria-pressed="${c.landing!=='button'}">${tt('cs.land.tg','Open Telegram')}</button><button data-act="landing" data-id="${c.id}" data-v="button" aria-pressed="${c.landing==='button'}">${tt('cs.land.jp','Join page')}</button></span></div>`;
+function csBind(c, tab){
+  const mf=$('#csmf'); mf&&mf.addEventListener('submit', async e=>{ e.preventDefault(); const b=e.submitter; if(b) b.disabled=true; const p=S.csPlat;
+    try { await api('PATCH','/api/channels/'+c.id,platBody(p)); toast(tt('cs.saved','{p} saved',{p:PLAT[p].name})); S.csPlat=null; await refreshChans(); drawChannels(); if(!$('#cl')) drawCS(); }
+    catch(err){ $('#csmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; if(b) b.disabled=false; } });
+  if (tab==='ads') metaBox($('#csmeta'), false);
+  const bf=$('#csbf'); bf&&bf.addEventListener('submit', async e=>{ e.preventDefault(); const bot=S.chans.bots.find(b=>('@'+b.username)===c.title)||S.chans.bots[0];
+    const body={bot_id:bot&&bot.id,welcome:$('#sw1').value,btn_text:$('#sw2').value,btn_url:$('#sw3').value,forward_url:$('#sw4').value.trim()}; if($('#sw5').value.trim()) body.forward_secret=$('#sw5').value.trim();
+    try { await api('POST','/api/bot-targets',body); toast(tt('common.saved','Saved')); await refreshChans(); drawChannels(); if(!$('#cl')) drawCS(); } catch(err){ $('#bserr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+  const jf=$('#jrf'); if (jf && $('#csbody')){ const bot='@'+((c.bots&&c.bots[0])||'your_bot'); S.jrAp=jrAp(c); bindJrPreview(c,bot);
+    jf.addEventListener('submit', async e=>{ e.preventDefault(); const b=jrBody(), v=jrValid(b); if(v){ $('#jrerr').innerHTML=`<div class="err">${esc(v)}</div>`; return; }
+      const btn=e.submitter; if(btn) btn.disabled=true;
+      try { await api('PATCH','/api/channels/'+c.id,b); S.csJrOpen=false; toast(jrDone(b.join_approver)); await refreshChans(); drawChannels(); if(!$('#cl')) drawCS(); }
+      catch(err){ $('#jrerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; if(btn) btn.disabled=false; } }); }
+  if (tab==='join') audBox($('#csaud'), true);
+  if (tab==='web'){ const d=$(`#csbody [data-snsec="${c.id}"]`); if(d) d.open=true; S.snipOpen[c.id]=true; }
+  if (tab==='domain') dlLoad(c.id, $('#csdl'));
+}
+async function dlLoad(id, el){
+  if(!el) return;
+  try { const r=await api('GET','/api/deadlink/options?channel_id='+id); if(!el.isConnected) return; el.innerHTML=dlList(r, id); }
+  catch(e){ const c=chById(id); el.innerHTML=c?domPick(c,S.chans)||`<p class="hint">${esc(e.message)}</p>`:''; }
+}
+function dlList(r, id){
+  if (!(r.options||[]).length){ const c=chById(id), h=r.current_host||hostOf((c&&c.tracking_url)||''); r={...r,options:h?[{type:'joinvoo',host:h,current:true,patch:{}}]:[]}; }
+  return `<div class="opts17" role="radiogroup">${(r.options||[]).map(o=>`<button class="opt17" role="radio" aria-checked="${!!o.current}" data-act="dl-pick" data-id="${id}" data-patch="${esc(JSON.stringify(o.patch||{}))}"><span class="o-rad"></span><span class="mr-t"><b>${esc(o.host)}</b><small>${o.type==='custom'?tt('dl.own','Your domain')+(o.live?' · '+tt('dm.live2','Live'):''):tt('dl.jv','Joinvoo link domain')}</small></span>${o.current?`<span class="chip v">${tt('dl.cur','In use')}</span>`:''}</button>`).join('')}</div><p class="hint">${esc(r.note||'')}</p>`;
+}
+function openDeadlink(id){
+  const c=chById(id); if(!c) return; S.side=null;
+  sheet(`<h2>${tt('al.dl','Your ad link may be blocked')}<small>${esc(c.title)}</small></h2>`, `<p class="muted cs-lead">${tt('dl.p','Clicks on this link stopped while your ads usually bring people now. Move your ad link to another domain, then paste the new link in your ads.')}</p><div id="dlsheet" class="dl-list"><div class="sk" style="height:120px"></div></div><div id="dlres"></div>`);
+  dlLoad(id, $('#dlsheet'));
+}
+async function dlPick(a){
+  if (a.getAttribute('aria-checked')==='true') return; const id=a.dataset.id; let patch={}; try{ patch=JSON.parse(a.dataset.patch||'{}'); }catch{}
+  $$('.opt17').forEach(b=>b.disabled=true);
+  try { const r=await api('PATCH','/api/channels/'+id, patch); await refreshChans(); if ($('#cl')) drawChannels(); toast(tt('dl.done','New ad link ready. Update it in your ads.'));
+    const res=$('#dlres'); if (res){ res.innerHTML=`<div class="okbar">${I.checkc}<span>${tt('dl.done2','Paste this new link in your ads')}</span></div><div class="codebox"><code>${esc(r.tracking_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.tracking_url||'')}">${I.copy} ${tt('common.copy','Copy')}</button></div>`; dlLoad(id,$('#dlsheet')); }
+    if ($('#csbody')) drawCS(); drawOvAlerts(); }
+  catch(e){ toast(e.message,false); $$('.opt17').forEach(b=>b.disabled=false); }
+}
+async function csPatch(id, body, msg){
+  try { const r=await api('PATCH','/api/channels/'+id, body); await refreshChans(); if($('#cl')) drawChannels(); else drawCS(); drawOvAlerts(); toast(r&&r.switched?tt('bk.sw','Done. Your ads now send people to the backup.'):msg); return r; }
+  catch(e){ toast(e.message,false); drawCS(); }
+}
+async function switchBack(a){
+  a.disabled=true; try { await api('POST',`/api/channels/${a.dataset.id}/switch-back`); await refreshChans(); if($('#cl')) drawChannels(); drawCS(); drawOvAlerts(); toast(tt('bk.swb.ok','Switched back. New visitors join this channel again.')); }
+  catch(e){ toast(e.message,false); a.disabled=false; }
+}
+
+/* ---------- Team (owner) ---------- */
+const ROLE_T = r => r==='manager'?tt('team.r.m','Manager'):r==='buyer'?tt('team.r.b','Media buyer'):tt('ws.owner','Owner');
+const ST_T = {invited:['y','Invited'],expired:['r','Invite expired'],active:['g','Active'],paused:['o','Paused']};
+async function viewTeam(){
+  S.redraw=[];
+  if (!isOwner()){ const c=(R17.ws&&R17.ws.current)||{}; $('#view').innerHTML=`<div class="view"><div class="ph"><div><h1>${tt('more.team','Team')}</h1><p>${tt('team.member','You’re in {n}’s team as {r}.',{n:esc(c.name||''),r:ROLE_T(c.role)})}</p></div></div></div>`; return; }
+  $('#view').innerHTML=`<div class="view team17"><div class="ph"><div><h1>${tt('more.team','Team')}</h1><p>${tt('team.p','Invite media buyers and managers. Buyers only see the channels you give them.')}</p></div><div class="ph-act">${watchBtn('t8')}</div></div><div id="tm"><div class="sk" style="height:260px;border-radius:24px"></div></div></div>`;
+  let r; try { r=await api('GET','/api/team'); } catch(e){ const el=$('#tm'); if(el) el.innerHTML=`<div class="card"><div class="empty"><h3>${esc(e.message)}</h3></div></div>`; return; }
+  R17.team=r; if (S.page!=='team') return; drawTeam();
+}
+function drawTeam(){
+  const el=$('#tm'), r=R17.team; if(!el||!r) return; const s=r.seats||{}, pro=s.plan==='pro'||s.included>0;
+  const ms=r.members||[], used=s.used||0, inc=s.included||0, pctv=inc?Math.min(100,used/inc*100):0;
+  el.innerHTML=`<section class="card seat17"><div class="st-top"><span class="mr-ic">${I.team}</span><span class="mr-t"><b>${pro?tt('team.seats','{a} of {b} seats',{a:fmt(used),b:fmt(inc)}):tt('team.basic','Team seats come with Pro')}</b><small>${pro?tt('team.extra','{p}/mo per extra seat',{p:centsTxt(s.seat_cents||500)})+(s.extra?' · '+tt('team.extran','{n} extra',{n:fmt(s.extra)}):''):tt('team.basic.p','Pro includes {n} team members. Add more any time.',{n:s.pro_included||3})}</small></span>
+      <button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>
+    ${pro?`<span class="st-bar"><i style="width:${pctv}%"></i></span>`:''}</section>
+    <section class="card"><div class="card-h"><h2>${tt('team.people','People')}</h2><span class="sub">${nNoun(ms.length,'person','people')}</span></div>
+    ${ms.length?`<div class="tm-l">${ms.map(m=>{ const [cc,lb]=ST_T[m.status]||['o',m.status]; const chs=(m.channel_ids||[]).map(id=>(r.channels||[]).find(c=>c.id===id)).filter(Boolean);
+      return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b>${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>esc(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
+        <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
+      :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('team.e','Just you for now')}</h3><p>${tt('team.e.p','Invite a media buyer and compare results side by side.')}</p><button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>`}</section>
+    ${ms.some(m=>m.status==='active')?`<button class="card row17" data-act="nav" data-p="leaderboard"><span class="mr-ic">${I.results}</span><span class="mr-t"><b>${tt('team.lb','Compare your buyers')}</b><small>${tt('team.lb.p','Joins, deposits and cost per deposit, per person')}</small></span><span class="mr-go">${I.chevr}</span></button>`:''}`;
+}
+function tmMenu(a){
+  const m=((R17.team&&R17.team.members)||[]).find(x=>String(x.id)===a.dataset.id); if(!m) return;
+  const p=openPop(a, `${m.status!=='active'?`<button class="pi" data-act="tm-resend" data-id="${m.id}">${I.mail} ${tt('team.resend','Resend invite')}</button>`:''}<button class="pi" data-act="tm-edit" data-id="${m.id}">${I.gear} ${tt('team.edit','Change role or channels')}</button><hr><button class="pi pi-danger" data-act="tm-rm" data-id="${m.id}">${TRASH} ${tt('team.rm','Remove')}</button>`,'chm'); p.style.width='240px';
+}
+function inviteForm(m){
+  const r=R17.team||{}, role=(S.tmRole=S.tmRole||(m&&m.role)||'buyer'), sel=new Set(((m&&m.channel_ids)||[]).map(Number)), chs=(r.channels||[]).filter(c=>c.status!=='removed');
+  return `<form id="tmf" class="cs-form" novalidate>${m?'':`<div class="field"><label for="tme">${tt('team.email','Their email')}</label><input class="inp" id="tme" type="email" autocomplete="off" inputmode="email" placeholder="buyer@example.com" required></div>`}
+    <div class="field"><span class="lbl">${tt('team.role','Role')}</span><div class="role-pick" role="radiogroup">
+      <button type="button" class="rp" role="radio" data-act="tm-role" data-v="buyer" aria-checked="${role==='buyer'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.b','Media buyer')}</b><small>${tt('team.r.b.p','Sees only the channels you pick')}</small></span></button>
+      <button type="button" class="rp" role="radio" data-act="tm-role" data-v="manager" aria-checked="${role==='manager'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.m','Manager')}</b><small>${tt('team.r.m.p','Sees every channel. Never billing or team.')}</small></span></button></div></div>
+    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span>${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
+    <div id="tmerr"></div><button class="btn primary lg wide" type="submit">${m?tt('common.save','Save'):tt('team.send','Send invite')}</button></form>`;
+}
+function openInvite(m){
+  S.tmRole=(m&&m.role)||'buyer'; const s=(R17.team&&R17.team.seats)||{};
+  sheet(`<h2>${m?tt('team.edit','Change role or channels'):tt('team.inv.h','Invite to your team')}<small>${m?esc(m.email):s.included?tt('team.inv.s','{a} of {b} seats used',{a:fmt(s.used||0),b:fmt(s.included)}):''}</small></h2>`, `${inviteForm(m)}`);
+  $('#tmf').addEventListener('submit', async e=>{ e.preventDefault(); const b=e.submitter; const ids=$$('#tmch input:checked').map(x=>+x.value);
+    const body={role:S.tmRole, channel_ids:S.tmRole==='buyer'?ids:[]}; if(!m){ body.email=$('#tme').value.trim(); if(!body.email){ $('#tme').focus(); return; } }
+    if(b) b.disabled=true;
+    try { if (m){ await api('PATCH','/api/team/'+m.id, body); closeSheet(); toast(tt('common.saved','Saved')); }
+      else { const r=await api('POST','/api/team/invite', body); inviteDone(r); }
+      viewTeamReload(); }
+    catch(err){ if(b) b.disabled=false; if (err.status===402) return seatSheet(err.body||{}); $('#tmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; } });
+}
+function inviteDone(r){
+  sheet(`<h2>${tt('team.sent','Invite ready')}<small>${esc(r.member&&r.member.email||'')}</small></h2>`, `<div class="lim-done"><span class="ld-ic">${I.check}</span><b>${r.emailed?tt('team.emailed','We emailed them the invite.'):tt('team.share','Email isn’t set up, share this link')}</b><span>${tt('team.valid','The link works for 7 days.')}${r.charged_cents?' '+tt('team.charged','{p} was taken from your wallet for the extra seat.',{p:centsTxt(r.charged_cents)}):''}</span></div>
+    <div class="codebox"><code>${esc(r.invite_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.invite_url||'')}">${I.copy} ${tt('common.copy','Copy')}</button></div><button class="btn lg wide" data-act="close">${tt('common.done','Done')}</button>`);
+}
+function seatSheet(b){
+  const up=b.upgrade, need=b.need_cents;
+  sheet(`<h2>${up?tt('seat.up.h','Team seats come with Pro'):tt('seat.top.h','Top up to add a seat')}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true">${[0,1,2].map(i=>`<i style="--d:${i*90}ms">${I.team}</i>`).join('')}<span class="lh-plus">${I.lock}</span></div><b>${esc(b.error||'')}</b><span>${up?tt('seat.up.p','Pro includes 3 team members. Extra seats are $5 a month each.'):tt('seat.top.p','An extra seat costs {p} a month, paid from your credits.',{p:centsTxt(need||500)})}</span></div>
+    ${up?`<button class="btn primary lg wide" data-act="lim-up">${I.sparkles} ${tt('pro.upgrade','Upgrade to Pro')}</button>`:`<button class="btn primary lg wide" data-act="deposit">${I.plus} ${tt('credits.buy','Buy credits')}</button>`}<button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
+}
+async function viewTeamReload(){ try { R17.team=await api('GET','/api/team'); drawTeam(); } catch{} }
+function tmRemove(id){
+  const m=((R17.team&&R17.team.members)||[]).find(x=>String(x.id)===String(id)); if(!m) return;
+  sheet(`<h2>${tt('team.rm.h','Remove from your team?')}<small>${esc(m.email)}</small></h2>`, `<p class="muted cs-lead">${tt('team.rm.p','They lose access right away. Their past results stay. The seat is freed (no refund).')}</p><div id="tmrmerr"></div><button class="btn danger lg wide" data-act="tm-rm-go" data-id="${m.id}">${TRASH} ${tt('team.rm','Remove')}</button><button class="btn ghost wide" data-act="close">${tt('common.cancel','Cancel')}</button>`);
+}
+
+/* ---------- Daily report in Telegram ---------- */
+async function viewReport(){
+  S.redraw=[];
+  $('#view').innerHTML=`<div class="view rep17"><div class="ph"><div><h1>${tt('more.report','Daily report')}</h1><p>${tt('rep.p','Yesterday’s joins, deposits and costs, sent to your Telegram every morning.')}</p></div></div><div id="rp"><div class="sk" style="height:300px;border-radius:24px"></div></div></div>`;
+  let r; try { r=await api('GET','/api/report-settings'); } catch(e){ const el=$('#rp'); if(el) el.innerHTML=`<div class="card"><div class="empty"><h3>${esc(e.message)}</h3></div></div>`; return; }
+  R17.rep=r; if (S.page!=='report') return; drawReport(); repPreview();
+}
+function drawReport(){
+  const el=$('#rp'), r=R17.rep; if(!el||!r) return; const opts=r.link_options||[], first=opts[0];
+  el.innerHTML=`<div class="rep-g"><section class="card rep-set">
+      <div class="cs-row"><span class="mr-t"><b>${tt('rep.on','Send me a daily report')}</b><small>${r.scope==='team'?tt('rep.team','For this team’s channels you can see.'):tt('rep.own','For all your channels.')}</small></span>${sw('rep-on',r.enabled,tt('rep.on','Send me a daily report'),r.linked?'':'disabled')}</div>
+      <div class="cs-row"><span class="mr-t"><b>${tt('rep.time','Time')}</b><small>${esc(r.tz||'UTC')}${r.hour_note?' · '+esc(r.hour_note):''}</small></span><select class="sel rep-h" id="reph" aria-label="${esc(tt('rep.time','Time'))}">${Array.from({length:24},(_,h)=>`<option value="${h}" ${h===r.hour?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></div>
+      <div class="rep-tg ${r.linked?'on':''}"><span class="mr-ic">${I.report}</span><span class="mr-t"><b>${r.linked?tt('rep.linked','Telegram linked'):tt('rep.link','Link your Telegram')}</b><small>${r.linked?(r.via==='tracking_bot'?tt('rep.via.t','Sent by your tracking bot'):tt('rep.via.a','Sent by the Joinvoo alert bot')):tt('rep.link.p','Open the bot and press Start. It takes 5 seconds.')}</small></span>${r.linked?`<button class="btn sm ghost" data-act="rep-off">${tt('rep.unlink','Unlink')}</button>`:''}</div>
+      ${r.linked?'':`<div class="rep-links">${opts.map((o,i)=>`<a class="btn ${i?'':'primary'} wide" href="${esc(o.url)}" target="_blank" rel="noopener" data-act="rep-link" data-via="${esc(o.via)}">${I.report} ${o.via==='alert_bot'?tt('rep.open.a','Open @{u}',{u:esc(o.username)}):tt('rep.open.t','Use my bot @{u}',{u:esc(o.username)})}</a>`).join('')}${first?'':`<p class="hint">${tt('rep.nobot','Connect a tracking bot first.')}</p>`}<span class="rep-wait" id="repwait" hidden><i></i>${tt('rep.wait','Waiting for you to press Start…')}</span></div>`}
+      <button class="btn wide" data-act="rep-test" ${r.linked?'':'disabled'}>${I.send} ${tt('rep.test','Send a test now')}</button>
+      ${r.last_sent?`<p class="hint">${tt('rep.last','Last sent {t}',{t:ago(r.last_sent.at)})}</p>`:''}</section>
+    <section class="rep-prev"><span class="lbl">${tt('rep.prev','Preview')}</span><div class="tgp rep-tgp"><div class="tgp-h"><span class="tgp-av">${I.report}</span><span><b>${r.via==='tracking_bot'&&opts[1]?'@'+esc(opts[1].username):'Joinvoo Alerts'}</b><small>bot</small></span></div><div class="tgp-b"><div class="tgp-msg rep-msg" id="repmsg"><span class="sk" style="height:140px;display:block"></span></div></div></div></section></div>`;
+}
+const arrow17 = (a,b) => { if(!b&&!a) return ''; if(!b) return ' ↑'; const d=(a-b)/b*100; return Math.abs(d)<0.5?' →0%':` ${d>0?'↑':'↓'}${Math.abs(d).toFixed(0)}%`; };
+function repText(R){
+  const T=R.totals||{}, P=R.previous||{}, d=parseYmd(R.day).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});
+  return `📊 <b>Joinvoo daily report · ${esc(d)}</b>\n\n👆 Clicks: <b>${fmt(T.clicks)}</b>${arrow17(T.clicks,P.clicks)}\n👥 Joins: <b>${fmt(T.joins)}</b>${arrow17(T.joins,P.joins)}\n💰 Deposits: <b>${fmt(T.ftd)}</b>${arrow17(T.ftd,P.ftd)}\n💵 Revenue: <b>${money0(T.revenue_cents)}</b>${arrow17(T.revenue_cents,P.revenue_cents)}\n📉 Spend: <b>${money0(T.spend_cents)}</b>${arrow17(T.spend_cents,P.spend_cents)}\n🎯 Cost per join: <b>${centsOr(T.cost_per_join_cents)}</b>\n🏦 Cost per deposit: <b>${centsOr(T.cost_per_ftd_cents)}</b>${R.best_channel?`\n\n🏆 Best channel: <b>${esc(R.best_channel.title)}</b> (${fmt(R.best_channel.n)} ${esc(R.best_channel.by)})`:''}${R.best_campaign?`\n🚀 Best campaign: <b>${esc(R.best_campaign.name)}</b>`:''}`;
+}
+async function repPreview(R){
+  const el=$('#repmsg'); if(!el) return;
+  if (!R){ const y=ymd(addDays(new Date(),-1)), y2=ymd(addDays(new Date(),-2));
+    try { const [a,b]=await Promise.all([api('GET',`/api/stats?from=${y}&to=${y}&${tzq()}`),api('GET',`/api/stats?from=${y2}&to=${y2}&${tzq()}`)]); const T=a.totals, P=b.totals;
+      R={day:y,totals:{...T,cost_per_join_cents:T.spend_cents&&T.joins?T.spend_cents/T.joins:null,cost_per_ftd_cents:T.spend_cents&&T.ftd?T.spend_cents/T.ftd:null},previous:P}; } catch { return; } }
+  if ($('#repmsg')) $('#repmsg').innerHTML=repText(R).replace(/\n/g,'<br>')+`<span class="tgp-t">${String((R17.rep&&R17.rep.hour)??8).padStart(2,'0')}:00</span>`;
+}
+async function repPatch(body){ try { const r=await api('PATCH','/api/report-settings',body); R17.rep=r; drawReport(); repPreview(); return r; } catch(e){ toast(e.message,false); drawReport(); } }
+function repPoll(){
+  const w=$('#repwait'); if(w) w.hidden=false; clearInterval(R17.repT); let n=0;
+  R17.repT=setInterval(async()=>{ if(S.page!=='report'||++n>60){ clearInterval(R17.repT); return; } try { const r=await api('GET','/api/report-settings'); if(r.linked){ clearInterval(R17.repT); R17.rep=r; drawReport(); repPreview(); toast(tt('rep.ok','Telegram linked. Your report is on.')); } } catch{} }, DEMO?1500:3000);
+}
+
+/* ---------- team invite links, Meta return, deep links (?team= ?tutorial= ?meta= #channels/backup/<id> …) ---------- */
+async function r17Boot(){
+  if (R17.init) return; R17.init=true;
+  const qp=new URLSearchParams(location.search), clean=k=>{ qp.delete(k); history.replaceState(null,'',location.pathname+(qp.toString()?'?'+qp:'')+location.hash); };
+  if (isOwner() && !R17.team) api('GET','/api/team').then(r=>{ R17.team=r; if(RES_SET.has(S.page)) drawSubnav(S.page); }).catch(()=>{});
+  const te=qp.get('team_error'); if (te){ clean('team_error'); toast(te==='expired'?tt('team.exp','That team invite expired. Ask for a new one.'):tt('team.inv0','That team invite link isn’t valid.'),false); }
+  const tk=qp.get('team'); if (tk){ clean('team'); clean('email'); teamAsk(tk); }
+  const mt=qp.get('meta'), me=qp.get('meta_error');
+  if (mt==='connected' && !DEMO){ clean('meta'); toast(tt('mt.ok','Meta connected. Spend comes in every hour.')); }
+  if (me){ clean('meta_error'); toast(tt('mt.err','Meta wasn’t connected ({e}). Try again.',{e:me}),false); }
+  const tu=qp.get('tutorial'); if (tu && TUT.some(t=>t.id===tu)){ clean('tutorial'); setTimeout(()=>tutOpen(tu),350); }
+  const h0=S.hash0; S.hash0=null; deepLink(h0!=null?h0:location.hash.slice(1));
+}
+function deepLink(h){
+  let m;
+  if ((m=/^channels\/(backup|switch-back|link-domain)\/(\d+)/.exec(h))||(m=/^channels\/(\d+)$/.exec(h))){
+    const kind=m.length>2?m[1]:'open', id=m.length>2?m[2]:m[1];
+    try{ history.replaceState(null,'','#channels'); }catch{}
+    if (S.page!=='channels') go('channels');
+    setTimeout(()=>{ if(kind==='link-domain') openDeadlink(id); else if(kind==='switch-back'){ const c=chById(id); if(c) openCS(id,'backup'); } else openCS(id, kind==='backup'?'backup':undefined); }, 500);
+    return true; }
+  if (h==='spend'){ try{ history.replaceState(null,'','#results'); }catch{} go('results'); return true; }
+  return false;
+}
+const ibNav0 = ibNav;
+ibNav = function(u){ const m=/^#tab:(channels\/[\w/-]+|spend)$/.exec(u||''); if (m){ closePop(); deepLink(m[1]); return; } return ibNav0(u); };
+addEventListener('hashchange',()=>{ if ($('#shell')) deepLink(location.hash.slice(1)); });
+async function teamAsk(tk){
+  let i; try { i=await api('GET','/api/team/invite-info?token='+encodeURIComponent(tk)); } catch(e){ toast(e.status===410?tt('team.exp','That team invite expired. Ask for a new one.'):tt('team.inv0','That team invite link isn’t valid.'),false); return; }
+  sheet(`<h2>${tt('team.join.h','Join {n}’s team?',{n:esc(i.owner_name||i.owner_email)})}</h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true"><i>${I.team}</i></div><b>${tt('team.join.b','You’ll join as {r}',{r:esc(i.role_name||ROLE_T(i.role))})}</b><span>${i.role==='buyer'?tt('team.join.pb','You’ll see the channels {n} gives you. Your own account stays as it is.',{n:esc(i.owner_name||'')}):tt('team.join.pm','You’ll see all of {n}’s channels and results. Your own account stays as it is.',{n:esc(i.owner_name||'')})}</span></div>
+    <div id="tjerr"></div><button class="btn primary lg wide" data-act="team-accept" data-v="${esc(tk)}">${tt('team.join.go','Join the team')} ${I.arrow}</button><button class="btn ghost wide" data-act="close">${tt('team.join.no','Not now')}</button>`);
+}
+async function teamAccept(a){
+  a.disabled=true;
+  try { const r=await api('POST','/api/team/accept',{token:a.dataset.v}); closeSheet(); const ws=await api('GET','/api/workspace'); R17.ws=ws; if(S.me) S.me.workspace=ws; await refreshChans(); setRole(); S.page='overview'; renderApp();
+    toast(tt('team.joined','Welcome to {n}’s team',{n:r.owner_name||''})); }
+  catch(e){ $('#tjerr').innerHTML=`<div class="err">${esc(e.message)}</div>`; a.disabled=false; }
+}
+
+/* ---------- setup: one question per screen, “Watch how” on steps 1–3 ---------- */
+const drawStep0 = drawStep;
+drawStep = function(){
+  drawStep0();
+  const s=$('#stp .step'); if(!s) return;
+  const id = W.step===1&&!W.pickBot ? 't1' : W.step===2 ? (W.mode==='bot'&&W.bsub==='external'?'t7':'t2') : W.step===3 ? ($('#jrf')?'t4':'t3') : null;
+  if (id && !s.querySelector('.watch')){ const h=s.querySelector('h1'); if(h) h.insertAdjacentHTML('afterend', watchBtn(id)); }
+};
+const renderSetup0 = renderSetup;
+renderSetup = async function(step, fromApp, opt){
+  await renderSetup0(step, fromApp, opt);
+  const qp=new URLSearchParams(location.search), tu=qp.get('tutorial');
+  if (tu && TUT.some(t=>t.id===tu)){ qp.delete('tutorial'); history.replaceState(null,'',location.pathname+(qp.toString()?'?'+qp:'')+location.hash); setTimeout(()=>tutOpen(tu),350); }
+};
+
+/* ---------- Help & tutorials page: the tutorials first, then the existing help ---------- */
+const viewHelp0 = viewHelp;
+viewHelp = function(){
+  viewHelp0();
+  const v=$('#view .view'); if(!v) return;
+  const ph=v.querySelector('.ph'); if (ph){ const e=ph.querySelector('.eyebrow'); if(e) e.remove(); const h=ph.querySelector('h1'); if(h) h.textContent=tt('help.h','Help & tutorials'); const p=ph.querySelector('p'); if(p) p.textContent=tt('help.p','Short videos for every step. Real people in chat when you need them.'); }
+  ph && ph.insertAdjacentHTML('afterend', `<section class="tut-sec"><div class="card-h tut-h"><h2>${tt('tut.h','Video tutorials')}</h2><span class="sub">${tt('tut.n','{n} short videos',{n:TUT.length})}</span></div><div class="tut-grid">${TUT.map(t=>`<button class="tut-card" data-act="tut" data-v="${t.id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(t.id)}</span><span class="tut-play">${I.play}</span><em>${tutLen(t.id)}</em></span><span class="tut-t"><b>${esc(tt('tut.'+t.id,t.title))}</b><small>${esc(t.where)}</small></span></button>`).join('')}</div></section>`);
+};
+
+/* ---------- handlers ---------- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'cs-open': e.preventDefault(); openCS(a.dataset.id, a.dataset.tab); break;
+    case 'cs-tab': if(S.cs){ S.cs.tab=a.dataset.v; S.csPlat=null; drawCS(); const b=$('#csbody'); if(b) b.scrollTop=0; const sb=$('.cs-sheet .sheet-b'); if(sb) sb.scrollTop=0; } break;
+    case 'cs-plat': S.csPlat=S.csPlat===a.dataset.p?null:a.dataset.p; drawCS(); break;
+    case 'cs-jr': { const c=chById(a.dataset.id); if(!c) break; if (jrOn(c)){ csPatch(c.id,{join_mode:'link'},tt('jr.off2','Back to direct invite links')); }
+      else if (jrAp(c)==='joinvoo' && !c.offer_text){ S.csJrOpen=true; drawCS(); setTimeout(()=>{ const f=$('#jro'); if(f) f.focus(); },50); }
+      else csPatch(c.id,{join_mode:'request'},tt('jr.on3','Request-to-join is on')); break; }
+    case 'cs-auto': if(!a.disabled){ const on=a.getAttribute('aria-checked')!=='true'; csPatch(a.dataset.id,{auto_failover:on},on?tt('bk.auto.on','Your ads switch to the backup by themselves'):tt('bk.auto.off','Automatic switch is off. We’ll still alert you.')); } break;
+    case 'sw-back': switchBack(a); break;
+    case 'dl-open': openDeadlink(a.dataset.id); break;
+    case 'dl-pick': dlPick(a); break;
+    case 'dom-sheet': openDomSheet(); break;
+    case 'bots-sheet': openBotsSheet(); break;
+    case 'ws-pop': $('.pop.wsp')?closePop():wsPop(a); break;
+    case 'ws-pop-in': { const ch=$('#wschip')||$('.tb-ava'); closePop(); setTimeout(()=>wsPop(ch||a),0); break; }
+    case 'ws-go': wsGo(a.dataset.id); break;
+    case 'team-invite': openInvite(null); break;
+    case 'tm-role': S.tmRole=a.dataset.v; $$('[data-act="tm-role"]').forEach(b=>b.setAttribute('aria-checked',b===a)); { const c=$('#tmch'); if(c) c.hidden=S.tmRole!=='buyer'; } break;
+    case 'tm-menu': tmMenu(a); break;
+    case 'tm-edit': closePop(); { const m=((R17.team&&R17.team.members)||[]).find(x=>String(x.id)===a.dataset.id); if(m) openInvite(m); } break;
+    case 'tm-resend': closePop(); api('POST',`/api/team/${a.dataset.id}/resend`).then(r=>{ inviteDone(r); viewTeamReload(); }).catch(err=>{ if(err.status===402) seatSheet(err.body||{}); else toast(err.message,false); }); break;
+    case 'tm-rm': closePop(); tmRemove(a.dataset.id); break;
+    case 'tm-rm-go': a.disabled=true; api('DELETE','/api/team/'+a.dataset.id).then(()=>{ closeSheet(); toast(tt('team.rmd','Removed from your team')); viewTeamReload(); }).catch(err=>{ $('#tmrmerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; a.disabled=false; }); break;
+    case 'team-accept': teamAccept(a); break;
+    case 'rep-on': if(!a.disabled) repPatch({enabled:a.getAttribute('aria-checked')!=='true'}); break;
+    case 'rep-off': repPatch({disconnect:true}); break;
+    case 'rep-link': if (DEMO){ e.preventDefault(); toast(tt('rep.demo','In the real app this opens Telegram')); api('POST','/api/demo/report-link',{via:a.dataset.via}); } repPoll(); break;
+    case 'rep-test': a.disabled=true; api('POST','/api/report-settings/test').then(r=>{ toast(tt('rep.sent','Sent. Check your Telegram.')); if(r.report) repPreview(r.report); }).catch(err=>{ toast(err.message,false); if(err.body&&err.body.report) repPreview(err.body.report); }).finally(()=>a.disabled=false); break;
+    case 'meta-connect': if (DEMO){ e.preventDefault(); toast(tt('mt.demo','In the real app this opens Facebook to log in')); } else { e.preventDefault(); location.href=a.getAttribute('href'); } break;
+    case 'meta-sync': a.disabled=true; api('POST','/api/meta/sync').then(r=>{ toast(tt('mt.synced2','Synced {n} rows',{n:fmt((r.sync&&r.sync.rows)||0)})); metaBox(a.closest('.metabox'),true); }).catch(err=>{ toast(err.message,false); a.disabled=false; }); break;
+    case 'meta-off': a.disabled=true; api('DELETE','/api/meta').then(()=>{ toast(tt('mt.offd','Meta disconnected. Synced spend stays.')); metaBox(a.closest('.metabox'),true); }).catch(err=>{ toast(err.message,false); a.disabled=false; }); break;
+    case 'meta-map': metaMap(); break;
+  }
+});
+document.addEventListener('change', e=>{
+  const t=e.target; if(!t.dataset) return;
+  if (t.dataset.csbk){ const v=t.value; csPatch(t.dataset.csbk,{backup_channel_id:v?+v:null},v?tt('bk.set','Backup channel saved'):tt('bk.unset','Backup channel removed')); }
+  if (t.id==='reph') repPatch({hour:+t.value});
+  if (t.dataset.metaAcc){ const sel=$$('[data-meta-acc]:checked').map(x=>x.dataset.metaAcc); api('PATCH','/api/meta/accounts',{selected:sel}).then(()=>toast(tt('common.saved','Saved'))).catch(err=>toast(err.message,false)); }
+  if (t.dataset.metaCamp){ api('PATCH','/api/meta/campaigns/'+encodeURIComponent(t.dataset.metaCamp),{channel_id:t.value?+t.value:null}).then(r=>toast(tt('mt.mapped','Matched. {n} days of spend moved.',{n:r.spend_rows_updated||0}))).catch(err=>toast(err.message,false)); }
+});
