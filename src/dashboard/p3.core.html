@@ -171,6 +171,8 @@ function deltaChip(a,b,goodUp=true,title){
   return `<span class="delta ${good?'up':'dn'}" title="${esc(title||'')}">${up?I.up:I.dn}${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0)}%</span>`;
 }
 function stopTimers(){ S.timers.forEach(clearInterval); S.timers=[]; }
+S.lastPtr=0; ['pointerdown','touchstart','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{ S.lastPtr=Date.now(); },{capture:true,passive:true}));
+const busyPtr=()=>Date.now()-(S.lastPtr||0)<2500; // the user is mid-tap: don't swap the page under them
 function every(ms, fn){ const t=setInterval(()=>{ if(!document.hidden) fn(); }, ms); S.timers.push(t); return t; }
 
 /* ---------- config & feature switches (admin-managed; every field optional) ---------- */

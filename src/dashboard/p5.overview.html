@@ -112,7 +112,7 @@ async function viewOverview(){
   </div>`;
   drawBlogNew(); drawCountryBanner(); drawSisterCard(); showcaseStart();
   await loadOverview(true);
-  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')) loadOverview(false); });
+  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!busyPtr()&&!$('.sheet')) loadOverview(false); });
 }
 /* Fills the #kpis grid (KPI_DEF tiles + Ad spend / Cost per FTD when there is spend). Shared by the Overview loaders. */
 function drawKpis(st,prev,first){

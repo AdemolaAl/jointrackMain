@@ -5,10 +5,10 @@ This guide is for a developer who already runs Joinvoo on Railway with real cust
 ## Tutorial voiceovers (6 October 2026)
 
 The 9 in-app video tutorials play `public/media/tutorials/t1.mp3` … `t9.mp3` when present (captions-only until then; never an error).
-The voiceovers are already recorded in the owner's ElevenLabs account (flow “Joinvoo tutorials voiceover”, voice “Sulbyee – Nigerian Professional”, 4 takes each):
+The voiceovers are already recorded in the owner's ElevenLabs account (flow “Joinvoo tutorials voiceover (international)”, voice “Jacob L.” (American), 4 takes each):
 download one take per tutorial, name it `t1.mp3` … `t9.mp3` in the order of `docs/tutorials.json`, put them in `public/media/tutorials/`, run
 `bash src/dashboard/make.sh && python3 build/build.py`, and deploy. `server.js` now serves `/media/tutorials/*.mp3` (range requests, path-safe).
-The website's "Watch how it works" player also picks up `public/media/tutorials/home.mp3` if you add one (optional).
+The website's "Watch how it works" player plays `public/media/tutorials/home.mp3` (also in that flow, the 10th voiceover).
 
 ## Round 17 — 6 October 2026: team seats, daily Telegram report, ban protection, Meta spend sync, dead-link warning
 

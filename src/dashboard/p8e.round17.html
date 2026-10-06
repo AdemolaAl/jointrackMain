@@ -159,7 +159,7 @@ viewOverview = async function(){
   </div>`;
   drawBlogNew(); drawCountryBanner(); drawSisterCard(); showcaseStart(); drawOvAlerts();
   await loadOv(true);
-  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!$('.sheet')&&!$('.tvp')) loadOv(false); });
+  if (range()[1]===ymd(new Date())) every(DEMO?3500:8000, ()=>{ if(S.page==='overview'&&!busyPtr()&&!$('.sheet')&&!$('.tvp')) loadOv(false); });
 };
 let seen17=new Set();
 async function loadOv(first){
@@ -328,7 +328,7 @@ viewChannels = async function(){
   S.redraw=[];
   $('#view').innerHTML=`<div class="view chv17"><div class="ph"><div><h1>${tt('nav.channels','Channels')}</h1><p>${tt('ch17.p','One ad link per channel. Tap Settings for everything else.')}</p></div><div class="ph-act"><button class="btn primary sm" data-act="add-channel">${I.plus} ${tt('ch17.add','Add channel')}</button></div></div><div id="cl"><div class="chs">${'<div class="card ch17"><div class="sk" style="height:150px"></div></div>'.repeat(2)}</div></div></div>`;
   await refreshChans(); setRole(); drawChannels();
-  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')||$('.tvp')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
+  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')||$('.tvp')||busyPtr()) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old && S.page==='channels' && !$('.sheet') && !busyPtr()) drawChannels(); });
 };
 const CH_TYPE = c => c.type==='bot'?(c.external?tt('ch.botnt','Bot · no token'):tt('ch.bot','Bot')):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group');
 function chPill(c){
@@ -351,7 +351,7 @@ drawChannels = function(){
     return `<article class="card ch17${c.lost_at?' lost':''}${c.locked?' locked':''}" data-ch="${c.id}">
       <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
       ${chBanner(c)}${c.locked?chLockNote(c):''}
-      <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div></div>
+      <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>${utmCard17(c)}</div>
       <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${tt('ch17.today','joins today')}</span>
         <span class="c-pl">${plats.length?plats.map(p=>pm(p)).join(''):`<button class="chip y" data-act="cs-open" data-id="${c.id}" data-tab="ads">${tt('ch17.noads','No ad platform')}</button>`}</span>
         <button class="btn sm c-set" data-act="cs-open" data-id="${c.id}">${I.gear} ${tt('ch17.settings','Settings')}</button></div></article>`; }).join('')}
@@ -404,10 +404,26 @@ function drawCS(){
   el.innerHTML=csBody(c, S.cs.tab); csBind(c, S.cs.tab);
 }
 function csRefresh(){ if ($('#csbody') && S.cs && !($('#csbody').contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) drawCS(); }
+/* campaign tracking (UTM) parameters: shown on every channel card and in Settings → Ad platforms, so buyers always find them */
+const UTM17 = { meta:'?utm_source=meta&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}', tiktok:'?utm_source=tiktok&utm_campaign=__CAMPAIGN_NAME__&utm_content=__CID_NAME__', snap:'?utm_source=snapchat&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}' };
+function utmBlock17(c){
+  const ps=['meta'].concat(FEAT('tiktok')?['tiktok']:[]).concat(FEAT('snapchat')?['snap']:[]);
+  const hl=s=>esc(s).replace(/(\{\{[^}]+\}\}|__[A-Z_]+__)/g,'<b>$1</b>');
+  return `<div class="utm17"><div class="cs-sub">${tt('utm.h','Campaign tracking · URL parameters')}</div><p class="hint">${tt('utm.p','Paste these in your ad’s “URL parameters” field (or add them to the end of your link) so every join shows its campaign, ad set and ad.')}</p>
+    ${ps.map(p=>`<div class="utm17-r"><span class="uh">${pm(p)}${PLAT[p].name}</span><div class="codebox"><code>${hl(UTM17[p])}</code><button class="btn sm" data-act="copy" data-v="${esc(UTM17[p].slice(1))}">${I.copy} ${tt('utm.params','Parameters')}</button><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url+UTM17[p])}">${I.copy} ${tt('utm.full','Full link')}</button></div></div>`).join('')}</div>`;
+}
+function utmCard17(c){
+  const ps=['meta'].concat(FEAT('tiktok')?['tiktok']:[]).concat(FEAT('snapchat')?['snap']:[]);
+  const on=ps.filter(p=>platOn(c,p)); const cur=(S.utmP&&S.utmP[c.id]&&ps.includes(S.utmP[c.id]))?S.utmP[c.id]:(on[0]||'meta');
+  const hl=s=>esc(s).replace(/(\{\{[^}]+\}\}|__[A-Z_]+__)/g,'<b>$1</b>');
+  return `<div class="utmc"><div class="utmc-h"><span class="utmc-t">${tt('utm.tags','Campaign tags')}</span><span class="utmc-ps" role="tablist">${ps.map(p=>`<button type="button" class="utmc-p${p===cur?' on':''}" data-act="utm-p" data-id="${c.id}" data-p="${p}" aria-selected="${p===cur}" title="${PLAT[p].name}">${pm(p)}</button>`).join('')}</span></div>
+    <div class="codebox utmc-b"><code>${hl(UTM17[cur])}</code><button class="btn sm" data-act="copy" data-v="${esc(UTM17[cur].slice(1))}">${I.copy} ${tt('common.copy','Copy')}</button></div>
+    <small class="utmc-n">${tt('utm.where','Paste in your ad’s “URL parameters” field, or copy the full link with tags:')} <button type="button" class="link" data-act="copy" data-v="${esc(c.tracking_url+UTM17[cur])}">${tt('utm.full2','Copy link + tags')}</button></small></div>`;
+}
 const csHelp = (t,p) => `<div class="cs-intro"><b>${t}</b><small>${p}</small></div>`;
 function csBody(c, tab){
   const isB=c.type==='bot';
-  if (tab==='ads') return `${csHelp(tt('cs.ads.h','Tell your ads about every join'),tt('cs.ads.p','Each join from this link is sent to the platforms you connect, so your ads learn who really joins.'))}${watchBtn('t3')}
+  if (tab==='ads') return `${csHelp(tt('cs.ads.h','Tell your ads about every join'),tt('cs.ads.p','Each join from this link is sent to the platforms you connect, so your ads learn who really joins.'))}${watchBtn('t3')}${utmBlock17(c)}
     <div class="cs-list">${PLATS().map(p=>{ const on=platOn(c,p), open=S.csPlat===p, test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
       return `<div class="cs-pl${open?' open':''}"><button type="button" class="cs-plh" data-act="cs-plat" data-p="${p}" aria-expanded="${open}">${pm(p,1)}<span class="mr-t"><b>${PLAT[p].name}</b><small>${on?tt('cs.sends','Sends “{e}”',{e:esc(platEvent(c,p))})+(test?' · '+tt('cs.test','test mode'):''):tt('cs.notc','Not connected')}</small></span>${on?`<span class="chip g">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${tt('cs.on','On')}</span>`:`<span class="chip o">${tt('cs.connect','Connect')}</span>`}<span class="cs-chev">${I.chev}</span></button>
         ${open?`<form id="csmf" class="cs-plf">${platFields(p,c,true)}<div id="csmerr"></div><div class="row-in"><button class="btn primary" type="submit" style="flex:1">${tt('common.save','Save')}</button>${on?`<button class="btn" type="button" data-act="test" data-id="${c.id}" data-p="${p}">${tt('cs.sendtest','Send test')}</button>`:''}</div><a class="link" href="${GUIDE}" target="_blank" rel="noopener">${tt('cs.where','Where do I find these?')} ${I.ext}</a></form>`:''}</div>`; }).join('')}
@@ -431,7 +447,7 @@ function csBody(c, tab){
   if (tab==='ping') return `${csHelp(tt('cs.ping.h','Connect your bot’s Start'),tt('cs.ping.p','Your bot tells Joinvoo when someone presses Start. Your token stays with you.'))}${watchBtn('t7')}${hookPanel(c)}`;
   if (tab==='web') return `${csHelp(tt('sn.title','Send people from your own website'),tt('cs.web.p','Keep your landing page. Paste one line on it and visitors go from your page into Telegram, still tracked.'))}${watchBtn('t5')}<div class="cs-snip">${snipSection(c)}</div>`;
   if (tab==='domain') return `${csHelp(tt('cs.dom.h','Which domain your ad link uses'),tt('cs.dom.p','If a link domain gets blocked, pick another one here. Old links keep working.'))}${watchBtn('t6')}
-    <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div></div>
+    <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>${utmCard17(c)}</div>
     <div id="csdl" class="dl-list"><div class="sk" style="height:110px"></div></div>
     <button class="btn wide" data-act="dom-sheet">${I.globe} ${tt('cs.dom.manage','Add or manage your own domains')}</button>`;
   if (tab==='backup'){ const others=visChans(S.chans).filter(x=>x.id!==c.id&&x.status!=='removed'&&x.type!=='bot');
@@ -669,6 +685,7 @@ document.addEventListener('click', e=>{
     case 'sw-back': switchBack(a); break;
     case 'dl-open': openDeadlink(a.dataset.id); break;
     case 'dl-pick': dlPick(a); break;
+    case 'utm-p': { S.utmP=S.utmP||{}; S.utmP[a.dataset.id]=a.dataset.p; const card=a.closest('.utmc'); const c=chById(a.dataset.id); if(card&&c) card.outerHTML=utmCard17(c); break; }
     case 'dom-sheet': openDomSheet(); break;
     case 'bots-sheet': openBotsSheet(); break;
     case 'ws-pop': $('.pop.wsp')?closePop():wsPop(a); break;

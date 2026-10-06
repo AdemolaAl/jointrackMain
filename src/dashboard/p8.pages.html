@@ -6,7 +6,7 @@ async function viewChannels(){
   S.redraw=[];
   $('#view').innerHTML=`<div class="view"><div class="ph"><div><div class="eyebrow">Setup</div><h1>Channels</h1><p>Your tracked channels, groups and bots. Each one has its own link for your ads and sends joins to Meta, TikTok and Snapchat.</p></div><div class="ph-act"><button class="btn primary sm" data-act="add-channel">${I.plus} Add channel</button></div></div><div id="cl"><div class="chans">${'<div class="card" style="height:420px"><div class="sk" style="height:100%"></div></div>'.repeat(2)}</div></div></div>`;
   await refreshChans(); drawChannels();
-  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old) drawChannels(); });
+  every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')||busyPtr()) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old && S.page==='channels' && !$('.sheet') && !busyPtr()) drawChannels(); });
 }
 function drawChannels(){
   const d=S.chans, el=$('#cl'); if(!el) return; const list=visChans(d);

@@ -487,6 +487,75 @@ section.blk{padding-block:96px}
 .pfine{margin:4px 0 0;font-size:14px;color:var(--faint);max-width:70ch}
 .pfine button{border:0;background:none;padding:11px 2px;margin:-11px 0;font:inherit;font-weight:800;color:var(--brand-text);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
+/* hero: "Try the live demo" text link (third, lighter CTA; sits in .ctas so the two buttons never move) */
+.demo-l{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 8px;font-weight:700;font-size:16px;color:var(--ink);text-decoration:none;align-self:center;border-radius:12px}
+.demo-l i{width:8px;height:8px;border-radius:50%;background:var(--success,#2e9d6a);box-shadow:0 0 0 0 rgba(46,157,106,.5);animation:dlPulse 2s ease-out infinite;flex:none}
+.demo-l .ar{display:inline-block;transition:transform .2s;color:var(--brand-text)}
+.demo-l:hover .ar{transform:translateX(3px)}
+.demo-l:hover{color:var(--brand-text)}
+@keyframes dlPulse{70%,100%{box-shadow:0 0 0 8px rgba(46,157,106,0)}}
+@media (max-width:420px){.hcopy .ctas{gap:10px}.demo-l{min-height:40px;margin-top:-2px}}
+
+/* savings calculator (#calc): inputs left, dark result panel right; stacks on phones */
+.calc{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);width:100%;max-width:980px;margin-top:30px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow);overflow:hidden}
+.cin{padding:34px;display:flex;flex-direction:column;gap:30px;min-width:0}
+.cper{margin-top:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cper div{padding:14px 16px;border-radius:18px;background:var(--sunk);display:flex;flex-direction:column;gap:2px;justify-content:space-between;min-width:0}
+.cper div.on{background:var(--lilac)}
+.cper span{font-size:13px;font-weight:700;color:var(--muted)}
+.cper output{font-size:22px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.cper div.on output{color:var(--brand-text)}
+.cf{display:flex;flex-direction:column;gap:14px;min-width:0;border:0;margin:0;padding:0}
+.cf-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cl{font-weight:800;font-size:16px;color:var(--ink);padding:0}
+.cnum{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;font-weight:600}
+.cin input.ct{width:8.2em;min-width:0;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:800 16px/1.2 var(--f);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:-.01em;transition:border-color .2s,box-shadow .2s}
+.cin input.ct:focus{outline:none;border-color:var(--brand,#5b3df5);box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 18%,transparent)}
+.cin input.ct[aria-invalid="true"]{border-color:var(--rose)}
+.crange{-webkit-appearance:none;appearance:none;width:100%;height:32px;margin:0;background:transparent;cursor:pointer;--p:50%}
+.crange::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,#5b3df5,#8f7bff) 0/var(--p) 100% no-repeat,var(--sunk)}
+.crange::-moz-range-track{height:8px;border-radius:99px;background:var(--sunk)}
+.crange::-moz-range-progress{height:8px;border-radius:99px;background:linear-gradient(90deg,#5b3df5,#8f7bff)}
+.crange::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 6px color-mix(in srgb,#5b3df5 22%,transparent),0 4px 12px rgba(20,20,40,.25);transition:box-shadow .2s}
+.crange::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:0;box-shadow:0 0 0 6px color-mix(in srgb,#5b3df5 22%,transparent),0 4px 12px rgba(20,20,40,.25)}
+.crange:focus{outline:none}
+.crange:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 6px color-mix(in srgb,#5b3df5 45%,transparent),0 4px 12px rgba(20,20,40,.25)}
+.crange:focus-visible::-moz-range-thumb{box-shadow:0 0 0 6px color-mix(in srgb,#5b3df5 45%,transparent),0 4px 12px rgba(20,20,40,.25)}
+.cscale{display:flex;justify-content:space-between;font-size:13px;color:var(--faint);font-weight:600;font-variant-numeric:tabular-nums;margin-top:-6px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:var(--sunk)}
+.seg label{position:relative;display:block;cursor:pointer}
+.seg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.seg label span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 8px;border-radius:12px;font-weight:700;font-size:15.5px;color:var(--muted);font-variant-numeric:tabular-nums;transition:background .2s,color .2s,box-shadow .2s;white-space:nowrap}
+.seg input:checked+span{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(20,20,18,.06),0 6px 16px -8px rgba(40,20,120,.3)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.ccust{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:14.5px;font-weight:600;animation:drop .3s cubic-bezier(.2,.8,.2,1)}
+.ccust[hidden]{display:none}
+.cpre{position:relative;display:inline-flex;align-items:center}
+.cpre b{position:absolute;left:14px;color:var(--muted);font-weight:800;pointer-events:none}
+.cin .cpre input.ct{padding-left:28px;width:7.4em;text-align:left}
+.cout{position:relative;isolation:isolate;background:#0b0a12;color:#fff;padding:34px;display:flex;flex-direction:column;gap:16px;min-width:0;overflow:hidden}
+.cout::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 60% at 100% 0%,rgba(91,61,245,.45),transparent 70%),radial-gradient(60% 50% at 0% 100%,rgba(143,123,255,.22),transparent 70%)}
+.cr{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cr-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ck{font-size:13.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a9a6bd}
+.cplan{font-size:13px;font-weight:600;color:#a9a6bd}
+.cv{display:flex;align-items:baseline;gap:6px;min-width:0}
+.cv output{font-size:clamp(34px,4.4vw,46px);font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cv small{font-size:15px;font-weight:600;color:#a9a6bd}
+.cr.c-el .cv output{color:#d9d7e6}
+.cbar{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.cbar i{display:block;height:100%;border-radius:inherit;background:rgba(255,255,255,.38);transform-origin:left;transform:scaleX(1);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.cr.c-jv .cbar i{background:linear-gradient(90deg,#8f7bff,#c8f169)}
+.csave{margin-top:auto;padding:16px 18px;border-radius:20px;background:rgba(200,241,105,.1);border:1px solid rgba(200,241,105,.32);color:#e9ffc2;font-size:16px;font-weight:600;line-height:1.45;transition:background .3s,border-color .3s}
+.csave b{display:inline-block;color:#c8f169;font-size:clamp(26px,3.2vw,32px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1.1}
+.csave span{display:block;color:#c3d99a;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.csave.neutral{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:#d9d7e6}
+.csave.neutral b{color:#fff}.csave.neutral span{color:#a9a6bd}
+.cnote{margin:0;font-size:13.5px;color:#8e8ba3;line-height:1.5}
+@media (max-width:760px){.calc{grid-template-columns:minmax(0,1fr);border-radius:28px}.cin,.cout{padding:24px 20px}.cin{gap:26px}}
+@media (max-width:360px){.cin,.cout{padding:22px 16px}.seg label span{font-size:14.5px;padding:0 4px}.cin input.ct{width:7.4em}}
+@media (prefers-reduced-motion:reduce){.cbar i,.ccust{transition:none;animation:none}.demo-l i{animation:none}}
+
 /* faq */
 .faq{width:100%;max-width:780px;margin-top:24px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:28px;overflow:hidden}
 .faq details{border-top:1px solid var(--line);padding:0 24px}
@@ -686,7 +755,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
     <div class="hcopy">
       <h1 data-i18n="u126p2">Your ad dashboard is <em class="lie">lying</em> <span class="g">if you’re not tracking your Telegram joins.</span></h1>
       <p data-i18n="o4ngko" class="lede"><b>Joinvoo feeds your ad platforms real joins, so they optimize for quality.</b> <span class="l2">Every join, deposit, purchase and sale is matched to the exact ad click on Meta, TikTok and Snapchat.</span></p>
-      <div class="ctas"><a data-i18n-t="fr3k4j" class="btn violet lg" href="signup.html">Start free <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button data-i18n-t="lwi2qh" class="btn lg play" type="button" data-xopen><span class="pi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></span>Watch how it works</button></div>
+      <div class="ctas"><a data-i18n-t="fr3k4j" class="btn violet lg" href="signup.html">Start free <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button data-i18n-t="lwi2qh" class="btn lg play" type="button" data-xopen><span class="pi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></span>Watch how it works</button><a data-i18n-t="12yhck0" class="demo-l" href="app.html"><i aria-hidden="true"></i>Try the live demo <span class="ar" aria-hidden="true">→</span></a></div>
       <p data-i18n="9cug1l" class="checks"><span><b class="fj">500</b> joins free</span><span>No card needed</span><span>Live in 10 minutes</span></p>
       <div class="ha-wrap">
         <p data-i18n="9j0ms" class="sr">Before and after Joinvoo. Without Joinvoo, Ads Manager shows 1,240 results at $0.40 each, but you can’t see which ad brought each join or who deposited. With Joinvoo, every join is matched to its ad and sent to Meta, deposits show up by ad, and Joe, your assistant, tells you where to move your budget.</p>
@@ -787,6 +856,38 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   </div>
 </div></section>
 
+<section class="blk" id="calc" style="padding-top:0" aria-labelledby="calcT"><div class="wrap center">
+  <span data-i18n="hfzy8g" class="kick reveal">Savings</span>
+  <h2 data-i18n="z7ucvu" class="h2 reveal" id="calcT">What tracking really costs you</h2>
+  <p data-i18n="1chu0t4" class="sub reveal">Put in your monthly joins and what you pay per lead today.</p>
+  <div class="calc reveal">
+    <div class="cin">
+      <div class="cf">
+        <div class="cf-h"><label data-i18n="12jh213" class="cl" id="cJoinsL" for="cJoinsN">Monthly joins</label><span class="cnum"><input class="ct" id="cJoinsN" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="30,000" aria-describedby="cJoinsH"></span></div>
+        <input class="crange" id="cJoins" type="range" min="0" max="1000" step="5" value="492" aria-labelledby="cJoinsL" aria-describedby="cJoinsH" aria-valuetext="30,000">
+        <div data-i18n="drbt49" class="cscale" id="cJoinsH"><span>1,000</span><span class="sr">to</span><span>1,000,000</span></div>
+      </div>
+      <fieldset class="cf">
+        <legend data-i18n="14dv5f5" class="cl">What you pay per lead elsewhere</legend>
+        <div class="seg">
+          <label><input type="radio" name="cRate" value="0.02"><span>$0.02</span></label>
+          <label><input type="radio" name="cRate" value="0.03" checked><span>$0.03</span></label>
+          <label><input type="radio" name="cRate" value="custom"><span data-i18n="15dsham">Custom</span></label>
+        </div>
+        <div class="ccust" id="cCust" hidden><label data-i18n="v9np36" for="cRateC">Your price per lead</label><span class="cpre"><b aria-hidden="true">$</b><input class="ct" id="cRateC" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="0.05"></span></div>
+      </fieldset>
+      <div class="cper"><div><span data-i18n="1m6mxog">Per join elsewhere</span><output id="cPerE">$0.030</output></div><div class="on"><span data-i18n="1g6jn8h">Per join on Joinvoo</span><output id="cPerJ">$0.0197</output></div></div>
+    </div>
+    <div class="cout">
+      <div class="cr c-el"><div data-i18n="13xufmb" class="cr-h"><span class="ck">Elsewhere</span></div><div class="cv"><output id="cElse" for="cJoins cJoinsN cRateC">$900</output><small data-i18n="1t5c6k8">/month</small></div><div class="cbar" aria-hidden="true"><i id="cElseBar"></i></div></div>
+      <div class="cr c-jv"><div data-i18n="17ryx4" class="cr-h"><span class="ck">Joinvoo</span><small class="cplan" id="cPlan" data-noi18n>Basic plan</small></div><div class="cv"><output id="cJv" for="cJoins cJoinsN">$590</output><small data-i18n="1t5c6k8">/month</small></div><div class="cbar" aria-hidden="true"><i id="cJvBar"></i></div></div>
+      <div class="csave" id="cSave" data-noi18n>You save <b>$310</b>/month <span>($3,720 a year)</span></div>
+      <p data-i18n="1b30lj1" class="cnote">Based on current Joinvoo prices. Your ad spend isn’t included.</p>
+      <p class="sr" id="cLive" aria-live="polite" data-noi18n></p>
+    </div>
+  </div>
+</div></section>
+
 <section class="blk" id="pricing" style="padding-top:0"><div class="wrap center">
   <span data-i18n="1e656gd" class="kick reveal">Pricing</span>
   <h2 data-i18n="1xpd2vy" class="h2 reveal">Start free. <span>Pay as you grow.</span></h2>
@@ -820,7 +921,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
 <section class="blk" id="start" style="padding-top:0"><div class="wrap">
   <div class="cta reveal">
     <h2 data-i18n="wwt9z7">Stop guessing. <span>See every join.</span></h2><p data-i18n="1yb6iwh">Give Meta, TikTok and Snapchat the one signal they’re missing. Your first <span class="fj">500</span> joins are on us.</p>
-    <div class="ctas" style="justify-content:center"><a data-i18n="fr3k4j" class="btn violet lg" href="signup.html">Start free</a><button data-i18n="lwi2qh" class="btn lg ghost2" type="button" data-xopen>Watch how it works</button></div>
+    <div class="ctas" style="justify-content:center"><a data-i18n="fr3k4j" class="btn violet lg" href="signup.html">Start free</a><a data-i18n="12yhck0" class="btn lg ghost2" href="app.html">Try the live demo</a><button data-i18n="lwi2qh" class="btn lg ghost2" type="button" data-xopen>Watch how it works</button></div>
     <p data-i18n="1elvjsp" class="have">Already have an account? <a href="login.html">Log in</a></p></div>
   <p class="affl"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="1gr9ol1">Promote Joinvoo and earn up to 50% for life.</span> <a data-i18n="7u7gle" href="affiliates.html">VooSquare affiliates →</a></p>
 </div></section>
@@ -1209,6 +1310,56 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
     document.addEventListener('visibilitychange',sync); sync();
   })();
 
+  /* savings calculator: same plan numbers as the pricing cards (defaults = server defaults; /api/config below overwrites them) */
+  const PR={basic:{name:'Basic',base:3000,inc:2000,per:2},pro:{name:'Pro',base:9900,inc:5000,per:2}};
+  const calc=(function(){ const R=$('#cJoins'), N=$('#cJoinsN'), C=$('#cRateC'), cust=$('#cCust'); if(!R||!N) return {update(){}};
+    const MIN=1000, MAX=1000000, DEC=Math.log10(MAX/MIN);
+    const nice=j=>{ const st=j<10000?50:j<100000?500:j<500000?5000:10000; return Math.min(MAX,Math.max(MIN,Math.round(j/st)*st)); };
+    const toJ=v=>nice(MIN*Math.pow(10,DEC*v/1000)), toV=j=>Math.round(1000*Math.log10(j/MIN)/DEC);
+    const money=c=>{ const d=c/100, w=Math.abs(d-Math.round(d))<.005; return '$'+d.toLocaleString('en-US',{minimumFractionDigits:w?0:2,maximumFractionDigits:w?0:2}); };
+    const cost=(p,j)=>p.base+Math.max(0,j-p.inc)*p.per;
+    let joins=30000, rate=.03;
+    function plan(j){ let best=null; ['basic','pro'].forEach(k=>{ const p=PR[k]; if(p.base==null||p.inc==null||p.per==null) return; const c=cost(p,j); if(!best||c<best.c) best={k,c,name:p.name}; }); return best; }
+    /* count-up: tween each figure from what's on screen to the new value */
+    function tween(el,to,fmtf){ if(!el) return; const from=el._v==null?to:el._v; el._v=to; cancelAnimationFrame(el._r);
+      if(reduced||from===to){ el.textContent=fmtf(to); return; } const t0=performance.now(), D=480;
+      const step=now=>{ const k=Math.min(1,(now-t0)/D), e=1-Math.pow(1-k,3), v=from+(to-from)*e; el.textContent=k<1?fmtf(Math.round(v/100)*100):fmtf(to); if(k<1) el._r=requestAnimationFrame(step); };
+      el._r=requestAnimationFrame(step); }
+    let lt=0;
+    function update(){
+      const p=plan(joins); if(!p) return;
+      const els=Math.round(joins*rate*100), jv=p.c, save=els-jv;
+      tween($('#cElse'),els,money); tween($('#cJv'),jv,money);
+      const per=c=>'$'+(c/100).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:4}); $('#cPerE').textContent=per(els/joins); $('#cPerJ').textContent=per(jv/joins);
+      const mx=Math.max(els,jv,1); $('#cElseBar').style.transform='scaleX('+(els/mx).toFixed(4)+')'; $('#cJvBar').style.transform='scaleX('+(jv/mx).toFixed(4)+')';
+      $('#cPlan').textContent=_t('Cheapest plan:')+' '+p.name;
+      const sv=$('#cSave'); sv.classList.toggle('neutral',save<=0);
+      if(save>0) sv.innerHTML=_t('You save')+' <b id="cSaveN"></b>'+_t('/month')+' <span id="cSaveY"></span>';
+      else if(save<0) sv.innerHTML=_t('Joinvoo costs')+' <b id="cSaveN"></b>'+_t('/month')+' '+_t('more at this volume.')+' <span id="cSaveY"></span>';
+      else sv.innerHTML=_t('Same price at this volume.')+' <b id="cSaveN" hidden></b><span id="cSaveY"></span>';
+      const sn=$('#cSaveN'), sy=$('#cSaveY'); sn._v=sv._sv; tween(sn,Math.abs(save),money); sv._sv=Math.abs(save);
+      sy.textContent=save>0?'('+money(save*12)+' '+_t('a year')+')':'';
+      clearTimeout(lt); lt=setTimeout(()=>{ $('#cLive').textContent=_t('Elsewhere')+' '+money(els)+_t('/month')+'. '+'Joinvoo '+money(jv)+_t('/month')+'. '+(save>0?_t('You save')+' '+money(save)+_t('/month')+' ('+money(save*12)+' '+_t('a year')+').':save<0?_t('Joinvoo costs')+' '+money(-save)+_t('/month')+' '+_t('more at this volume.'):_t('Same price at this volume.')); },600);
+    }
+    function setJoins(j,from){ joins=Math.min(MAX,Math.max(MIN,Math.round(j))); const v=toV(joins);
+      if(from!=='range') R.value=v; R.style.setProperty('--p',(R.value/10)+'%'); R.setAttribute('aria-valuetext',fmt(joins)+' '+_t('joins'));
+      if(from!=='num') { N.value=fmt(joins); N.removeAttribute('aria-invalid'); } update(); }
+    R.addEventListener('input',()=>setJoins(toJ(+R.value),'range'));
+    const parseJ=()=>{ const d=N.value.replace(/[^\d]/g,''); return d?+d:NaN; };
+    N.addEventListener('input',()=>{ const j=parseJ(); const ok=j>=MIN&&j<=MAX; N.setAttribute('aria-invalid',ok?'false':'true'); if(ok) setJoins(j,'num'); });
+    const commitN=()=>{ const j=parseJ(); setJoins(isNaN(j)?joins:j); };
+    N.addEventListener('blur',commitN); N.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); commitN(); }
+      else if(e.key==='ArrowUp'||e.key==='ArrowDown'){ e.preventDefault(); const st=joins<10000?500:joins<100000?5000:50000; setJoins(joins+(e.key==='ArrowUp'?st:-st)); } });
+    const parseR=()=>{ const v=parseFloat(String(C.value).replace(',','.').replace(/[^\d.]/g,'')); return isFinite(v)&&v>=0&&v<=100?v:NaN; };
+    const setRate=()=>{ const r=document.querySelector('input[name="cRate"]:checked'); const isC=r&&r.value==='custom'; cust.hidden=!isC;
+      if(isC){ const v=parseR(); C.setAttribute('aria-invalid',isNaN(v)?'true':'false'); if(!isNaN(v)) rate=v; } else rate=+(r?r.value:.03); update(); };
+    $$('input[name="cRate"]').forEach(r=>r.addEventListener('change',()=>{ setRate(); if(r.value==='custom'&&r.checked&&r._click) C.focus(); }));
+    $$('input[name="cRate"]').forEach(r=>r.addEventListener('pointerdown',()=>{ r._click=true; setTimeout(()=>r._click=false,400); }));
+    C.addEventListener('input',setRate); C.addEventListener('blur',()=>{ const v=parseR(); if(!isNaN(v)) C.value=String(v); });
+    setJoins(30000);
+    return {update};
+  })();
+
   /* live numbers from /api/config: free joins, trial, plan prices, limits, feature switches */
   (window.JV_CONFIG||Promise.resolve(null)).then(c=>{ if(!c) return;
     const f=c.features; if(f) ['signup','snapchat','tiktok','enterprise'].forEach(k=>{ if(f[k]===false) document.body.classList.add('no-'+k); });
@@ -1221,6 +1372,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
       if(v.base!=null) card.querySelector('.pv').textContent='$'+(v.base/100).toLocaleString('en-US',{maximumFractionDigits:2});
       if(v.inc!=null) t.querySelector('.pi').textContent=fmt(v.inc)+' '+_t('tracked joins');
       if(v.per!=null) t.querySelector('.pj').textContent=cents(v.per); });
+    ['basic','pro'].forEach(k=>{ const v=q[k], n=(pl[k]||{}).name; ['base','inc','per'].forEach(f=>{ if(v[f]!=null&&isFinite(+v[f])) PR[k][f]=+v[f]; }); if(n) PR[k].name=n; }); calc.update();
     if(q.basic.per!=null) $$('.pjc').forEach(x=>x.textContent=cents(q.basic.per));
     const L=c.limits; if(L) $$('.tc li[data-l]').forEach(li=>{ const x=L[li.dataset.l]; if(!x) return;
       if(li.classList.contains('lim')){ const ch=+x.channels||0, bt=+x.bots||0;

@@ -5,7 +5,7 @@ Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tuto
 - Format: MP3, mono or stereo, 44.1 kHz, about 30–40 seconds each. Keep a short pause between sentences; the scenes change on each sentence.
 - Read the text exactly as written (the scenes are timed by the words of each sentence). If you change a sentence, change it in `docs/tutorials.json` and in `TUT` in `src/dashboard/p8f.tutorials.html` too.
 - After adding files, rebuild the demo (`bash src/dashboard/make.sh`) so `dist/media/tutorials/` gets them as well.
-- **Server:** `server.js` serves `/media/tutorials/*.mp3` (audio/mpeg, with range support), so files dropped here play on the live site after a deploy. They're voiced by ElevenLabs (voice “Sulbyee – Nigerian Professional”) in the owner's ElevenLabs flow “Joinvoo tutorials voiceover”: download one take per tutorial and save it with the name below.
+- **Server:** `server.js` serves `/media/tutorials/*.mp3` (audio/mpeg, with range support), so files dropped here play on the live site after a deploy. They're voiced by ElevenLabs (voice “Jacob L.”, American) in the owner's ElevenLabs flow “Joinvoo tutorials voiceover (international)”: download one take per tutorial and save it with the name below.
 
 | File | Tutorial | Where it opens | Words |
 |---|---|---|---|
