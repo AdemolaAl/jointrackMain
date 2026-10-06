@@ -1282,7 +1282,7 @@ function tr(lang, key, vars) {
 const userLang = (uid) => normLang(uid ? (Q(`SELECT lang FROM users WHERE id=?`).get(uid) || {}).lang : 'en');
 
 // Header illustrations (public/media/email/<art>.gif|png, 600×260). Only used when the file exists, so a missing one never leaves a broken image.
-const EMAIL_ART = { welcome: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
+const EMAIL_ART = { welcome: 'welcome', email_verified: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
   low_balance: 'low_balance', tracking_paused: 'paused', free_joins_80: 'free_80', free_joins_used: 'free_done', payout_requested: 'payout_requested', payout_sent: 'payout_sent',
   payout_rejected: 'payout_rejected', support_reply: 'support_reply', weekly_summary: 'weekly', trial_started: 'trial_started', trial_ending: 'trial_ending', trial_ended: 'trial_ended',
   pro_welcome: 'pro_welcome', plan_changed: 'plan_changed', meet_joe: 'meet_joe', rank_up: 'rank_up', level_up: ['level_up', 'rank_up'], credits_added: ['credits_added', 'payment'], staff_invite: ['staff_invite', 'welcome'] };
@@ -1377,6 +1377,13 @@ const EMAILS = {
       cta: { text: t('welcome.cta'), url: d.url }, link: true,
       rows: [[t('welcome.step1'), t('welcome.step1_v')], [t('welcome.step2'), t('welcome.step2_v')], [t('welcome.step3'), t('welcome.step3_v')], [t('welcome.step4'), t('welcome.step4_v')]].map(([a, b]) => [a, esc(b)]),
       after: [t('welcome.after', { guide: brandLink(BASE_URL + '/guide', esc(t('welcome.guide_link'))) })] }) },
+  email_verified: { title: 'Email confirmed', when: 'Right after they confirm their email address',
+    sample: () => ({ name: 'Alex' }),
+    build: (d, t) => ({ subject: t('email_verified.subject'), preheader: t('email_verified.preheader'), icon: '✅', tone: 'mint',
+      title: d.name ? t('email_verified.title_named', { name: d.name }) : t('email_verified.title'),
+      lead: t('email_verified.lead'),
+      paras: [t('email_verified.p1')],
+      cta: { text: t('mail.cta_dashboard'), url: BASE_URL + '/app' } }) },
   password_reset: { title: 'Password reset', when: 'When someone taps “Forgot your password?”',
     sample: () => ({ url: BASE_URL + '/app?reset=sample-token' }),
     build: (d, t) => ({ subject: t('reset.subject'), preheader: t('reset.preheader'), icon: '🔐', title: t('reset.title'),
@@ -1548,7 +1555,7 @@ function renderTemplate(name, data, lang = 'en') { const L = normLang(lang); ret
 const EMAIL_KIND = { payment_received: 'account', topup_review: 'account', topup_rejected: 'account', credits_added: 'account', free_joins_80: 'account', free_joins_used: 'account',
   trial_started: 'account', trial_ending: 'account', trial_ended: 'account', pro_welcome: 'account', plan_changed: 'account', rank_up: 'account', level_up: 'account',
   payout_requested: 'account', payout_sent: 'account', payout_rejected: 'account', support_reply: 'account', low_balance: 'alert', tracking_paused: 'alert', meet_joe: 'joe', weekly_summary: 'update', broadcast: 'update' };
-const SECURITY_EMAILS = new Set(['welcome', 'password_reset', 'password_changed', 'staff_invite']);
+const SECURITY_EMAILS = new Set(['welcome', 'email_verified', 'password_reset', 'password_changed', 'staff_invite']);
 const INBOX_KINDS = ['update', 'account', 'alert', 'joe'];
 const DEFAULT_PREFS = { update: { email: true }, account: { email: true }, alert: { email: true }, joe: { email: true } };
 function notifyPrefs(uid) {
@@ -7517,8 +7524,14 @@ const server = http.createServer(async (req, res) => {
     if (p === '/verify') {
       const [uid, exp, sig] = String(url.searchParams.get('t') || '').split('.');
       if (!uid || !exp || sig !== hmac('verify:' + uid + ':' + exp) || +exp < now()) return send(res, 302, '', { location: '/app?verified=expired' });
-      const u = Q(`SELECT id, verified_at FROM users WHERE id=?`).get(+uid);
-      if (u && !u.verified_at) { Q(`UPDATE users SET verified_at=? WHERE id=?`).run(now(), u.id); grantWelcome(u.id); staffBust(); log('email verified', u.id); }
+      const u = Q(`SELECT id, email, name, verified_at FROM users WHERE id=?`).get(+uid);
+      if (u && !u.verified_at) {
+        Q(`UPDATE users SET verified_at=? WHERE id=?`).run(now(), u.id);
+        grantWelcome(u.id);
+        sendTemplate(u.email, 'email_verified', { name: u.name || '' }, { userId: u.id, lang: userLang(u.id) });
+        staffBust();
+        log('email verified', u.id);
+      }
       return send(res, 302, '', { location: '/app?verified=1' });
     }
     if ((mm = /^\/pb\/([A-Za-z0-9_-]{8,40})$/.exec(p))) return await onPostback(req, res, mm[1]);
