@@ -4020,7 +4020,18 @@ function joeSetup(u) {
   const spend30 = sc(`SELECT COUNT(*) FROM spend WHERE owner_id=? AND created_at>?`, u.id, D30), metaSync = !!Q(`SELECT 1 FROM meta_conns WHERE owner_id=? AND status='active'`).get(u.id);
   const deposits = !conv.n ? `NOT CONNECTED: no deposit postback has ever been received${conv.reg ? ` (only ${conv.reg} registration event(s))` : ''}` : conv.last < D30 ? `SILENT: no deposit postback in the last 30 days (last one ${new Date(conv.last).toISOString().slice(0, 10)})` : `connected (last deposit ${new Date(conv.last).toISOString().slice(0, 10)})`;
   const noPixel = chs.filter((c) => !c.meta && !c.tiktok && !c.snap).map((c) => c.title);
-  return `SETUP STATUS (check before judging anything):
+  // ground truth Joe always sees, so he never says ads "aren't running" when they are
+  let snap = '';
+  try { const lc = localClock(u.tz), off = lc.off, t = now(), D = 864e5, P = (a, b) => periodData(u.id, a, b, off, null, 'day').totals;
+    const td = P(lc.dayStart, t), w = P(lc.dayStart - 6 * D, t), m = P(lc.dayStart - 29 * D, t);
+    const lastClick = Q(`SELECT MAX(ts) t FROM clicks WHERE owner_id=?`).get(u.id).t, lastJoin = Q(`SELECT MAX(joined_at) t FROM joins WHERE owner_id=? AND click_id IS NOT NULL`).get(u.id).t;
+    const f = (x) => `${(x.clicks || 0)} ad clicks, ${Math.max(0, (x.joins || 0) - (x.dms || 0))} joins from ads${x.dms ? `, ${x.dms} DMs from ads` : ''}`;
+    snap = `LIVE SNAPSHOT (ads only, already counted for you; trust this over any zero you get from a tool with odd dates or a channel filter):
+- Today so far: ${f(td)}. Last 7 days: ${f(w)}. Last 30 days: ${f(m)}.
+- Last ad click: ${lastClick ? new Date(lastClick).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'never'}. Last join from an ad: ${lastJoin ? new Date(lastJoin).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'never'}.
+- If clicks are above 0 in any window, the ads ARE running: never say they aren't. If a tool returns all zeros while this snapshot shows activity, your dates or filter were wrong: call get_stats again with no dates (last 7 days) and no channel_id.
+`; } catch (e) { snap = ''; }
+  return `${snap}SETUP STATUS (check before judging anything):
 - Deposit/registration tracking (postbacks): ${deposits}.
 - Ad spend: ${spend30 || metaSync ? (metaSync ? 'Meta spend sync connected' : 'entered by hand') : 'NOT ENTERED: no ad spend in the last 30 days, so cost per join, cost per FTD and ROAS are unknown'}.
 - Channels/bots tracked: ${chs.length}${chs.length ? ` (${chs.map((c) => `${c.title}: ${[c.meta && 'Meta', c.tiktok && 'TikTok', c.snap && 'Snapchat'].filter(Boolean).join('+') || 'no ad platform connected'}${c.type === 'channel' || c.type === 'group' ? ', join mode ' + (c.join_mode || 'link') : ''}`).slice(0, 8).join('; ')})` : ''}.

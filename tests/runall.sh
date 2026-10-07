@@ -19,10 +19,10 @@
 # Output: every ok/FAIL line, then a total. Exit code 1 if anything failed. Logs: tests/.run/
 T="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(dirname "$T")"; RUN="$T/.run"
 mkdir -p "$RUN"; cd "$ROOT" || exit 1
-SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e-round19.js e2e-round19b.js e2e-round19c.js e2e-round19d.js e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js e2e-round15.js e2e-round16.js e2e-round16b.js e2e-round17.js e2e-round17b.js e2e-round17c.js e2e-round18.js e2e-round18b.js)
+SUITES=("$@"); [ ${#SUITES[@]} -eq 0 ] && SUITES=(e2e-round19.js e2e-round19b.js e2e-round19c.js e2e-round19d.js e2e-round19e.js e2e.js e2e2.js e2e3.js e2e-bill.js e2e-ftd.js e2e-trial.js e2e-hook.js e2e-admin.js e2e-phaseA.js e2e-pay.js e2e-round6.js e2e-round7.js e2e-round8.js e2e-round9.js e2e-links.js e2e-staff.js e2e-voo.js e2e-joe2.js e2e-joe3.js e2e-round11.js e2e-vooconnect.js e2e-audit.js e2e-round15.js e2e-round16.js e2e-round16b.js e2e-round17.js e2e-round17b.js e2e-round17c.js e2e-round18.js e2e-round18b.js)
 
 busy() { node -e "const s=require('net').connect($1,'127.0.0.1');s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"; }
-for port in 3999 4950 4960 4200 4300 4400 4410 4500 4600 4700 4800 4900; do if busy $port; then echo "Port $port is already in use. Stop whatever is listening there and run again."; exit 2; fi; done
+for port in 3999 4950 4960 4961 4200 4300 4400 4410 4500 4600 4700 4800 4900; do if busy $port; then echo "Port $port is already in use. Stop whatever is listening there and run again."; exit 2; fi; done
 
 MOCK=""; PAYMOCK=""
 if ! curl -s localhost:4000/__state >/dev/null 2>&1; then node "$T/mock.js" > "$RUN/mock.log" 2>&1 & MOCK=$!; fi
@@ -56,6 +56,7 @@ for t in "${SUITES[@]}"; do
     e2e-round17c.js) extra=(POOL_SIZE=5 LINK_INTERVAL_MS=30 META_APP_ID=1234567890 META_APP_SECRET=meta_test_secret META_GRAPH=http://localhost:4900/v21.0 META_DIALOG=http://localhost:4900/dialog/oauth) ;;
     e2e-round19b.js) extra=(WEBHOOK_TEST_ALLOW=1) ;;
     e2e-round19d.js) extra=(ANTHROPIC_API_BASE=http://localhost:4960 PAYSTACK_SECRET=sk_test_x PAYSTACK_API=http://localhost:4100) ;;
+    e2e-round19e.js) extra=(ANTHROPIC_API_BASE=http://localhost:4961) ;;
     e2e-round19c.js) extra=(PRICE_INCLUDED=3 FREE_JOINS=0 WELCOME_CREDIT_CENTS=0) ;;
     e2e-round8.js) extra=(PAYSTACK_API_BASE=http://localhost:4300 STRIPE_API_BASE=http://localhost:4300) ;;
   esac

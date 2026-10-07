@@ -1,4 +1,4 @@
-# Joinvoo round 19: release report
+# Joinvoo round 20: release report
 
 7 October 2026 · prepared for Ejiro (Zedapex)
 
@@ -67,8 +67,8 @@ It tells the customer, in varied words, something like "I'll get my team on this
 ## For your developer
 
 1. Back up the database, deploy as usual. Updates run by themselves on start. Don't set `WEBHOOK_TEST_ALLOW` on the live server.
-2. Run `bash tests/runall.sh`. It should print `1,778 ok, 0 FAIL`.
-3. BotFather: turn on **Business Mode** for the tracking bot (needed for DM tracking).
+2. Run `bash tests/runall.sh`. It should end with `0 FAIL`.
+3. Follow SETUP-ROUND20.md for DM tracking, mini apps and AI support.
 4. To use AI support:
    - Make sure the AI key is set (Admin → Settings → Joe).
    - In Settings → Support → AI support, switch it on and save.
