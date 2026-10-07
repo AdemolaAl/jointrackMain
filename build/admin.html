@@ -756,6 +756,7 @@ button.kpi:hover{transform:translateY(-2px)}button.kpi{transition:transform .2s}
   .acard{padding:16px}
   .pmc{padding:14px}
 }
+.bub .bimg{display:block;margin:-4px -6px 4px}.bub .bimg img{display:block;max-width:min(260px,60vw);max-height:320px;border-radius:12px;background:var(--line,#eee)}
 </style>
 <div id="root" class="adm"></div>
 <script>
@@ -1140,7 +1141,7 @@ function drawThread() {
   for (const m of P.msgs) { const k = m.from_admin ? 'a:' + ((m.agent && m.agent.name) || '') : 'c'; const g = groups[groups.length - 1]; if (g && g.k === k && m.created_at - g.last < 5 * 60e3) { g.items.push(m); g.last = m.created_at; } else groups.push({ k, items: [m], last: m.created_at }); }
   const cust = { name: (P.user && P.user.name) || (P.ticket && (P.ticket.name || P.ticket.email)) || 'Visitor' };
   el.innerHTML = groups.map((g) => { const a = g.items[0].from_admin, ag = g.items[0].agent || {};
-    return `<div class="msg-g ${a ? 'me' : ''}">${avatar(a ? ag : cust, 30)}<div class="col"><span class="nm">${esc(a ? (ag.name || 'Team') : cust.name)}${a && ag.ai ? ' <em class="aitag">AI</em>' : ''} · ${clock(g.items[0].created_at)}</span>${g.items.map((m) => m.internal ? `<div class="bub note" title="Only your team sees this">${I(IC.lock)} ${esc(m.body)}</div>` : `<div class="bub ${a ? 'me' : 'them'}">${esc(m.body)}</div>`).join('')}</div></div>`; }).join('') || '<div class="empty">No messages.</div>';
+    return `<div class="msg-g ${a ? 'me' : ''}">${avatar(a ? ag : cust, 30)}<div class="col"><span class="nm">${esc(a ? (ag.name || 'Team') : cust.name)}${a && ag.ai ? ' <em class="aitag">AI</em>' : ''} · ${clock(g.items[0].created_at)}</span>${g.items.map((m) => m.internal ? `<div class="bub note" title="Only your team sees this">${I(IC.lock)} ${esc(m.body)}</div>` : `<div class="bub ${a ? 'me' : 'them'}">${m.image ? `<a href="${esc(m.image)}" target="_blank" rel="noopener" class="bimg"><img src="${esc(m.image)}" alt="Photo from the customer" loading="lazy"></a>${m.body && m.body !== '📷 Photo' ? esc(m.body) : ''}` : esc(m.body)}</div>`).join('')}</div></div>`; }).join('') || '<div class="empty">No messages.</div>';
   el.scrollTop = el.scrollHeight;
 }
 async function cannedMenu(ta) {

@@ -306,7 +306,7 @@ const CH = { open:false, msgs:[], last:0, online:false, t:null, seen:store.get('
 const hashN = s => { let h=7; for (const c of String(s||'')) h=(h*31+c.charCodeAt(0))>>>0; return h; };
 function faceSvg(name){
   const h=hashN(name), SK=['#F2C9A6','#E2AC80','#C68A63','#A56A47','#7B4B31'], HR=['#2A1B12','#5B3A21','#17161D','#8C5B2C','#B98A4E'], SH=['#5b3df5','#2e9d6a','#e08a2b','#3d5ad6','#c2463f','#8a3fd1'], BG=['#E9E4FF','#DDF3E8','#FDEBD8','#E3ECFF','#FBE3EC'];
-  const sk=SK[h%5], hr=HR[(h>>3)%5], st=(h>>6)%3, sh=SH[(h>>9)%6], bg=BG[(h>>12)%5];
+  const sk=SK[h%5], hr=HR[(h>>>3)%5], st=(h>>>6)%3, sh=SH[(h>>>9)%6], bg=BG[(h>>>12)%5]; /* round 20: >>> (unsigned): with >> some names got no colours (a black face) */
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${bg}"/>${st===1?`<path d="M11.3 20c0-7.6 3.9-12 8.7-12s8.7 4.4 8.7 12v7.5H11.3z" fill="${hr}"/>`:''}<path d="M7 40c1.2-7.5 6.4-10.5 13-10.5S31.8 32.5 33 40z" fill="${sh}"/><rect x="17" y="24" width="6" height="7" rx="2.5" fill="${sk}"/><circle cx="20" cy="18.5" r="8" fill="${sk}"/><path d="M11.8 18.5c-.4-6.4 3.6-10 8.2-10s8.6 3.6 8.2 10c-1.6-3.2-4.6-4.6-8.2-4.6s-6.6 1.4-8.2 4.6z" fill="${hr}"/>${st===2?`<circle cx="20" cy="8.6" r="3.6" fill="${hr}"/>`:''}<circle cx="17" cy="19.4" r="1" fill="#2b1810"/><circle cx="23" cy="19.4" r="1" fill="#2b1810"/><path d="M17.4 22.6q2.6 2 5.2 0" stroke="#7a3b22" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;
 }
 const face = (p,cls='') => { p=p||{}; return `<span class="face ${cls}" title="${esc(p.name||'')}">${faceSvg(p.name||'Joinvoo')}${p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`; };
@@ -330,7 +330,7 @@ async function supportPoll(){
 }
 function supportLoop(reset){
   clearTimeout(CH.t); if (!FEAT('support_chat')) return; if (reset){ CH.msgs=[]; CH.last=0; }
-  const run=async()=>{ try{ await supportPoll(); }catch{} CH.t=setTimeout(run, CH.open?(CH.ai?1500:4000):30000); }; run();
+  const run=async()=>{ try{ await supportPoll(); }catch{} CH.t=setTimeout(run, CH.open?(CH.ai?1000:4000):30000); }; run();
 }
 function drawUnread(){
   const n=CH.open?0:CH.msgs.filter(m=>m.from_admin&&m.id>CH.seen).length;
@@ -351,7 +351,7 @@ function openChat(){
       <small id="chat-st">${chatStatus()}</small>
       ${hrs?`<small class="ch-hours">${I.clock}${esc(hrs)}</small>`:''}</div>
     <div class="msgs" id="msgs" aria-live="polite"></div>
-    <form class="composer" id="chatf"><textarea id="chatin" rows="1" placeholder="${esc(tt('sup.write','Write a message…'))}" aria-label="Message" maxlength="4000"></textarea><button class="send" type="submit" aria-label="Send" disabled>${I.send}</button></form>
+    <form class="composer" id="chatf"><button type="button" class="att" id="chatatt" aria-label="${esc(tt('sup.photo','Send a photo or screenshot'))}" title="${esc(tt('sup.photo','Send a photo or screenshot'))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg></button><input type="file" id="chatfile" accept="image/*" hidden><textarea id="chatin" rows="1" placeholder="${esc(tt('sup.write','Write a message…'))}" aria-label="Message" maxlength="4000"></textarea><button class="send" type="submit" aria-label="Send" disabled>${I.send}</button></form>
     <div class="chat-foot">${aiSup()?`<span class="ai-foot">${I.sparkles} ${tt('sup.ai.foot','AI support')} · ${tt('sup.ai.pow','Powered by')} <b>Replyvoo</b></span>`:`We reply here${S.me&&S.me.email?' and by email':''} · Enter to send`}</div></section>`);
   const fab=$('#fab'); if (fab) fab.classList.add('hide');
   drawMsgs(); drawUnread();
@@ -360,6 +360,8 @@ function openChat(){
   ta.addEventListener('input',fit);
   ta.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); if(ta.value.trim()) sendChat(); } });
   $('#chatf').addEventListener('submit',e=>{ e.preventDefault(); if(ta.value.trim()) sendChat(); });
+  const cf=$('#chatfile'); $('#chatatt').addEventListener('click',()=>cf.click());
+  cf.addEventListener('change',()=>{ const f=cf.files&&cf.files[0]; cf.value=''; if(f) sendPhoto(f); });
   if (matchMedia('(min-width:701px)').matches) ta.focus();
   supportLoop(false);
 }
@@ -382,14 +384,34 @@ function drawMsgs(){
     if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
     const me=!m.from_admin, ag=me?null:(m.agent&&m.agent.name?m.agent:lead), key=me?'me':'a:'+ag.name, nx=CH.msgs[i+1], nk=nx?(!nx.from_admin?'me':'a:'+((nx.agent&&nx.agent.name)||lead.name)):'', first=key!==prevKey, last=key!==nk||!!CH.pending.length&&me;
     prevKey=key;
-    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me">${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
-    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
-  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending">${esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
+    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me${m.image?' pic':''}">${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
+    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
+  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending${p&&p.img?' pic':''}">${p&&p.img?msgBody({image:p.img,body:p.body||PHOTO}):esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
   if (CH.typing){ const tp=(CH.typingName&&T.find(t=>t.name===CH.typingName))||lead; h+=`<div class="mrow them">${face(tp,'sm')}<div class="typing" aria-label="${esc(tp.name)} is typing"><i></i><i></i><i></i></div></div>`; }
   if (CH.err) h+=`<div class="err" style="align-self:stretch">${esc(CH.err)}</div>`;
-  el.innerHTML=h; el.scrollTop=el.scrollHeight;
+  /* round 20: keep the reader's place. Only stick to the bottom when they were already there (or just sent something);
+     jump without smooth scrolling, which fights the finger on iPhones and feels like a freeze */
+  const stick=!el.childElementCount||el.scrollHeight-el.scrollTop-el.clientHeight<90||CH.stick, keep=el.scrollTop; CH.stick=false;
+  el.innerHTML=h; el.style.scrollBehavior='auto'; el.scrollTop=stick?el.scrollHeight:keep; el.style.scrollBehavior='';
 }
-function sendChat(text){ const ta=$('#chatin'); const body=(text||(ta&&ta.value)||'').trim(); if(!body) return; if(!text&&ta){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; } CH.pending.push(body); CH.err=''; drawMsgs(); CH.q=(CH.q||Promise.resolve()).then(()=>sendChat0(body,true)); return CH.q; } /* round 19: one at a time, so quick messages keep their order */
+/* round 20: photos and screenshots in the chat (shrunk on the device to max 1600px first) */
+const PHOTO='📷 Photo';
+function msgBody(m){ if(!m.image) return esc(m.body); const cap=m.body&&m.body!==PHOTO?`<span class="cap">${esc(m.body)}</span>`:'';
+  return `<img class="mimg" src="${esc(m.image)}" alt="${esc(tt('sup.photo1','Photo'))}" loading="lazy" onload="const e=document.getElementById('msgs');if(e&&e.scrollHeight-e.scrollTop-e.clientHeight<this.height+120)e.scrollTop=e.scrollHeight"${/^data:/.test(m.image)?'':` onclick="window.open(this.src,'_blank','noopener')"`}>${cap}`; }
+function shrinkPhoto(file){ return new Promise((res,rej)=>{ if(!file||!/^image\//.test(file.type||'image/')) return rej(new Error(tt('sup.photo.bad','Send a photo or screenshot.')));
+  const url=URL.createObjectURL(file), im=new Image();
+  im.onload=()=>{ try{ const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)), c=document.createElement('canvas'); c.width=Math.max(1,Math.round(im.naturalWidth*k)); c.height=Math.max(1,Math.round(im.naturalHeight*k));
+    const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',.85)); }catch(e){ URL.revokeObjectURL(url); rej(e); } };
+  im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error(tt('sup.photo.open','That photo couldn’t be opened. Try a screenshot instead.'))); }; im.src=url; }); }
+async function sendPhoto(file){
+  let data; try{ data=await shrinkPhoto(file); }catch(e){ CH.err=e.message; drawMsgs(); return; }
+  const ta=$('#chatin'), cap=((ta&&ta.value)||'').trim(); if(ta&&cap){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; }
+  const item={img:data, body:cap}; CH.pending.push(item); CH.err=''; CH.stick=true; drawMsgs();
+  CH.q=(CH.q||Promise.resolve()).then(async()=>{
+    try { const rr=await api('POST','/api/support',{body:cap,image:data}); CH.pending=CH.pending.filter(x=>x!==item); if (rr&&rr.ai){ CH.ai=true; CH.typing=true; } else if(!CH.online||DEMO) CH.typing=DEMO; await supportPoll(); drawMsgs(); clearTimeout(CH.t); supportLoop(false); }
+    catch(e){ CH.pending=CH.pending.filter(x=>x!==item); CH.err=e.message; if(ta&&cap&&!ta.value) ta.value=cap; drawMsgs(); } });
+  return CH.q; }
+function sendChat(text){ const ta=$('#chatin'); const body=(text||(ta&&ta.value)||'').trim(); if(!body) return; if(!text&&ta){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; } CH.pending.push(body); CH.err=''; CH.stick=true; drawMsgs(); CH.q=(CH.q||Promise.resolve()).then(()=>sendChat0(body,true)); return CH.q; } /* round 19: one at a time, so quick messages keep their order */
 async function sendChat0(text,queued){
   const ta=$('#chatin'); const body=(text||ta.value).trim(); if(!body) return;
   if (!text){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; }
@@ -480,7 +502,7 @@ document.addEventListener('click', e=>{
     case 'usdt-submit': usdtSubmit(a); break;
     case 'usdt-back': S.dep.step=1; drawDeposit(); break;
     case 'use-credit': api('POST','/api/referrals/credit').then(x=>{ toast(money(x.moved_cents)+' added to your wallet'); refreshBal(); viewEarn(); }).catch(err=>toast(err.message,false)); break;
-    case 'chat': closePop(); openChat(); break;
+    case 'chat': closePop(); { const sh=$('#shell'); if (sh) sh.classList.remove('open'); } openChat(); break; /* round 20: from the side menu on phones, close the menu first */
     case 'chat-close': closeChat(); break;
     case 'quick': sendChat(a.dataset.v); break;
     case 'topic-page': closeChat(); go(a.dataset.v); break;

@@ -2,8 +2,10 @@
 const http=require('http'); const state={webhook:null,links:0,events:[]};
 http.createServer((req,res)=>{let b='';req.on('data',c=>b+=c);req.on('end',()=>{
   const j=b?JSON.parse(b):{}; const u=req.url; res.setHeader('content-type','application/json');
+  if(u.startsWith('/file/bot')){res.setHeader('content-type','image/png');return res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=','base64'));} // round 20: Telegram file download
   let m=/^\/bot(\d+):[^/]+\/(\w+)/.exec(u);
   if(m){const id=+m[1],meth=m[2];
+    if(meth==='getFile') return res.end(JSON.stringify({ok:true,result:{file_id:j.file_id,file_size:70,file_path:'photos/file_'+j.file_id+'.png'}}));
     if(meth==='getMe') return res.end(JSON.stringify({ok:true,result:{id,is_bot:true,username:'test_track_bot'}}));
     if(meth==='setWebhook'){state.webhook=j;return res.end(JSON.stringify({ok:true,result:true}));}
     if(meth==='sendMessage'){state.msgs=(state.msgs||[]).concat([j]);return res.end(JSON.stringify({ok:true,result:{}}));}

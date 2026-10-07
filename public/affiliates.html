@@ -583,6 +583,13 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 .sp-form textarea:focus{outline:none;border-color:#5b3df5;box-shadow:0 0 0 4px color-mix(in srgb,#5b3df5 16%,transparent)}
 .sp-send{width:46px;height:46px;border-radius:16px;border:0;background:#5b3df5;color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
 .sp-send svg{width:18px;height:18px}
+.sp-att{width:40px;height:46px;border-radius:14px;border:0;background:transparent;color:var(--faint);display:grid;place-items:center;cursor:pointer;flex:none;margin-right:-4px}
+.sp-att:hover,.sp-att:focus-visible{color:#5b3df5;background:color-mix(in srgb,#5b3df5 8%,transparent);outline:none}
+.sp-att svg{width:21px;height:21px}
+.sp-msg.sp-pic{padding:4px;width:min-content;max-width:100%}.sp-msg.sp-pic .sp-cap{display:block;padding:6px 9px 4px}.sp-msg.sp-pic small{padding:0 9px 4px}
+.sp-img{display:block;max-width:min(240px,62vw);max-height:300px;width:auto;height:auto;border-radius:14px;cursor:zoom-in;background:var(--line)}
+.sp-row.me .sp-msg.sp-pic{padding:4px}
+.sp-msg.sp-up{opacity:.65}
 .sp-err{font-size:13px;color:var(--rose);font-weight:600}
 .sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
 .sp-foot a{color:var(--faint)}
@@ -609,6 +616,8 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 }
 @media (min-width:901px){body.mcta-on .sp-launch{bottom:calc(18px + env(safe-area-inset-bottom,0px))}body.mcta-on .sp{bottom:calc(88px + env(safe-area-inset-bottom,0px));height:min(640px,calc(100dvh - 116px))}}
 @media (prefers-reduced-motion:reduce){.sp,.sp-row{transition:none;animation:none}}
+@media (max-width:560px){html.sp-open,html.sp-open body{overflow:hidden;overscroll-behavior:none}}
+.sp-body{overscroll-behavior:contain}
 </style>
 
 <button class="sp-launch" id="spLaunch" type="button" aria-expanded="false" aria-controls="spPanel" aria-label="Chat with Joinvoo support">
@@ -638,7 +647,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   <form class="sp-form" id="spForm" novalidate>
     <div id="spEmailRow" hidden><label data-i18n="423ze" class="sr" for="spEmail">Your email</label><input data-i18n-ph="1pq88gt" class="inp" id="spEmail" type="email" autocomplete="email" placeholder="Your email, so we can reply if you leave"></div>
     <div class="sp-err" id="spErr" hidden></div>
-    <div class="sp-crow"><label data-i18n="1cam7ic" class="sr" for="spText">Message</label><textarea data-i18n-ph="1g0yvse" id="spText" rows="1" placeholder="Write a message…"></textarea><button class="sp-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>
+    <div class="sp-crow"><button class="sp-att" id="spAtt" type="button" aria-label="Send a photo or screenshot" title="Send a photo or screenshot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-9 9"/></svg></button><input type="file" id="spFile" accept="image/*" hidden><label data-i18n="1cam7ic" class="sr" for="spText">Message</label><textarea data-i18n-ph="1g0yvse" id="spText" rows="1" placeholder="Write a message…"></textarea><button class="sp-send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></button></div>
     <div data-i18n="14kpqx" class="sp-foot"><span id="spNote">Real people · secure</span><a href="/privacy">Privacy</a></div>
   </form>
 </section>
@@ -655,7 +664,8 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
       document.body.classList.toggle('sp-pad', mq.matches); };
     addEventListener('scroll',()=>{ if(!t) t=requestAnimationFrame(()=>{ t=0; upd(); }); },{passive:true}); addEventListener('resize',upd); upd(); })();
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
-  const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
+  const DEF_TEAM=DEMO?['Sofia','Daniel','Maya','Leo'].map(n=>({name:n,role:'Customer support',photo:'media/team/ai-'+n.toLowerCase()+'.png',ai:true})) /* round 20: the demo shows the 4 AI teammates */
+    :[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
   let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false, aiMode=false, tRow=null;
 
@@ -670,7 +680,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function av(p){ const n=(p&&p.name)||'Joinvoo'; return `<span class="sp-av" title="${esc(n)}">${p&&p.photo?`<img src="${esc(p.photo)}" alt="" loading="lazy">`:face(n)}</span>`; }
   function render(){ const t=team.slice(0,3);
-    $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
+    $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=team.slice(0,4).map(av).join(''); /* round 20: up to 4 teammates in the header */
     const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
     $('spHello').textContent=aiMode?_t('Hi 👋 I’m {name}, Joinvoo’s AI support assistant. Ask me anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A teammate can take over any time.').replace('{name}',a.name)
       :_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
@@ -682,12 +692,17 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   render();
 
   const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
-  const scroll=()=>{ body.scrollTop=body.scrollHeight; };
-  function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
+  /* round 20: only jump to the newest message when the reader is already near the bottom (or sent it themselves) */
+  const scroll=(force)=>{ if(force===true||body.scrollHeight-body.scrollTop-body.clientHeight<120) body.scrollTop=body.scrollHeight; };
+  const PHOTO='📷 Photo';
+  function msg(who,txt,ts,agent,html,img){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
     const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.ai?' <em class="sp-ai">AI</em>':''}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
     r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
-    if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
-    body.appendChild(r); scroll(); return r; }
+    if(img){ m.classList.add('sp-pic'); const i=document.createElement('img'); i.className='sp-img'; i.alt=_t('Photo'); i.src=img; i.onload=()=>{ if(who==='me'||body.scrollHeight-body.scrollTop-body.clientHeight<i.height+120) body.scrollTop=body.scrollHeight; }; i.onclick=()=>{ if(!/^data:/.test(img)) window.open(img,'_blank','noopener'); }; m.appendChild(i);
+      if(txt&&txt!==PHOTO){ const c=document.createElement('span'); c.className='sp-cap'; c.textContent=txt; m.appendChild(c); } }
+    else if(html) m.innerHTML=txt; else m.textContent=txt;
+    if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
+    body.appendChild(r); scroll(who==='me'); return r; }
   function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; body.appendChild(d); scroll(); }
   function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(r); scroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
   function showErr(m){ err.textContent=m||''; err.hidden=!m; }
@@ -710,23 +725,52 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   function setTyping(who){ if(tRow){ tRow.remove(); tRow=null; } if(!who) return; const a=team.find(m=>m.name===who.name)||team[0]; tRow=document.createElement('div'); tRow.className='sp-row them'; tRow.innerHTML=av(a)+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(tRow); scroll(); }
   function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; if(j.ticket&&j.ticket.ai!==undefined) aiMode=!!j.ticket.ai; applySupport(j); emRow.hidden=!!ticket;
     if(tRow){ tRow.remove(); tRow=null; }
-    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); });
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null,false,m.image); });
     if(j.typing) setTyping(j.typing); render(); }
   async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
     try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
-  function demo(){ DEMO=true; online=true; emRow.hidden=true; render(); $('spNote').textContent=_t('Demo preview · messages aren’t sent'); }
-  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },aiMode?1500:4000); }
+  function demo(){ DEMO=true; online=true; aiMode=true; emRow.hidden=true; render(); $('spNote').textContent=_t('Demo preview · messages aren’t sent'); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },aiMode?1000:4000); }
   function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
-  function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
+  /* round 20: phones (iPhone keyboard): the full-screen chat follows the visible area, and iOS's leftover page offset is reset when the keyboard closes */
+  (function(){ const vv=window.visualViewport, phone=()=>matchMedia('(max-width:560px)').matches; let raf=0;
+    const fit=()=>{ raf=0; const on=panel.classList.contains('open')&&phone(); if(!on||!vv){ panel.style.top=panel.style.height=panel.style.bottom=''; return; }
+      panel.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; panel.style.height=Math.round(vv.height)+'px'; panel.style.bottom='auto'; scroll(); };
+    const q=()=>{ if(!raf) raf=requestAnimationFrame(fit); };
+    if(vv){ vv.addEventListener('resize',q); vv.addEventListener('scroll',q); } addEventListener('resize',q);
+    panel.addEventListener('focusin',()=>{ q(); setTimeout(q,320); });
+    panel.addEventListener('focusout',()=>setTimeout(()=>{ if(!panel.contains(document.activeElement)&&phone()&&panel.classList.contains('open')){ if(document.documentElement.classList.contains('sp-open')&&Math.abs(scrollY-(window._spSY||0))>2) window.scrollTo(0,window._spSY||0); q(); } },90));
+    window._spFitQ=q; })();
+  function open(o){ if(o&&!panel.classList.contains('open')) window._spSY=scrollY; panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches); if(window._spFitQ) window._spFitQ();
     if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
   launch.onclick=()=>open(!panel.classList.contains('open')); $('spClose').onclick=()=>{ open(false); launch.focus(); };
   addEventListener('keydown',e=>{ if(e.key==='Escape'&&panel.classList.contains('open')){ open(false); launch.focus(); } });
   text.addEventListener('input',()=>{ text.style.height='auto'; text.style.height=Math.min(120,text.scrollHeight)+'px'; });
   text.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
+  /* round 20: photos and screenshots. Shrunk on the device first (max 1600px JPEG), so a phone photo uploads in a second. */
+  function shrink(file){ return new Promise((res,rej)=>{ if(!file||!/^image\//.test(file.type||'image/')) return rej(new Error(_t('Send a photo or screenshot.')));
+    const url=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{ try{ const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(im.naturalWidth*k)); c.height=Math.max(1,Math.round(im.naturalHeight*k));
+      const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',.85)); }catch(e){ URL.revokeObjectURL(url); rej(e); } };
+    im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error(_t('That photo couldn’t be opened. Try a screenshot instead.'))); }; im.src=url; }); }
+  function needEmail(payload){ if(ticket) return false; const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return true; } em.removeAttribute('aria-invalid'); payload.email=v; return false; }
+  const att=$('spAtt'), file=$('spFile');
+  att.onclick=()=>{ showErr(''); file.click(); };
+  file.onchange=async()=>{ const f=file.files&&file.files[0]; file.value=''; if(!f||sending) return; showErr('');
+    let data; try{ data=await shrink(f); }catch(x){ showErr(x.message||_t('That photo couldn’t be opened. Try a screenshot instead.')); return; }
+    const cap=text.value.trim();
+    if(DEMO){ msg('me',cap||PHOTO,Date.now(),null,false,data); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
+      msg('them',_t('Got your screenshot, thanks! (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
+    const payload={body:cap,image:data}; if(needEmail(payload)) return;
+    sending=true; const b=msg('me',cap||PHOTO,Date.now(),null,false,data); b.querySelector('.sp-msg').classList.add('sp-up'); text.value=''; text.style.height='';
+    try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); b.querySelector('.sp-msg').classList.remove('sp-up'); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
+      if(j.ai){ aiMode=true; setTyping({name:team[0].name}); } else if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+    catch(x){ b.remove(); if(cap&&!text.value) text.value=cap; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
+    finally{ sending=false; } };
   form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(!t||sending) return; showErr('');
     if(DEMO){ msg('me',t,Date.now()); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
-      msg('them',_t('Thanks! A real person replies here within minutes during the day. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
-    const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
+      msg('them',_t('Thanks! In the live chat I’d answer this in seconds, and a teammate can take over any time. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
+    const payload={body:t}; if(needEmail(payload)) return;
     sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
     try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
       if(j.ai){ aiMode=true; setTyping({name:team[0].name}); } else if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }

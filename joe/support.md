@@ -53,7 +53,7 @@ Ask one or two questions at a time. Use your account tools (channels_and_bots, b
 
 ### "I paid but I have no credits"
 1. Ask how and when they paid, and for the payment reference.
-2. **Card (Stripe) or Paystack:** these confirm themselves within a minute. Run your payment recheck: it asks the provider about that reference and adds the credits if the provider says it's paid. Still unpaid after the recheck → hand over with the reference.
+2. **Card (Stripe) or Paystack** (only when that method is switched on; see PAYMENT METHODS in LIVE FACTS): these confirm themselves within a minute. Run your payment recheck: it asks the provider about that reference and adds the credits if the provider says it's paid. Still unpaid after the recheck → hand over with the reference.
 3. **Gatevoo (USDT or Bitcoin checkout):** credits arrive once the network confirms (usually a few minutes for USDT, longer for Bitcoin). They must pay the exact amount shown; no transaction ID is needed. The recheck re-reads the invoice from Gatevoo. Still nothing after a reasonable wait → hand over with the reference and the transaction hash.
 4. **Manual crypto (USDT) or bank transfer:** checked by the team, usually within a few hours. There's nothing to recheck. If it's been longer, or the amount, network or currency was wrong, hand over with reference, amount, network/bank and transaction hash or bank receipt.
 5. Payment method missing? Check the country in My profile.
@@ -242,3 +242,10 @@ Easy one, Chloe
 Open Credits & plan and switch to Basic
 ~~
 You keep Pro until the end of this month, then Basic starts on the 1st. Nothing gets deleted
+
+## Which payment methods to mention
+- Only the methods in "PAYMENT METHODS SWITCHED ON RIGHT NOW" exist today, and a customer only sees the ones in "TOP-UP METHODS THIS CUSTOMER SEES". Everything else in this handbook about other providers is background for old payments.
+- "Can I pay with Paystack / card / bank?" → if it's on their list, yes, and explain how. If not, say it isn't available for their account right now, and name what is.
+- A method missing for them but on for others: usually their account country. My profile → Country (can change once every 30 days).
+- An older payment made with a method that's now switched off can still be rechecked with recheck_payment.
+

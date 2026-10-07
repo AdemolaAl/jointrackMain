@@ -364,3 +364,35 @@ async function r19BlogNav(){
 }
 { const _ra=renderApp; renderApp=function(){ const r=_ra.apply(this,arguments); try{ r19BlogNav(); }catch{} return r; }; }
 { const _nm=navMark; navMark=function(page){ _nm(page); if (page==='learn'){ const s=$('.side .nav-a[data-p="learn"]'); if(s){ $$('.side .nav-a[aria-current]').forEach(x=>x.removeAttribute('aria-current')); s.setAttribute('aria-current','page'); } } }; }
+
+/* ---------- round 20: Support in the side menu, under Blog (opens the chat; green dot when the team or AI is online, unread count) ---------- */
+function r20SupNav(){
+  if (!FEAT('support_chat')) return;
+  const nav=$('.side .nav'); if (!nav || nav.querySelector('.sup-nav')) return;
+  const after=nav.querySelector('.nav-a[data-p="learn"]')||nav.querySelector('.nav-a[data-p="channels"]'), lbl=tt('nav.support','Support');
+  const html=`<button class="nav-a sup-nav" data-act="chat" title="${esc(lbl)}">${I.chat}<span>${esc(lbl)}</span><i class="sup-on" aria-hidden="true" hidden></i><i class="nb" data-unread hidden></i></button>`;
+  if (after) after.insertAdjacentHTML('afterend',html); else nav.insertAdjacentHTML('beforeend',html);
+  r20SupDot(); try{ drawUnread(); }catch{}
+}
+function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiSup()||CH.online); }
+{ const _ra=renderApp; renderApp=function(){ const r=_ra.apply(this,arguments); try{ r20SupNav(); }catch{} return r; }; }
+{ const _du=drawUnread; drawUnread=function(){ _du.apply(this,arguments); try{ r20SupDot(); }catch{} }; }
+
+/* ---------- round 20: support chat on phones (iPhone keyboard) ----------
+   Full-screen chat follows the visible area when the keyboard opens/closes (like Joe), the page behind can't scroll,
+   and after the keyboard closes iOS's leftover page offset is reset, so taps land where they look. */
+(function(){
+  const vv=window.visualViewport, phone=()=>matchMedia('(max-width:700px)').matches; let raf=0;
+  const fit=()=>{ raf=0; const c=$('#chat'); document.documentElement.classList.toggle('chat-on',!!c&&phone()); if(!c) return;
+    if(!phone()||!vv){ c.style.top=c.style.height=c.style.bottom=''; return; }
+    c.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; c.style.height=Math.round(vv.height)+'px'; c.style.bottom='auto';
+    const m=$('#msgs'); if(m&&m.scrollHeight-m.scrollTop-m.clientHeight<90){ m.style.scrollBehavior='auto'; m.scrollTop=m.scrollHeight; m.style.scrollBehavior=''; } };
+  const q=()=>{ if(!raf) raf=requestAnimationFrame(fit); };
+  if(vv){ vv.addEventListener('resize',q); vv.addEventListener('scroll',q); } addEventListener('resize',q);
+  document.addEventListener('focusin',e=>{ if(e.target&&e.target.id==='chatin'){ q(); setTimeout(q,320); } });
+  document.addEventListener('focusout',e=>{ if(e.target&&e.target.id==='chatin') setTimeout(()=>{ const a=document.activeElement; if(!(a&&a.id==='chatin')&&phone()&&$('#chat')){ if(Math.abs(scrollY-(window._chatSY||0))>2) window.scrollTo(0,window._chatSY||0); q(); } },90); });
+  window._chatFitQ=q;
+})();
+{ const _oc=openChat; openChat=function(){ if(!$('#chat')) window._chatSY=scrollY; const r=_oc.apply(this,arguments); try{ window._chatFitQ(); }catch{} return r; }; }
+{ const _cc=closeChat; closeChat=function(){ const r=_cc.apply(this,arguments); try{ document.documentElement.classList.remove('chat-on'); }catch{} return r; }; }
+

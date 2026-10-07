@@ -53,7 +53,7 @@ Joe and the support AI share this key. The default model is `claude-haiku-4-5-20
 **d) Switch it on.** Admin → **Settings → Support → AI support (Powered by Replyvoo)**:
 - turn it on → Save;
 - check the limits: payment checks up to $500, daily AI budget $25;
-- optional: mark team members as **"AI teammate"** and upload their photos (default names Sofia and Daniel);
+- optional: mark team members as **"AI teammate"** and upload their photos (by default there are 4 AI teammates, Sofia, Daniel, Maya and Leo, with illustrated faces; to use real photos, add team members in admin, mark them "AI teammate" and upload photos, or replace `public/media/team/ai-*.png`);
 - use the **Try it** box with 10–20 real questions before going live.
 
 **e) Telegram support bot (optional, any time later):**
@@ -64,6 +64,14 @@ Joe and the support AI share this key. The default model is `claude-haiku-4-5-20
 **f) Team alerts when the AI hands a chat over (optional):**
 - `SUPPORT_TG_BOT_TOKEN` = a bot token (can be the support bot)
 - `SUPPORT_TG_CHAT_ID` = the staff Telegram group or user ID that receives the pings
+
+**Speed (round 20b):** replies now start about 1–2 seconds after the customer stops typing, plus the AI's thinking time. Before, it was about 6–15 seconds. For even quicker replies: Admin → Settings → Support → AI support → Typing speed → **Fast**.
+
+**Photos (round 20c):** customers can send photos and screenshots in the website chat, the dashboard chat and the Telegram support bot. The AI reads them, and staff see them in admin. They're stored privately in `DATA_DIR/media/support`. Nothing to set up, but back up the **whole DATA_DIR folder** (database + photos). The admin "Backup" button only downloads the database. On Docker/Railway, `DATA_DIR=/data` is already the persistent volume.
+
+**Payment methods (round 20c):** the AI reads the live list from Admin → Payment methods (switched on and set up) and only offers those, filtered by each customer's country. Nothing to set up. Just keep that list accurate.
+
+**Real faces for the AI teammates:** 4 photos were made in Higgsfield. To use them, either replace `public/media/team/ai-sofia.png`, `ai-daniel.png`, `ai-maya.png`, `ai-leo.png` (square images, keep the same names), or add the 4 people in Admin → Support team, mark each one "AI teammate" and upload their photos.
 
 **Feature switch:** Admin → Settings → Features → "AI support (Replyvoo)". It's on by default; the support card's own switch is what actually starts it. Env `FEATURE_SUPPORT_AI=false` hides it completely.
 

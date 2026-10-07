@@ -280,7 +280,9 @@ function drawJoeChat(keepInput){
     <div class="jc-hint">${jcHint()}</div></div>`;
   drawJoeCta(); joeFit();
   const box=$('#jcmsgs'), bh=JOE.smooth&&!reduced?'smooth':'auto';
-  if (box){ box.scrollTo({top:box.scrollHeight,behavior:bh}); if (JOE.smooth && matchMedia('(max-width:700px)').matches){ const last=box.lastElementChild; if(last) last.scrollIntoView({block:'end',behavior:bh}); } }
+  /* round 20: scroll only the message list. scrollIntoView also moved the page, and with the iPhone keyboard open that
+     shifted the layout so taps missed (felt frozen). On phones: no smooth scroll (it fights the finger). */
+  if (box){ const ph=matchMedia('(max-width:700px)').matches; box.style.scrollBehavior='auto'; if (ph||bh==='auto') box.scrollTop=box.scrollHeight; else box.scrollTo({top:box.scrollHeight,behavior:bh}); box.style.scrollBehavior=''; }
   JOE.smooth=true;
   const inp=$('#jcin'); if(prev) inp.value=prev;
   $('#jcf').addEventListener('submit',e=>{ e.preventDefault(); const v=inp.value.trim(); if(v) askJoe(v); });

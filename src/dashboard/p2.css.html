@@ -263,6 +263,11 @@
 .composer .send{width:44px;height:44px;border-radius:50%;border:0;background:var(--brand);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;transition:transform .15s,opacity .15s}
 .composer .send:disabled{opacity:.4;cursor:default}
 .composer .send svg{width:18px;height:18px}
+.composer .att{width:38px;height:44px;border-radius:14px;border:0;background:transparent;color:var(--faint);display:grid;place-items:center;cursor:pointer;flex:none;margin-right:-4px}
+.composer .att:hover,.composer .att:focus-visible{color:var(--brand);outline:none}
+.composer .att svg{width:21px;height:21px}
+.msg.pic{padding:4px;width:min-content;max-width:100%}.msg.pic .cap{display:block;padding:6px 10px 4px}
+.mimg{display:block;max-width:min(240px,62vw);max-height:300px;width:auto;height:auto;border-radius:16px;cursor:zoom-in;background:var(--line)}
 .chat-foot{font-size:12px;color:var(--faint);text-align:center;padding:0 0 8px;background:var(--surface)}
 
 /* ---------- auth (form + dark illustration showcase) ---------- */
@@ -586,4 +591,10 @@
 .usdt-pay .amt{overflow-wrap:anywhere;flex-wrap:wrap;justify-content:center}
 @media (max-width:900px){.sup-launch{height:52px;padding:0 5px 0 7px;bottom:calc(92px + env(safe-area-inset-bottom,0px))}.sup-launch .lf .face{width:30px;height:30px}.sup-launch .lc{width:40px;height:40px}}
 @media (max-width:700px){.sup-launch .lf .face:nth-child(3){display:none}.chat-h h3{font-size:22px}}
+.nav-a .sup-on{width:8px;height:8px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 3px rgba(47,191,113,.22);flex:none;margin-left:auto}
+.nav-a .sup-on+.nb:not([hidden]){margin-left:8px}
+.shell.col .nav-a .sup-on{position:absolute;top:8px;right:9px;margin:0;box-shadow:0 0 0 2px var(--surface)}
+@media (max-width:700px){html.chat-on,html.chat-on body{overflow:hidden;overscroll-behavior:none}}
+.msgs{scroll-behavior:auto}
+@media (max-width:700px){#jcmsgs{scroll-behavior:auto}}
 </style>

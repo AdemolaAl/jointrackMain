@@ -478,11 +478,12 @@ const Demo = (() => {
     if (p==='/api/me') return {email:'alex@example.com',name:'Alex',admin:false,verified:sample||verified,email_on:true,welcome_cents:0,free_joins_gift:500,tracking:true,state:'active',support:''};
     if (p==='/api/verify/resend'){ await wait(500); return {ok:true,message:'Demo: a new confirmation link would be on its way.'}; }
     if (p==='/api/support'){
-      if (method==='POST'){ const b=String(body.body||'').trim(); if(!b) throw err('Type a message first.'); const msg={id:sid++,from_admin:0,body:b,created_at:Date.now()}; support.push(msg);
+      if (method==='POST'){ const img=typeof body.image==='string'&&/^data:image\//.test(body.image)?body.image:null; let b=String(body.body||'').trim(); if(!b&&!img) throw err('Type a message first.'); if(!b) b='📷 Photo';
+        const msg={id:sid++,from_admin:0,body:b,created_at:Date.now(),...(img?{image:img}:{})}; support.push(msg);
         /* people send bursts: like the live AI, wait for the last message and answer once (an answer already being sent finishes first) */
         const D=window.__sup||(window.__sup={timers:[],started:false,end:0});
         if (D.timers.length && !D.started){ D.timers.forEach(clearTimeout); D.timers=[]; supTyping=Math.max(0,supTyping-1); }
-        const bub=demoAi(b), ag='Sofia'; let at=Math.max(1600, D.started?D.end-Date.now()+900:0); supTyping++; const mine=[]; D.timers=mine; D.started=false;
+        const bub=img&&b==='📷 Photo'?['Thanks for the screenshot, Alex! 👀','I can see your Events Manager. The pixel is connected, but there are no Lead events in the last 24 hours.','Open your channel card → Settings → Ad platforms and tap "Send test". I\u2019ll check it with you.']:demoAi(b), ag='Sofia'; let at=Math.max(1600, D.started?D.end-Date.now()+900:0); supTyping++; const mine=[]; D.timers=mine; D.started=false;
         bub.forEach((t,i)=>{ at+=Math.min(3800,900+t.length*22); mine.push(setTimeout(()=>{ if(D.timers===mine) D.started=true; support.push({id:sid++,from_admin:1,body:t,created_at:Date.now(),agent:{name:ag,role:'Customer support',photo:'',ai:true}}); if(i===bub.length-1){ supTyping=Math.max(0,supTyping-1); if(D.timers===mine){ D.timers=[]; D.started=false; } } }, at)); });
         D.end=Date.now()+at;
         return {ok:true,id:msg.id,online:true,ai:true}; }
@@ -577,7 +578,7 @@ const Demo = (() => {
     try{ localStorage.removeItem('jv_seen_admin'); }catch{} CH.seen=0;
     boot(); }
   function reset(){ clear(); sample=false; verified=false; db={bots:[],channels:[]}; S.forceSetup=true; boot(); }
-  const TEAM=[{name:'Sofia',role:'Customer support',photo:'',ai:true},{name:'Daniel',role:'Customer support',photo:'',ai:true},{name:'Maya',role:'Customer success',photo:''}];
+  const TEAM=['Sofia','Daniel','Maya','Leo'].map(n=>({name:n,role:'Customer support',photo:'media/team/ai-'+n.toLowerCase()+'.png',ai:true})); /* round 20: the 4 AI teammates */
   /* round 19 demo: AI support replies in short bubbles with typing pauses (scripted here; live accounts use the real AI) */
   let supTyping=0;
   const demoAi=(q)=>{ q=q.toLowerCase(); const n='Alex';

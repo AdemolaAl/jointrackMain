@@ -18,7 +18,7 @@ const use = (name, input) => ({ id: 'm', type: 'message', role: 'assistant', sto
 function brain(b) {
   const msgs = b.messages, last = msgs[msgs.length - 1], tools = (b.tools || []).map((t) => t.name);
   const userText = [...msgs].reverse().find((m) => m.role === 'user' && typeof m.content === 'string').content.toLowerCase();
-  seen.push({ system: b.system[0].text, tools, userText });
+  seen.push({ system: b.system[0].text, dyn: (b.system[1] || {}).text || '', cached: !!b.system[0].cache_control, tools, userText });
   if (Array.isArray(last.content) && last.content[0].type === 'tool_result') {
     const prev = msgs[msgs.length - 2].content.find((c) => c.type === 'tool_use'), res = JSON.parse(last.content[0].content);
     if (prev.name === 'billing_history') { const d = (res.topups || []).find((x) => x.status !== 'paid'); return d ? use('recheck_payment', { reference: d.reference }) : say('I can’t see a pending top-up on your account.'); }
@@ -65,13 +65,15 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   cfg = (await fetch(B + '/api/config').then((x) => x.json())).support;
   assert(cfg.ai === true && cfg.powered_by === 'Replyvoo' && cfg.team.some((m) => m.ai && m.name === 'Sofia'), 'config shows the AI team and “Powered by Replyvoo”');
   r = await post(U, '/api/support', { body: 'my tracking link question' }); assert(r.j.ai === true, 'customer message goes to the AI');
-  await sleep(2600); let g = (await U('/api/support')).j;
+  await sleep(600); let g = (await U('/api/support')).j;
   assert(g.typing && g.typing.name, 'the chat shows “typing…” with the teammate’s name (' + (g.typing && g.typing.name) + ')');
   await sleep(5000); g = (await U('/api/support')).j;
   let ai1 = g.messages.filter((m) => m.from_admin);
   assert(ai1.length === 3 && ai1[0].body === 'Hi there! 👋' && ai1.every((m) => m.agent && m.agent.ai && m.agent.name), 'answer arrives as 3 short bubbles from a named AI teammate');
   assert(ai1[1].created_at - ai1[0].created_at >= 300, 'bubbles arrive one after another, not all at once');
   try { fs.writeFileSync(__dirname + '/.run/support-system.txt', seen[0].system); } catch { /* for review */ }
+  assert(seen[0].cached && /ACCOUNT RIGHT NOW/.test(seen[0].dyn) && /"email_confirmed"/.test(seen[0].dyn) && /You are \w+/.test(seen[0].dyn), 'speed: the big shared instructions are cached for every chat, and the customer\u2019s account snapshot comes with the first question (no extra lookup)');
+  assert(!/@/.test(seen[0].system.split('JOINVOO KNOWLEDGE')[0]) && !/ACCOUNT RIGHT NOW/.test(seen[0].system), 'speed: the shared (cached) part has nothing about this customer');
   assert(seen[0].system.includes('never claim to be a human') && !/Segbuyota|Graceboy|Olamide/.test(seen[0].system) && seen[0].system.includes('Philippines, Nigeria and the UK'), 'its instructions: honest AI, no founder details, remote team answer');
   assert(seen[0].system.includes('SUPPORT HANDBOOK') && seen[0].tools.includes('recheck_payment') && !seen[0].tools.some((t) => /credit|refund|bonus/.test(t)), 'it has the support handbook and NO tool that can give credits or refunds');
 
