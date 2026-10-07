@@ -330,10 +330,12 @@ viewChannels = async function(){
   await refreshChans(); setRole(); drawChannels();
   every(5000, async()=>{ if(S.page!=='channels'||$('.sheet')||$('.tvp')||busyPtr()) return; const old=JSON.stringify(S.chans); await refreshChans().catch(()=>{}); if(JSON.stringify(S.chans)!==old && S.page==='channels' && !$('.sheet') && !busyPtr()) drawChannels(); });
 };
-const CH_TYPE = c => c.type==='bot'?(c.external?tt('ch.botnt','Bot · no token'):tt('ch.bot','Bot')):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group');
+const CH_TYPE = c => c.type==='dm'?tt('r19.type','DM tracking')+(c.go_via==='miniapp'?' · '+tt('r19.type.ma','mini app'):''):c.type==='bot'?(c.go_via==='miniapp'&&!c.external?tt('r19.type.bma','Bot · mini app'):null)||(c.external?tt('ch.botnt','Bot · no token'):tt('ch.bot','Bot')):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group');
 function chPill(c){
   if (c.lost_at) return `<span class="chip r"><i class="d"></i>${tt('ch.lost','Lost')}</span>`;
   if (c.locked) return `<span class="chip y">${tt('lim.notrack','Not tracking')}</span>`;
+  if (c.type==='dm' && c.status==='pending') return `<span class="chip v"><i class="d"></i>${tt('r19.waiting','Needs your OK')}</span>`;
+  if (c.type==='dm' && c.status!=='active') return `<span class="chip y"><i class="d"></i>${tt('r19.botoff','Bot turned off')}</span>`;
   return c.status==='active'?`<span class="chip g"><i class="d"></i>${tt('ch.live','Tracking')}</span>`:c.status==='no_rights'?`<span class="chip y"><i class="d"></i>${tt('ch.perm','Needs permission')}</span>`:`<span class="chip r"><i class="d"></i>${tt('ch.removed','Bot removed')}</span>`;
 }
 function chBanner(c){
@@ -342,6 +344,8 @@ function chBanner(c){
   if (c.can_switch_back) return `<div class="cban ok">${I.checkc}<span><b>${tt('al.back2','Channel is back')}</b><small>${tt('al.back3','Ads still go to {b}',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`;
   if (c.redirect_to) return `<button class="cban info" data-act="cs-open" data-id="${c.id}" data-tab="backup">${I.link}<span><b>${tt('bk.on','Traffic is going to {t}',{t:esc(c.redirect_title||'')})}</b><small>${tt('bk.on.s','Your ad link keeps working')}</small></span>${I.chevr}</button>`;
   if (c.deadlink_at) return `<button class="cban warn" data-act="dl-open" data-id="${c.id}">${I.alert}<span><b>${tt('al.dl','Your ad link may be blocked')}</b><small>${tt('al.dl.s','Tap to switch link domain')}</small></span>${I.chevr}</button>`;
+  if (c.type==='dm' && c.status==='pending') return dmAsk(c);
+  if (c.type==='dm' && c.status!=='active') return `<button class="cban warn" data-act="cs-open" data-id="${c.id}" data-tab="open">${I.alert}<span><b>${tt('r19.off','The manager turned the bot off')}</b><small>${tt('r19.off.s','Telegram → Settings → Telegram Business → Chatbots')}</small></span>${I.chevr}</button>`;
   if (c.status==='no_rights') return `<div class="cban warn">${I.alert}<span><b>${tt('ch.perm','Needs permission')}</b><small>${tt('ch.perm.p','In Telegram: channel → Administrators → your bot → turn on “Invite users via link”.')}</small></span></div>`;
   return '';
 }
@@ -349,13 +353,13 @@ drawChannels = function(){
   const d=S.chans, el=$('#cl'); if(!d) return; if(!el){ csRefresh(); sideSheetRefresh(); return; } const list=visChans(d);
   el.innerHTML=`${limitsCard(d)}<div class="chs">${list.map((c,i)=>{ const plats=PLATS().filter(p=>platOn(c,p));
     return `<article class="card ch17${c.lost_at?' lost':''}${c.locked?' locked':''}" data-ch="${c.id}">
-      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
+      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='dm'?ICO_DM.replace('<svg','<svg style="width:20px;height:20px"'):c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
       ${chBanner(c)}${c.locked?chLockNote(c):''}
       <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>${utmCard17(c)}</div>
-      <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${tt('ch17.today','joins today')}</span>
+      <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${c.type==='dm'?tt('r19.today','messages today'):tt('ch17.today','joins today')}</span>
         <span class="c-pl">${plats.length?plats.map(p=>pm(p)).join(''):`<button class="chip y" data-act="cs-open" data-id="${c.id}" data-tab="ads">${tt('ch17.noads','No ad platform')}</button>`}</span>
         <button class="btn sm c-set" data-act="cs-open" data-id="${c.id}">${I.gear} ${tt('ch17.settings','Settings')}</button></div></article>`; }).join('')}
-    <button class="add-card ch-add" data-act="add-channel"><span class="ei">${I.plus}</span>${list.length?tt('ch17.another','Add another channel or bot'):tt('ch17.first','Connect your first channel')}<small class="faint" style="font-weight:500">${tt('ch17.mins','About 3 minutes')}</small></button></div>
+    <button class="add-card ch-add" data-act="add-channel"><span class="ei">${I.plus}</span>${list.length?tt('r19.another','Add a channel, bot or DM tracking'):tt('ch17.first','Connect your first channel')}<small class="faint" style="font-weight:500">${tt('ch17.mins','About 3 minutes')}</small></button></div>
     <div class="rows17">${domRow17(d)}${botsRow17(d)}</div>`;
   csRefresh(); sideSheetRefresh(); loadToday();
 };
@@ -431,7 +435,7 @@ function csBody(c, tab){
     <div class="cs-sub">${tt('cs.spend','Ad spend')}</div><div class="metabox" id="csmeta"></div>`;
   if (tab==='join' && isB) return `${csHelp(tt('cs.wel.h','What your bot says'),tt('cs.wel.p','When someone presses Start, Joinvoo matches them to their ad and sends this message.'))}
     <form id="csbf" class="cs-form"><div class="field"><label for="sw1">${tt('cs.wel.m','Welcome message')}</label><textarea class="inp" id="sw1" rows="3" placeholder="Hi {name} 👋 Welcome!">${esc(c.welcome||'')}</textarea><span class="hint">${tt('cs.wel.hint','{name} becomes their first name. Leave empty to send nothing.')}</span></div>
-      <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:140px"><label for="sw2">${tt('cs.btn','Button text')}</label><input class="inp" id="sw2" value="${esc(c.btn_text||'')}" placeholder="Join the group"></div><div class="field" style="flex:2;min-width:180px"><label for="sw3">${tt('cs.btnl','Button link')}</label><input class="inp" id="sw3" value="${esc(c.btn_url||'')}" placeholder="https://t.me/+…"></div></div>
+      <div class="row-in" style="flex-wrap:wrap"><div class="field" style="flex:1;min-width:140px"><label for="sw2">${tt('cs.btn','Button text')}</label><input class="inp" id="sw2" value="${esc(c.btn_text||'')}" placeholder="Join the group"></div><div class="field" style="flex:2;min-width:180px"><label for="sw3">${tt('cs.btnl','Button link')}</label><input class="inp" id="sw3" value="${esc(c.btn_url||'')}" placeholder="https://t.me/+…"></div></div>${tagChips('sw3')}
       <details class="cs-more cs-fw"><summary>${tt('cs.adv','My bot already runs on a server')} ${I.chev}</summary><div class="field"><label for="sw4">${tt('cs.fw','Pass messages on to')}</label><input class="inp" id="sw4" value="${esc(c.forward_url||'')}" placeholder="https://your-server.com/telegram-webhook"><span class="hint">${tt('cs.fw.p','Your bot keeps working as before. Not for bots that fetch their own messages (“polling”).')}</span></div>
         <div class="field"><label for="sw5">${tt('cs.sec','Secret token (optional)')}</label><input class="inp" id="sw5" type="password" autocomplete="off" placeholder="${c.has_forward_secret?'Saved. Paste a new one to replace it':'Leave empty if you don’t use one'}"></div></details>
       <div id="bserr"></div><button class="btn primary lg wide" type="submit">${tt('common.save','Save')}</button></form>
@@ -652,7 +656,7 @@ const drawStep0 = drawStep;
 drawStep = function(){
   drawStep0();
   const s=$('#stp .step'); if(!s) return;
-  const id = W.step===1&&!W.pickBot ? 't1' : W.step===2 ? (W.mode==='bot'&&W.bsub==='external'?'t7':'t2') : W.step===3 ? ($('#jrf')?'t4':'t3') : null;
+  const id = W.step===1&&!W.pickBot ? 't1' : W.step===2 ? (W.mode==='dm'?'t11':W.mode==='bot'&&W.bsub==='external'?'t7':'t2') : W.step===3 ? ($('#jrf')?'t4':'t3') : null;
   if (id && !s.querySelector('.watch')){ const h=s.querySelector('h1'); if(h) h.insertAdjacentHTML('afterend', watchBtn(id)); }
 };
 const renderSetup0 = renderSetup;

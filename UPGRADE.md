@@ -2,6 +2,66 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
+## Round 19 — DM tracking + mini apps, webhooks, downloads, link tags (7 October 2026)
+
+**Nothing changes for existing users.** Their channels, bots, links and ads work exactly as before, and nobody needs to do anything. The database only gets new columns (`bots.ma_app`, `bots.ma_seen_at`, `channels.biz_conn`, `channels.go_via`, `channels.app_url`, `channels.dm_text`, `hourly.opens`) and one new table (`ma_opens`). On first start the server re-registers every active bot's webhook once (setting `tg.updates_v` → 3) so Telegram also sends `business_connection` and `business_message`. Bots that never turn on Business Mode receive nothing new.
+
+### What changed
+- **Manager chats (`channels.type = 'dm'`).** A manager adds the customer's Joinvoo bot under Telegram → Settings → Telegram Business → Chatbots (needs Telegram Premium; Business Mode must be on for the bot in BotFather). Telegram sends `business_connection`; Joinvoo creates a manager chat in **pending** state. Anyone with Premium can add any bot, so the owner must tap **“Yes, that’s my manager”** (dashboard card, wizard, inbox notice; `POST /api/channels/:id/approve`). Pending rows take no plan slot, track nothing and receive no traffic. “Not mine” = `DELETE /api/channels/:id`, and it stays removed if they reconnect.
+- **First message = conversion.** On `business_message`, the first message from each person in an approved manager chat is recorded through the normal `recordJoin` (fraud filter, charge, stats, ad platform events). Default events: Meta `Lead`, TikTok `Contact`, Snapchat `SIGN_UP`. The manager's own messages, later messages and edits are ignored. No message text is stored. The bot never replies.
+- **Matching.** (1) Mini app: the ad link opens `t.me/<bot>/<app>?startapp=<click code>`; Joinvoo's page `/ma/<bot id>.<sig>` checks Telegram's signed `initData` (HMAC with the bot token, max 24 h old), records the open in `ma_opens` and sends the person on to the manager's chat. Their first message is matched by Telegram user ID. (2) Straight to chat: `t.me/<manager>?text=<ready message>\n\nRef: <signed click code>`; the code in the first message is matched (codes are HMAC-signed, so made-up codes count as organic).
+- **Bots with their own mini app.** Bot Settings → Mini app → “Open my mini app instead of the chat” + the app's https address. The ad link opens the mini app, the open counts as the lead (once per person), then Joinvoo hands over to the customer's app with Telegram's launch data intact.
+- **Never a dead end.** Bad or old initData, rate limits or a switched-off feature still send the visitor on (untracked).
+- **Admin.** Overview → Features: “DM tracking” and “Mini apps” (default on). Plans & trial → “DM tracking & mini apps”: every plan (default) or Pro only (`dm.plan`). Pro only: Basic links still open the chat, untracked.
+- **Billing.** A first message from an ad counts as one tracked join (same price). Organic messages are free.
+- **Website.** Homepage “Track messages, not just joins” section + 2 FAQs, guide step 9, blog post `track-telegram-dms-and-mini-apps-from-ads`, tutorials t11 + t12 (captions until the MP3s are added — see `public/media/tutorials/README.md`). Joe knows the feature (`joe/knowledge.md`).
+- **Tests.** `tests/e2e-round19.js`, `e2e-round19b.js`, `e2e-round19c.js`. Full suite: 1,778 ok, 0 failed. Upgrade tested on a database made by the previous version.
+
+### Also in round 19: DMs on Overview/Results, downloads, webhooks, link tags
+- **Overview + Results.** `/api/stats` totals add `dms`, `dms_organic`, `dm_clicks`, `dm_opens` and `counts.has_dm`; `/api/breakdown` rows add `dms` and `dm_clicks`. Overview shows “DMs from ads” and “DM rate” only for accounts with DM tracking; Results gets a DMs column and Cost/lead.
+- **Downloads.** New `GET /api/clicks.csv` (ad taps) and `GET /api/conversions.csv` (registrations and deposits), both for the date range; `joins.csv` gains a `kind` column. Media buyers only get their channels. New index `clicks(owner_id, ts)`.
+- **Webhooks.** New tables `webhooks`, `hook_queue`. API: `GET/POST /api/webhooks`, `PATCH/DELETE /api/webhooks/:id`, `POST /api/webhooks/:id/test`, `POST /api/webhooks/:id/secret` (owners only, max 5). Sender runs every 3 s, 6 tries with backoff, only public https addresses (checked again at send time, redirects not followed). Signature: `X-Joinvoo-Signature: sha256=HMAC(secret, timestamp + "." + body)`. Admin switch: Features → “Custom webhooks” (`FEATURE_WEBHOOKS`, default on). `WEBHOOK_TEST_ALLOW=1` is for the test suite only, never set it in production.
+- **Link tags.** `{utm_source}`, `{utm_medium}`, `{utm_campaign}`, `{utm_term}`, `{utm_content}`, `{sub1}`…`{sub9}` now work next to `{tg_id}`, `{click_id}`, `{name}` in offer links/texts, bot welcome text and button link, and a bot's own mini app address. Tap-to-add chips under those fields.
+- **Tutorials.** t13 (webhooks) and t14 (link tags), same female voice and music intro. Guide: three new “Good to know” entries.
+- **Tests.** `tests/e2e-round19b.js` (39 checks, webhook receiver on :4950).
+
+### Also in round 19: AI support (Replyvoo) + Telegram support bot + smarter Joe
+- **Off by default.** Nothing changes for anyone until an admin turns it on in **Settings → Support → AI support** (needs the AI key from Settings → Joe; same provider and model unless you pick another).
+- **What customers see:** the same chat (website + dashboard) with AI teammates (team members marked “AI teammate”; default names Sofia and Daniel with illustrated faces until you upload photos), a small “AI” tag, typing dots, short messages one after another, and “AI support · Powered by Replyvoo”. It says honestly that it's AI if asked, and a person can take over any time.
+- **What it can do by itself** (each switchable): read the customer's account, re-check a top-up with the payment provider (credits only what Gatevoo/Paystack/Stripe/Flutterwave confirm, once, up to your limit), resend the confirmation email, send a password reset to the account email, repair a bot's webhook, re-check a link domain, retry failed ad-platform events. It has NO way to add credits, refunds or bonuses.
+- **Hands over** refunds, withdrawals, chargebacks, manual top-ups, bugs, account deletion/email change, upset customers and anyone who asks for a person: the chat moves to your team with a short note (only staff see it), and you get a Telegram ping if SUPPORT_TG_BOT_TOKEN / SUPPORT_TG_CHAT_ID are set. When a teammate replies, the AI steps back in that chat; “Let AI continue” hands it back.
+- **Telegram support bot:** make a NEW bot in @BotFather (not the tracking bot), paste its token in the AI support card → Connect. Customers link their account by email + 6-digit code before any account tools work.
+- **Limits:** daily AI budget (default $25), 400 visitor (not logged-in) AI chats a day, per-chat action limits, link-code brute-force locks. Every AI action is logged on the ticket.
+- **Knowledge:** joe/knowledge.md + new joe/support.md (support handbook) + live prices/limits from settings + optional “Notes for the AI” in admin. No founder details; office answer: remote team across the Philippines, Nigeria and the UK.
+- **Joe:** now knows what isn't connected (deposits/postback, spend, pixels, link-mode channels) and never judges campaigns on missing data; sharper “senior traffic banker” persona.
+- **Joe ads reports count ads only:** get_stats now gives Joe `ads_only` numbers (joins from ads, people from ads who left, ad leave rate). Organic joins and organic/older members who left are kept apart and not used in ads reports.
+- **Also fixed:** the notification bell (and other round icon buttons) are centred the same way on every phone browser; dashboard top bar at 1024px, homepage header in long languages on phones, French chip overflow in Integrations, chat messages keep their order when sent quickly.
+- New tables/columns: `support_out`, `support_ai_log`, `support_ai_usage`, `tickets.ai_mode/ai_agent/ai_summary/ai_upto/tg_chat/seen_at/link_*`, `ticket_msgs.internal`. Route `/tgsup/<secret>`. Admin API `/api/admin/support-ai*`, `/api/admin/support/:id/ai`. Tests: `tests/e2e-round19d.js` (39 checks, fake AI on :4960).
+
+### Also in round 19: admin money switches per account
+- Users → open someone → **Revenue & referrals** (needs the “Add or remove credits” permission):
+  - **Don’t count as revenue** (`users.exclude_revenue`): their paid top-ups leave every revenue total on the admin Overview (month, all time, daily chart, by payment method, by rank). The month tile shows “· $X not counted”. Their referrer earns no commission on them, and no affiliate spend is reported to VooSquare for them. Their account works normally.
+  - **No referral commissions** (`users.no_commission`): they stop earning commission on the people they refer. What they already earned stays.
+- Admin credit gifts (Users → Add credits) were never revenue: they are `gift` ledger rows, not deposits. The switch is for money that did come in as a deposit but isn't real income (a top-up you paid for someone, staff, tests).
+- API: `POST /api/admin/users/:id/flags` `{exclude_revenue, no_commission}`. Tests: `tests/e2e-round19c.js` (18 checks).
+
+### Also in round 19: Blog in the side menu, review fixes
+- **Blog in the dashboard menu.** “Blog” sits under Tutorials in the side menu (on phones, in the ☰ menu). It opens the built-in reader (the page that used to be called Learn) and shows a small “New” tag while a recent post is unread. The bottom bar on phones is unchanged.
+- **DM tracking approval can't be skipped.** New column `channels.approved_at`, set when the owner taps “Yes, that’s my manager”. Someone who connects the bot and then switches their chatbot off and on stays waiting. Approved managers come back by themselves when the bot's token is reconnected.
+- **Only the owner** can change where a bot or DM link sends people (`go_via`, `app_url`), like the forwarding address.
+- **Webhooks** have a hard 10-second limit per delivery, so a slow server can't hold up anyone else.
+- **People CSV** keeps its old columns in the same order; `kind` is added at the end.
+- **Build check.** `make.sh` now stops if a CSS part loses its closing `</style>` tag.
+- Two independent reviews (security + UI/upgrade) were run; everything they found is fixed. Full test suite: **1,778 ok, 0 failed**.
+
+### Note for customers who forward their bot's updates
+If a customer uses “My bot already runs on a server” (forward URL), their server will now also receive `business_*` updates when their manager uses Business Mode. Normal bots ignore unknown update types.
+
+### Check after deploying (5 minutes, with a real Premium account)
+1. In BotFather turn on Business Mode for a test bot connected to Joinvoo; on a Premium account add it under Telegram Business → Chatbots. The manager chat appears; tap “Yes, that’s my manager”.
+2. Connect a Meta pixel with a test event code. Open the ad link on another phone and send a message. Meta Test Events shows a `Lead` within a minute.
+3. Set up the mini app (Settings → How it opens) and repeat. The status turns green and the open shows under “Opened app”.
+
 ## Round 18 — Setup helper + Accounts I manage (6 October 2026)
 
 **Nothing changes for existing users.** One column is added (`team_members.expires_at`, empty for everyone) and one setting (`team.helper_free`, default 1). Existing owners, managers, media buyers, seats, billing, tracking, links and every other feature behave exactly as before; nobody is charged anything new. The API is in `docs/round18-api.md`.

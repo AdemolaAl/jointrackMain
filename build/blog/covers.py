@@ -480,11 +480,43 @@ def numbers(c):
     c.spark(1130, 100, 22); c.spark(60, 420, 14, WHITE)
 
 
+def manager_chat(c):
+    """A chat card with first-message bubbles, a 'Lead' chip flying to an ad-platform tile, and a mini app phone."""
+    c.glow(360, 330, 300, MINT, 70, 110); c.glow(900, 300, 260, VIOLET2, 120, 100); c.dots(a=20)
+    c.brand()
+    # chat card
+    c.card(110, 120, 520, 440, 34, WHITE)
+    c.circle(170, 176, 26, MINT); c.text(170, 176, 'AS', 18, WHITE, anchor='mm')
+    c.rr(212, 160, 150, 14, 7, INK, 220); c.rr(212, 184, 90, 10, 5, (170, 165, 190))
+    c.line([(110, 222), (630, 222)], (235, 232, 246), w=2)
+    c.rr(150, 256, 300, 64, 24, LILAC); c.rr(174, 278, 200, 12, 6, VIOLET, 200); c.rr(174, 298, 130, 9, 4, LILAC2)
+    c.rr(300, 344, 290, 60, 24, VIOLET); c.rr(324, 366, 210, 12, 6, WHITE, 220)
+    c.rr(150, 428, 240, 60, 24, LILAC); c.rr(174, 452, 150, 12, 6, VIOLET, 200)
+    c.rr(150, 506, 440, 34, 17, (247, 246, 252)); c.circle(566, 523, 13, VIOLET)
+    c.circle(150, 288, 12, LIME); c.text(150, 288, '1', 14, INK, anchor='mm')
+    # arrow to lead chip
+    c.line(smooth([(470, 288), (620, 230), (760, 250)], 16), LIME, w=6, dash=(14, 10))
+    c.poly([(772, 250), (748, 238), (752, 266)], LIME)
+    c.shadow(780, 200, 300, 100, 26)
+    c.card(780, 200, 300, 100, 26, WHITE, shadow=False)
+    c.circle(830, 250, 28, LIME); c.line([(816, 250), (827, 262), (846, 238)], INK, w=6)
+    c.text(874, 236, 'Lead', 30, INK, anchor='lm'); c.rr(874, 262, 150, 10, 5, LILAC2)
+    # mini app phone
+    c.shadow(860, 340, 180, 250, 30)
+    c.rr(860, 340, 180, 250, 30, INK)
+    c.rr(872, 352, 156, 226, 22, LILAC)
+    c.rr(920, 360, 60, 12, 6, INK)
+    c.circle(950, 440, 34, VIOLET); c.line([(934, 440), (946, 452), (968, 428)], WHITE, w=7)
+    c.rr(900, 496, 100, 12, 6, VIOLET, 180); c.rr(915, 520, 70, 10, 5, LILAC2)
+    c.spark(1130, 110, 22); c.spark(70, 590, 14, WHITE); c.spark(700, 560, 12, LIME)
+
+
 SCENES = {
     'meta_joins': (meta_joins, VIOLET, DEEP), 'capi': (capi, DEEP, VIOLET), 'fake_joins': (fake_joins, INK, VIOLET),
     'tiktok': (tiktok, DEEP, (60, 30, 140)), 'snapchat': (snapchat, LILAC, LILAC), 'cost_ftd': (cost_ftd, VIOLET, INK),
     'postbacks': (postbacks, (70, 44, 210), DEEP), 'utm': (utm, DEEP, (76, 50, 220)), 'scaling': (scaling, (80, 52, 230), INK),
     'bot_vs_channel': (bot_vs_channel, INK, (70, 44, 210)), 'backup': (backup, DEEP, (88, 58, 240)), 'numbers': (numbers, VIOLET, (40, 24, 110)),
+    'manager_chat': (manager_chat, DEEP, (70, 44, 210)),
 }
 
 
@@ -502,6 +534,7 @@ COVERS = {
     'bot-vs-channel-funnels': 'bot_vs_channel',
     'backup-channels-ban-proof-telegram-funnel': 'backup',
     'reading-your-numbers-roas-cpl-ftd-rate': 'numbers',
+    'track-telegram-dms-and-mini-apps-from-ads': 'manager_chat',
 }
 
 

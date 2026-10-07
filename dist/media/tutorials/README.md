@@ -19,6 +19,10 @@ Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tuto
 | `t8.mp3` | Add your team | More > Team | 59 |
 | `t9.mp3` | Read your results | Results | 76 |
 | `t10.mp3` | Invite a setup helper | More > Team | 78 |
+| `t11.mp3` | Why track messages to your manager | Setup step 2 · DM tracking / DM tracking Settings > How it opens | 104 |
+| `t12.mp3` | Set up your mini app | DM tracking Settings > How it opens / bot Settings > Mini app | 84 |
+| `t13.mp3` | Send events to your own server | Conversions > Integrations > Send events to your own server | 55 |
+| `t14.mp3` | Pass your ad’s details to your offer | Channel settings > Offer link · bot Settings > Button link · mini app address | 47 |
 | `home.mp3` | Website explainer | Joinvoo homepage (website, not the dashboard) | — |
 
 ## Scripts
@@ -64,6 +68,24 @@ Drop the ElevenLabs MP3 files here, named exactly as below. The dashboard's tuto
 > Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time.
 
 Not recorded yet (round 18): record it with the same voice (“Jacob L.”, American) in the same ElevenLabs flow, save one take as `t10.mp3`. Until then the tutorial plays with captions only.
+
+### t11.mp3 — Why track messages to your manager
+
+> Do your ads send people straight to a manager’s chat on Telegram? Then this one matters. Right now, Meta only sees a tap on your link. It can’t see who actually sent your manager a message, so it learns to find people who tap and leave. You pay for clicks, while your manager sits waiting for real conversations. Joinvoo fixes that by tracking every first message. First, in BotFather, open your bot’s settings and turn on Business Mode. Then, on the manager’s Telegram, open Settings, then Telegram Business, then Chatbots, and add your bot. Back in Joinvoo, tap Yes, that’s my manager, and you get a new ad link. Connect Meta, and put that link in your ad. When someone taps your ad and sends their first message, Joinvoo matches it to the exact ad, and sends a Lead to Meta. Now Meta learns from people who really start a conversation, so your cost per message drops and your manager gets better leads. And Joinvoo never replies, and never saves what people write.
+
+### t12.mp3 — Set up your mini app
+
+> For the most exact tracking, send people to your manager through a mini app. Open the chat’s Settings, then How it opens, and pick Through your mini app. Copy the web address Joinvoo shows you. In BotFather, send slash new app, pick your bot, and paste the address. BotFather sends you a link. Paste it back into Joinvoo, and tap Save. Open the mini app once, and it turns green. Now Telegram tells Joinvoo exactly who tapped your ad, so every message is matched.
+
+### t13.mp3 — Send events to your own server
+
+> Want every join, message and deposit sent to your own server the moment it happens? Open Conversions, then Integrations, and scroll down to Send events to your own server. Tap Add webhook, and paste your server’s address, like your CRM, your own bot, or a Zapier or Make link. Tick the events you want, like joins, first messages and first deposits, then tap Add webhook. Copy the signing secret, so your server can check that each event really comes from Joinvoo. Now tap Send test, and when your server answers, the card says Working. From now on, each event arrives with the person, their Telegram ID, and the campaign and ad they came from. And if your server is ever down, Joinvoo tries again for you, so nothing gets lost.
+
+### t14.mp3 — Pass your ad’s details to your offer
+
+> Want your offer or tracker to know which campaign and ad each person came from? Open your channel’s settings, and find your offer link, or your bot’s button link. Under the link, tap a tag, like campaign, ad, or sub one, and Joinvoo adds it to the link for you. In your ad, keep your usual URL parameters on your Joinvoo link, like the campaign name and the ad name. When someone taps your ad, Joinvoo fills in each tag with that person’s details. Your offer now sees the campaign, the ad and the Telegram ID behind every visit, so each deposit is matched back to the ad. Tags work in your welcome message too.
+
+Round 19: t11, t12, t13 and t14 are a **female** narrator (Kokoro voice `af_heart`, American, same open model as the others) over a short original music bed: 4 seconds of music fading in, then the voice, with the music kept low underneath and fading out at the end. Each sentence's start time is stored as `marks` on the tutorial in `src/dashboard/p8h.round19.html`, so the scenes follow the voice exactly. If you re-record them, update `marks` (or delete them and the player falls back to word-count timing).
 
 ### home.mp3 — Website explainer
 

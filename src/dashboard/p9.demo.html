@@ -13,7 +13,7 @@ const Demo = (() => {
   const dayIdx=d=>Math.round((parseYmd(ymd(d))-today0())/864e5);
   const blank={pixel_id:'',has_token:false,test_code:'',event_name:'Subscribe',tt_pixel:'',tt_has_token:false,tt_test_code:'',tt_event:'Subscribe',sc_pixel:'',sc_has_token:false,sc_test:false,sc_event:'SUBSCRIBE',has_fallback:true,landing:'auto',welcome:'',btn_text:'',btn_url:'',forward_url:'',join_mode:'link',offer_text:'',offer_btn:'',offer_url:'',join_approver:'joinvoo',approve_after:60,pending_requests:0};
   const sampleDb=()=>({
-    bots:[{id:1,tg_id:7712045533,username:'dailydeals_track_bot',status:'active'},{id:2,tg_id:7790112274,username:'fit30_track_bot',status:'active'},{id:3,tg_id:7731880412,username:'studysquad_bot',status:'active'}],
+    bots:[{id:1,tg_id:7712045533,username:'dailydeals_track_bot',status:'active',ma_app:'go',ma_url:'https://joinvoo.com/ma/1.k7Qx2mWz9A',ma_link:'https://t.me/dailydeals_track_bot/go',ma_seen_at:Date.now()-26*60e3},{id:2,tg_id:7790112274,username:'fit30_track_bot',status:'active'},{id:3,tg_id:7731880412,username:'studysquad_bot',status:'active'}],
     channels:[
       {...blank,id:11,title:'Daily Deals Club',type:'channel',join_mode:'request',offer_text:'Welcome to Daily Deals Club 👋 Today’s best offer is waiting for you. Tap below to claim it.',offer_btn:'Claim today’s offer',offer_url:'https://partner.example/offer?sub1={tg_id}',status:'active',pool:184,pool_target:200,bots:['dailydeals_track_bot','fit30_track_bot'],tracking_url:'https://joinvoo.com/c/deals7Q',pixel_id:'884210395527140',has_token:true,tt_pixel:'CQ7B9E3C77U5JHG0T1A0',tt_has_token:true,sc_pixel:'5f1c2a9e-8b7d-4e3a-9c21-7d0e6b4a3f12',sc_has_token:true,sc_event:'SUBSCRIBE',
         age:420,base:1150,rate:.41,cc:['US','US','GB','DE','BR','IN','AE','US'],mix:{meta:.6,tiktok:.28,snap:.12},fr:.085,avg:52},
@@ -25,6 +25,8 @@ const Demo = (() => {
         age:75,base:220,rate:.52,cc:['IN','KE','ZA','GB','AE'],mix:{meta:.8,tiktok:.2},fr:.03,avg:24},
       {...blank,id:15,title:'@recipebox_bot',type:'bot',external:true,status:'active',pool:0,pool_target:200,bots:[],tracking_url:'https://joinvoo.com/c/recip3b',hook_start:'https://joinvoo.com/hook/demoKey123/start',hook_blocked:'https://joinvoo.com/hook/demoKey123/blocked',pixel_id:'884210395527140',has_token:true,
         age:40,base:90,rate:.47,cc:['US','GB','CA','AU'],mix:{meta:1},fr:.02,avg:18},
+      {...blank,id:16,title:'Ada (Sales)',type:'dm',username:'ada_sales',status:'active',pool:0,pool_target:200,bots:['dailydeals_track_bot'],bot_id:1,tracking_url:'https://joinvoo.com/c/adaDm7',pixel_id:'884210395527140',has_token:true,event_name:'Lead',tt_event:'Contact',sc_event:'SIGN_UP',go_via:'miniapp',dm_text:'Hi! I saw your ad.',
+        age:60,base:260,rate:.4,cc:['US','GB','BR','AE','IN','NG'],mix:{meta:.85,tiktok:.15},fr:.07,avg:45},
     ]});
   const PAYM=[
     {id:'paystack',type:'paystack',label:'Paystack',note:'Card, bank transfer, USSD',enabled:true},
@@ -50,7 +52,8 @@ const Demo = (() => {
   function stats0(qs){
     const T={}; KEYS.forEach(k=>T[k]=0); const ser=new Map(), ids=new Set(chansFor(qs).map(c=>c.id));
     const add=(key,c,j,f)=>{ const s=ser.get(key)||{day:key,clicks:0,joins:0,ftd:0}; s.clicks+=c; s.joins+=j; s.ftd+=f; ser.set(key,s); };
-    for (const d of days(qs)) for (const ch of chansFor(qs)) { const r=dayRow(ch,dayIdx(d)); if(!r) continue; for(const k of KEYS) T[k]+=r[k]; add(ymd(d),r.clicks,r.joins,r.ftd); }
+    T.dms=0; T.dms_organic=0; T.dm_clicks=0;
+    for (const d of days(qs)) for (const ch of chansFor(qs)) { const r=dayRow(ch,dayIdx(d)); if(!r) continue; for(const k of KEYS) T[k]+=r[k]; add(ymd(d),r.clicks,r.joins,r.ftd); if(ch.type==='dm'){ T.dms+=r.joins; T.dms_organic+=r.organic; T.dm_clicks+=r.clicks; } }
     for (const c of liveClicks) if (ids.has(c.ch)&&inRange(qs,c.ts)) { T.clicks++; add(ymd(new Date(c.ts)),1,0,0); }
     for (const j of live) if (ids.has(j.channel_id)&&inRange(qs,j.joined_at)) { if(j.click_id){T.joins++; add(ymd(new Date(j.joined_at)),0,1,0);} else T.organic++; if(j.capi_status==='sent') T.capi_ok++; if(j.tt_status==='sent') T.tt_ok++; if(j.sc_status==='sent') T.sc_ok++; }
     for (const c of extraConvs) if ((!c.ch||ids.has(c.ch))&&inRange(qs,c.at)) { if(c.event==='ftd'){ T.ftd++; add(ymd(new Date(c.at)),0,0,1); } if(c.event==='reg') T.reg++; if(c.event==='ftd'||c.event==='dep') T.revenue_cents+=c.value_cents; }
@@ -110,10 +113,11 @@ const Demo = (() => {
   }
   function breakdown0(qs){
     const dim=qs.get('dim')||'campaign', acc=new Map();
-    const put=(key,T,w,jm=1,fm=1,W)=>{ const a=acc.get(key)||{key,clicks:0,joins:0,ftd:0,reg:0,revenue_cents:0,leaves:0}; a.clicks+=T.clicks*w/W.c; a.joins+=T.joins*w*jm/W.j; a.ftd+=T.ftd*w*jm*fm/W.f; a.reg+=T.reg*w*jm*fm/W.f; a.revenue_cents+=T.revenue_cents*w*jm*fm/W.f; a.leaves+=T.leaves*w*jm/W.j; acc.set(key,a); };
+    let isDm=false;
+    const put=(key,T,w,jm=1,fm=1,W)=>{ const a=acc.get(key)||{key,clicks:0,joins:0,dms:0,dm_clicks:0,ftd:0,reg:0,revenue_cents:0,leaves:0}; a.clicks+=T.clicks*w/W.c; a.joins+=T.joins*w*jm/W.j; if(isDm){ a.dms+=T.joins*w*jm/W.j; a.dm_clicks+=T.clicks*w/W.c; } a.ftd+=T.ftd*w*jm*fm/W.f; a.reg+=T.reg*w*jm*fm/W.f; a.revenue_cents+=T.revenue_cents*w*jm*fm/W.f; a.leaves+=T.leaves*w*jm/W.j; acc.set(key,a); };
     const split=(T,parts)=>{ const W={c:0,j:0,f:0}; for(const [,w,jm=1,fm=1] of parts){ W.c+=w; W.j+=w*jm; W.f+=w*jm*fm; } if(W.c) for(const [k,w,jm,fm] of parts) put(k,T,w,jm,fm,W); };
     for (const ch of chansFor(qs)){
-      const q=new URLSearchParams(qs); q.set('channel',ch.id); const T=stats(q).totals; if(!T.clicks) continue;
+      const q=new URLSearchParams(qs); q.set('channel',ch.id); const T=stats(q).totals; if(!T.clicks) continue; isDm=ch.type==='dm';
       const mix=Object.entries(ch.mix||{meta:1});
       if (dim==='channel') split(T,[[ch.title,1]]);
       else if (dim==='platform') split(T,[...mix.map(([p,w])=>[PNAME[p],w*.98,p==='tiktok'?.92:p==='snap'?.88:1.04,p==='meta'?1.1:.85]),['Other / direct',.02,.6,.5]]);
@@ -122,7 +126,7 @@ const Demo = (() => {
       else if (dim==='ad') split(T,ADS.map((a,i)=>[a,[.3,.24,.2,.15,.11][i],[1.12,.9,1.05,.96,.85][i],[1.1,.95,1.25,.8,.9][i]]));
       else { const parts=[]; for (const [p,w] of mix) CAMPS[p].forEach((c,i)=>parts.push([c,w*[.4,.3,.2,.1][i],[1.1,.95,1.2,.8][i],[1.3,.9,1.1,.7][i]])); split(T,parts); }
     }
-    const rows=[...acc.values()].map(a=>{ for(const k of ['clicks','joins','ftd','reg','revenue_cents','leaves']) a[k]=Math.round(a[k]); a.join_rate=a.clicks?a.joins/a.clicks:0; return a; }).sort((a,b)=>b.joins-a.joins||b.clicks-a.clicks);
+    const rows=[...acc.values()].map(a=>{ for(const k of ['clicks','joins','dms','dm_clicks','ftd','reg','revenue_cents','leaves']) a[k]=Math.round(a[k]); a.join_rate=a.clicks?a.joins/a.clicks:0; return a; }).sort((a,b)=>b.joins-a.joins||b.clicks-a.clicks);
     return {dim,rows};
   }
   function conversions0(limit){
@@ -475,9 +479,14 @@ const Demo = (() => {
     if (p==='/api/verify/resend'){ await wait(500); return {ok:true,message:'Demo: a new confirmation link would be on its way.'}; }
     if (p==='/api/support'){
       if (method==='POST'){ const b=String(body.body||'').trim(); if(!b) throw err('Type a message first.'); const msg={id:sid++,from_admin:0,body:b,created_at:Date.now()}; support.push(msg);
-        setTimeout(()=>support.push({id:sid++,from_admin:1,demo:true,body:`Thanks for trying the chat! This is an automatic demo reply. On your live account a real person from our team answers right here, usually within a few hours.`,created_at:Date.now()}), 2400);
-        return {ok:true,id:msg.id,online:true}; }
-      const after=+qs.get('after')||0; return {ticket:support.length?{id:1,status:'open',email:'alex@example.com'}:null,online:true,support:'',team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',messages:support.filter(x=>x.id>after).map(m=>m.from_admin?{...m,agent:{name:'Maya',photo:''}}:m)}; }
+        /* people send bursts: like the live AI, wait for the last message and answer once (an answer already being sent finishes first) */
+        const D=window.__sup||(window.__sup={timers:[],started:false,end:0});
+        if (D.timers.length && !D.started){ D.timers.forEach(clearTimeout); D.timers=[]; supTyping=Math.max(0,supTyping-1); }
+        const bub=demoAi(b), ag='Sofia'; let at=Math.max(1600, D.started?D.end-Date.now()+900:0); supTyping++; const mine=[]; D.timers=mine; D.started=false;
+        bub.forEach((t,i)=>{ at+=Math.min(3800,900+t.length*22); mine.push(setTimeout(()=>{ if(D.timers===mine) D.started=true; support.push({id:sid++,from_admin:1,body:t,created_at:Date.now(),agent:{name:ag,role:'Customer support',photo:'',ai:true}}); if(i===bub.length-1){ supTyping=Math.max(0,supTyping-1); if(D.timers===mine){ D.timers=[]; D.started=false; } } }, at)); });
+        D.end=Date.now()+at;
+        return {ok:true,id:msg.id,online:true,ai:true}; }
+      const after=+qs.get('after')||0; return {ticket:support.length?{id:1,status:'open',email:'alex@example.com',ai:true}:null,typing:supTyping>0?{name:'Sofia'}:null,online:true,support:'',team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Mon–Sat, 8am–10pm',messages:support.filter(x=>x.id>after).map(m=>m.from_admin&&!m.agent?{...m,agent:{name:'Maya',photo:''}}:m)}; }
     if (p==='/api/referrals'){ const D=864e5, ppl=sample?[
         {email:'lu•••@gmail.com',joined_at:Date.now()-71*D,active:true,spend_cents:62800,earned_cents:12560},
         {email:'so•••@outlook.com',joined_at:Date.now()-58*D,active:true,spend_cents:48600,earned_cents:9720},
@@ -568,7 +577,18 @@ const Demo = (() => {
     try{ localStorage.removeItem('jv_seen_admin'); }catch{} CH.seen=0;
     boot(); }
   function reset(){ clear(); sample=false; verified=false; db={bots:[],channels:[]}; S.forceSetup=true; boot(); }
-  const TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}];
+  const TEAM=[{name:'Sofia',role:'Customer support',photo:'',ai:true},{name:'Daniel',role:'Customer support',photo:'',ai:true},{name:'Maya',role:'Customer success',photo:''}];
+  /* round 19 demo: AI support replies in short bubbles with typing pauses (scripted here; live accounts use the real AI) */
+  let supTyping=0;
+  const demoAi=(q)=>{ q=q.toLowerCase(); const n='Alex';
+    if (/are you (a )?(bot|ai|human|real)/.test(q)) return ['Good question 🙂','I’m Joinvoo’s AI support assistant. I can check your account and fix most things right here.','If you’d rather talk to a person, just say so and a teammate will take over.'];
+    if (/paid|credit|top.?up|payment|deposit.*money/.test(q)) return [`Hi ${n}! 👋`,'Let me check your account…','Found it. Your $50 top-up via Gatevoo was confirmed a moment ago, and the 5,000 credits are on your balance now ✅','Tracking is running again. Anything else I can help with?'];
+    if (/refund|withdraw|chargeback/.test(q)) return ['Got it, thanks for explaining 🙏','Refunds are handled by a teammate, so I’ve passed this to the team with all the details.','They’ll continue right here, usually within a few hours.'];
+    if (/bot|token|stopped|not tracking|joins? (not|aren)/.test(q)) return ['Let me look at your bots…','Your bot @dailydeals_track_bot had its connection replaced by another tool. I’ve repaired it ✅','New joins will show up again within a minute. Want me to check your channels too?'];
+    if (/office|where are you|based/.test(q)) return ['We’re a remote team 🌍','Our teammates work from the Philippines, Nigeria and the UK, so we can help customers around the world.','Anything I can help you with in Joinvoo?'];
+    if (/person|human|agent/.test(q)) return ['Of course!','I’ve asked a teammate to join this chat. They’ll reply right here soon 🙏'];
+    if (/meta|pixel|event/.test(q)) return ['Happy to help with Meta 👍','Open Channels, tap Settings on your channel, then Ad platforms → Meta. Paste your Pixel ID and Conversions API token, then tap Send a test event.','If the test shows up in Events Manager → Test events, you’re all set. Want me to check yours?'];
+    return [`Hi ${n}! 👋`,'Happy to help with that.','Can you tell me a bit more about what you’re seeing?']; };
   function config(){
     const features={signup:true,referrals:true,tiktok:true,snapchat:true,support_chat:true,ftd:true,bot_no_token:true,withdrawals:true,integrations:true,join_requests:true,spend:true,fake_filter:true,alerts:true,credits_bonus:true,ranks:true,enterprise:true,joe:true};
     // testing only: ?features=referrals:0,snapchat:0
@@ -582,7 +602,7 @@ const Demo = (() => {
       {id:'landvoo',name:'Landvoo',tagline:'Landing pages that convert.',headline:'Fast pages for your ads, built in minutes.',url:'',color:'#EEF0F6',color2:'#E2E6F0',ink:'dark',logo:'landvoo',badge:'Coming soon',offer:'',status:'soon',enabled:true},
       {id:'voosquare',name:'VooSquare',tagline:'One login for all Zedapex tools',url:'https://voosquare.com',color:'#0fae6b',color2:'#c6f45a',ink:'dark',logo:'voosquare',status:'live',enabled:true}];
     const voo={login:'off',home:'https://voosquare.com',referrals:qa.get('refs')==='voo'?'voosquare':'local'};
-    return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Usually replies in a few minutes',hours:'Mon–Sat, 8am–10pm',contact:''},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
+    return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Mon–Sat, 8am–10pm',contact:'',ai:true,powered_by:'Replyvoo'},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
   }
   /* ---------- Round 11: plan limits, remove channel / disconnect bot, click IDs + match keys, leaves split, showcase ----------
      Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.
@@ -801,9 +821,50 @@ const Demo = (() => {
     if (p==='/api/team/invite-info'&&H18){ await wait(250); return {ok:true,valid:true,expired:false,email:'alex@example.com',role:'helper',role_name:'Setup helper',owner_name:'Ada Okafor',owner_email:'ada@growfast.co',account_exists:true}; }
     return handle17(method,path,body);
   }
+  /* ---- round 19: manager chats + mini apps ---- */
+  function addDM(){
+    const bot=(W.bot&&db.bots.find(b=>b.id===W.bot.id&&b.status!=='deleted'))||db.bots.filter(b=>b.status!=='deleted').pop(); if(!bot) return; const id=60+db.channels.length;
+    db.channels.push({...blank,id,title:'Ada (Sales)',type:'dm',username:'ada_sales',status:'pending',pool:0,pool_target:200,bots:[bot.username],bot_id:bot.id,tracking_url:'https://joinvoo.com/c/'+Math.random().toString(36).slice(2,7),event_name:'Lead',tt_event:'Contact',sc_event:'SIGN_UP',go_via:'text',dm_text:'',age:0,base:0,rate:0,cc:['NG'],mix:{meta:1},live:true});
+    if (W.step===2 && $('#stp')) checkArrived();
+  }
+  const st19=c=>{ if(c.type!=='dm'&&c.go_via!=='miniapp') return undefined; let k=0,o=0,a=0,g=0; for(let d=0;d>-7;d--){ const r=dayRow({...c,live:false},d); if(r){ k+=r.clicks; a+=r.joins; g+=r.organic; } }
+    if (c.live&&!k){ return {clicks:0,opens:0,from_ads:0,organic:0}; } o=c.go_via==='miniapp'?Math.round(k*.71):0; return {clicks:k,opens:o,from_ads:a,organic:g}; };
+  async function handle19(method,path,body){
+    const p=path.split('?')[0]; let m;
+    if ((m=/^\/api\/bots\/(\d+)$/.exec(p))&&method==='PATCH'){ await wait(300); const b=db.bots.find(x=>x.id===+m[1]); if(!b) throw err('Bot not found.');
+      let v=String((body&&body.ma_app)||'').trim().replace(/^https?:\/\//,'').replace(/\/$/,''); const mm=/^t\.me\/(\w+)(?:\/(\w{3,64}))?$/.exec(v);
+      if (v && mm && mm[1].toLowerCase()!==b.username.toLowerCase()) throw err(`That link is for @${mm[1]}. Paste the mini app link of @${b.username}.`);
+      if (v && !mm && !/^\w{3,64}$/.test(v)) throw err(`Paste the link BotFather gave you, like t.me/${b.username}/app`);
+      b.ma_app=v?(mm?(mm[2]||'main'):v):null; b.ma_url=b.ma_url||'https://joinvoo.com/ma/'+b.id+'.k7Qx2mWz9A'; b.ma_link=b.ma_app?(b.ma_app==='main'?'https://t.me/'+b.username:'https://t.me/'+b.username+'/'+b.ma_app):''; if(b.ma_app) setTimeout(()=>{ b.ma_seen_at=Date.now(); },4000);
+      return {ok:true,ma_app:b.ma_app,ma_url:b.ma_url,ma_link:b.ma_link}; }
+    if ((m=/^\/api\/channels\/(\d+)$/.exec(p))&&method==='PATCH'&&body&&(body.go_via!==undefined||body.app_url!==undefined||body.dm_text!==undefined)){ await wait(300); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Channel not found');
+      const gv=body.go_via===undefined?(c.go_via||(c.type==='dm'?'text':'start')):body.go_via, au=body.app_url===undefined?(c.app_url||''):String(body.app_url||'').trim();
+      if (au && !/^https:\/\/[^\s/]+\.[^\s]+$/.test(au)) throw err('Your mini app address must be a public https:// address, like https://app.yourbrand.com');
+      if (gv==='miniapp' && c.type==='bot' && !au) throw err('Enter your mini app’s web address first.');
+      c.go_via=gv; c.app_url=au; if(body.dm_text!==undefined) c.dm_text=String(body.dm_text||'').slice(0,300);
+      const bot=db.bots.find(b=>b.id===c.bot_id)||db.bots.find(b=>b.username===(c.bots||[])[0]); return {ok:true,go_via:gv,app_url:au,dm_text:c.dm_text,needs_miniapp:gv==='miniapp'&&!(bot&&bot.ma_app)}; }
+    if (p==='/api/webhooks'||p.startsWith('/api/webhooks/')){ await wait(300); db.hooks=db.hooks||[]; const EV=[['join','Channel or group join'],['start','Bot Start'],['dm','First DM'],['reg','Registration'],['ftd','First deposit'],['dep','Repeat deposit'],['sale','Sale']];
+      const all=()=>({ok:true,webhooks:db.hooks.map(h=>({...h})),events:EV.map(([key,label])=>({key,label}))}), sec=()=>'whsec_'+Math.random().toString(36).slice(2,14)+Math.random().toString(36).slice(2,14);
+      const chk=(b,cur)=>{ const url=b.url===undefined?cur.url:String(b.url||'').trim(); if(!/^https:\/\/[^\s/]+\.[^\s]+/.test(url)) throw err('Enter a public https:// address of your server, like https://yourserver.com/joinvoo');
+        const ev=b.events===undefined?cur.events:(b.events||[]).filter(x=>EV.some(e=>e[0]===x)); if(!ev.length) throw err('Pick at least one event to send.'); return {url,events:ev,enabled:b.enabled===undefined?(cur.enabled!==false):!!b.enabled}; };
+      if (p==='/api/webhooks'&&method==='GET') return all();
+      if (p==='/api/webhooks'&&method==='POST'){ if(db.hooks.length>=5) throw err('Up to 5 webhooks per account.'); const c=chk(body||{},{events:[]}), id=(db.hooks.reduce((x,h)=>Math.max(x,h.id),0))+1, s0=sec();
+        db.hooks.push({id,...c,secret_hint:'…'+s0.slice(-4),created_at:Date.now(),last_at:null,last_status:null,last_error:null,sent_24h:0,failed_24h:0}); return {...all(),created:id,secret:s0}; }
+      const mm=/^\/api\/webhooks\/(\d+)(\/test|\/secret)?$/.exec(p), h=mm&&db.hooks.find(x=>x.id===+mm[1]); if(!h) throw err('Webhook not found.');
+      if (mm[2]==='/test'){ await wait(500); h.last_at=Date.now(); h.last_status='ok'; h.last_error=null; return {ok:true,message:'Your server answered 200. Webhook works.'}; }
+      if (mm[2]==='/secret'){ const s0=sec(); h.secret_hint='…'+s0.slice(-4); return {...all(),secret:s0}; }
+      if (method==='PATCH'){ Object.assign(h,chk(body||{},h)); return all(); }
+      if (method==='DELETE'){ db.hooks=db.hooks.filter(x=>x!==h); return all(); }
+    }
+    if ((m=/^\/api\/channels\/(\d+)\/approve$/.exec(p))&&method==='POST'){ await wait(300); const c=db.channels.find(x=>x.id===+m[1]); if(!c) throw err('Not found.'); c.status='active'; return {ok:true,status:'active'}; }
+    const r=await handle18(method,path,body);
+    if (p==='/api/channels'&&method==='GET'&&r&&Array.isArray(r.channels)){ r.dm_on=true; r.miniapp_on=true; r.dm_plan_ok=true;
+      r.channels=r.channels.map(c=>{ const raw=db.channels.find(x=>x.id===c.id)||c; const x={...c,go_via:c.go_via||(c.type==='dm'?'text':'start'),app_url:c.app_url||'',dm_text:c.dm_text||'',bot_id:c.bot_id||((db.bots.find(b=>b.username===(c.bots||[])[0])||{}).id)||null}; const st=st19(raw); if(st) x.stats7=st; return x; }); }
+    return r;
+  }
   function useSampleQuiet(){ sample=true; db=sampleDb(); }
   if (H18) useSampleQuiet();
-  return {handle:handle18,addChannel,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
+  return {handle:handle19,addChannel,addDM,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 
 boot();

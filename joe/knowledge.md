@@ -58,7 +58,7 @@ Compare any two periods (today vs yesterday, this week vs last, this month vs la
 Campaigns shows rows by campaign, ad set, ad, language, source, country, platform or channel. You can chart up to three campaigns side by side.
 
 ## Plans: Basic and Pro
-Both plans are paid monthly from Joinvoo Credits (1 credit = $0.01), on the first ad click of the month.
+Both plans are paid monthly from Joinvoo Credits (1 credit = $0.01), on the first tracked ad click of the month.
 Basic: joins tracked and sent to your ads, deposits matched and sent to your ads, counts of deposits.
 Pro: everything in Basic plus which campaigns, ad sets and ads drove each deposit, with revenue, ROAS and cost per FTD.
 Upgrade any time: you pay only the difference for the rest of the month. Switching back to Basic happens at the end of the month.
@@ -71,7 +71,7 @@ One trial per account and per ad account or pixel.
 ## Credits, free joins and billing
 New accounts get their first tracked joins free after confirming their email. After that, the monthly plan applies, and each tracked join beyond the plan’s included joins costs a small number of credits. Organic joins are free.
 If the wallet runs out, tracking pauses: visitors still reach Telegram, but joins aren’t tracked or sent until you top up.
-Buy credits in Wallet. Bigger top-ups get bonus credits. Credits pay for tracking; they can’t be withdrawn or refunded.
+Buy credits in Wallet. Bigger top-ups get bonus credits. Credits pay for tracking; they can’t be withdrawn, and refunds only happen in the cases on the Refunds page.
 
 ## Levels
 Your level shows how big you are as a media buyer, by leads in the rolling last 30 days (tracked ad joins plus bot Starts; filtered fake joins don’t count):
@@ -82,7 +82,7 @@ Levels are checked every hour. Reaching a new level sends you a congratulations 
 Ranks (Bronze, Silver, Gold, Platinum, Diamond) follow your lifetime paid top-ups and can give a discount on every tracked join, plus perks. Bonus and gift credits don’t count towards ranks.
 
 ## Referral program
-Share your link from Earn. You earn a share of what the people you invite spend with real money (not bonus or gift credits). Earnings settle for a few days, then you can move them to your wallet or withdraw them in USDT or BTC.
+Share your link from Earn. You earn a share of what the people you invite spend with real money (not bonus or gift credits). Earnings settle for a holding period first (14 days by default), then you can move them to your wallet or withdraw them in USDT or BTC.
 
 ## Telegram alerts
 Connect the Joinvoo alerts bot in Settings → Telegram alerts to get: broken tokens or platforms refusing events, invite links running low, tracking paused, no joins for 2 hours on a channel that usually has them, a campaign with deposits yesterday but none by 18:00 today, live FTD pings, and a morning summary at 08:00 in your time zone (joins, FTDs, revenue, spend, ROAS, cost per FTD).
@@ -116,7 +116,7 @@ Open Conversions to see every postback, including unmatched ones, and what was s
 The bell at the top of the dashboard opens the inbox. It has tabs: Updates (announcements from the Joinvoo team), Account (top-ups, payouts, plan, trial, level-ups, support replies), Alerts (no joins, platform errors, fake joins filtered) and Joe (daily tips). Unread items show a red count. In My profile → Notifications you choose which kinds also arrive by email. Security emails, like password resets, are always sent.
 
 ## Learn (the blog inside the dashboard)
-The Learn page in the menu has articles about tracking Telegram joins, Conversions API, postbacks, UTM naming, scaling ad sets, backup channels and reading your numbers. Some are written by Dchessking, the founder. Point people to Learn when they ask "how do I" questions about media buying.
+The Learn page in the menu has articles about tracking Telegram joins, Conversions API, postbacks, UTM naming, scaling ad sets, backup channels and reading your numbers. Point people to Learn when they ask "how do I" questions about media buying.
 
 ## Country and payment methods
 Each account has a country, chosen at sign-up and changeable in My profile once every 30 days. The Credits page only shows the payment methods available in that country. Card payments (Stripe) and Paystack confirm themselves within a minute. Bank transfer and crypto (USDT) are checked by the team, usually within a few hours. If a method someone expects is missing, check that their country is right in My profile.
@@ -154,3 +154,39 @@ Credits → Top up → "USDT or Bitcoin" opens a secure Gatevoo checkout. Pay th
 
 ## Affiliates vs referrals
 Referrals: customers invite friends from the Earn page inside Joinvoo. Affiliates: marketers and creators promote Joinvoo through the VooSquare affiliate program and can earn up to 50% for life (with conditions, see affiliate.voosquare.com). Joinvoo's page about it is /affiliates.
+
+## DM tracking and mini apps
+- DM tracking (shown as “DM tracking” in Channels) tracks people who message a manager's personal Telegram account from an ad. Setup: in @BotFather turn on Business Mode for the Joinvoo bot (/mybots → bot → Bot Settings → Business Mode). Then on the manager's Telegram: Settings → Telegram Business → Chatbots → add the bot and pick "New chats" or "All non-contacts". Telegram Business needs Telegram Premium on the manager's account.
+- A DM tracking card appears in Channels by itself with its own ad link. Only each person's first message counts. Joinvoo never replies in those chats and never stores message text.
+- Default events for a first message: Meta Lead, TikTok Contact, Snapchat SIGN_UP (changeable in Settings → Ad platforms). Optimise DM campaigns for Lead.
+- Two ways the link opens (Settings → How it opens): "Straight to the chat" (ready message plus a short ref code; if the person deletes the code the message counts as organic) or "Through your mini app" (recommended: Telegram tells Joinvoo exactly who tapped, so every message is matched).
+- Mini app setup: copy the address Joinvoo shows, in BotFather send /newapp, pick the bot, paste it as the Web App URL, then paste the t.me/bot/app link BotFather gives back into Joinvoo. Open it once; the status turns green.
+- Bots with their own mini app (trading or shopping apps): bot Settings → Mini app → "Open my mini app instead of the chat" and enter the app's address; point the BotFather mini app at Joinvoo's address. Each open counts as a lead; Telegram login in their app keeps working.
+- If the manager removes the bot or turns Business off, the DM tracking card shows "Bot turned off"; adding the bot again in Chatbots restarts tracking. The manager needs a Telegram username so the link can open the chat.
+- A message from an ad counts as one tracked join for billing.
+
+## DMs on Overview and Results
+- When an account has DM tracking, Overview shows two extra tiles: "DMs from ads" (first messages matched to an ad, plus organic DMs underneath) and "DM rate" (ad taps that turned into a message). Joins and Join rate then count channel and group joins only.
+- Results gets a DMs column per campaign, ad set or ad, and Cost/join becomes Cost/lead (spend divided by joins plus DMs).
+
+## Downloads (CSV)
+- People → Download CSV: everyone who joined, started the bot or wrote, with the kind of row, the ad, what was sent to the ad platforms and deposits.
+- Results → Download: every ad tap in the chosen dates with platform, country, UTM tags, sub1–sub5, and whether it joined, started or messaged.
+- Conversions → Download CSV: every registration and deposit with value, currency, txid and the campaign behind it. All downloads follow the date range picked at the top.
+
+## Webhooks (send events to your own server)
+- Conversions → Integrations → "Send events to your own server" → Add webhook. Paste an https address (CRM, own bot, Zapier or Make "catch hook" link), tick events: channel or group join, bot Start, first DM, registration, first deposit, repeat deposit, sale. Up to 5 per account; only the account owner can manage them.
+- Each event is a JSON POST sent the moment it happens: event, person (tg_user_id, username, first_name), from_ad, ad (platform, utm_source, utm_campaign, utm_term, utm_content, subs), channel, and for deposits value, currency and txid.
+- Security: header X-Joinvoo-Signature = "sha256=" + HMAC-SHA256 of (X-Joinvoo-Timestamp + "." + raw body) with the signing secret shown once when the webhook is created (a new secret can be made in Edit). If the server fails, Joinvoo retries up to 6 times over about 15 minutes. "Send test" sends a sample event.
+- Tutorial: t13 "Send events to your own server".
+
+## Link tags (pass the ad's details to an offer)
+- Offer links (join-request mode), bot button links, bot welcome messages and a bot's mini app address accept tags: {tg_id}, {click_id}, {name}, {utm_source}, {utm_medium}, {utm_campaign}, {utm_term}, {utm_content}, {sub1}…{sub9}. Tap a chip under the link field to add one.
+- Values come from the Joinvoo ad link the person tapped, so keep URL parameters on the Joinvoo link in the ad (e.g. Meta: utm_campaign={{campaign.name}}&utm_content={{ad.name}}). In links values are URL-encoded; with no ad they are empty. Unknown tags are left as typed.
+- Tutorial: t14 "Pass your ad's details to your offer".
+
+## Who built Joinvoo
+- Joinvoo is built by Zedapex, the brand of its founder Ejiro Segbuyota, known as Dchessking (also "The Traffic Banker"). He had the idea and built it.
+- Dchessking is a very skilled, award-winning media buyer who has won several awards and media buying contests. He was once an economics teacher at a secondary school.
+- His brother Graceboy is also a media buyer, and his wife Olamide is a digital marketer. Traffic is in their blood.
+- For more, open the about-zedapex-and-team playbook. Never invent details about them that aren't written there.

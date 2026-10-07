@@ -4,12 +4,18 @@
 set -e
 D="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$D/../.." && pwd)"; OUT="$ROOT/public/app.html"; TMP="${TMPDIR:-/tmp}/joinvoo-app.next.html"
 cat "$D/p1.css.html" "$D/p2.css.html" "$D/p2b.css.html" "$D/p2c.css.html" "$D/p2d.css.html" "$D/p2e.css.html" "$D/p3.core.html" "$D/p4.shell.html" "$D/p5.overview.html" "$D/p6.compare.html" \
-    "$D/p7.data.html" "$D/p8.pages.html" "$D/p8b.phaseA.html" "$D/p8c.round6.html" "$D/p8d.round16.html" "$D/p8e.round17.html" "$D/p8f.tutorials.html" "$D/p8g.round18.html" "$D/p9.demo.html" > "$TMP"
+    "$D/p7.data.html" "$D/p8.pages.html" "$D/p8b.phaseA.html" "$D/p8c.round6.html" "$D/p8d.round16.html" "$D/p8e.round17.html" "$D/p8f.tutorials.html" "$D/p8g.round18.html" "$D/p8h.round19.html" "$D/p9.demo.html" > "$TMP"
 python3 - "$TMP" <<'PY'
 import sys
 s = open(sys.argv[1]).read()
 a = s.index('<script>\n(function(){')
 open(sys.argv[1] + '.js', 'w').write(s[a + 8:s.index('</script>', a)])
+PY
+python3 - "$TMP" <<'PY'
+import sys
+s = open(sys.argv[1]).read()
+o, c = s.count('<style'), s.count('</style>')
+if o != c: sys.exit(f'STYLE TAGS NOT BALANCED: {o} <style> vs {c} </style>. A CSS part lost its closing tag.')
 PY
 node --check "$TMP.js" && echo SYNTAX_OK
 cp "$TMP" "$OUT"

@@ -1,0 +1,366 @@
+
+/* ================= round 19: manager chats (Telegram Business) and mini apps =================
+   A manager chat is a tracked "channel" of type 'dm': it appears by itself when a manager adds the bot under
+   Telegram → Settings → Telegram Business → Chatbots. The first message each person sends is the conversion.
+   Mini apps: the bot's mini app (made in BotFather) points at Joinvoo's page, which knows exactly who opened it. */
+const isDM = c => !!c && c.type==='dm';
+const DM_ON = () => !S.chans || S.chans.dm_on!==false;
+const MA_ON = () => !S.chans || S.chans.miniapp_on!==false;
+const botOfCh = c => { const bs=(S.chans&&S.chans.bots)||[]; return bs.find(b=>b.id===c.bot_id) || bs.find(b=>b.username===((c.bots||[])[0])) || (c.type==='bot'&&!c.external?bs.find(b=>'@'+b.username===c.title):null) || null; };
+const ICO_DM = sv('<path d="M4.5 5.5h15a1.5 1.5 0 011.5 1.5v8.6a1.5 1.5 0 01-1.5 1.5H10l-4.3 3.4v-3.4H4.5A1.5 1.5 0 013 15.6V7a1.5 1.5 0 011.5-1.5z"/><path d="M7.5 10h9M7.5 13h5.5"/>');
+const ICO_APP = sv('<rect x="6.5" y="2.8" width="11" height="18.4" rx="2.6"/><path d="M10.5 17.8h3"/><path d="M9.5 7.5l2.5 2 2.5-2"/>');
+const r19Chip = (k,l) => `<span class="chip ${k}">${l}</span>`;
+
+/* ---- 7-day strip: taps → opened → messaged (manager chats) or leads (mini-app bots) ---- */
+function r19Stats(c){
+  const s=c.stats7||{}, showOpen=c.go_via==='miniapp'||s.opens>0;
+  const cells=[[s.clicks,tt('r19.taps','Ad taps')]].concat(showOpen?[[s.opens,tt('r19.opened','Opened app')]]:[]).concat([[s.from_ads,isDM(c)?tt('r19.msgd','Messaged'):tt('r19.leads','Leads')],[s.organic,tt('r19.org','Organic')]]);
+  return `<div class="r19-st" aria-label="${esc(tt('r19.7d','Last 7 days'))}">${cells.map(([v,l],i)=>`<span${i===cells.length-2?' class="hi"':''}><b class="num">${fmt(v||0)}</b><small>${l}</small></span>`).join('')}</div><span class="hint r19-7d">${tt('r19.7d','Last 7 days')}</span>`;
+}
+
+/* ---- the mini app box (shared by manager chats and bots) ---- */
+function maPanel(b, own){
+  if (!MA_ON()) return `<div class="note">${tt('r19.ma.off','Mini apps are switched off right now.')}</div>`;
+  if (!b) return `<div class="note">${tt('r19.ma.nobot','Connect this bot with its token to use a mini app.')}</div>`;
+  if (!b.ma_url) return `<div class="note">${tt('r19.ma.owner','Only the account owner can set up the mini app.')}</div>`;
+  const u='@'+esc(b.username);
+  const st = !b.ma_app ? `<div class="al17 soft"><span class="al-ic">${ICO_APP}</span><span class="al-t"><b>${tt('r19.ma.none','No mini app yet')}</b><small>${tt('r19.ma.none.p','Takes about 2 minutes in @BotFather.')}</small></span></div>`
+    : b.ma_seen_at ? `<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('r19.ma.ok','Mini app is working')}</b><small>${tt('r19.ma.seen','Last opened {t}',{t:ago(b.ma_seen_at)})}</small></span>${b.ma_link?`<a class="btn sm" href="${esc(b.ma_link)}" target="_blank" rel="noopener">${I.ext} ${tt('r19.ma.open','Open')}</a>`:''}</div>`
+    : `<div class="al17 warn"><span class="al-ic">${I.clock}</span><span class="al-t"><b>${tt('r19.ma.wait','Saved. Open it once to check')}</b><small>${tt('r19.ma.wait.p','Open your mini app in Telegram. This turns green when it loads.')}</small></span>${b.ma_link?`<a class="btn sm primary" href="${esc(b.ma_link)}" target="_blank" rel="noopener">${I.ext} ${tt('r19.ma.test','Open to test')}</a>`:''}</div>`;
+  const steps = own
+    ? `<li><span class="n">1</span><span>${tt('r19.ma.o1','In {bf}, send {c} and pick your mini app',{bf:'<a href="https://t.me/BotFather" target="_blank" rel="noopener"><b>@BotFather</b></a>',c:'<button class="kbd" data-act="copy" data-v="/myapps">/myapps</button>'})}</span></li>
+       <li><span class="n">2</span><span>${tt('r19.ma.o2','Tap <b>Edit Web App URL</b> and paste:')}</span></li>`
+    : `<li><span class="n">1</span><span>${tt('r19.ma.s1','In {bf}, send {c} and pick {u}',{bf:'<a href="https://t.me/BotFather" target="_blank" rel="noopener"><b>@BotFather</b></a>',c:'<button class="kbd" data-act="copy" data-v="/newapp">/newapp</button>',u:`<b>${u}</b>`})}</span></li>
+       <li><span class="n">2</span><span>${tt('r19.ma.s2','Add a title, a short description and a photo')}</span></li>
+       <li><span class="n">3</span><span>${tt('r19.ma.s3','When it asks for the Web App URL, paste:')}</span></li>`;
+  const done=!!(b.ma_app&&b.ma_seen_at);
+  return `<div class="r19-ma">${st}${done?`<details class="cs-more r19-chg"><summary>${tt('r19.ma.chg','Change or set up again')} ${I.chev}</summary><div class="r19-ma">`:''}
+    <ol class="howto r19-how">${steps}</ol>
+    <div class="codebox"><code>${esc(b.ma_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(b.ma_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>
+    <form class="cs-form r19-maf" data-maf="${b.id}"><div class="field"><label for="ma-${b.id}">${own?tt('r19.ma.l2','Your mini app link'):tt('r19.ma.l','Paste the link BotFather sends you')}</label>
+      <div class="row-in"><input class="inp mono" id="ma-${b.id}" autocomplete="off" spellcheck="false" inputmode="url" value="${esc(b.ma_link||'')}" placeholder="t.me/${esc(b.username)}/app"><button class="btn primary" type="submit">${tt('common.save','Save')}</button></div>
+      <span class="hint">${tt('r19.ma.h','Looks like t.me/{b}/app. Using your bot’s main mini app instead? Paste t.me/{b}',{b:esc(b.username)})}</span></div><div class="r19-maerr"></div></form>${done?'</div></details>':''}</div>`;
+}
+async function maSave(f){
+  const id=f.dataset.maf, v=f.querySelector('input').value.trim(), btn=f.querySelector('button[type="submit"]'), er=f.querySelector('.r19-maerr'); btn.disabled=true; er.innerHTML='';
+  try { await api('PATCH','/api/bots/'+id,{ma_app:v}); toast(v?tt('r19.ma.saved','Mini app saved. Open it once to check.'):tt('r19.ma.cleared','Mini app removed')); await refreshChans(); if($('#cl')) drawChannels(); drawCS(); }
+  catch(e){ er.innerHTML=`<div class="err">${esc(e.message)}</div>`; btn.disabled=false; }
+}
+
+/* ---- Channel settings: manager chats get "How it opens"; bots with a token get "Mini app" ---- */
+const csTabs0 = csTabs;
+csTabs = function(c){
+  if (isDM(c)) return [['ads',tt('cs.ads','Ad platforms')],['open',tt('r19.tab.open','How it opens')],['web',tt('cs.web','Your own website')],['domain',tt('cs.dom','Domain')]];
+  const t=csTabs0(c);
+  if (c.type==='bot' && !c.external && MA_ON()) t.splice(2,0,['miniapp',tt('r19.tab.ma','Mini app')]);
+  return t;
+};
+const csBody0 = csBody;
+csBody = function(c, tab){
+  if (tab==='open' && isDM(c)) return r19OpenTab(c);
+  if (tab==='miniapp' && c.type==='bot') return r19BotTab(c);
+  if (tab==='ads' && isDM(c)) return csBody0(c,tab).replace(tt('cs.ads.h','Tell your ads about every join'),tt('r19.ads.h','Tell your ads about every message')).replace(tt('cs.ads.p','Each join from this link is sent to the platforms you connect, so your ads learn who really joins.'),tt('r19.ads.p','The first message each person sends your manager is sent to your ad platforms, so your ads find people who really write to you.'));
+  return csBody0(c,tab);
+};
+function r19OpenTab(c){
+  const b=botOfCh(c), mini=c.go_via==='miniapp', u=(c.bots&&c.bots[0])?'@'+esc(c.bots[0]):tt('r19.yourbot','your bot');
+  const off = c.status!=='active' ? `<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('r19.off','The manager turned the bot off')}</b><small>${tt('r19.off.p','In Telegram: Settings → Telegram Business → Chatbots → add {u} again. Tracking starts again by itself.',{u})}</small></span></div>` : '';
+  const noUser = !c.username ? `<div class="note warn">${tt('r19.nouser','This manager account has no Telegram username, so the link can’t open the chat. Add one in Telegram → Settings → Username. It shows here by itself.')}</div>` : '';
+  const planNote = S.chans && S.chans.dm_plan_ok===false ? `<div class="note warn">${tt('r19.pro','DM tracking and mini apps are on the Pro plan. Until you upgrade, your link still opens the chat, but DMs aren’t tracked.')} <button class="link" data-act="nav" data-p="wallet">${tt('r19.seepro','See Pro')}</button></div>` : '';
+  const opt=(v,t,s,rec)=>`<button class="opt17" role="radio" aria-checked="${c.go_via===v}" data-act="r19-via" data-id="${c.id}" data-v="${v}"><span class="o-rad"></span><span class="mr-t"><b>${t}${rec?` <em class="chip g">${tt('r19.rec','Recommended')}</em>`:''}</b><small>${s}</small></span></button>`;
+  return `${csHelp(tt('r19.open.h','From your ad to {n}’s chat',{n:esc(c.title)}),tt('r19.open.p','Only the first message each person sends counts. Joinvoo never replies and never saves what people write.'))}${watchBtn('t11')}
+    ${off}${planNote}${r19Stats(c)}
+    <div class="cs-sub">${tt('r19.how','How your ad link opens')}</div>
+    <div class="opts17" role="radiogroup">${MA_ON()?opt('miniapp',tt('r19.via.ma','Through your mini app'),tt('r19.via.ma.p','Telegram tells Joinvoo exactly who tapped. Every message is matched, then the chat opens.'),1):''}
+      ${opt('text',tt('r19.via.tx','Straight to the chat'),tt('r19.via.tx.p','Opens the chat with a ready message and a short code. If someone deletes the code, that message can’t be matched.'))}</div>
+    <form id="r19dm" class="cs-form"><div class="field"><label for="r19t">${tt('r19.msg','Ready message')}</label><textarea class="inp" id="r19t" rows="2" maxlength="300" placeholder="${esc(tt('r19.msg.ph','Hi! I’m interested.'))}">${esc(c.dm_text||'')}</textarea>
+      <span class="hint">${mini?tt('r19.msg.h1','Typed into their message box when the chat opens. They just tap Send.'):tt('r19.msg.h2','We add a short code at the end, like “Ref: 3k_x7Yp2Q”, so we know which ad they came from.')}</span></div>
+      <div id="r19err"></div><button class="btn primary lg wide" type="submit">${tt('common.save','Save')}</button></form>
+    ${noUser}
+    ${mini?`<div class="cs-sub">${tt('r19.ma.h2','Your mini app')}</div>${b&&b.ma_app&&b.ma_seen_at?'':watchBtn('t12')}${maPanel(b,false)}${b&&!b.ma_app?`<p class="hint">${tt('r19.ma.until','Until your mini app is saved, your link opens the chat with a ready message.')}</p>`:''}`:''}`;
+}
+function r19BotTab(c){
+  const b=botOfCh(c), on=c.go_via==='miniapp', open=on||S.r19BotOpen===c.id;
+  return `${csHelp(tt('r19.bot.h','Open your mini app from the ad'),tt('r19.bot.p','Has your bot got its own mini app, like a trading or shopping app? Your ad can open it straight away. Each open counts as a lead and is sent to your ad platforms.'))}${watchBtn('t12')}
+    ${on?r19Stats(c):''}
+    <div class="cs-row"><span class="mr-t"><b>${tt('r19.bot.t','Open my mini app instead of the chat')}</b><small>${on?tt('r19.bot.on','On. Your ad link opens your mini app.'):tt('r19.bot.off2','Off. Your ad link opens the bot and people press Start.')}</small></span>${sw('r19-bm',on,tt('r19.bot.t','Open my mini app instead of the chat'),`data-id="${c.id}"`)}</div>
+    ${open?`<form id="r19bf" class="cs-form"><div class="field"><label for="r19u">${tt('r19.bot.u','Your mini app’s web address')}</label><input class="inp" id="r19u" inputmode="url" value="${esc(c.app_url||'')}" placeholder="https://app.yourbrand.com">
+      <span class="hint">${tt('r19.bot.uh','Where your app lives today. Joinvoo notes who opened it, then shows your app. Telegram login inside your app keeps working.')}</span>${tagChips('r19u')}</div>
+      <div id="r19err"></div><button class="btn primary lg wide" type="submit">${on?tt('common.save','Save'):tt('r19.bot.go','Turn it on')}</button></form>
+      <div class="cs-sub">${tt('r19.bot.c','Point your mini app at Joinvoo')}</div>${maPanel(b,true)}`:''}`;
+}
+const csBind0 = csBind;
+csBind = function(c, tab){
+  csBind0(c, tab);
+  const f=$('#r19dm'); f&&f.addEventListener('submit', async e=>{ e.preventDefault(); const btn=e.submitter; if(btn) btn.disabled=true;
+    try { await api('PATCH','/api/channels/'+c.id,{dm_text:$('#r19t').value}); toast(tt('common.saved','Saved')); await refreshChans(); drawCS(); }
+    catch(err){ $('#r19err').innerHTML=`<div class="err">${esc(err.message)}</div>`; if(btn) btn.disabled=false; } });
+  const bf=$('#r19bf'); bf&&bf.addEventListener('submit', async e=>{ e.preventDefault(); const btn=e.submitter; if(btn) btn.disabled=true;
+    try { await api('PATCH','/api/channels/'+c.id,{go_via:'miniapp',app_url:$('#r19u').value.trim()}); S.r19BotOpen=null; toast(tt('r19.bot.saved','Your ad link now opens your mini app')); await refreshChans(); if($('#cl')) drawChannels(); drawCS(); }
+    catch(err){ if (err.status===402){ toast(err.message,false); } $('#r19err').innerHTML=`<div class="err">${esc(err.message)}</div>`; if(btn) btn.disabled=false; } });
+  $$('#csbody form[data-maf]').forEach(m=>m.addEventListener('submit', e=>{ e.preventDefault(); maSave(m); }));
+};
+
+/* ---- setup wizard: "Manager chats" ---- */
+function dmStep(u, pick){
+  const pro = S.chans && S.chans.dm_plan_ok===false;
+  return `<div class="step">
+    <div class="okbar">${I.checkc}<span>${tt('r19.w.conn','@{u} is connected',{u:esc(u)})}</span></div>
+    <h1>${tt('w.h','What do you want to track?')}</h1>${pick}
+    <p class="lede" style="margin-top:0">${tt('r19.w.p','Your manager adds @{u} in Telegram once. Then every first message from your ads is matched to the ad and sent to your ad platforms.',{u:esc(u)})}</p>
+    ${pro?`<div class="note warn">${tt('r19.pro','DM tracking and mini apps are on the Pro plan. Until you upgrade, your link still opens the chat, but DMs aren’t tracked.')}</div>`:''}
+    <ol class="howto">
+      <li><span class="n">1</span><span>${tt('r19.w.1','In {bf}: {c} → @{u} → <b>Bot Settings</b> → <b>Business Mode</b> → turn on',{bf:'<a href="https://t.me/BotFather" target="_blank" rel="noopener"><b>@BotFather</b></a>',c:'<button class="kbd" data-act="copy" data-v="/mybots">/mybots</button>',u:esc(u)})}</span></li>
+      <li><span class="n">2</span><span>${tt('r19.w.2','On the manager’s Telegram: <b>Settings</b> → <b>Telegram Business</b> → <b>Chatbots</b>')}</span></li>
+      <li><span class="n">3</span><span>${tt('r19.w.3','Add {u} and pick <b>New chats</b> or <b>All non-contacts</b>',{u:`<button class="kbd" data-act="copy" data-v="@${esc(u)}">@${esc(u)}</button>`})}</span></li>
+    </ol>
+    <div class="note">${tt('r19.w.n','Telegram Business needs Telegram Premium on the manager’s account. Joinvoo only notes each person’s first message: it never replies and never saves what people write.')}</div>
+    ${W.dmPend?dmAsk(W.dmPend):`<div class="radar"><span class="r"><i></i><i></i><i></i><b></b></span><div><strong>${tt('r19.w.wait','Waiting for your manager…')}</strong><span>${tt('r19.w.wait2','This moves on by itself once the bot is added.')}</span></div></div>
+    ${DEMO?`<button class="btn ghost" data-act="demo-dm">${tt('r19.w.demo','Demo: pretend my manager added it')}</button>`:''}`}</div>`;
+}
+
+/* ---- "Is this your manager?" (anyone with Telegram Premium can add a bot, so the owner confirms) ---- */
+function dmAsk(c){
+  return `<div class="r19-ask" role="group"><span class="r19-ask-ic">${ICO_DM}</span><span class="r19-ask-t"><b>${tt('r19.ask','Is this your manager?')}</b><small>${tt('r19.ask.p','{n} connected your bot in Telegram Business.',{n:`<b>${esc(c.title)}</b>${c.username?' (@'+esc(c.username)+')':''}`})}</small></span>
+    <span class="r19-ask-b"><button class="btn sm primary" data-act="r19-ok" data-id="${c.id}">${tt('r19.yes','Yes, that’s my manager')}</button><button class="btn sm ghost" data-act="r19-no" data-id="${c.id}">${tt('r19.no','Not mine')}</button></span></div>`;
+}
+async function dmApprove(id, a){
+  if (a) a.disabled=true;
+  try { const r=await api('POST','/api/channels/'+id+'/approve'); await refreshChans(); toast(r.locked?tt('r19.ok.lock','Approved. It starts tracking when you have a free slot.'):tt('r19.ok','Tracking messages to your manager'));
+    if (W.step===2 && $('#stp')){ W.channel=S.chans.channels.find(x=>String(x.id)===String(id)); W.dmPend=null; W.step=3; drawStep(); return; }
+    if ($('#cl')) drawChannels(); }
+  catch(e){ toast(e.message,false); if (a) a.disabled=false; }
+}
+/* the setup wizard waits for a NEW manager chat (pending), then asks the same question */
+const checkArrived0 = checkArrived;
+checkArrived = async function(){
+  if (!(W.mode==='dm' && DM_ON())) return checkArrived0();
+  try { const d=await api('GET','/api/channels'); if (W.step!==2) return; S.chans=d;
+    const p=d.channels.filter(c=>c.type==='dm'&&c.status==='pending').pop(), act=d.channels.length>W.before?d.channels.filter(c=>c.type==='dm'&&c.status==='active').pop():null;
+    if (act && !p){ W.channel=act; W.step=3; drawStep(); toast(tt('r19.found','Your manager is connected')); return; }
+    if (p && (!W.dmPend||W.dmPend.id!==p.id)){ W.dmPend=p; drawStep(); } } catch{}
+};
+
+/* ---- handlers ---- */
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'r19-via': { if (a.getAttribute('aria-checked')==='true') break; const c=chById(a.dataset.id); if(!c) break; $$('[data-act="r19-via"]').forEach(x=>x.disabled=true);
+      api('PATCH','/api/channels/'+c.id,{go_via:a.dataset.v}).then(async r=>{ toast(a.dataset.v==='miniapp'?(r.needs_miniapp?tt('r19.via.ma.t','Now set up your mini app below'):tt('r19.via.ma.ok','Your link now opens your mini app')):tt('r19.via.tx.ok','Your link now opens the chat')); await refreshChans(); if($('#cl')) drawChannels(); drawCS(); })
+        .catch(err=>{ toast(err.message,false); drawCS(); }); break; }
+    case 'r19-bm': { const c=chById(a.dataset.id); if(!c) break; const on=a.getAttribute('aria-checked')==='true';
+      if (on){ csPatch(c.id,{go_via:'start'},tt('r19.bot.offd','Your ad link opens the bot again')); S.r19BotOpen=null; }
+      else if (c.app_url){ csPatch(c.id,{go_via:'miniapp'},tt('r19.bot.saved','Your ad link now opens your mini app')); }
+      else { S.r19BotOpen=c.id; drawCS(); setTimeout(()=>{ const i=$('#r19u'); if(i) i.focus(); },50); } break; }
+    case 'demo-dm': if (DEMO) Demo.addDM(); break;
+    case 'r19-ok': dmApprove(a.dataset.id, a); break;
+    case 'r19-no': { a.disabled=true; api('DELETE','/api/channels/'+a.dataset.id).then(async()=>{ await refreshChans(); toast(tt('r19.no.ok','Removed. They can’t use your bot for tracking.')); if (W.step===2&&$('#stp')){ W.dmPend=null; drawStep(); } else if ($('#cl')) drawChannels(); }).catch(err=>{ toast(err.message,false); a.disabled=false; }); break; }
+  }
+});
+
+/* ---------- tutorials t11 (manager chats) and t12 (mini app) ---------- */
+TUT.push(
+ {id:'t11',title:'Why track messages to your manager',where:'Setup step 2 · DM tracking',voice:'female',intro:4.0,marks:[4.0, 8.38, 10.59, 13.87, 20.5, 25.68, 29.73, 35.01, 42.44, 47.57, 50.77, 58.41, 66.81],text:"Do your ads send people straight to a manager’s chat on Telegram? Then this one matters. Right now, Meta only sees a tap on your link. It can’t see who actually sent your manager a message, so it learns to find people who tap and leave. You pay for clicks, while your manager sits waiting for real conversations. Joinvoo fixes that by tracking every first message. First, in BotFather, open your bot’s settings and turn on Business Mode. Then, on the manager’s Telegram, open Settings, then Telegram Business, then Chatbots, and add your bot. Back in Joinvoo, tap Yes, that’s my manager, and you get a new ad link. Connect Meta, and put that link in your ad. When someone taps your ad and sends their first message, Joinvoo matches it to the exact ad, and sends a Lead to Meta. Now Meta learns from people who really start a conversation, so your cost per message drops and your manager gets better leads. And Joinvoo never replies, and never saves what people write."},
+ {id:'t12',title:'Set up your mini app',where:'Channel settings › How it opens',voice:'female',intro:4.0,marks:[4.0, 8.96, 13.98, 16.96, 21.84, 24.23, 27.55, 30.91],text:"For the most exact tracking, send people to your manager through a mini app. Open the chat’s Settings, then How it opens, and pick Through your mini app. Copy the web address Joinvoo shows you. In BotFather, send slash new app, pick your bot, and paste the address. BotFather sends you a link. Paste it back into Joinvoo, and tap Save. Open the mini app once, and it turns green. Now Telegram tells Joinvoo exactly who tapped your ad, so every message is matched."}
+);
+const DMCARD = (extra='') => `<div class="m-card m-ch" data-t="card"><div class="m-cht"><span class="m-chi" style="background:${CH_GRAD[1]}">${ICO_DM}</span><span class="m-rt"><b>Ada (Sales)</b><small>DM tracking</small></span><span class="m-chip g">● Tracking</span></div>
+  <div class="m-code" data-t="link"><code>gojoinly.com/c/adaDm7</code><span class="m-btn p sm" data-t="copy">${I.copy} Copy</span></div><div class="m-chf"><span><b>46</b> messages today</span><span class="m-pms">${pm('meta')}</span><span class="m-btn sm" data-t="set">${I.gear} Settings</span></div>${extra}</div>`;
+Object.assign(SCR, {
+  'tg-mgr': () => TG(M.tg('Ada (Sales)','online','#12b886'), `${M.msg('in','Hi! I saw your ad 👋','m1',1)}${M.msg('out','Welcome! Here’s how to get started…','m2',1)}`, `<div class="m-comp">${M.inp('comp','Message')}<span class="m-send" data-t="send">${I.send}</span></div>`),
+  'tg-bf-biz': () => TG(M.tg('BotFather','bot','#3390ec',1), `${M.msg('out','/mybots','m1',1)}${M.msg('in','Choose a bot from the list below:<br><b>@dailydeals_track_bot</b>','m2',1)}${M.msg('in','Bot Settings → <b>Business Mode</b>','m3',1)}${M.msg('in','✅ Business Mode is <b>enabled</b> for @dailydeals_track_bot.','m4',1)}`),
+  'tg-set': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-tn"><b>Settings</b></span></div><div class="m-tgl">${M.row(I.user,'My Profile','')}${M.row(I.bell,'Notifications','')}${M.row(I.sparkles,'Telegram Premium','')}${M.row(I.bolt,'Telegram Business','','', 'biz')}</div></div>`,
+  'tg-biz': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tn"><b>Telegram Business</b></span></div><div class="m-tgl">${M.row(I.globe,'Location','')}${M.row(I.clock,'Opening Hours','')}${M.row(I.chat,'Quick Replies','')}${M.row(I.bot,'Chatbots','','', 'bots')}</div></div>`,
+  'tg-chatbots': () => `<div class="m-scr tg">${M.sb()}<div class="m-tgh"><span class="m-back">${I.chevl}</span><span class="m-tn"><b>Chatbots</b></span><span class="m-blue m-done" data-t="save">Done</span></div><div class="m-tgs">${M.inp('q','Bot username')}</div>
+    <div class="m-tgl h" data-t="res">${M.row(`<span class="m-tav" style="background:#5b3df5">D</span>`,'Daily Deals Tracker','@dailydeals_track_bot · bot','', 'res1')}</div><div class="m-tgl">${M.row('','Chats','New chats','', 'chats')}</div></div>`,
+  'meta-taps': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Ads Manager</b></div><div class="m-body"><div class="m-card" data-t="clk"><b>Link clicks</b><small class="m-mut">Last 7 days</small><span class="m-big">1,240</span></div>
+    <div class="m-card" data-t="msg"><b>Messages to your manager</b><small class="m-mut">Meta can’t see these</small><span class="m-big" style="color:#b3392f">?</span></div><div class="m-card h" data-t="cost"><b>You pay for</b><small class="m-mut">taps that never write</small></div></div></div>`,
+  'tg-mgr-empty': () => TG(M.tg('Ada (Sales)','online','#12b886'), `<div class="m-sys" data-t="none">No new messages</div>`, `<div class="m-comp">${M.inp('comp','Message')}<span class="m-send">${I.send}</span></div>`),
+  'jv-ask': () => JV(`<b class="m-h1">Channels</b><div class="m-card" data-t="ask"><b>Is this your manager?</b><small class="m-mut">Ada (Sales) connected your bot in Telegram Business.</small><div style="display:flex;gap:6px;margin-top:8px">${M.btn('yes','Yes, that’s my manager','p sm')}<span class="m-btn sm">Not mine</span></div></div><div class="m-ok h" data-t="found">${I.checkc}<span>Tracking messages to Ada (Sales)</span></div>`, 'channels', 'Channels'),
+  'jv-ch-dm': () => JV(`<b class="m-h1">Channels</b>${DMCARD()}${M.toast('copied','Ad link copied')}<div class="m-ok h" data-t="found">${I.checkc}<span>Found Ada (Sales)</span></div>`, 'channels', 'Channels'),
+  'meta-leads': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Events Manager</b></div><div class="m-body"><div class="m-card"><b>Lead</b><small class="m-mut">Server · Joinvoo</small><span class="m-big" data-t="cnt">46</span></div>
+    ${['Lucas · Story_Countdown','Aisha · UGC_Phone','Mateo · Hook_A_Video'].map((x,i)=>`<div class="m-ev h" data-t="e${i+1}">${I.checkc}<span><b>Lead</b><small>${x} · first message</small></span><em>now</em></div>`).join('')}</div></div>`,
+  'jv-cs-open': () => JV(`${DMCARD()}${M.sheet('Channel settings','Ada (Sales)',`${M.tabs('ads',[['ads','Ad platforms'],['open','How it opens'],['web','Your own website']])}<div class="m-shb"><div class="m-pane h" data-t="pane">
+    <div class="m-aps" data-t="aps"><span class="m-ap" data-t="o1"><span class="m-rad"></span><b>Through your mini app <em class="m-chip g">Recommended</em></b><small>Every message is matched.</small></span>
+    <span class="m-ap on" data-t="o2"><span class="m-rad"></span><b>Straight to the chat</b><small>Ready message with a short code.</small></span></div>
+    <div class="m-code h" data-t="url"><code>joinvoo.com/ma/1.k7Qx2mWz9A</code><span class="m-btn p sm" data-t="ucopy">${I.copy} Copy</span></div>${M.toast('copied','Copied')}
+    <span class="h" data-t="paste">${M.lab('Paste the link BotFather sends you')}${M.inp('ml','t.me/dailydeals_track_bot/app','','mono')}${M.btn('save','Save','p wide')}</span></div></div>`)}`, false, 'Channels'),
+  'tg-bf-app': () => TG(M.tg('BotFather','bot','#3390ec',1), `${M.msg('out','/newapp','m1',1)}${M.msg('in','Choose a bot to create a new Web App for.','m2',1)}${M.msg('out','@dailydeals_track_bot','m3',1)}${M.msg('in','OK. Now send me the Web App URL.','m4',1)}${M.msg('out','https://joinvoo.com/ma/1.k7Qx2mWz9A','m5',1)}${M.msg('in','Done! Your Web App link: <u>t.me/dailydeals_track_bot/go</u>','m6',1)}`),
+  'jv-ma-ok': () => JV(`${DMCARD()}${M.sheet('Channel settings','Ada (Sales)',`${M.tabs('open',[['ads','Ad platforms'],['open','How it opens'],['web','Your own website']])}<div class="m-shb">
+    <div class="m-ok h" data-t="ok">${I.checkc}<span>Mini app is working · opened just now</span></div>
+    <div class="m-card"><b>1,088</b><small class="m-mut">Opened the mini app · last 7 days</small></div><div class="m-card" data-t="msgs"><b>636</b><small class="m-mut">Messaged from your ads · every one matched</small></div></div>`)}`, false, 'Channels'),
+});
+BEATS.t11 = {poster:'tg-mgr', b:[
+  {s:'tg-mgr',a:[[.4,'on','m1']]},
+  {a:[[0,'on','m1'],[.3,'hl','m1']]},
+  {s:'meta-taps',a:[[.4,'hl','clk']]},
+  {a:[[.3,'hl','msg']]},
+  {a:[[.2,'on','cost'],[.5,'screen','tg-mgr-empty'],[.7,'hl','none']]},
+  {s:'jv-ch-dm',a:[[.4,'hl','card']]},
+  {s:'tg-bf-biz',a:[[.1,'on','m1'],[.3,'on','m2'],[.55,'on','m3'],[.85,'on','m4']]},
+  {s:'tg-set',a:[[.22,'tap','biz'],[.32,'screen','tg-biz'],[.5,'tap','bots'],[.58,'screen','tg-chatbots'],[.66,'tap','q'],[.7,'type','q','dailydeals_track'],[.84,'on','res'],[.92,'tap','res1']]},
+  {s:'jv-ask',a:[[.2,'hl','ask'],[.5,'tap','yes'],[.6,'on','found'],[.8,'screen','jv-ch-dm'],[.86,'on','found']]},
+  {s:'jv-s3',a:[[.3,'hl','pmeta'],[.7,'screen','jv-ch-dm'],[.8,'tap','copy'],[.86,'on','copied']]},
+  {s:'tg-mgr',a:[[.2,'on','m1'],[.55,'screen','meta-leads'],[.62,'on','e1'],[.8,'on','e2']]},
+  {s:'meta-leads',a:[[0,'on','e1'],[0,'on','e2'],[.2,'on','e3'],[.5,'hl','cnt']]},
+  {s:'tg-mgr',a:[[0,'on','m1'],[0,'on','m2'],[.4,'hl','m2']]}]};
+BEATS.t12 = {poster:'jv-ma-ok', b:[
+  {s:'jv-ch-dm',a:[[.5,'hl','card']]},
+  {a:[[.1,'tap','set'],[.3,'screen','jv-cs-open'],[.45,'tap','tab-open'],[.5,'on','tab-open'],[.5,'off','tab-ads'],[.52,'on','pane'],[.75,'tap','o1'],[.8,'on','o1'],[.8,'off','o2'],[.84,'on','url']]},
+  {s:'jv-cs-open',a:[[0,'on','pane'],[0,'on','o1'],[0,'off','o2'],[0,'on','url'],[0,'on','tab-open'],[0,'off','tab-ads'],[.3,'tap','ucopy'],[.45,'on','copied']]},
+  {s:'tg-bf-app',a:[[.08,'on','m1'],[.25,'on','m2'],[.45,'on','m3'],[.62,'on','m4'],[.85,'on','m5']]},
+  {s:'tg-bf-app',a:[[0,'on','m1'],[0,'on','m2'],[0,'on','m3'],[0,'on','m4'],[0,'on','m5'],[.1,'on','m6'],[.35,'screen','jv-cs-open'],[.4,'on','pane'],[.4,'on','o1'],[.4,'off','o2'],[.4,'on','url'],[.4,'on','paste'],[.5,'tap','ml'],[.55,'type','ml','t.me/dailydeals_track_bot/go'],[.9,'tap','save']]},
+  {s:'jv-ma-ok',a:[[.3,'on','ok'],[.55,'hl','ok']]},
+  {a:[[0,'on','ok'],[.5,'hl','msgs']]}]};
+TUT_GROUPS.splice(2,0,['msg','Track messages',['t11','t12']]);
+PAGES.tutorials.tag=String(TUT.length);
+
+/* ---------- round 19b: link tags, downloads, webhooks ---------- */
+const TAGS19=[['tg_id','Telegram ID'],['click_id','Click ID'],['utm_source','Source'],['utm_campaign','Campaign'],['utm_term','Ad set'],['utm_content','Ad'],['sub1','sub1'],['sub2','sub2'],['sub3','sub3']];
+/* Tap-to-insert chips under a link field. Each chip puts {tag} into the link; Joinvoo swaps in this person's value from the ad they tapped. */
+function tagChips(id){
+  if (!FEAT('link_tags')) return '';
+  return `<div class="tg19" data-for="${id}"><span class="tg19-l">${tt('r19.tags.l','Add ad info to this link')}</span><div class="tg19-c">${TAGS19.map(([k,l])=>`<button type="button" class="tg19-b" data-act="tag-ins" data-t="${id}" data-v="${k}" title="${esc(l)}">{${k}}</button>`).join('')}</div>
+    <span class="hint">${tt('r19.tags.h','Joinvoo fills these in for each person, from the ad they tapped. Your offer or tracker then sees the campaign and ad behind every visit.')} <button type="button" class="linkbtn" data-act="tut" data-v="t14">${tt('r19.tags.w','Watch how')}</button></span></div>`;
+}
+document.addEventListener('mousedown', e=>{ if (e.target.closest('.tg19-b')) e.preventDefault(); }); /* keep the cursor where it is in the link field */
+function tagIns(id,k){
+  const u=document.getElementById(id); if(!u) return; const v=u.value, tag='{'+k+'}';
+  if (!v.trim()){ u.focus(); toast(tt('r19.tags.first','Paste your link first, then add tags to it'),false); return; }
+  const at=document.activeElement===u&&u.selectionStart!=null&&u.selectionStart<v.length?u.selectionStart:-1;
+  if (at>=0){ u.value=v.slice(0,at)+tag+v.slice(u.selectionEnd); u.setSelectionRange(at+tag.length,at+tag.length); }
+  else if (/[=\/{]$/.test(v)||!v) u.value=v+tag;
+  else { let key=/^(tg_id|click_id)$/.test(k)?'sub1':k; for(let n=1;new RegExp('[?&]'+key+'=').test(v)&&n<10;n++) key=/^sub\d$/.test(key)?'sub'+(+key.slice(3)+1):key+n;
+    u.value=v+(v.includes('?')?(/[?&]$/.test(v)?'':'&'):'?')+key+'='+tag; }
+  u.dispatchEvent(new Event('input',{bubbles:true})); u.focus(); if (at<0){ try{ u.setSelectionRange(u.value.length,u.value.length); }catch{} u.scrollLeft=u.scrollWidth; }
+}
+
+/* Downloads */
+function dl19(kind){
+  if (DEMO){ toast(tt('r19.dl.demo','Downloads work on your live account'),false); return; }
+  const url=(kind==='taps'?'/api/clicks.csv?':'/api/conversions.csv?')+rq();
+  toast(tt('r19.dl.wait','Preparing your download…'));
+  fetch(url,{credentials:'same-origin'}).then(async r=>{
+    if(!r.ok){ let m=''; try{ m=(await r.json()).error; }catch{} throw new Error(m||tt('r19.dl.err','Download failed. Try again.')); }
+    const b=await r.blob(), cd=r.headers.get('content-disposition')||'', name=(/filename="([^"]+)"/.exec(cd)||[])[1]||'joinvoo.csv';
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
+  }).catch(e=>toast(e.message,false));
+}
+
+/* Webhooks: Conversions → Integrations (or under the postback when integrations are off) */
+const WH_EV=[['join','Channel or group join'],['start','Bot Start'],['dm','First DM'],['reg','Registration'],['ftd','First deposit'],['dep','Repeat deposit'],['sale','Sale']];
+const whEvName=k=>tt('r19.wh.ev.'+k,(WH_EV.find(x=>x[0]===k)||[k,k])[1]);
+async function drawWebhooks(host){
+  if (!host||!FEAT('webhooks')) return; let box=$('#wh19'); if(!box){ box=document.createElement('section'); box.className='card wh19'; box.id='wh19'; host.appendChild(box); }
+  let d; try { d=await api('GET','/api/webhooks'); S.wh=d; } catch(e){ box.innerHTML=`<div class="card-h"><h2>${I.send} ${tt('r19.wh.t','Send events to your own server')}</h2></div><p class="wh-note">${esc(e.message)}</p>`; return; }
+  const list=d.webhooks||[];
+  const row=h=>{ const st=!h.enabled?['off',tt('r19.wh.paused','Paused')]:h.last_status==='error'?['bad',tt('r19.wh.err','Last try failed')+(h.last_error?': '+h.last_error:'')]:h.last_status==='ok'?['ok',tt('r19.wh.ok','Working')]:['wait',tt('r19.wh.wait','Waiting for the first event')];
+    return `<div class="wh-row"><div class="wh-main"><code class="wh-url">${esc(h.url)}</code><div class="wh-ev">${h.events.map(e=>`<span class="chip">${esc(whEvName(e))}</span>`).join('')}</div>
+      <span class="wh-st ${st[0]}"><i></i>${esc(st[1])}${h.sent_24h?` · ${fmt(h.sent_24h)} ${tt('r19.wh.sent','sent today')}`:''}${h.failed_24h?` · ${fmt(h.failed_24h)} ${tt('r19.wh.failed','failed')}`:''}</span></div>
+      <div class="wh-act">${sw('wh-on',h.enabled,tt('r19.wh.on','On'),`data-id="${h.id}"`)}<button class="btn sm" data-act="wh-test" data-id="${h.id}">${I.send} ${tt('r19.wh.test','Send test')}</button><button class="btn sm ghost" data-act="wh-edit" data-id="${h.id}" aria-label="${tt('common.edit','Edit')}">${I.gear}</button></div></div>`; };
+  box.innerHTML=`<div class="card-h wh-h"><div><h2>${I.send} ${tt('r19.wh.t','Send events to your own server')}</h2><p class="muted">${tt('r19.wh.p','Webhooks. Each join, DM and deposit is sent to your address the moment it happens, with the ad it came from. Use it for your CRM, your own bot, or Zapier and Make.')}</p></div>
+      ${list.length<5?`<button class="btn sm primary" data-act="wh-add">${I.plus} ${tt('r19.wh.add','Add webhook')}</button>`:''}</div>
+    ${list.length?`<div class="wh-list">${list.map(row).join('')}</div>`:`<div class="wh-empty"><span>${tt('r19.wh.none','No webhooks yet. Add your server’s address and pick which events to send.')}</span><button class="linkbtn" data-act="tut" data-v="t13">${I.play} ${tt('r19.wh.watch','Watch how it works')}</button></div>`}`;
+}
+function whSheet(h){
+  const ev=new Set(h?h.events:['join','start','dm','ftd']);
+  sheet(`<h2>${h?tt('r19.wh.edit','Edit webhook'):tt('r19.wh.add','Add webhook')}<small>${tt('r19.wh.small','Sent the moment it happens')}</small></h2>`,`
+    <form id="whf"><div class="field"><label for="whu">${tt('r19.wh.u','Your server’s address')}</label><input class="inp" id="whu" inputmode="url" autocomplete="off" value="${esc(h?h.url:'')}" placeholder="https://yourserver.com/joinvoo"></div>
+    <div class="field"><span class="lbl">${tt('r19.wh.which','Send these events')}</span><div class="checks">${WH_EV.map(([k])=>`<label class="ck"><input type="checkbox" value="${k}" ${ev.has(k)?'checked':''}><span>${esc(whEvName(k))}</span></label>`).join('')}</div></div>
+    <div id="wherr"></div><button class="btn primary lg wide" type="submit">${h?tt('common.save','Save'):tt('r19.wh.add','Add webhook')}</button>
+    ${h?`<div class="wh-more"><button type="button" class="btn sm ghost" data-act="wh-secret" data-id="${h.id}">${I.key} ${tt('r19.wh.newsec','New signing secret')}</button><button type="button" class="btn sm ghost danger" data-act="wh-del" data-id="${h.id}">${I.trash} ${tt('r19.wh.del','Delete')}</button></div>`:''}</form>`);
+  $('#whf').addEventListener('submit',async e=>{ e.preventDefault(); const b=$('#whf [type=submit]'); b.disabled=true;
+    const body={url:$('#whu').value.trim(),events:$$('#whf input[type=checkbox]:checked').map(x=>x.value)};
+    try { const r=await api(h?'PATCH':'POST','/api/webhooks'+(h?'/'+h.id:''),body); S.wh=r; if(r.secret) whSecret(r.secret,r.created); else { closeSheet(); toast(tt('r19.wh.saved','Saved')); } drawWebhooks($('#wh19')&&$('#wh19').parentNode); }
+    catch(err){ $('#wherr').innerHTML=`<div class="note warn">${esc(err.message)}</div>`; b.disabled=false; } });
+}
+function whSecret(secret,id){
+  sheet(`<h2>${id?tt('r19.wh.ready','Your webhook is ready'):tt('r19.wh.newsec','New signing secret')}<small>${tt('r19.wh.copyonce','Copy the secret now. It is shown only once.')}</small></h2>`,`
+    <div class="field"><span class="lbl">${tt('r19.wh.sec','Signing secret')}</span><div class="codeblock">${esc(secret)}</div><div class="row-in" style="justify-content:flex-end"><button class="btn sm" data-act="copy" data-v="${esc(secret)}">${I.copy} ${tt('common.copy','Copy')}</button></div>
+      <span class="hint">${tt('r19.wh.sech','Each event comes with an X-Joinvoo-Signature header: an HMAC-SHA256 of the timestamp, a dot and the body, made with this secret. Check it to know the event is really from Joinvoo.')}</span></div>
+    ${id?`<button class="btn primary lg wide" data-act="wh-test" data-id="${id}">${I.send} ${tt('r19.wh.test','Send test')}</button>`:''}<button class="btn lg wide" data-act="close" style="margin-top:8px">${tt('common.done','Done')}</button>`);
+}
+async function whTest(id,btn){
+  if(btn) btn.disabled=true;
+  try { const r=await api('POST','/api/webhooks/'+id+'/test',{}); toast(r.message||tt('r19.wh.tok','Test sent. Your server answered.')); }
+  catch(e){ toast(e.message,false); }
+  if(btn) btn.disabled=false; drawWebhooks($('#wh19')&&$('#wh19').parentNode);
+}
+{ const _di=drawIntegrations; drawIntegrations=async function(){ await _di.apply(this,arguments); const el=$('#cvbody'); if(el&&S.page==='conversions'&&S.cvTab==='integrations') drawWebhooks(el); }; }
+{ const _vc=viewConversions; viewConversions=async function(){ await _vc.apply(this,arguments); if(!FEAT('integrations')&&S.page==='conversions'){ const st=$('#cvbody .stack')||$('#cvbody'); if(st) drawWebhooks(st); } }; }
+
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'tag-ins': e.preventDefault(); tagIns(a.dataset.t,a.dataset.v); break;
+    case 'csv-taps': dl19('taps'); break;
+    case 'csv-cv': dl19('cv'); break;
+    case 'wh-add': whSheet(null); break;
+    case 'wh-edit': { const h=((S.wh&&S.wh.webhooks)||[]).find(x=>x.id===+a.dataset.id); if(h) whSheet(h); break; }
+    case 'wh-test': whTest(a.dataset.id,a); break;
+    case 'wh-on': { const on=a.getAttribute('aria-checked')!=='true'; a.disabled=true; api('PATCH','/api/webhooks/'+a.dataset.id,{enabled:on}).then(r=>{ S.wh=r; toast(on?tt('r19.wh.ond','Webhook on'):tt('r19.wh.offd','Webhook paused')); }).catch(err=>toast(err.message,false)).then(()=>drawWebhooks($('#wh19')&&$('#wh19').parentNode)); break; }
+    case 'wh-secret': if(!confirm(tt('r19.wh.secq','Make a new secret? The old one stops working right away.'))) break; api('POST','/api/webhooks/'+a.dataset.id+'/secret',{}).then(r=>{ S.wh=r; whSecret(r.secret,null); }).catch(err=>toast(err.message,false)); break;
+    case 'wh-del': if(!confirm(tt('r19.wh.delq','Delete this webhook? Events stop going to this address.'))) break; api('DELETE','/api/webhooks/'+a.dataset.id).then(r=>{ S.wh=r; closeSheet(); toast(tt('r19.wh.deld','Webhook deleted')); drawWebhooks($('#wh19')&&$('#wh19').parentNode); }).catch(err=>toast(err.message,false)); break;
+  }
+});
+
+/* ---------- tutorials t13 (webhooks) and t14 (link tags) ---------- */
+TUT.push(
+ {id:'t13',title:'Send events to your own server',where:'Conversions › Integrations',voice:'female',intro:4.0,marks:[4.0, 10.08, 16.51, 23.64, 30.59, 36.62, 41.51, 49.01],text:"Want every join, message and deposit sent to your own server the moment it happens? Open Conversions, then Integrations, and scroll down to Send events to your own server. Tap Add webhook, and paste your server’s address, like your CRM, your own bot, or a Zapier or Make link. Tick the events you want, like joins, first messages and first deposits, then tap Add webhook. Copy the signing secret, so your server can check that each event really comes from Joinvoo. Now tap Send test, and when your server answers, the card says Working. From now on, each event arrives with the person, their Telegram ID, and the campaign and ad they came from. And if your server is ever down, Joinvoo tries again for you, so nothing gets lost."},
+ {id:'t14',title:'Pass your ad’s details to your offer',where:'Channel settings › Offer link',voice:'female',intro:4.0,marks:[4.0, 9.48, 14.69, 21.54, 28.99, 34.38, 43.53],text:"Want your offer or tracker to know which campaign and ad each person came from? Open your channel’s settings, and find your offer link, or your bot’s button link. Under the link, tap a tag, like campaign, ad, or sub one, and Joinvoo adds it to the link for you. In your ad, keep your usual URL parameters on your Joinvoo link, like the campaign name and the ad name. When someone taps your ad, Joinvoo fills in each tag with that person’s details. Your offer now sees the campaign, the ad and the Telegram ID behind every visit, so each deposit is matched back to the ad. Tags work in your welcome message too."}
+);
+const WH_URL='https://crm.yourbrand.com/joinvoo';
+const whCard = (st) => `<div class="m-card" data-t="whc"><b>${I.send} Send events to your own server</b><small class="m-mut">Joins, DMs and deposits, the moment they happen.</small>
+  ${st?`<div class="m-whr" data-t="row"><code>${WH_URL}</code><span class="m-whe"><em>Join</em><em>First DM</em><em>First deposit</em></span><span class="m-whs ${st==='ok'?'ok':''}" data-t="st"><i></i>${st==='ok'?'Working · 3 sent today':'Waiting for the first event'}</span><span class="m-btn sm" data-t="test">${I.send} Send test</span></div>`:`<div style="margin-top:8px">${M.btn('add',`${I.plus} Add webhook`,'p sm')}</div>`}</div>`;
+const INTS = `<div class="m-intg">${['Affiliate network','Keitaro','Binom','Custom postback'].map(x=>`<span class="m-int"><b>${x}</b><small>Postback ready</small></span>`).join('')}</div>`;
+Object.assign(SCR, {
+  'jv-cv-int': () => JV(`<b class="m-h1">Conversions</b>${M.tabs('int',[['pb','Postback & log'],['int','Integrations']])}${INTS}${whCard('')}`, 'more', 'Conversions'),
+  'jv-wh-add': () => JV(`<b class="m-h1">Conversions</b>${INTS}${whCard('')}${M.sheet('Add webhook','Sent the moment it happens',`<div class="m-shb">${M.lab('Your server’s address')}${M.inp('u','https://yourserver.com/joinvoo','','mono')}
+    ${M.lab('Send these events')}<div class="m-cks">${[['c1','Channel or group join',1],['c2','Bot Start',0],['c3','First DM',1],['c4','First deposit',1],['c5','Registration',0]].map(([t,l])=>`<span class="m-ck" data-t="${t}"><i></i>${l}</span>`).join('')}</div>${M.btn('save','Add webhook','p wide')}</div>`)}`, 'more', 'Conversions'),
+  'jv-wh-sec': () => JV(`<b class="m-h1">Conversions</b>${INTS}${whCard('wait')}${M.sheet('Your webhook is ready','Copy the secret now. It is shown only once.',`<div class="m-shb">${M.lab('Signing secret')}<div class="m-code" data-t="sec"><code>whsec_8Kq2…f9Lm</code><span class="m-btn p sm" data-t="copy">${I.copy} Copy</span></div>${M.toast('copied','Copied')}
+    <small class="m-mut">Each event is signed with it, so your server knows it’s really from Joinvoo.</small>${M.btn('test',`${I.send} Send test`,'p wide')}</div>`)}`, 'more', 'Conversions'),
+  'jv-wh-ok': () => JV(`<b class="m-h1">Conversions</b>${whCard('ok')}${M.toast('tok','Your server answered 200. Webhook works.')}`, 'more', 'Conversions'),
+  'srv-log': () => `<div class="m-scr m-term">${M.sb(1)}<div class="m-th"><b>Your server</b><small>POST ${WH_URL.replace('https://','')}</small></div><div class="m-tb">
+    <div class="m-tl h" data-t="l1"><span class="m-tk">200</span><b>first_dm</b> · Lucas · <em>utm_campaign</em> "Spring Sale" · <em>utm_content</em> "Video 1"</div>
+    <div class="m-tl h" data-t="l2"><span class="m-tk">200</span><b>join</b> · Aisha · tg_user_id 8102 · <em>platform</em> meta</div>
+    <div class="m-tl h" data-t="l3"><span class="m-tk">200</span><b>ftd</b> · Lucas · <em>value</em> 55.50 EUR · <em>ad</em> "Video 1"</div>
+    <div class="m-tl bad h" data-t="l4"><span class="m-tk">503</span>server down · Joinvoo will try again</div>
+    <div class="m-tl h" data-t="l5"><span class="m-tk">200</span><b>join</b> · Mateo · delivered on retry</div></div></div>`,
+  'jv-tags': () => JV(`${M.chcard('Daily Deals','gojoinly.com/c/deals7',0)}${M.sheet('Channel settings','Daily Deals',`${M.tabs('join',[['ads','Ad platforms'],['join','Join method'],['web','Your own website']])}<div class="m-shb">${M.lab('Offer link')}${M.inp('u','https://partner.com/offer','https://partner.com/offer','mono')}
+    <small class="m-mut">Add ad info to this link</small><div class="m-tgc">${[['t1','{tg_id}'],['t2','{utm_campaign}'],['t3','{utm_content}'],['t4','{sub1}'],['t5','{sub2}']].map(([t,l])=>`<span class="m-tgb" data-t="${t}">${l}</span>`).join('')}</div>${M.btn('save','Save','p wide')}</div>`)}`, false, 'Channels'),
+  'meta-url': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh">${pm('meta')}<b>Ads Manager</b></div><div class="m-body"><div class="m-card"><b>Website URL</b><code class="m-mono">gojoinly.com/c/deals7</code></div>
+    <div class="m-card h" data-t="p"><b>URL parameters</b><code class="m-mono">utm_campaign={{campaign.name}}&amp;utm_content={{ad.name}}</code></div></div></div>`,
+  'tg-offer': () => TG(M.tg('Daily Deals Bot','bot','#5b3df5',1), `${M.msg('in','Hi Lucas 👋 You came from <b>Spring Sale</b>. Tap below to get today’s offer.','m1',1)}<div class="m-tgbtn h" data-t="btn">Get the offer ${I.ext}</div>
+    <div class="m-card h" data-t="url"><small class="m-mut">Opens</small><code class="m-mono">partner.com/offer?sub1=<b>8101</b>&amp;utm_campaign=<b>Spring%20Sale</b>&amp;utm_content=<b>Video%201</b></code></div>`),
+  'offer-dash': () => `<div class="m-scr meta">${M.sb()}<div class="m-mh"><b>Your offer · Conversions</b></div><div class="m-body">${[['e1','Lucas','8101','Spring Sale','Video 1','FTD $55'],['e2','Aisha','8102','Spring Sale','UGC Phone','Reg'],['e3','Mateo','8103','Retarget','Carousel B','FTD $120']].map(([t,n,id,c,a,r])=>`<div class="m-ev h" data-t="${t}">${I.checkc}<span><b>${n} · sub1 ${id}</b><small>${c} · ${a}</small></span><em>${r}</em></div>`).join('')}</div></div>`,
+});
+BEATS.t13 = {poster:'jv-wh-ok', b:[
+  {s:'srv-log',a:[[.3,'on','l1'],[.6,'on','l2'],[.85,'on','l3']]},
+  {s:'jv-cv-int',a:[[.3,'hl','tab-int'],[.7,'hl','whc']]},
+  {s:'jv-wh-add',a:[[.25,'tap','u'],[.32,'type','u','https://crm.yourbrand.com/joinvoo']]},
+  {a:[[0,'type','u','https://crm.yourbrand.com/joinvoo'],[.15,'on','c1'],[.35,'on','c3'],[.55,'on','c4'],[.85,'tap','save']]},
+  {s:'jv-wh-sec',a:[[.3,'hl','sec'],[.6,'tap','copy'],[.68,'on','copied']]},
+  {a:[[.3,'tap','test'],[.45,'screen','jv-wh-ok'],[.52,'on','tok'],[.7,'hl','st']]},
+  {s:'srv-log',a:[[.15,'on','l1'],[.4,'on','l2'],[.65,'on','l3'],[.85,'hl','l1']]},
+  {s:'srv-log',a:[[0,'on','l1'],[0,'on','l2'],[0,'on','l3'],[.3,'on','l4'],[.7,'on','l5'],[.85,'hl','l5']]}]};
+BEATS.t14 = {poster:'tg-offer', b:[
+  {s:'offer-dash',a:[[.3,'on','e1'],[.55,'on','e2'],[.8,'on','e3']]},
+  {s:'jv-tags',a:[[.4,'hl','u']]},
+  {a:[[.15,'tap','t1'],[.2,'type','u','https://partner.com/offer?sub1={tg_id}'],[.5,'tap','t2'],[.55,'type','u','https://partner.com/offer?sub1={tg_id}&utm_campaign={utm_campaign}'],[.8,'tap','t3'],[.85,'type','u','…&utm_content={utm_content}']]},
+  {s:'meta-url',a:[[.3,'on','p'],[.6,'hl','p']]},
+  {s:'tg-offer',a:[[.2,'on','m1'],[.5,'on','btn'],[.75,'on','url']]},
+  {s:'offer-dash',a:[[.1,'on','e1'],[.3,'on','e2'],[.5,'on','e3'],[.75,'hl','e1']]},
+  {s:'tg-offer',a:[[0,'on','btn'],[.2,'on','m1'],[.5,'hl','m1']]}]};
+TUT_GROUPS.push(['pro','Power tools',['t13','t14']]);
+PAGES.tutorials.tag=String(TUT.length);
+
+PAGES.learn.t='Blog'; MORE_SET.delete('learn'); /* Blog has its own menu item now */
+/* ---------- round 19: Blog in the side menu (opens the in-app reader; a small “New” tag while there's an unread post) ---------- */
+{ const _sn=setNav; setNav=function(){ _sn(); const m=NAV[0]&&NAV[0][1]; if (m && pageOn('learn') && !m.includes('learn')){ const k=m.indexOf('tutorials'); m.splice(k<0?Math.max(0,m.indexOf('more')):k+1,0,'learn'); } }; }
+async function r19BlogNav(){
+  const b=$('.side .nav-a[data-p="learn"]'); if(!b) return;
+  const sp=b.querySelector('span'); if (sp && sp.firstChild && sp.firstChild.nodeType===3) sp.firstChild.nodeValue=tt('nav.blog','Blog'); b.title=tt('nav.blog','Blog');
+  try { const posts=await blogPosts(), p=posts&&posts[0]; const fresh=p&&(Date.now()-new Date(p.date+'T12:00:00'))<14*864e5&&!blogRead().includes(p.slug);
+    const b2=$('.side .nav-a[data-p="learn"]'); if (b2 && fresh && !b2.querySelector('em.new')) b2.querySelector('span').insertAdjacentHTML('afterend',`<em class="new">${tt('nav.new','New')}</em>`); } catch {}
+}
+{ const _ra=renderApp; renderApp=function(){ const r=_ra.apply(this,arguments); try{ r19BlogNav(); }catch{} return r; }; }
+{ const _nm=navMark; navMark=function(page){ _nm(page); if (page==='learn'){ const s=$('.side .nav-a[data-p="learn"]'); if(s){ $$('.side .nav-a[aria-current]').forEach(x=>x.removeAttribute('aria-current')); s.setAttribute('aria-current','page'); } } }; }

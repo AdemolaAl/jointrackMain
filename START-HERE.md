@@ -1,8 +1,12 @@
-# Joinvoo: start here (developer handover, 5 October 2026)
+# Joinvoo: start here (developer handover, 7 October 2026)
 
 This folder is the complete, current Joinvoo: website, dashboard, admin, server, Joe (AI assistant) and tests. Everything from today's work is included and tested (905 automated checks, 0 failures, plus an independent review and an upgrade test on a copy of the previous version). It replaces any earlier zip.
 
 Joinvoo is already live on Railway with real users. This update is safe to deploy on top: the database only gets new tables and columns, sessions and balances stay, and new features stay off until you switch them on.
+
+## New in this update (round 19): manager chats + mini apps
+
+Customers can now track people who **message a manager** from an ad (Telegram Business), and open ad links through a **mini app** for exact matching. Existing users don't need to do anything. Details, checks and the deploy note are at the top of **UPGRADE.md**.
 
 ## Read these, in this order
 

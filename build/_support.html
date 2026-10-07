@@ -74,6 +74,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 .sp-err{font-size:13px;color:var(--rose);font-weight:600}
 .sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
 .sp-foot a{color:var(--faint)}
+.sp-foot b{color:var(--muted);font-weight:700}.sp-ai{font-style:normal;font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:6px;background:#efebff;color:#5b3df5;margin-left:3px}
 .sp-hide{display:none!important}
 @media (max-width:560px){
   .sp-launch{height:54px;padding:0 16px 0 8px;font-size:14.5px;right:14px}
@@ -144,7 +145,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
-  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false;
+  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false, aiMode=false, tRow=null;
 
   /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
   const BG=['#efebff','#e8f3ec','#fbf2df','#ecf0fc','#fbeae8'], SKIN=['#f2c9a5','#d9a27a','#b97a52','#a8714d','#f6d7bf'], HAIR=['#1f1633','#3a2417','#6b3f1f','#0f0f14','#8a5a2b'], SHIRT=['#5b3df5','#2e7d57','#c2463f','#3d5ad6','#87631a'];
@@ -159,17 +160,19 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   function render(){ const t=team.slice(0,3);
     $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
     const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
-    $('spHello').textContent=_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
-    $('spOnTxt').textContent=online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
+    $('spHello').textContent=aiMode?_t('Hi 👋 I’m {name}, Joinvoo’s AI support assistant. Ask me anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A teammate can take over any time.').replace('{name}',a.name)
+      :_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
+    if(aiMode){ online=true; $('spNote').innerHTML=esc(_t('AI support'))+' · '+esc(_t('Powered by'))+' <b>Replyvoo</b>'; }
+    $('spOnTxt').textContent=aiMode?_t('Online now')+' · '+_t('Replies in seconds, day and night'):online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
     $('spOn').classList.toggle('on',online); $('spLDot').hidden=!online;
     const hh=$('spHours'); hh.querySelector('span').textContent=_t(hours); hh.hidden=!hours; }
-  function applySupport(s){ if(!s) return; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
+  function applySupport(s){ if(!s) return; if(s.ai!==undefined) aiMode=!!s.ai; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
   render();
 
   const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
   const scroll=()=>{ body.scrollTop=body.scrollHeight; };
   function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
-    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
+    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.ai?' <em class="sp-ai">AI</em>':''}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
     r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
     if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
     body.appendChild(r); scroll(); return r; }
@@ -186,17 +189,21 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const bot={name:'Joinvoo',photo:'',bot:true};
   async function quick(k){ if(k==='person'){ sys(_t('Write your message below.')+' '+(online?_t('We’re online now.'):_t(replyTime)+'.')); text.focus(); return; }
     const [q,a]=ANSWERS[k]; msg('me',q,Date.now()); await typing(team[0],700); msg('them',a,Date.now(),{name:team[0].name,photo:team[0].photo},k==='bot');
-    sys(_t('Need more? Write below and a real person will reply.')); }
+    sys(aiMode?_t('Need more? Write below and I’ll help right away.'):_t('Need more? Write below and a real person will reply.')); }
   $('spQuick').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) quick(b.dataset.q); });
 
   async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
     const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
-  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; applySupport(j); emRow.hidden=!!ticket;
-    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); }); render(); }
+  /* the AI teammate's "typing…" comes from the server while it answers */
+  function setTyping(who){ if(tRow){ tRow.remove(); tRow=null; } if(!who) return; const a=team.find(m=>m.name===who.name)||team[0]; tRow=document.createElement('div'); tRow.className='sp-row them'; tRow.innerHTML=av(a)+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(tRow); scroll(); }
+  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; if(j.ticket&&j.ticket.ai!==undefined) aiMode=!!j.ticket.ai; applySupport(j); emRow.hidden=!!ticket;
+    if(tRow){ tRow.remove(); tRow=null; }
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); });
+    if(j.typing) setTyping(j.typing); render(); }
   async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
     try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
-  function demo(){ DEMO=true; online=true; emRow.hidden=true; $('spNote').textContent=_t('Demo preview · messages aren’t sent'); render(); }
-  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },4000); }
+  function demo(){ DEMO=true; online=true; emRow.hidden=true; render(); $('spNote').textContent=_t('Demo preview · messages aren’t sent'); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },aiMode?1500:4000); }
   function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
   function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
     if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
@@ -210,7 +217,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
     const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
     sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
     try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
-      if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+      if(j.ai){ aiMode=true; setTyping({name:team[0].name}); } else if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
     catch(x){ b.remove(); text.value=t; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
     finally{ sending=false; } });
 

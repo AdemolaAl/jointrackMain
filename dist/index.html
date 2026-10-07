@@ -36,7 +36,7 @@
 })();
 </script>
 <title data-i18n="11ojumn">Joinvoo · Lead tracking for media buyers on Meta, TikTok and Snapchat</title>
-<meta name="description" content="Your ad dashboard is lying if you’re not tracking your Telegram joins. Joinvoo feeds your ad platforms real joins so they optimize for quality, filtering out bots and junk placements: every Telegram join, deposit, purchase and sale matched to the exact ad click, with bot traffic filtered out. First 500 joins free.">
+<meta name="description" content="Your ad dashboard is lying if you’re not tracking your Telegram joins. Joinvoo feeds your ad platforms real joins so they optimize for quality, filtering out bots and junk placements: every Telegram join, message to your manager, deposit, purchase and sale matched to the exact ad click, with bot traffic filtered out. First 500 joins free.">
 <meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Joinvoo · Your ad dashboard is lying if you’re not tracking your Telegram joins">
 <meta property="og:description" content="Every Telegram join, deposit, purchase and sale, matched to the exact ad click and sent back to Meta, TikTok and Snapchat. First 500 joins free.">
@@ -172,6 +172,7 @@ header.top nav{display:flex;gap:4px;align-items:center}
 header.top nav a.plain{color:var(--muted);text-decoration:none;padding:10px 14px;font-weight:600;font-size:15px;border-radius:99px}
 header.top nav a.plain:hover{color:var(--ink)}
 header.top nav a.login{color:var(--ink);font-weight:700}
+@media (max-width:440px){header.top .wrap{gap:6px}html:not([lang="en"]) header.top nav a.plain.login{display:none}header.top nav .navbtn{white-space:nowrap;padding-inline:14px}}
 .navbtn{padding:11px 20px!important;font-size:15px!important}
 
 /* hero */
@@ -412,6 +413,38 @@ section.lv{padding-block:64px 0}
 .strip i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center}
 .strip i svg{width:15px;height:15px}
 .pm{background:linear-gradient(160deg,#2E86FF,#0559E3)}.pt{background:#0B0B12}.ps{background:#FFFC00}.pg{background:linear-gradient(160deg,#3CC0FF,#1E96D8)}
+
+
+/* round 19: "Track messages" — the manager chat phone (bubbles in, floats show the match). Paused until on screen (.m19.run). */
+section.m19{padding-block:0 8px}
+.m19 .lv-g{grid-template-columns:minmax(0,560px) minmax(0,1fr)}
+.m19 .lv-panel::before{background:radial-gradient(55% 70% at 12% 50%,color-mix(in srgb,#12b886 14%,transparent),transparent 70%),radial-gradient(40% 50% at 100% 100%,color-mix(in srgb,#5b3df5 12%,transparent),transparent 70%)}
+.m19-new{display:inline-flex;align-items:center;gap:8px}
+.m19-new em{font-style:normal;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--mint);color:var(--green)}
+.m19-l{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:46ch}
+.m19-l li{display:flex;gap:12px;align-items:flex-start;color:var(--muted);font-size:15.5px;line-height:1.5}
+.m19-l li b{color:var(--ink)}
+.m19-l li>span:first-child{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--lilac);color:var(--brand-text)}
+.m19-l li>span:first-child svg{width:16px;height:16px}
+.m19-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.m19 .lp-av{background:linear-gradient(135deg,#22c79a,#0e9e73)}
+.m19 .lp-body{justify-content:flex-end;padding-bottom:14px}
+.m19-b{max-width:82%;padding:9px 12px;border-radius:16px;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.05);opacity:0;transform:translateY(8px) scale(.98);animation:m19In 9s infinite}
+.m19-b.in{align-self:flex-start;background:var(--surface);border-bottom-left-radius:5px}
+.m19-b.out{align-self:flex-end;background:#e3dcff;color:#2a1d75;border-bottom-right-radius:5px}
+.m19-b small{display:block;color:var(--faint);font-size:10.5px;margin-top:2px;text-align:right}
+.m19-b.b1{animation-delay:.6s}.m19-b.b2{animation-delay:2.4s}.m19-b.b3{animation-delay:4.2s}
+@keyframes m19In{0%{opacity:0;transform:translateY(8px) scale(.98)}6%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:none}}
+.m19-comp{display:flex;align-items:center;gap:8px;margin:0 12px 12px;padding:8px 8px 8px 14px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+.m19-comp i{margin-left:auto;width:26px;height:26px;border-radius:50%;background:#5b3df5;display:grid;place-items:center;color:#fff;font-style:normal;font-size:12px}
+.m19 .lp-fl{opacity:0;animation:m19Fl 9s infinite}
+.m19 .m19-f1{right:0;top:120px;animation-delay:1.2s}.m19 .m19-f2{left:0;top:300px;animation-delay:1.8s}.m19 .m19-f3{right:10px;bottom:70px;animation-delay:5s}
+@keyframes m19Fl{0%{opacity:0;transform:translateY(10px)}6%,86%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(-6px)}}
+.m19 .lp-wrap *{animation-play-state:paused}.m19.run .lp-wrap *{animation-play-state:running}
+@media (prefers-reduced-motion:reduce){.m19 .lp-wrap *{animation:none!important;opacity:1!important;transform:none!important}.m19 .lp-ring{display:none}}
+@media (max-width:1100px){.m19 .lv-g{grid-template-columns:minmax(0,440px) minmax(0,1fr)}}
+@media (max-width:900px){.m19 .lv-g{grid-template-columns:minmax(0,1fr)}.m19 .lv-copy{order:-1}.m19-l{text-align:left}.m19-cta{justify-content:center}
+  .m19 .m19-f1{right:0;top:96px}.m19 .m19-f2{left:0;top:250px}.m19 .m19-f3{right:4px;bottom:50px}}
 
 /* sections */
 section.blk{padding-block:96px}
@@ -792,7 +825,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   <div class="wrap hgrid">
     <div class="hcopy">
       <h1 data-i18n="u126p2">Your ad dashboard is <em class="lie">lying</em> <span class="g">if you’re not tracking your Telegram joins.</span></h1>
-      <p data-i18n="o4ngko" class="lede"><b>Joinvoo feeds your ad platforms real joins, so they optimize for quality.</b> <span class="l2">Every join, deposit, purchase and sale is matched to the exact ad click on Meta, TikTok and Snapchat.</span></p>
+      <p data-i18n="16wb1ux" class="lede"><b>Joinvoo feeds your ad platforms real joins, so they optimize for quality.</b> <span class="l2">Every join, message, deposit, purchase and sale is matched to the exact ad click on Meta, TikTok and Snapchat.</span></p>
       <div class="ctas"><a data-i18n-t="fr3k4j" class="btn violet lg" href="signup.html">Start free <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button data-i18n-t="lwi2qh" class="btn lg play" type="button" data-xopen><span class="pi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></span>Watch how it works</button><a data-i18n-t="12yhck0" class="demo-l" href="app.html"><i aria-hidden="true"></i>Try the live demo <span class="ar" aria-hidden="true">→</span></a></div>
       <p data-i18n="9cug1l" class="checks"><span><b class="fj">500</b> joins free</span><span>No card needed</span><span>Live in 10 minutes</span></p>
       <div class="ha-wrap">
@@ -818,7 +851,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
               <div class="jv">
                 <div class="jv-r"><span class="k ly q" data-at="0" data-off="4.25"><i class="am-q">?</i><span data-i18n="jl8pok">Which ad?</span></span><span class="k ly c" data-at="4.25"><i class="jv-av a1">A</i><span data-i18n="4qmun9">Ada joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="4.25" data-off="5.1"></span></div>
                 <div class="jv-r"><span class="k ly q" data-at="0" data-off="4.75"><i class="am-q">?</i><span data-i18n="z3fqvy">Deposit?</span></span><span class="k ly c" data-at="4.75"><i class="jv-av a2">K</i><span data-i18n="iwmvbl">Kwame joined · Reel ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="4.75" data-off="5.6"></span></div>
-                <div class="jv-r"><span class="k ly q" data-at="0" data-off="5.25"><i class="am-q">?</i><span data-i18n="1kmy72x">Unknown</span></span><span class="k ly c" data-at="5.25"><i class="jv-av a3">A</i><span data-i18n="zgs20t">Amina joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="5.25" data-off="6.1"></span></div>
+                <div class="jv-r"><span class="k ly q" data-at="0" data-off="5.25"><i class="am-q">?</i><span data-i18n="1kmy72x">Unknown</span></span><span class="k ly c" data-at="5.25"><i class="jv-av a3">S</i><span data-i18n="1f2txln">Sofia joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="5.25" data-off="6.1"></span></div>
               </div>
               <div class="jv-ts"><span class="jv-t k" data-at="6.35"><i>$</i><span data-i18n="ubrm5y">First deposit $120 · Story · Countdown</span></span><span class="jv-t jv-t2 k" data-at="6.9"><i>$</i><span data-i18n="1b0i73t">Re-deposit $60</span></span></div>
               <div data-i18n="wzir7" class="jv-st k" data-at="5.75"><span><b class="ha-n" data-n="612">0</b><small>Joins</small></span><span><b class="ha-n" data-n="48">0</b><small>Deposits</small></span><span><b class="ha-n" data-n="9.80" data-d="2" data-p="$">$0.00</b><small>Cost per deposit</small></span></div>
@@ -856,7 +889,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
       <div class="lp-head"><span data-i18n="gvdp11" class="lp-av">DD</span><div data-i18n="6qinrf"><b>Daily Deals Club</b><small><span id="subs">12,480</span> subscribers</small></div></div>
       <div class="lp-body"><div class="lp-post"><b data-i18n="vovi56">🔥 Today’s top 5 deals</b><div data-i18n="15qog6h" class="lp-deal">Headphones −60%</div><p data-i18n="1mzxri1">Prices drop at noon. Details in the pinned post.</p><small>👁 8.4K · 09:12</small></div><div id="tg"></div></div>
     </div>
-    <div class="lp-fl lp-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div data-i18n="1xagqf1"><b>Matched to ad</b><small id="fb1">Video 3 · Hook B · Lagos</small></div></div>
+    <div class="lp-fl lp-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div data-i18n="18kcl6z"><b>Matched to ad</b><small id="fb1">Video 3 · Hook B · London</small></div></div>
     <div class="lp-fl lp-f2"><span class="lp-ok">✓</span><div data-i18n="cfqvb5"><b>Sent to Meta</b><small id="fb2">Subscribe · 14s after tap</small></div></div>
     <div class="lp-fl lp-f3"><span class="lp-ftd">$</span><div data-i18n="nw627g"><b id="fa3">First deposit $120</b><small>Purchase sent to Meta ✓</small></div></div>
   </div>
@@ -874,7 +907,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         <div data-i18n-t="1i96n90" class="a-row"><i style="background:#5b3df5">A</i>Ada · Video 3<small data-i18n="1x2o8ds" class="j">Joined</small></div>
         <div data-i18n-t="1bak28g" class="a-row"><i style="background:#2e9d6a">K</i>Kwame · UGC<small data-i18n="1x2o8ds" class="j">Joined</small></div>
         <div data-i18n-t="1i96n90" class="a-row"><i style="background:#e0a43a">A</i>Ada · Video 3<small data-i18n="56hkm" class="d">FTD $120</small></div>
-        <div data-i18n-t="1r4gghm" class="a-row"><i style="background:#ff5c8a">Z</i>Zanele · Story<small data-i18n="1x2o8ds" class="j">Joined</small></div>
+        <div data-i18n-t="1x5rmgn" class="a-row"><i style="background:#ff5c8a">L</i>Lucas · Story<small data-i18n="1x2o8ds" class="j">Joined</small></div>
         <div data-i18n-t="1i96n90" class="a-row"><i style="background:#5b3df5">A</i>Ada · Video 3<small data-i18n="1x2o8ds" class="j">Joined</small></div>
         <div data-i18n-t="1bak28g" class="a-row"><i style="background:#2e9d6a">K</i>Kwame · UGC<small data-i18n="1x2o8ds" class="j">Joined</small></div>
         <div data-i18n-t="1i96n90" class="a-row"><i style="background:#e0a43a">A</i>Ada · Video 3<small data-i18n="56hkm" class="d">FTD $120</small></div>
@@ -898,9 +931,35 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
     <article class="wt reveal"><span class="e" style="background:var(--lilac);color:var(--brand-text)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><h3 data-i18n="fd0ytn">Exact click matching</h3><p data-i18n="198lnrf">Every join is tied to the exact click, ad, ad set and campaign, then sent to Meta, TikTok or Snapchat through their Conversions APIs.</p></article>
     <article class="wt reveal"><span class="e" style="background:var(--cream);color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><h3 data-i18n="1v024fv">Deposits and sales, not just joins</h3><p data-i18n="1rfsa3t">Deposits, purchases and sales are matched to the person and the ad, and sent back as Purchase with value. Your ads find buyers, not browsers.</p></article>
     <article class="wt reveal"><span class="e" style="background:var(--sky);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><h3 data-i18n="13eopj3">Your bot, page and domain</h3><p data-i18n="134mn1a">Keep your own bot, your own landing page and your own link domain. Request-to-join channels work too.</p></article>
-    <article class="wt reveal"><span class="e" style="background:var(--mint);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3 data-i18n="1r15saw">Built for big volume</h3><p data-i18n="1jisdui">Made for high-volume African traffic. Joins beyond your plan cost <b class="pjc">2¢</b> each, and several bots can share one busy channel.</p></article>
+    <article class="wt reveal"><span class="e" style="background:var(--mint);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3 data-i18n="1r15saw">Built for big volume</h3><p data-i18n="1qiwuhv">Made for high-volume traffic from anywhere in the world. Joins beyond your plan cost <b class="pjc">2¢</b> each, and several bots can share one busy channel.</p></article>
   </div>
 </div></section>
+
+<section class="lv m19" id="messages"><div class="wrap lv-outer"><div class="lv-panel lv-g">
+  <div class="lp-wrap" aria-hidden="true">
+    <span class="lp-ring"></span><span class="lp-ring r2"></span>
+    <div class="lp-phone"><span class="lp-notch"></span>
+      <div class="lp-head"><span data-i18n="h5mr7x" class="lp-av">AS</span><div data-i18n="1heyvl5"><b>Ada · Sales</b><small>online</small></div></div>
+      <div class="lp-body"><div data-i18n="cll8np" class="m19-b in b1">Hi! I saw your ad 👋<small>09:41</small></div><div data-i18n="xqy6q7" class="m19-b out b2">Welcome! Here’s how to get started…<small>09:41 ✓✓</small></div><div data-i18n="qxvs9a" class="m19-b in b3">Done, I just deposited 🙌<small>09:52</small></div></div>
+      <div data-i18n-t="1cam7ic" class="m19-comp">Message<i>➤</i></div>
+    </div>
+    <div class="lp-fl m19-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div data-i18n="zgge3y"><b>Matched to ad</b><small>Story · Countdown · Dubai</small></div></div>
+    <div class="lp-fl m19-f2"><span class="lp-ok">✓</span><div data-i18n="d7k4l4"><b>Lead sent to Meta</b><small>First message · 9s after tap</small></div></div>
+    <div class="lp-fl m19-f3"><span class="lp-ftd">$</span><div data-i18n="1x7toxw"><b>First deposit $120</b><small>Purchase sent to Meta ✓</small></div></div>
+  </div>
+  <div class="lv-copy">
+    <span data-i18n="1ak2g9c" class="kick m19-new">DM tracking <em>New</em></span>
+    <h2 data-i18n="kz72bt" class="h2">Track messages, <span>not just joins.</span></h2>
+    <p data-i18n="100qnua" class="sub">Send your ads straight to a manager’s chat. Joinvoo matches each person’s first message to the exact ad, and sends it to your ad platforms as a Lead. Your ads learn to find people who really write to you.</p>
+    <ul class="m19-l">
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v8.6a1.5 1.5 0 0 1-1.5 1.5H10l-4.3 3.4v-3.4H4.5A1.5 1.5 0 0 1 3 15.6V7a1.5 1.5 0 0 1 1.5-1.5z"/></svg></span><span data-i18n="1h2mf1o"><b>Connect once in Telegram.</b> Your manager adds your bot under Telegram Business. No code.</span></li>
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.8" width="11" height="18.4" rx="2.6"/><path d="M10.5 17.8h3"/></svg></span><span data-i18n="vynubm"><b>Every message matched with a mini app.</b> Telegram tells Joinvoo exactly who tapped your ad.</span></li>
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span data-i18n="1o7wsdp"><b>Private by design.</b> Joinvoo only notes the first message. It never replies and never saves what people write.</span></li>
+    </ul>
+    <div class="m19-cta"><a data-i18n="lwi2qh" class="btn violet" href="app.html?tutorial=t11">Watch how it works</a><a data-i18n="fr3k4j" class="btn" href="signup.html">Start free</a></div>
+  </div>
+</div></div>
+<script>JVI();(function(){var s=document.getElementById('messages');if(!s)return;if(!('IntersectionObserver' in window)){s.classList.add('run');return}new IntersectionObserver(function(e){s.classList.toggle('run',e[0].isIntersecting)},{threshold:.15}).observe(s)})();</script></section>
 
 <section class="blk" id="calc" style="padding-top:0" aria-labelledby="calcT"><div class="wrap center">
   <span data-i18n="hfzy8g" class="kick reveal">Savings</span>
@@ -958,7 +1017,9 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
     <details open><summary data-i18n="7s86vp">Do I need to write any code?</summary><p data-i18n="mvsbmr">No. You make a bot in Telegram, paste a token, and put your Joinvoo link in your ads. Most people are live in about 10 minutes.</p></details>
     <details><summary data-i18n="1ivn4fy">How are deposits matched to my ads?</summary><p data-i18n="1gvkg7n">Your broker, casino, affiliate network or bot sends a small postback when someone deposits. Joinvoo matches it to the person who joined and the ad they came from, and sends <b>Purchase</b> with the value to your ad platform. You can also mark a deposit by hand.</p></details>
     <details><summary data-i18n="1cm9p30">Can I keep my own bot, landing page and domain?</summary><p data-i18n="w7fwqp">Yes. Track your own bot’s Start without sharing its token, keep your landing page with one line of code, and run links on your own domain. Request-to-join channels are supported.</p></details>
-    <details><summary data-i18n="1512x44">Is this allowed by Telegram?</summary><p data-i18n="1nphf0c">Yes. Joinvoo only uses Telegram’s official Bot API, the same invite-link features any channel admin can use. Your bot never posts in your channel.</p></details>
+    <details><summary data-i18n="18n3tk1">Can I track people who message my manager?</summary><p data-i18n="1h3qe65">Yes. Your manager adds your bot once under Telegram → Settings → Telegram Business → Chatbots (this needs Telegram Premium). Each person’s first message is matched to their ad and sent to Meta, TikTok or Snapchat as a Lead. Joinvoo never replies and never saves what people write.</p></details>
+    <details><summary data-i18n="18i484z">Do I need a mini app?</summary><p data-i18n="1gs4ub5">No, but it’s the most exact way. Without one, your link opens the chat with a ready message and a short code. With a mini app (2 minutes in BotFather), Telegram tells Joinvoo exactly who tapped your ad, so every message is matched. Already have your own mini app? Your ad can open it, and each open counts as a lead.</p></details>
+    <details><summary data-i18n="1512x44">Is this allowed by Telegram?</summary><p data-i18n="1rolmuj">Yes. Joinvoo only uses Telegram’s official Bot API: the same invite-link features any channel admin can use, Telegram Business chatbots and mini apps. Your bot never posts in your channel and never replies to your customers.</p></details>
     <details><summary data-i18n="yawmk0">What happens when my credits run out?</summary><p data-i18n="1ve1kn7"><b>Your ads keep working</b> and people still get into your channel. Tracking pauses until you top up, and you’ll see a banner in your dashboard.</p></details>
   </div>
   <p data-i18n="1y93h5p" class="pfine">More answers in the <a href="guide.html" style="color:var(--brand-text);font-weight:800">Help centre</a>.</p>
@@ -966,7 +1027,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
 
 <section class="blk" id="start" style="padding-top:0"><div class="wrap">
   <div class="cta reveal">
-    <h2 data-i18n="wwt9z7">Stop guessing. <span>See every join.</span></h2><p data-i18n="1yb6iwh">Give Meta, TikTok and Snapchat the one signal they’re missing. Your first <span class="fj">500</span> joins are on us.</p>
+    <h2 data-i18n="13e47bd">Stop guessing. <span>See every join and message.</span></h2><p data-i18n="1yb6iwh">Give Meta, TikTok and Snapchat the one signal they’re missing. Your first <span class="fj">500</span> joins are on us.</p>
     <div class="ctas" style="justify-content:center"><a data-i18n="fr3k4j" class="btn violet lg" href="signup.html">Start free</a><a data-i18n="12yhck0" class="btn lg ghost2" href="app.html">Try the live demo</a><button data-i18n="lwi2qh" class="btn lg ghost2" type="button" data-xopen>Watch how it works</button></div>
     <p data-i18n="1elvjsp" class="have">Already have an account? <a href="login.html">Log in</a></p></div>
   <p class="affl"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span data-i18n="1gr9ol1">Promote Joinvoo and earn up to 50% for life.</span> <a data-i18n="7u7gle" href="affiliates.html">VooSquare affiliates →</a></p>
@@ -1016,14 +1077,14 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         <div class="sc" data-s="5"><div class="lt"><span data-i18n="178q6l6" class="st">Step 3 of 3</span><div data-i18n="15eekan" class="ttl">Meta gets the <span>Subscribe.</span></div></div>
           <div class="rt"><div class="m"><div class="m-h"><span class="m-av" style="background:linear-gradient(160deg,#2E86FF,#0559E3)">∞</span><div data-i18n="1x5igw7">Events Manager<small>Conversions API · Server</small></div></div>
             <div class="m-b" style="background:#fff"><div class="ev an" style="--k:fslide;--d:.6s"><span class="ic" style="background:#efebff;color:#5b3df5">★</span><div data-i18n="pxrdjw"><b>Subscribe</b><small>Received · 14s after the click</small></div><span class="ck">✓</span></div>
-              <div class="ev an" style="--k:fslide;--d:1.4s"><span class="ic" style="background:#ecf0fc;color:#3d5ad6">◎</span><div data-i18n="1ur6ykz"><b>Matched to your ad</b><small>Video 3 · Hook B · Lagos</small></div><span class="ck">✓</span></div>
+              <div class="ev an" style="--k:fslide;--d:1.4s"><span class="ic" style="background:#ecf0fc;color:#3d5ad6">◎</span><div data-i18n="48raup"><b>Matched to your ad</b><small>Video 3 · Hook B · London</small></div><span class="ck">✓</span></div>
               <div class="ev an" style="--k:fslide;--d:2.2s"><span class="ic" style="background:#fbf2df;color:#87631a">$</span><div data-i18n="zivepv"><b>Purchase · $120</b><small>When Ada deposits</small></div><span class="ck">✓</span></div></div></div></div></div>
         <div class="sc" data-s="6"><div class="lt"><span data-i18n="171bs7a" class="st">Every day</span><div data-i18n="1p99h4a" class="ttl">Every join and deposit, <span>by ad.</span></div></div>
           <div class="rt"><div class="m"><div class="m-h"><span class="m-av" style="background:#5b3df5">J</span><div data-i18n="1r1xor2">Joinvoo · Results<small>Today</small></div></div>
             <div class="m-b" style="background:#fff;gap:7px"><div class="tiles3 an" style="--d:.3s"><div data-i18n="vok8x7"><b>1,248</b><small>Joins</small></div><div data-i18n="1lpvfwe"><b>64</b><small>Deposits</small></div><div data-i18n="1e2tdzl"><b>$9.80</b><small>Per FTD</small></div></div>
               <div class="dr an" style="--k:fslide;--d:1s"><div data-i18n="c2597k">Ada<small>Video 3 · Hook B</small></div><span data-i18n="56hkm" class="tg" style="background:#fbf2df;color:#87631a">FTD $120</span></div>
               <div class="dr an" style="--k:fslide;--d:1.6s"><div data-i18n="aahjlx">Kwame<small>UGC · Unboxing</small></div><span data-i18n="1x2o8ds" class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div>
-              <div class="dr an" style="--k:fslide;--d:2.2s"><div data-i18n="2hd0b6">Zanele<small>Story · Countdown</small></div><span data-i18n="1x2o8ds" class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div></div></div></div></div>
+              <div class="dr an" style="--k:fslide;--d:2.2s"><div data-i18n="bmfz5n">Lucas<small>Story · Countdown</small></div><span data-i18n="1x2o8ds" class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div></div></div></div></div>
       </div>
       <button class="xp-big" type="button" id="xpBig" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></button>
     </div>
@@ -1143,6 +1204,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 .sp-err{font-size:13px;color:var(--rose);font-weight:600}
 .sp-foot{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--faint)}
 .sp-foot a{color:var(--faint)}
+.sp-foot b{color:var(--muted);font-weight:700}.sp-ai{font-style:normal;font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:6px;background:#efebff;color:#5b3df5;margin-left:3px}
 .sp-hide{display:none!important}
 @media (max-width:560px){
   .sp-launch{height:54px;padding:0 16px 0 8px;font-size:14.5px;right:14px}
@@ -1213,7 +1275,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
   let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
-  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false;
+  let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false, aiMode=false, tRow=null;
 
   /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
   const BG=['#efebff','#e8f3ec','#fbf2df','#ecf0fc','#fbeae8'], SKIN=['#f2c9a5','#d9a27a','#b97a52','#a8714d','#f6d7bf'], HAIR=['#1f1633','#3a2417','#6b3f1f','#0f0f14','#8a5a2b'], SHIRT=['#5b3df5','#2e7d57','#c2463f','#3d5ad6','#87631a'];
@@ -1228,17 +1290,19 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   function render(){ const t=team.slice(0,3);
     $('spLFaces').innerHTML=t.map(av).join(''); $('spTeam').innerHTML=t.map(av).join('');
     const a=team[0]||DEF_TEAM[0]; $('spWho').innerHTML=av(a)+`<span><b>${esc(a.name)}</b><small>${esc(a.role?_t(a.role):_t('Joinvoo support'))}</small></span>`;
-    $('spHello').textContent=_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
-    $('spOnTxt').textContent=online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
+    $('spHello').textContent=aiMode?_t('Hi 👋 I’m {name}, Joinvoo’s AI support assistant. Ask me anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A teammate can take over any time.').replace('{name}',a.name)
+      :_t('Hi 👋 I’m {name}. Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.').replace('{name}',a.name);
+    if(aiMode){ online=true; $('spNote').innerHTML=esc(_t('AI support'))+' · '+esc(_t('Powered by'))+' <b>Replyvoo</b>'; }
+    $('spOnTxt').textContent=aiMode?_t('Online now')+' · '+_t('Replies in seconds, day and night'):online?_t('Online now')+' · '+_t(replyTime):_t(replyTime);
     $('spOn').classList.toggle('on',online); $('spLDot').hidden=!online;
     const hh=$('spHours'); hh.querySelector('span').textContent=_t(hours); hh.hidden=!hours; }
-  function applySupport(s){ if(!s) return; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
+  function applySupport(s){ if(!s) return; if(s.ai!==undefined) aiMode=!!s.ai; if(Array.isArray(s.team)&&s.team.length) team=s.team.filter(m=>m&&m.name); if(s.reply_time) replyTime=s.reply_time; if(s.hours!==undefined) hours=s.hours; render(); }
   render();
 
   const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
   const scroll=()=>{ body.scrollTop=body.scrollHeight; };
   function msg(who,txt,ts,agent,html){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
-    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
+    const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.ai?' <em class="sp-ai">AI</em>':''}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
     r.innerHTML=a+`<div class="sp-col">${name}<div class="sp-msg"></div></div>`; const m=r.querySelector('.sp-msg');
     if(html) m.innerHTML=txt; else m.textContent=txt; if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
     body.appendChild(r); scroll(); return r; }
@@ -1255,17 +1319,21 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   const bot={name:'Joinvoo',photo:'',bot:true};
   async function quick(k){ if(k==='person'){ sys(_t('Write your message below.')+' '+(online?_t('We’re online now.'):_t(replyTime)+'.')); text.focus(); return; }
     const [q,a]=ANSWERS[k]; msg('me',q,Date.now()); await typing(team[0],700); msg('them',a,Date.now(),{name:team[0].name,photo:team[0].photo},k==='bot');
-    sys(_t('Need more? Write below and a real person will reply.')); }
+    sys(aiMode?_t('Need more? Write below and I’ll help right away.'):_t('Need more? Write below and a real person will reply.')); }
   $('spQuick').addEventListener('click',e=>{ const b=e.target.closest('button[data-q]'); if(b) quick(b.dataset.q); });
 
   async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
     const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
-  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; applySupport(j); emRow.hidden=!!ticket;
-    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); }); render(); }
+  /* the AI teammate's "typing…" comes from the server while it answers */
+  function setTyping(who){ if(tRow){ tRow.remove(); tRow=null; } if(!who) return; const a=team.find(m=>m.name===who.name)||team[0]; tRow=document.createElement('div'); tRow.className='sp-row them'; tRow.innerHTML=av(a)+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(tRow); scroll(); }
+  function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; if(j.ticket&&j.ticket.ai!==undefined) aiMode=!!j.ticket.ai; applySupport(j); emRow.hidden=!!ticket;
+    if(tRow){ tRow.remove(); tRow=null; }
+    (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null); });
+    if(j.typing) setTyping(j.typing); render(); }
   async function load(){ if(loaded) return; loaded=true; if(DEMO){ demo(); return; }
     try{ ingest(await api('GET')); }catch(e){ if(e.noapi||e instanceof TypeError) demo(); } }
-  function demo(){ DEMO=true; online=true; emRow.hidden=true; $('spNote').textContent=_t('Demo preview · messages aren’t sent'); render(); }
-  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },4000); }
+  function demo(){ DEMO=true; online=true; emRow.hidden=true; render(); $('spNote').textContent=_t('Demo preview · messages aren’t sent'); }
+  function startPoll(){ stopPoll(); if(DEMO) return; poll=setInterval(async()=>{ if(document.hidden) return; try{ ingest(await api('GET')); }catch{} },aiMode?1500:4000); }
   function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
   function open(o){ panel.classList.toggle('open',o); launch.setAttribute('aria-expanded',o); document.documentElement.classList.toggle('sp-open',o&&matchMedia('(max-width:560px)').matches);
     if(o){ load().then(startPoll); if(matchMedia('(min-width:561px)').matches) setTimeout(()=>text.focus(),250); } else stopPoll(); }
@@ -1279,7 +1347,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
     const payload={body:t}; if(!ticket){ const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return; } em.removeAttribute('aria-invalid'); payload.email=v; }
     sending=true; const b=msg('me',t,Date.now()); text.value=''; text.style.height='';
     try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
-      if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
+      if(j.ai){ aiMode=true; setTyping({name:team[0].name}); } else if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
     catch(x){ b.remove(); text.value=t; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
     finally{ sending=false; } });
 
@@ -1332,8 +1400,8 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   /* live phone: a join every ~2s, matched to an ad, sent to Meta; every third one deposits. Runs only while on screen. */
   (function(){
     const sec=$('#live'); if(!sec||!$('#tg')) return;
-    const NAMES=['Ada','Kwame','Amina','Tunde','Zanele','Wanjiru','Kofi','Chidi','Thandi','Emeka','Akosua','Brian'];
-    const ADS=['Video 3 · Hook B','Carousel · Deals','UGC · Unboxing','Static · Price drop','Story · Countdown'], CITY=['Lagos','Nairobi','Accra','Johannesburg','Douala','Abuja','Kumasi'];
+    const NAMES=['Lucas','Sofia','Ada','Mateo','Aisha','Noah','Priya','Kwame','Yuki','Elena','Omar','Chloe'];
+    const ADS=['Video 3 · Hook B','Carousel · Deals','UGC · Unboxing','Static · Price drop','Story · Countdown'], CITY=['London','São Paulo','Dubai','Lagos','Mumbai','Madrid','Jakarta','Mexico City','Paris','Nairobi'];
     let subs=12480, ni=0, iv=0, vis=false;
     const T=[];
     const later=(f,ms)=>T.push(setTimeout(f,ms));

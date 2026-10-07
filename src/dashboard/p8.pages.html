@@ -317,10 +317,12 @@ const faceStack = (n=3,cls='') => `<span class="fstack ${cls}">${team().slice(0,
 function drawLauncher(){ const f=$('#fab .lf'); if(f) f.innerHTML=faceStack(3); }
 async function supportPoll(){
   const r=await api('GET','/api/support?after='+CH.last); CH.online=!!r.online; CH.ticket=r.ticket;
+  CH.ai=!!((r.ticket&&r.ticket.ai)||(!r.ticket&&aiSup())); if (CH.ai||r.typing){ CH.typing=!!r.typing; CH.typingName=r.typing&&r.typing.name; } /* round 19: the AI teammate's typing comes from the server */
   if (Array.isArray(r.team)&&r.team.length){ const was=JSON.stringify(CH.team); CH.team=r.team; if(was!==JSON.stringify(r.team)){ drawLauncher(); const hf=$('#chat .ch-faces'); if(hf) hf.innerHTML=chatFaces(); } }
   if (r.reply_time) CH.reply_time=r.reply_time; if (r.hours) CH.hours=r.hours;
   const add=(r.messages||[]).filter(m=>!CH.msgs.some(x=>x.id===m.id));
   if (add.length){ CH.msgs.push(...add); CH.last=Math.max(CH.last,...add.map(m=>m.id)); if (add.some(m=>m.from_admin)) CH.typing=false; }
+  if (CH.ai&&r.typing) CH.typing=true; /* more AI bubbles on the way */
   if (CH.open){ const ma=Math.max(0,...CH.msgs.filter(m=>m.from_admin).map(m=>m.id)); if (ma>CH.seen){ CH.seen=ma; store.set('seen_admin',ma); } }
   if (add.length && CH.open) drawMsgs();
   drawUnread(); const ho=$('#help-online'); if (ho) ho.innerHTML=(CH.online?'<span style="color:var(--mint-ink);font-weight:700">● Online now.</span> ':'')+esc(replyTime())+'.';
@@ -328,13 +330,14 @@ async function supportPoll(){
 }
 function supportLoop(reset){
   clearTimeout(CH.t); if (!FEAT('support_chat')) return; if (reset){ CH.msgs=[]; CH.last=0; }
-  const run=async()=>{ try{ await supportPoll(); }catch{} CH.t=setTimeout(run, CH.open?4000:30000); }; run();
+  const run=async()=>{ try{ await supportPoll(); }catch{} CH.t=setTimeout(run, CH.open?(CH.ai?1500:4000):30000); }; run();
 }
 function drawUnread(){
   const n=CH.open?0:CH.msgs.filter(m=>m.from_admin&&m.id>CH.seen).length;
   $$('[data-unread]').forEach(b=>{ b.hidden=!n; b.textContent=n>9?'9+':n; });
 }
-const chatStatus = () => `<i class="${CH.online?'':'off'}"></i>${CH.online?'Online now':'Away right now'} · ${esc(replyTime())}`;
+const aiSup = () => !!(S.cfg&&S.cfg.support&&S.cfg.support.ai);
+const chatStatus = () => aiSup()?`<i></i>${tt('sup.ai.st','Online now · Replies in seconds, day and night')}`:`<i class="${CH.online?'':'off'}"></i>${CH.online?'Online now':'Away right now'} · ${esc(replyTime())}`;
 const chatFaces = () => team().slice(0,4).map(p=>`<span class="cf">${face(p,'lg')}${CH.online?'<i class="on"></i>':''}</span>`).join('');
 function openChat(){
   if (!FEAT('support_chat')) return;
@@ -342,14 +345,14 @@ function openChat(){
   CH.open=true; closePop();
   const hrs=supCfg('hours');
   document.body.insertAdjacentHTML('beforeend', `<section class="chat" id="chat" role="dialog" aria-label="Support chat" aria-modal="false">
-    <div class="chat-h"><div class="ch-top"><span class="ch-brand"><span class="mark">${I.mark}</span>Joinvoo support</span><button class="x" data-act="chat-close" aria-label="Close chat">${I.x}</button></div>
+    <div class="chat-h"><div class="ch-top"><span class="ch-brand"><span class="mark">${I.mark}</span>${tt('sup.brand','Joinvoo support')}</span><button class="x" data-act="chat-close" aria-label="Close chat">${I.x}</button></div>
       <div class="ch-faces">${chatFaces()}</div>
-      <h3>We’re here to help</h3>
+      <h3>${tt('sup.help','We’re here to help')}</h3>
       <small id="chat-st">${chatStatus()}</small>
       ${hrs?`<small class="ch-hours">${I.clock}${esc(hrs)}</small>`:''}</div>
     <div class="msgs" id="msgs" aria-live="polite"></div>
-    <form class="composer" id="chatf"><textarea id="chatin" rows="1" placeholder="Write a message…" aria-label="Message" maxlength="4000"></textarea><button class="send" type="submit" aria-label="Send" disabled>${I.send}</button></form>
-    <div class="chat-foot">We reply here${S.me&&S.me.email?' and by email':''} · Enter to send</div></section>`);
+    <form class="composer" id="chatf"><textarea id="chatin" rows="1" placeholder="${esc(tt('sup.write','Write a message…'))}" aria-label="Message" maxlength="4000"></textarea><button class="send" type="submit" aria-label="Send" disabled>${I.send}</button></form>
+    <div class="chat-foot">${aiSup()?`<span class="ai-foot">${I.sparkles} ${tt('sup.ai.foot','AI support')} · ${tt('sup.ai.pow','Powered by')} <b>Replyvoo</b></span>`:`We reply here${S.me&&S.me.email?' and by email':''} · Enter to send`}</div></section>`);
   const fab=$('#fab'); if (fab) fab.classList.add('hide');
   drawMsgs(); drawUnread();
   const ta=$('#chatin'), sb=$('#chatf .send');
@@ -362,17 +365,17 @@ function openChat(){
 }
 function closeChat(silent){ const c=$('#chat'); if(!c) return; c.remove(); CH.open=false; const fab=$('#fab'); if(fab) fab.classList.remove('hide'); if(!silent) supportLoop(false); }
 const TOPICS = () => [
-  ['msg', I.channels, 'My channel isn’t showing', 'My channel isn’t showing up in Joinvoo. Can you help?'],
-  ['guide', I.target, `Connect ${platNames()}`, ''],
-  ['msg', I.wallet, 'Billing & top-ups', 'I have a question about billing and top-ups.'],
-  FEAT('ftd') ? ['page', I.conversions, 'Track deposits (FTD)', 'conversions'] : null,
-  ['msg', I.user, 'Talk to a person', 'Hi! I’d like to talk to a person, please.']].filter(Boolean);
+  ['msg', I.channels, tt('sup.t1','My channel isn’t showing'), tt('sup.t1m','My channel isn’t showing up in Joinvoo. Can you help?')],
+  ['guide', I.target, tt('sup.t2','Connect {p}',{p:platNames()}), ''],
+  ['msg', I.wallet, tt('sup.t3','Billing & top-ups'), tt('sup.t3m','I have a question about billing and top-ups.')],
+  FEAT('ftd') ? ['page', I.conversions, tt('sup.t4','Track deposits (FTD)'), 'conversions'] : null,
+  ['msg', I.user, tt('sup.t5','Talk to a person'), tt('sup.t5m','Hi! I’d like to talk to a person, please.')]].filter(Boolean);
 function drawMsgs(){
   const el=$('#msgs'); if(!el) return; const nm=(S.me&&S.me.name)||'', T=team(), lead=T[0];
   const role = n => (T.find(t=>t.name===n)||{}).role || '';
   const fresh = !CH.msgs.some(m=>!m.from_admin) && !CH.pending.length;
   let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b>${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
-    <p>Hi${nm?' '+esc(nm):''} 👋 Ask us anything about setup, tracking, deposits or billing. We’re real people and we read every message.</p>
+    <p>${aiSup()?tt('sup.ai.hi','Hi{n} 👋 I’m {a}, Joinvoo’s AI support assistant. Ask me anything about setup, tracking, deposits, billing or your account. A teammate can take over any time.',{n:nm?' '+esc(nm):'',a:esc(lead.name)}):`Hi${nm?' '+esc(nm):''} 👋 Ask us anything about setup, tracking, deposits or billing. We’re real people and we read every message.`}</p>
     ${fresh?`<div class="topics">${TOPICS().map(([k,ic,l,v])=>k==='guide'?`<a class="topic" href="${GUIDE}" target="_blank" rel="noopener">${ic}<span>${esc(l)}</span>${I.ext}</a>`:`<button type="button" class="topic" data-act="${k==='page'?'topic-page':'quick'}" data-v="${esc(v)}">${ic}<span>${esc(l)}</span>${I.chevr}</button>`).join('')}</div>`:''}</div>`;
   let lastDay='', prevKey='';
   CH.msgs.forEach((m,i)=>{ const d=new Date(m.created_at).toDateString();
@@ -380,17 +383,18 @@ function drawMsgs(){
     const me=!m.from_admin, ag=me?null:(m.agent&&m.agent.name?m.agent:lead), key=me?'me':'a:'+ag.name, nx=CH.msgs[i+1], nk=nx?(!nx.from_admin?'me':'a:'+((nx.agent&&nx.agent.name)||lead.name)):'', first=key!==prevKey, last=key!==nk||!!CH.pending.length&&me;
     prevKey=key;
     if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me">${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
-    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
+    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${esc(m.body)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
   for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending">${esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
-  if (CH.typing) h+=`<div class="mrow them">${face(lead,'sm')}<div class="typing" aria-label="${esc(lead.name)} is typing"><i></i><i></i><i></i></div></div>`;
+  if (CH.typing){ const tp=(CH.typingName&&T.find(t=>t.name===CH.typingName))||lead; h+=`<div class="mrow them">${face(tp,'sm')}<div class="typing" aria-label="${esc(tp.name)} is typing"><i></i><i></i><i></i></div></div>`; }
   if (CH.err) h+=`<div class="err" style="align-self:stretch">${esc(CH.err)}</div>`;
   el.innerHTML=h; el.scrollTop=el.scrollHeight;
 }
-async function sendChat(text){
+function sendChat(text){ const ta=$('#chatin'); const body=(text||(ta&&ta.value)||'').trim(); if(!body) return; if(!text&&ta){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; } CH.pending.push(body); CH.err=''; drawMsgs(); CH.q=(CH.q||Promise.resolve()).then(()=>sendChat0(body,true)); return CH.q; } /* round 19: one at a time, so quick messages keep their order */
+async function sendChat0(text,queued){
   const ta=$('#chatin'); const body=(text||ta.value).trim(); if(!body) return;
   if (!text){ ta.value=''; ta.style.height='auto'; $('#chatf .send').disabled=true; }
-  CH.pending.push(body); CH.err=''; drawMsgs();
-  try { await api('POST','/api/support',{body}); CH.pending=CH.pending.filter(x=>x!==body); if(!CH.online||DEMO) CH.typing=DEMO; await supportPoll(); drawMsgs(); }
+  if (!queued){ CH.pending.push(body); CH.err=''; drawMsgs(); }
+  try { const rr=await api('POST','/api/support',{body}); CH.pending=CH.pending.filter(x=>x!==body); if (rr&&rr.ai){ CH.ai=true; CH.typing=true; } else if(!CH.online||DEMO) CH.typing=DEMO; await supportPoll(); drawMsgs(); clearTimeout(CH.t); supportLoop(false); }
   catch(e){ CH.pending=CH.pending.filter(x=>x!==body); CH.err=e.message; if(ta && !ta.value) ta.value=body; drawMsgs(); }
 }
 

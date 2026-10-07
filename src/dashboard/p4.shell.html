@@ -178,10 +178,11 @@ function drawStep(){
       <button class="btn primary lg wide" type="submit" id="tbtn" style="margin-top:8px">Connect bot ${I.arrow}</button></form>
     <a class="btn ghost" href="https://t.me/BotFather" target="_blank" rel="noopener">Open BotFather ${I.ext}</a>
     <button class="link" style="align-self:center;font-size:13.5px" data-act="no-token">My bot already runs elsewhere and I don’t want to share its token ${I.arrow}</button></div>`;
-  if (W.step===2){ const u=W.bot?W.bot.username:'yourbot'; const isBot=W.mode==='bot';
-    const pick=`<div class="mode2 plats" style="grid-template-columns:1fr 1fr"><button data-act="mode" data-m="channel" aria-pressed="${!isBot}">${pm('tg',1)}Channel or group<small>Track people who join</small></button>
-      <button data-act="mode" data-m="bot" aria-pressed="${isBot}"><span class="pm lg" style="background:var(--brand-soft);color:var(--brand-text)">${I.bot}</span>Bot subscribers<small>Track people who press Start</small></button></div>`;
-    h = isBot ? botStep(u, pick)
+  if (W.step===2){ const u=W.bot?W.bot.username:'yourbot'; const isBot=W.mode==='bot', isDm=W.mode==='dm'&&DM_ON();
+    const pick=`<div class="mode2 plats${DM_ON()?' r19-pick':''}" style="grid-template-columns:${DM_ON()?'repeat(3,minmax(0,1fr))':'1fr 1fr'}"><button data-act="mode" data-m="channel" aria-pressed="${!isBot&&!isDm}">${pm('tg',1)}<span class="r19-t">Channel or group<small>Track people who join</small></span></button>
+      <button data-act="mode" data-m="bot" aria-pressed="${isBot}"><span class="pm lg" style="background:var(--brand-soft);color:var(--brand-text)">${I.bot}</span><span class="r19-t">Bot subscribers<small>Track people who press Start</small></span></button>${DM_ON()?`
+      <button data-act="mode" data-m="dm" aria-pressed="${isDm}"><span class="pm lg" style="background:var(--mint-soft);color:var(--mint-ink)">${ICO_DM}</span><span class="r19-t"><span>${tt('r19.w.t','DM tracking')} <em class="chip g r19-new">${tt('nav.new','New')}</em></span><small>${tt('r19.w.s','Track people who message you')}</small></span></button>`:''}</div>`;
+    h = isDm ? dmStep(u, pick) : isBot ? botStep(u, pick)
     : `<div class="step">
     <div class="okbar">${I.checkc}<span>@${esc(u)} is connected</span></div>
     ${W.warn?`<div class="note warn">This bot was already connected to another server (${esc(W.prevWh)}). For a channel or group, use a new bot made just for Joinvoo, or that other service stops getting updates.</div>`:''}
@@ -192,11 +193,11 @@ function drawStep(){
     <div class="radar"><span class="r"><i></i><i></i><i></i><b></b></span><div><strong>Waiting for Telegram…</strong><span>This moves on by itself once the bot is in.</span></div></div>
     ${DEMO?'<button class="btn ghost" data-act="demo-detect">Demo: pretend I added it</button>':'<button class="btn ghost" data-act="manual">The bot was already an admin?</button>'}</div>`;
     if (!isBot){ W.before=(S.chans&&S.chans.channels.length)||0; W.poll=setInterval(checkArrived,2500); } }
-  if (W.step===3 && !W.jrSeen && FEAT('join_requests') && W.channel && W.channel.type!=='bot' && !jrOn(W.channel)){ s.innerHTML=jrStepHtml(); bindJrStep(); window.scrollTo(0,0); return; }
+  if (W.step===3 && !W.jrSeen && FEAT('join_requests') && W.channel && !['bot','dm'].includes(W.channel.type) && !jrOn(W.channel)){ s.innerHTML=jrStepHtml(); bindJrStep(); window.scrollTo(0,0); return; }
   if (W.step===3){ const c=W.channel||{}; const p=W.plat; h = `<div class="step">
-    ${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>`}
+    ${c.locked?chLockNote(c,true):`<div class="okbar">${I.checkc}<span>${c.type==='dm'?tt('r19.s3.ok','Tracking messages to {n}',{n:esc(c.title)}):c.type==='bot'?`Tracking ${esc(c.title)} subscribers`:`${esc(c.title||'Your channel')} is connected`}</span></div>`}
     <span class="step-ico">${I.target}</span>
-    <h1>Tell your ads about every join.</h1><p class="lede">Pick where you run ads. Your ads then learn from real joins, not taps. You can add the others later.</p>
+    ${c.type==='dm'?`<h1>${tt('r19.s3.h','Tell your ads about every message.')}</h1><p class="lede">${tt('r19.s3.p','Pick where you run ads. Your ads then learn from people who really write to you, not taps. You can add the others later.')}</p>`:`<h1>Tell your ads about every join.</h1><p class="lede">Pick where you run ads. Your ads then learn from real joins, not taps. You can add the others later.</p>`}
     <div class="plats" style="grid-template-columns:repeat(${PLATS().length},minmax(0,1fr))">${PLATS().map(k=>`<button data-act="plat" data-p="${k}" aria-pressed="${p===k}">${pm(k,1)}${PLAT[k].name}<small>${PLAT[k].sub}</small></button>`).join('')}</div>
     <form id="pf" style="display:flex;flex-direction:column;gap:16px">${platFields(p,c,false)}
       <div id="perr"></div><button class="btn primary lg wide" type="submit" id="pbtn">Save and send a test ${I.arrow}</button></form>
@@ -210,6 +211,7 @@ function drawStep(){
     <h1>You’re tracking.</h1><p class="lede">Use this link in your ad, in place of the t.me link. That’s the only change you make.</p>
     <div class="codebox" style="width:100%"><code>${esc(c.tracking_url||'')}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url||'')}">${I.copy} Copy</button></div>
     <div class="note" style="text-align:left;width:100%"><b>See which ad brought each person.</b> Add your platform’s campaign and ad macros to the end of the link, for example on Meta:<div class="mono" style="margin-top:6px;overflow-wrap:anywhere;color:var(--ink)">?utm_source=meta&amp;utm_campaign={{campaign.name}}&amp;utm_term={{adset.name}}&amp;utm_content={{ad.name}}</div><span style="display:block;margin-top:6px">TikTok and Snapchat examples are on the Campaigns page.</span></div>
+    ${c.type==='dm'&&MA_ON()?`<div class="note" style="text-align:left;width:100%"><b>${tt('r19.s4.h','Want every message matched?')}</b> ${tt('r19.s4.p','Set up a mini app in Settings → How it opens. It takes 2 minutes and Telegram tells Joinvoo exactly who tapped your ad.')}</div>`:''}
     <button class="btn primary lg wide" data-act="finish">Go to my dashboard ${I.arrow}</button></div>`; setTimeout(confetti,150); }
   s.innerHTML = h;
   const tf=$('#tf'); tf && tf.addEventListener('submit', e=>{e.preventDefault(); connectBot();});
@@ -268,7 +270,7 @@ async function connectBot(){
   catch(e){ b.disabled=false; b.innerHTML='Connect bot '+I.arrow; if (limitCatch(e)) return; $('#terr').innerHTML=`<div class="err" style="margin-top:4px">${esc(e.message)}</div>`; }
 }
 async function checkArrived(){
-  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast('Found your channel'); if (W.channel&&W.channel.locked) setTimeout(()=>openLimitSheet({kind:'channels'},{arrived:W.channel}),500); } } catch{}
+  try { const d=await api('GET','/api/channels'); if (W.step===2 && d.channels.length>W.before){ S.chans=d; W.channel=d.channels[d.channels.length-1]; W.step=3; drawStep(); toast(W.channel&&W.channel.type==='dm'?tt('r19.found','Your manager is connected'):'Found your channel'); if (W.channel&&W.channel.locked) setTimeout(()=>openLimitSheet({kind:'channels'},{arrived:W.channel}),500); } } catch{}
 }
 async function savePixel(){
   const c=W.channel, b=$('#pbtn'), p=W.plat; b.disabled=true; b.innerHTML='<span class="spin"></span> Saving';

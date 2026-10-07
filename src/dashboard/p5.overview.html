@@ -81,7 +81,11 @@ function startCard(){
 const KPI_DEF = [
   ['joins','Joined from ads','lilac'],['rate','Join rate','sky'],['clicks','Clicks','cream'],
   ['ftd','First deposits','mint'],['rev','Revenue','lime'],['leaves','Left','blush']];
-function kpiSkel(){ return KPI_DEF.map(([k,l,t])=>`<section class="kpi t-${t}" data-k="${k}"><span class="kl">${l}</span><div class="kv-row"><span class="sk" style="height:38px;width:60%"></span></div><div class="kd"><span class="sk" style="height:14px;width:45%"></span></div></section>`).join(''); }
+/* round 19: with DM tracking, two more tiles: "DMs from ads" and "DM rate" (8 tiles, 4 per row) */
+const KPI_DM = [['dms','DMs from ads','peach'],['dmrate','DM rate','teal']];
+const hasDmCh = () => ((S.chans&&S.chans.channels)||[]).some(c=>c.type==='dm'&&c.status!=='removed');
+const kpiList = () => hasDmCh() ? [KPI_DEF[0],KPI_DEF[1],...KPI_DM,...KPI_DEF.slice(2)] : KPI_DEF;
+function kpiSkel(){ return kpiList().map(([k,l,t])=>`<section class="kpi t-${t}" data-k="${k}"><span class="kl">${l}</span><div class="kv-row"><span class="sk" style="height:38px;width:60%"></span></div><div class="kd"><span class="sk" style="height:14px;width:45%"></span></div></section>`).join(''); }
 async function viewOverview(){
   S.redraw=[];
   const me=S.me||{}, hr=new Date().getHours(), greet=hr<5?tt('greet.evening','Good evening'):hr<12?tt('greet.morning','Good morning'):hr<17?tt('greet.afternoon','Good afternoon'):tt('greet.evening','Good evening'), nm=dispName();
@@ -117,31 +121,37 @@ async function viewOverview(){
 /* Fills the #kpis grid (KPI_DEF tiles + Ad spend / Cost per FTD when there is spend). Shared by the Overview loaders. */
 function drawKpis(st,prev,first){
   const t=new Date(), [,,span]=prevRange(), [,t0]=range();
-  const T=st.totals, P0=prev.totals;
+  const T={...st.totals}, P0={...prev.totals};
+  /* DMs are counted inside joins/organic/clicks by the server; on this screen they get their own tiles */
+  const DM={n:T.dms||0,o:T.dms_organic||0,c:T.dm_clicks||0}, PDM={n:P0.dms||0,c:P0.dm_clicks||0};
+  for (const X of [T,P0]){ X.joins=(X.joins||0)-(X.dms||0); X.organic=(X.organic||0)-(X.dms_organic||0); }
   // compare at the same pace: if today is still running, scale the previous period to the same share of time
   let k=1; if (t0===ymd(new Date())){ const frac=(t.getHours()*60+t.getMinutes())/1440; k=((span-1)+frac)/span; }
   const P={}; for (const key in P0) P[key]=(P0[key]||0)*k;
-  const rate=pct(T.joins,T.clicks), prate=pct(P.joins,P.clicks);
+  const rate=pct(T.joins,T.clicks-DM.c), prate=pct(P.joins,(P.clicks||0)-(PDM.c*k)), dmr=pct(DM.n,DM.c), pdmr=pct(PDM.n,PDM.c);
   const {list}=buckets(st.series), sv=key=>list.map(b=>b[key]), rs=list.map(b=>b.clicks?b.joins/b.clicks:0);
   const hasConv=st.counts&&(st.counts.has_conversions||T.ftd||T.reg);
   const vl=vsLabel();
   const cards={
     clicks:{v:fmt(T.clicks),raw:T.clicks,d:deltaChip(T.clicks,P.clicks,true,vl),s:'People who opened your link',sp:spark(sv('clicks'),css('--cream-ink'))},
     joins:{v:fmt(T.joins),raw:T.joins,d:deltaChip(T.joins,P.joins,true,vl),s:`+ ${fmt(T.organic)} organic joins`,sp:spark(sv('joins'),css('--lilac-ink'))},
-    rate:{v:pctS(T.joins,T.clicks),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
-    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins)} of joins · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
+    dms:{v:fmt(DM.n),raw:DM.n,d:deltaChip(DM.n,PDM.n*k,true,vl),s:tt('r19.kpi.dmso','+ {n} organic DMs',{n:fmt(DM.o)}),sp:''},
+    dmrate:{v:pctS(DM.n,DM.c),raw:dmr,p:1,d:DM.c&&PDM.c?deltaChip(dmr,pdmr,true,vl):'',s:tt('r19.kpi.dmr','Ad taps that sent a DM'),sp:''},
+    rate:{v:pctS(T.joins,T.clicks-DM.c),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
+    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins+DM.n)} of ${DM.n?tt('r19.kpi.leads','joins + DMs'):'joins'} · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
     rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
     leaves:leftCard(T,P,vl),
   };
-  const kp=$('#kpis'), hasSp=FEAT('spend')&&T.spend_cents>0;
-  if (kp){ kp.classList.toggle('k8',hasSp); if (hasSp && !$('.kpi[data-k="spend"]')) kp.insertAdjacentHTML('beforeend',`<section class="kpi t-peach" data-k="spend"></section><section class="kpi t-teal" data-k="cpf"></section>`); if(!hasSp) $$('.kpi[data-k="spend"],.kpi[data-k="cpf"]').forEach(x=>x.remove()); }
+  const kp=$('#kpis'), hasSp=FEAT('spend')&&T.spend_cents>0, hasDm=hasDmCh()||DM.n>0;
+  if (kp && hasDm && !$('.kpi[data-k="dms"]')){ const j=$('.kpi[data-k="rate"]'); if(j) j.insertAdjacentHTML('afterend',KPI_DM.map(([k2,l2,t2])=>`<section class="kpi t-${t2}" data-k="${k2}"><span class="kl">${tt('r19.kpi.'+k2,l2)}</span></section>`).join('')); }
+  if (kp){ kp.classList.toggle('k8',hasSp||hasDm); kp.classList.toggle('k10',hasSp&&hasDm); if (hasSp && !$('.kpi[data-k="spend"]')) kp.insertAdjacentHTML('beforeend',`<section class="kpi t-peach" data-k="spend"></section><section class="kpi t-teal" data-k="cpf"></section>`); if(!hasSp) $$('.kpi[data-k="spend"],.kpi[data-k="cpf"]').forEach(x=>x.remove()); }
   if (hasSp){ const roas=T.revenue_cents/T.spend_cents, pr=P.spend_cents||0, cpf=T.ftd?T.spend_cents/T.ftd:0, pcpf=P.ftd&&pr?pr/P.ftd:0;
-    cards.spend={v:money0(T.spend_cents),raw:T.spend_cents,m:1,d:pr?deltaChip(T.spend_cents,pr,false,vl):'',s:`ROAS ${roas.toFixed(2)}× · ${T.joins?money(T.spend_cents/T.joins):'—'} per join`,sp:''};
+    cards.spend={v:money0(T.spend_cents),raw:T.spend_cents,m:1,d:pr?deltaChip(T.spend_cents,pr,false,vl):'',s:`ROAS ${roas.toFixed(2)}× · ${(T.joins+DM.n)?money(T.spend_cents/(T.joins+DM.n)):'—'} ${DM.n?tt('r19.kpi.plead','per lead'):'per join'}`,sp:''};
     cards.cpf={v:cpf?money(cpf):'—',raw:cpf,mc:1,d:pcpf&&cpf?deltaChip(cpf,pcpf,false,vl):'',s:'Spend ÷ first deposits',sp:''};
     for (const [k2,l2] of [['spend','Ad spend'],['cpf','Cost per FTD']]){ const el=$(`.kpi[data-k="${k2}"]`), c=cards[k2]; if(el) el.innerHTML=`<span class="kl">${l2}</span><div class="kv-row"><div style="min-width:0"><span class="kn">${c.v}</span></div></div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>`; } }
   const fc=$('#fakechip'); if (fc){ const n=T.suspect_clicks||0, fj=T.filtered_joins||0; fc.hidden=!(FEAT('fake_filter')&&(n||fj)); fc.innerHTML=`${I.shield}${fj?tt('fraud.chip2','{c} fake clicks · {j} fake joins filtered',{c:fmt(n),j:fmt(fj)}):tt('fraud.chip','{c} fake clicks filtered',{c:fmt(n)})}`; fc.title=tt('fraud.tip','Bots, data-center clicks, join bursts, deleted accounts and repeat users. Recorded, but never sent to your ad platforms.'); }
-  for (const [key] of KPI_DEF){ const c=cards[key], el=$(`.kpi[data-k="${key}"]`); if(!el) continue;
-    el.innerHTML=`<span class="kl">${KPI_DEF.find(x=>x[0]===key)[1]}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>${c.s2||''}`;
+  for (const [key,lab] of [...KPI_DEF,...(hasDm?KPI_DM:[])]){ const c=cards[key], el=$(`.kpi[data-k="${key}"]`); if(!el) continue;
+    el.innerHTML=`<span class="kl">${key==='dms'||key==='dmrate'?tt('r19.kpi.'+key,lab):lab}</span><div class="kv-row"><div style="min-width:0"><span class="kn" data-v="${c.raw}">${c.v}</span></div>${c.sp}</div><div class="kd">${c.d}<span class="ks">${c.s}</span></div>${c.s2||''}`;
     if (first && !reduced) count(el.querySelector('.kn'), c.raw, c.p?'p':c.m?'m':''); }
   if (T.ftd_locked){ const r=$('.kpi[data-k="rev"]'); if(r){ r.classList.add('locked'); r.innerHTML=`<span class="kl">${tt('kpi.revenue','Revenue')}</span><div class="kv-row"><span class="kn">${I.lock}</span></div><div class="kd"><button class="ks link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></div>`; }
     if (!$('#lockb')){ const k=$('#kpis'); k&&k.insertAdjacentHTML('afterend',`<div id="lockb">${lockBanner(T.ftd)}</div>`); } }

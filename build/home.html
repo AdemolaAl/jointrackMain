@@ -1,5 +1,5 @@
 <title>Joinvoo · Lead tracking for media buyers on Meta, TikTok and Snapchat</title>
-<meta name="description" content="Your ad dashboard is lying if you’re not tracking your Telegram joins. Joinvoo feeds your ad platforms real joins so they optimize for quality, filtering out bots and junk placements: every Telegram join, deposit, purchase and sale matched to the exact ad click, with bot traffic filtered out. First 500 joins free.">
+<meta name="description" content="Your ad dashboard is lying if you’re not tracking your Telegram joins. Joinvoo feeds your ad platforms real joins so they optimize for quality, filtering out bots and junk placements: every Telegram join, message to your manager, deposit, purchase and sale matched to the exact ad click, with bot traffic filtered out. First 500 joins free.">
 <meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Joinvoo · Your ad dashboard is lying if you’re not tracking your Telegram joins">
 <meta property="og:description" content="Every Telegram join, deposit, purchase and sale, matched to the exact ad click and sent back to Meta, TikTok and Snapchat. First 500 joins free.">
@@ -18,6 +18,7 @@ header.top nav{display:flex;gap:4px;align-items:center}
 header.top nav a.plain{color:var(--muted);text-decoration:none;padding:10px 14px;font-weight:600;font-size:15px;border-radius:99px}
 header.top nav a.plain:hover{color:var(--ink)}
 header.top nav a.login{color:var(--ink);font-weight:700}
+@media (max-width:440px){header.top .wrap{gap:6px}html:not([lang="en"]) header.top nav a.plain.login{display:none}header.top nav .navbtn{white-space:nowrap;padding-inline:14px}}
 .navbtn{padding:11px 20px!important;font-size:15px!important}
 
 /* hero */
@@ -258,6 +259,38 @@ section.lv{padding-block:64px 0}
 .strip i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center}
 .strip i svg{width:15px;height:15px}
 .pm{background:linear-gradient(160deg,#2E86FF,#0559E3)}.pt{background:#0B0B12}.ps{background:#FFFC00}.pg{background:linear-gradient(160deg,#3CC0FF,#1E96D8)}
+
+
+/* round 19: "Track messages" — the manager chat phone (bubbles in, floats show the match). Paused until on screen (.m19.run). */
+section.m19{padding-block:0 8px}
+.m19 .lv-g{grid-template-columns:minmax(0,560px) minmax(0,1fr)}
+.m19 .lv-panel::before{background:radial-gradient(55% 70% at 12% 50%,color-mix(in srgb,#12b886 14%,transparent),transparent 70%),radial-gradient(40% 50% at 100% 100%,color-mix(in srgb,#5b3df5 12%,transparent),transparent 70%)}
+.m19-new{display:inline-flex;align-items:center;gap:8px}
+.m19-new em{font-style:normal;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--mint);color:var(--green)}
+.m19-l{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;max-width:46ch}
+.m19-l li{display:flex;gap:12px;align-items:flex-start;color:var(--muted);font-size:15.5px;line-height:1.5}
+.m19-l li b{color:var(--ink)}
+.m19-l li>span:first-child{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:var(--lilac);color:var(--brand-text)}
+.m19-l li>span:first-child svg{width:16px;height:16px}
+.m19-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.m19 .lp-av{background:linear-gradient(135deg,#22c79a,#0e9e73)}
+.m19 .lp-body{justify-content:flex-end;padding-bottom:14px}
+.m19-b{max-width:82%;padding:9px 12px;border-radius:16px;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.05);opacity:0;transform:translateY(8px) scale(.98);animation:m19In 9s infinite}
+.m19-b.in{align-self:flex-start;background:var(--surface);border-bottom-left-radius:5px}
+.m19-b.out{align-self:flex-end;background:#e3dcff;color:#2a1d75;border-bottom-right-radius:5px}
+.m19-b small{display:block;color:var(--faint);font-size:10.5px;margin-top:2px;text-align:right}
+.m19-b.b1{animation-delay:.6s}.m19-b.b2{animation-delay:2.4s}.m19-b.b3{animation-delay:4.2s}
+@keyframes m19In{0%{opacity:0;transform:translateY(8px) scale(.98)}6%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:none}}
+.m19-comp{display:flex;align-items:center;gap:8px;margin:0 12px 12px;padding:8px 8px 8px 14px;border-radius:99px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;color:var(--faint)}
+.m19-comp i{margin-left:auto;width:26px;height:26px;border-radius:50%;background:#5b3df5;display:grid;place-items:center;color:#fff;font-style:normal;font-size:12px}
+.m19 .lp-fl{opacity:0;animation:m19Fl 9s infinite}
+.m19 .m19-f1{right:0;top:120px;animation-delay:1.2s}.m19 .m19-f2{left:0;top:300px;animation-delay:1.8s}.m19 .m19-f3{right:10px;bottom:70px;animation-delay:5s}
+@keyframes m19Fl{0%{opacity:0;transform:translateY(10px)}6%,86%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(-6px)}}
+.m19 .lp-wrap *{animation-play-state:paused}.m19.run .lp-wrap *{animation-play-state:running}
+@media (prefers-reduced-motion:reduce){.m19 .lp-wrap *{animation:none!important;opacity:1!important;transform:none!important}.m19 .lp-ring{display:none}}
+@media (max-width:1100px){.m19 .lv-g{grid-template-columns:minmax(0,440px) minmax(0,1fr)}}
+@media (max-width:900px){.m19 .lv-g{grid-template-columns:minmax(0,1fr)}.m19 .lv-copy{order:-1}.m19-l{text-align:left}.m19-cta{justify-content:center}
+  .m19 .m19-f1{right:0;top:96px}.m19 .m19-f2{left:0;top:250px}.m19 .m19-f3{right:4px;bottom:50px}}
 
 /* sections */
 section.blk{padding-block:96px}
@@ -638,7 +671,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   <div class="wrap hgrid">
     <div class="hcopy">
       <h1>Your ad dashboard is <em class="lie">lying</em> <span class="g">if you’re not tracking your Telegram joins.</span></h1>
-      <p class="lede"><b>Joinvoo feeds your ad platforms real joins, so they optimize for quality.</b> <span class="l2">Every join, deposit, purchase and sale is matched to the exact ad click on Meta, TikTok and Snapchat.</span></p>
+      <p class="lede"><b>Joinvoo feeds your ad platforms real joins, so they optimize for quality.</b> <span class="l2">Every join, message, deposit, purchase and sale is matched to the exact ad click on Meta, TikTok and Snapchat.</span></p>
       <div class="ctas"><a class="btn violet lg" href="{{SIGNUP}}">Start free <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><button class="btn lg play" type="button" data-xopen><span class="pi" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></span>Watch how it works</button><a class="demo-l" href="{{DEMO}}"><i aria-hidden="true"></i>Try the live demo <span class="ar" aria-hidden="true">→</span></a></div>
       <p class="checks"><span><b class="fj">500</b> joins free</span><span>No card needed</span><span>Live in 10 minutes</span></p>
       <div class="ha-wrap">
@@ -664,7 +697,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
               <div class="jv">
                 <div class="jv-r"><span class="k ly q" data-at="0" data-off="4.25"><i class="am-q">?</i><span>Which ad?</span></span><span class="k ly c" data-at="4.25"><i class="jv-av a1">A</i><span>Ada joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="4.25" data-off="5.1"></span></div>
                 <div class="jv-r"><span class="k ly q" data-at="0" data-off="4.75"><i class="am-q">?</i><span>Deposit?</span></span><span class="k ly c" data-at="4.75"><i class="jv-av a2">K</i><span>Kwame joined · Reel ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="4.75" data-off="5.6"></span></div>
-                <div class="jv-r"><span class="k ly q" data-at="0" data-off="5.25"><i class="am-q">?</i><span>Unknown</span></span><span class="k ly c" data-at="5.25"><i class="jv-av a3">A</i><span>Amina joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="5.25" data-off="6.1"></span></div>
+                <div class="jv-r"><span class="k ly q" data-at="0" data-off="5.25"><i class="am-q">?</i><span>Unknown</span></span><span class="k ly c" data-at="5.25"><i class="jv-av a3">S</i><span>Sofia joined · Story ad</span><b class="jv-ok">✓</b></span><span class="k jv-gl" data-at="5.25" data-off="6.1"></span></div>
               </div>
               <div class="jv-ts"><span class="jv-t k" data-at="6.35"><i>$</i><span>First deposit $120 · Story · Countdown</span></span><span class="jv-t jv-t2 k" data-at="6.9"><i>$</i><span>Re-deposit $60</span></span></div>
               <div class="jv-st k" data-at="5.75"><span><b class="ha-n" data-n="612">0</b><small>Joins</small></span><span><b class="ha-n" data-n="48">0</b><small>Deposits</small></span><span><b class="ha-n" data-n="9.80" data-d="2" data-p="$">$0.00</b><small>Cost per deposit</small></span></div>
@@ -702,7 +735,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
       <div class="lp-head"><span class="lp-av">DD</span><div><b>Daily Deals Club</b><small><span id="subs">12,480</span> subscribers</small></div></div>
       <div class="lp-body"><div class="lp-post"><b>🔥 Today’s top 5 deals</b><div class="lp-deal">Headphones −60%</div><p>Prices drop at noon. Details in the pinned post.</p><small>👁 8.4K · 09:12</small></div><div id="tg"></div></div>
     </div>
-    <div class="lp-fl lp-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div><b>Matched to ad</b><small id="fb1">Video 3 · Hook B · Lagos</small></div></div>
+    <div class="lp-fl lp-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div><b>Matched to ad</b><small id="fb1">Video 3 · Hook B · London</small></div></div>
     <div class="lp-fl lp-f2"><span class="lp-ok">✓</span><div><b>Sent to Meta</b><small id="fb2">Subscribe · 14s after tap</small></div></div>
     <div class="lp-fl lp-f3"><span class="lp-ftd">$</span><div><b id="fa3">First deposit $120</b><small>Purchase sent to Meta ✓</small></div></div>
   </div>
@@ -720,7 +753,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         <div class="a-row"><i style="background:#5b3df5">A</i>Ada · Video 3<small class="j">Joined</small></div>
         <div class="a-row"><i style="background:#2e9d6a">K</i>Kwame · UGC<small class="j">Joined</small></div>
         <div class="a-row"><i style="background:#e0a43a">A</i>Ada · Video 3<small class="d">FTD $120</small></div>
-        <div class="a-row"><i style="background:#ff5c8a">Z</i>Zanele · Story<small class="j">Joined</small></div>
+        <div class="a-row"><i style="background:#ff5c8a">L</i>Lucas · Story<small class="j">Joined</small></div>
         <div class="a-row"><i style="background:#5b3df5">A</i>Ada · Video 3<small class="j">Joined</small></div>
         <div class="a-row"><i style="background:#2e9d6a">K</i>Kwame · UGC<small class="j">Joined</small></div>
         <div class="a-row"><i style="background:#e0a43a">A</i>Ada · Video 3<small class="d">FTD $120</small></div>
@@ -744,9 +777,35 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
     <article class="wt reveal"><span class="e" style="background:var(--lilac);color:var(--brand-text)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><h3>Exact click matching</h3><p>Every join is tied to the exact click, ad, ad set and campaign, then sent to Meta, TikTok or Snapchat through their Conversions APIs.</p></article>
     <article class="wt reveal"><span class="e" style="background:var(--cream);color:var(--gold)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><h3>Deposits and sales, not just joins</h3><p>Deposits, purchases and sales are matched to the person and the ad, and sent back as Purchase with value. Your ads find buyers, not browsers.</p></article>
     <article class="wt reveal"><span class="e" style="background:var(--sky);color:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span><h3>Your bot, page and domain</h3><p>Keep your own bot, your own landing page and your own link domain. Request-to-join channels work too.</p></article>
-    <article class="wt reveal"><span class="e" style="background:var(--mint);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3>Built for big volume</h3><p>Made for high-volume African traffic. Joins beyond your plan cost <b class="pjc">2¢</b> each, and several bots can share one busy channel.</p></article>
+    <article class="wt reveal"><span class="e" style="background:var(--mint);color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3>Built for big volume</h3><p>Made for high-volume traffic from anywhere in the world. Joins beyond your plan cost <b class="pjc">2¢</b> each, and several bots can share one busy channel.</p></article>
   </div>
 </div></section>
+
+<section class="lv m19" id="messages"><div class="wrap lv-outer"><div class="lv-panel lv-g">
+  <div class="lp-wrap" aria-hidden="true">
+    <span class="lp-ring"></span><span class="lp-ring r2"></span>
+    <div class="lp-phone"><span class="lp-notch"></span>
+      <div class="lp-head"><span class="lp-av">AS</span><div><b>Ada · Sales</b><small>online</small></div></div>
+      <div class="lp-body"><div class="m19-b in b1">Hi! I saw your ad 👋<small>09:41</small></div><div class="m19-b out b2">Welcome! Here’s how to get started…<small>09:41 ✓✓</small></div><div class="m19-b in b3">Done, I just deposited 🙌<small>09:52</small></div></div>
+      <div class="m19-comp">Message<i>➤</i></div>
+    </div>
+    <div class="lp-fl m19-f1"><span><svg viewBox="0 0 24 24" fill="none" stroke="#5b3df5" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#5b3df5"/></svg></span><div><b>Matched to ad</b><small>Story · Countdown · Dubai</small></div></div>
+    <div class="lp-fl m19-f2"><span class="lp-ok">✓</span><div><b>Lead sent to Meta</b><small>First message · 9s after tap</small></div></div>
+    <div class="lp-fl m19-f3"><span class="lp-ftd">$</span><div><b>First deposit $120</b><small>Purchase sent to Meta ✓</small></div></div>
+  </div>
+  <div class="lv-copy">
+    <span class="kick m19-new">DM tracking <em>New</em></span>
+    <h2 class="h2">Track messages, <span>not just joins.</span></h2>
+    <p class="sub">Send your ads straight to a manager’s chat. Joinvoo matches each person’s first message to the exact ad, and sends it to your ad platforms as a Lead. Your ads learn to find people who really write to you.</p>
+    <ul class="m19-l">
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v8.6a1.5 1.5 0 0 1-1.5 1.5H10l-4.3 3.4v-3.4H4.5A1.5 1.5 0 0 1 3 15.6V7a1.5 1.5 0 0 1 1.5-1.5z"/></svg></span><span><b>Connect once in Telegram.</b> Your manager adds your bot under Telegram Business. No code.</span></li>
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.8" width="11" height="18.4" rx="2.6"/><path d="M10.5 17.8h3"/></svg></span><span><b>Every message matched with a mini app.</b> Telegram tells Joinvoo exactly who tapped your ad.</span></li>
+      <li><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg></span><span><b>Private by design.</b> Joinvoo only notes the first message. It never replies and never saves what people write.</span></li>
+    </ul>
+    <div class="m19-cta"><a class="btn violet" href="{{DEMO}}?tutorial=t11">Watch how it works</a><a class="btn" href="{{SIGNUP}}">Start free</a></div>
+  </div>
+</div></div>
+<script>(function(){var s=document.getElementById('messages');if(!s)return;if(!('IntersectionObserver' in window)){s.classList.add('run');return}new IntersectionObserver(function(e){s.classList.toggle('run',e[0].isIntersecting)},{threshold:.15}).observe(s)})();</script></section>
 
 <section class="blk" id="calc" style="padding-top:0" aria-labelledby="calcT"><div class="wrap center">
   <span class="kick reveal">Savings</span>
@@ -804,7 +863,9 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
     <details open><summary>Do I need to write any code?</summary><p>No. You make a bot in Telegram, paste a token, and put your Joinvoo link in your ads. Most people are live in about 10 minutes.</p></details>
     <details><summary>How are deposits matched to my ads?</summary><p>Your broker, casino, affiliate network or bot sends a small postback when someone deposits. Joinvoo matches it to the person who joined and the ad they came from, and sends <b>Purchase</b> with the value to your ad platform. You can also mark a deposit by hand.</p></details>
     <details><summary>Can I keep my own bot, landing page and domain?</summary><p>Yes. Track your own bot’s Start without sharing its token, keep your landing page with one line of code, and run links on your own domain. Request-to-join channels are supported.</p></details>
-    <details><summary>Is this allowed by Telegram?</summary><p>Yes. Joinvoo only uses Telegram’s official Bot API, the same invite-link features any channel admin can use. Your bot never posts in your channel.</p></details>
+    <details><summary>Can I track people who message my manager?</summary><p>Yes. Your manager adds your bot once under Telegram → Settings → Telegram Business → Chatbots (this needs Telegram Premium). Each person’s first message is matched to their ad and sent to Meta, TikTok or Snapchat as a Lead. Joinvoo never replies and never saves what people write.</p></details>
+    <details><summary>Do I need a mini app?</summary><p>No, but it’s the most exact way. Without one, your link opens the chat with a ready message and a short code. With a mini app (2 minutes in BotFather), Telegram tells Joinvoo exactly who tapped your ad, so every message is matched. Already have your own mini app? Your ad can open it, and each open counts as a lead.</p></details>
+    <details><summary>Is this allowed by Telegram?</summary><p>Yes. Joinvoo only uses Telegram’s official Bot API: the same invite-link features any channel admin can use, Telegram Business chatbots and mini apps. Your bot never posts in your channel and never replies to your customers.</p></details>
     <details><summary>What happens when my credits run out?</summary><p><b>Your ads keep working</b> and people still get into your channel. Tracking pauses until you top up, and you’ll see a banner in your dashboard.</p></details>
   </div>
   <p class="pfine">More answers in the <a href="{{GUIDE}}" style="color:var(--brand-text);font-weight:800">Help centre</a>.</p>
@@ -812,7 +873,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
 
 <section class="blk" id="start" style="padding-top:0"><div class="wrap">
   <div class="cta reveal">
-    <h2>Stop guessing. <span>See every join.</span></h2><p>Give Meta, TikTok and Snapchat the one signal they’re missing. Your first <span class="fj">500</span> joins are on us.</p>
+    <h2>Stop guessing. <span>See every join and message.</span></h2><p>Give Meta, TikTok and Snapchat the one signal they’re missing. Your first <span class="fj">500</span> joins are on us.</p>
     <div class="ctas" style="justify-content:center"><a class="btn violet lg" href="{{SIGNUP}}">Start free</a><a class="btn lg ghost2" href="{{DEMO}}">Try the live demo</a><button class="btn lg ghost2" type="button" data-xopen>Watch how it works</button></div>
     <p class="have">Already have an account? <a href="{{LOGIN}}">Log in</a></p></div>
   <p class="affl"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="2" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="2" y="13" width="9" height="9" rx="2.6" fill="#0fae6b"/><rect x="13" y="13" width="9" height="9" rx="2.6" fill="#c6f45a"/></svg><span>Promote Joinvoo and earn up to 50% for life.</span> <a href="{{AFFILIATES}}">VooSquare affiliates →</a></p>
@@ -853,14 +914,14 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         <div class="sc" data-s="5"><div class="lt"><span class="st">Step 3 of 3</span><div class="ttl">Meta gets the <span>Subscribe.</span></div></div>
           <div class="rt"><div class="m"><div class="m-h"><span class="m-av" style="background:linear-gradient(160deg,#2E86FF,#0559E3)">∞</span><div>Events Manager<small>Conversions API · Server</small></div></div>
             <div class="m-b" style="background:#fff"><div class="ev an" style="--k:fslide;--d:.6s"><span class="ic" style="background:#efebff;color:#5b3df5">★</span><div><b>Subscribe</b><small>Received · 14s after the click</small></div><span class="ck">✓</span></div>
-              <div class="ev an" style="--k:fslide;--d:1.4s"><span class="ic" style="background:#ecf0fc;color:#3d5ad6">◎</span><div><b>Matched to your ad</b><small>Video 3 · Hook B · Lagos</small></div><span class="ck">✓</span></div>
+              <div class="ev an" style="--k:fslide;--d:1.4s"><span class="ic" style="background:#ecf0fc;color:#3d5ad6">◎</span><div><b>Matched to your ad</b><small>Video 3 · Hook B · London</small></div><span class="ck">✓</span></div>
               <div class="ev an" style="--k:fslide;--d:2.2s"><span class="ic" style="background:#fbf2df;color:#87631a">$</span><div><b>Purchase · $120</b><small>When Ada deposits</small></div><span class="ck">✓</span></div></div></div></div></div>
         <div class="sc" data-s="6"><div class="lt"><span class="st">Every day</span><div class="ttl">Every join and deposit, <span>by ad.</span></div></div>
           <div class="rt"><div class="m"><div class="m-h"><span class="m-av" style="background:#5b3df5">J</span><div>Joinvoo · Results<small>Today</small></div></div>
             <div class="m-b" style="background:#fff;gap:7px"><div class="tiles3 an" style="--d:.3s"><div><b>1,248</b><small>Joins</small></div><div><b>64</b><small>Deposits</small></div><div><b>$9.80</b><small>Per FTD</small></div></div>
               <div class="dr an" style="--k:fslide;--d:1s"><div>Ada<small>Video 3 · Hook B</small></div><span class="tg" style="background:#fbf2df;color:#87631a">FTD $120</span></div>
               <div class="dr an" style="--k:fslide;--d:1.6s"><div>Kwame<small>UGC · Unboxing</small></div><span class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div>
-              <div class="dr an" style="--k:fslide;--d:2.2s"><div>Zanele<small>Story · Countdown</small></div><span class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div></div></div></div></div>
+              <div class="dr an" style="--k:fslide;--d:2.2s"><div>Lucas<small>Story · Countdown</small></div><span class="tg" style="background:#e8f3ec;color:#2e7d57">Joined</span></div></div></div></div></div>
       </div>
       <button class="xp-big" type="button" id="xpBig" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.4-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg></button>
     </div>
@@ -948,8 +1009,8 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   /* live phone: a join every ~2s, matched to an ad, sent to Meta; every third one deposits. Runs only while on screen. */
   (function(){
     const sec=$('#live'); if(!sec||!$('#tg')) return;
-    const NAMES=['Ada','Kwame','Amina','Tunde','Zanele','Wanjiru','Kofi','Chidi','Thandi','Emeka','Akosua','Brian'];
-    const ADS=['Video 3 · Hook B','Carousel · Deals','UGC · Unboxing','Static · Price drop','Story · Countdown'], CITY=['Lagos','Nairobi','Accra','Johannesburg','Douala','Abuja','Kumasi'];
+    const NAMES=['Lucas','Sofia','Ada','Mateo','Aisha','Noah','Priya','Kwame','Yuki','Elena','Omar','Chloe'];
+    const ADS=['Video 3 · Hook B','Carousel · Deals','UGC · Unboxing','Static · Price drop','Story · Countdown'], CITY=['London','São Paulo','Dubai','Lagos','Mumbai','Madrid','Jakarta','Mexico City','Paris','Nairobi'];
     let subs=12480, ni=0, iv=0, vis=false;
     const T=[];
     const later=(f,ms)=>T.push(setTimeout(f,ms));

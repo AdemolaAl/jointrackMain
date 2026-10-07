@@ -80,6 +80,13 @@ dashboard (/app), admin (/admin), website, blog ──► server.js (JSON API + 
 5. `recordJoin`: fraud check (`burst`, `deleted_account`, `repeat_user`, `fake_click`). Suspect joins are stored with status `filtered`, never sent or charged. Real ones are queued for each connected platform, counted in `hourly`, and charged (`chargeJoin`).
 6. `sendCapi` posts batches (≤500) to Meta/TikTok/Snapchat with retries and per-event fallbacks.
 
+### Manager chat (Telegram Business) → first message → Lead (round 19)
+1. `business_connection` → `onBizConnection`: creates a `channels` row `type='dm'` (chat_id = manager's user id, `biz_conn` = connection id) in `pending`; the owner approves it (`approveDm`, `POST /api/channels/:id/approve`). Disabled → `no_rights`; bot deleted or token dead → `no_rights`.
+2. `/c/<slug>/go` for a dm row: `go_via='miniapp'` and the bot has `ma_app` → `t.me/<bot>/<app>?startapp=<startCode>`; else `t.me/<manager>?text=<dm_text>\n\nRef: <startCode>`.
+3. Mini app: `GET /ma/<maKey>` (page, may be framed by Telegram Web) → `POST /ma/<maKey>/open {init}` → `checkInitData` (HMAC, 24 h) → `ma_opens` row + `hourly.opens` → reply with where to go (`maFallback` when untracked).
+4. `business_message` → `onBizMessage`: first message per person per manager chat → click from `ma_opens` (by tg user id) or from a signed ref code in the text → `recordJoin`.
+5. Bots (`type='bot'`) with `go_via='miniapp'` + `app_url`: the link opens the mini app; the open is `recordBotStart` (the lead), then the page hands over to `app_url` with Telegram's hash.
+
 ### Postback → FTD
 1. The affiliate program calls `/pb/<key>?sub1=<telegram id>&status=ftd&payout=…&txid=…` (aliases accepted).
 2. `recordConversion` finds the person's join (ad-attributed, non-filtered first), dedupes by `txid`, turns a first deposit into `ftd` and later ones into `dep`, and queues Purchase/CompletePayment/PURCHASE with the value. `rejected` reverses revenue and sends nothing.

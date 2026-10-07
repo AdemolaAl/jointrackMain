@@ -268,6 +268,7 @@ function tutOpen(id){
   tutBarBind();
 }
 function tutStarts(){ const P=TP; let c=0; P.starts=P.plan.w.map(w=>{ const s=c; c+=w; return s/P.plan.W*P.D; });
+  { const T=TUT.find(x=>x.id===P.id); if (P.mode==='audio' && T && T.marks && T.marks.length===P.starts.length && T.marks[T.marks.length-1]<P.D){ P.starts=T.marks.slice(); P.starts[0]=0; } } /* round 19: exact sentence times (voice after a music intro) */
   const d=$('#tvdots'); if(d) d.innerHTML=P.starts.slice(1).map(s=>`<i style="left:${s/P.D*100}%"></i>`).join(''); const b=$('#tvbar'); if(b) b.setAttribute('aria-valuemax',Math.round(P.D)); }
 function tutFit(){
   const P=TP; if(!P) return; const db=$('#tvdb'), dev=$('#tvdev'); if(!db||!dev) return;
