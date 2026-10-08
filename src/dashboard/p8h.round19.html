@@ -385,8 +385,9 @@ function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiS
   const vv=window.visualViewport, phone=()=>matchMedia('(max-width:700px)').matches; let raf=0;
   const fit=()=>{ raf=0; const c=$('#chat'); document.documentElement.classList.toggle('chat-on',!!c&&phone()); if(!c) return;
     if(!phone()||!vv){ c.style.top=c.style.height=c.style.bottom=''; return; }
+    const m=$('#msgs'), n=m&&m.scrollHeight-m.scrollTop-m.clientHeight<90; /* measure BEFORE shrinking for the keyboard */
     c.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; c.style.height=Math.round(vv.height)+'px'; c.style.bottom='auto';
-    const m=$('#msgs'); if(m&&m.scrollHeight-m.scrollTop-m.clientHeight<90){ m.style.scrollBehavior='auto'; m.scrollTop=m.scrollHeight; m.style.scrollBehavior=''; } };
+    if(n){ m.style.scrollBehavior='auto'; m.scrollTop=m.scrollHeight; m.style.scrollBehavior=''; } };
   const q=()=>{ if(!raf) raf=requestAnimationFrame(fit); };
   if(vv){ vv.addEventListener('resize',q); vv.addEventListener('scroll',q); } addEventListener('resize',q);
   document.addEventListener('focusin',e=>{ if(e.target&&e.target.id==='chatin'){ q(); setTimeout(q,320); } });
@@ -395,4 +396,10 @@ function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiS
 })();
 { const _oc=openChat; openChat=function(){ if(!$('#chat')) window._chatSY=scrollY; const r=_oc.apply(this,arguments); try{ window._chatFitQ(); }catch{} return r; }; }
 { const _cc=closeChat; closeChat=function(){ const r=_cc.apply(this,arguments); try{ document.documentElement.classList.remove('chat-on'); }catch{} return r; }; }
+
+/* ---------- round 20: save the customer's time zone the first time they open the dashboard ----------
+   Without it the account stays on UTC, so the daily report's "yesterday" and the day totals can be a day off for people in Lagos, Doha, Manila… */
+{ let tzDone=false; const _ra3=renderApp; renderApp=function(){ const r=_ra3.apply(this,arguments);
+  try{ if(!tzDone&&!DEMO&&S.me&&!S.me.tz){ tzDone=true; const z=Intl.DateTimeFormat().resolvedOptions().timeZone; if(z) api('PATCH','/api/me',{tz:z}).then(()=>{ if(S.me) S.me.tz=z; }).catch(()=>{}); } }catch{}
+  return r; }; }
 

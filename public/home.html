@@ -728,6 +728,8 @@ body.xp-open{overflow:hidden}
 @media (max-width:900px){
   header.top nav a.plain{display:none}
   header.top nav a.plain.login{display:inline-flex;align-items:center;min-height:44px;padding:10px 12px}
+  header.top nav a.plain.blog{display:inline-flex;align-items:center;min-height:44px;padding:10px 8px} /* round 20: Blog stays one tap away on phones */
+
   .hero{padding-block:30px 18px}
   .hgrid{grid-template-columns:minmax(0,1fr);gap:4px}
   .hcopy{align-items:center;text-align:center;gap:20px}
@@ -812,11 +814,23 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   .tu-tx{padding:10px 12px 13px}.tu-tx b{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){.tu,.tu-ph,.tu-pl{transition:none}}
+/* round 20: phone header with Blog next to Log in: tighter spacing so nothing scrolls sideways */
+@media (max-width:430px){
+  header.top .wrap{gap:4px;padding-inline:14px}
+  header.top nav{gap:0}
+  header.top nav a.plain.blog{padding:10px 6px;font-size:14.5px}
+  header.top nav a.plain.login{padding:10px 7px;font-size:14.5px}
+  header.top nav .navbtn{padding:10px 13px!important;font-size:14px!important}
+  header.top .logo{font-size:21px;gap:8px}
+  header.top .mark{width:34px;height:34px}
+}
+@media (max-width:430px){header.top nav a.plain.blog,header.top nav a.plain.login{white-space:nowrap}}
+@media (max-width:385px){header.top .logo{font-size:0;gap:0}}
 </style>
 
 <header class="top" id="top"><div class="wrap">
   <a class="logo" href="/" aria-label="Joinvoo home"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="9" cy="12" r="5.2"/><circle cx="15" cy="12" r="5.2" stroke="#c9bfff"/></svg></span>Joinvoo</a>
-  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="vadd2s" class="plain" href="#tutorials">Tutorials</a><a data-i18n="1e656gd" class="plain" href="#pricing">Pricing</a><a data-i18n="1f8350a" class="plain" href="/guide">Help</a><a data-i18n="1jdup01" class="plain" href="/blog">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="plain login" href="/login">Log in</a><a data-i18n="fr3k4j" class="btn violet navbtn" href="/signup">Start free</a></nav>
+  <nav aria-label="Main"><a data-i18n="1lrzbkg" class="plain" href="#how">How it works</a><a data-i18n="vadd2s" class="plain" href="#tutorials">Tutorials</a><a data-i18n="1e656gd" class="plain" href="#pricing">Pricing</a><a data-i18n="1f8350a" class="plain" href="/guide">Help</a><a data-i18n="1jdup01" class="plain blog" href="/blog">Blog</a><div class="lsw" data-lsw></div><a data-i18n="idklxs" class="plain login" href="/login">Log in</a><a data-i18n="fr3k4j" class="btn violet navbtn" href="/signup">Start free</a></nav>
 </div></header>
 
 <main>
@@ -1284,7 +1298,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   let DEMO=!!window.JP_DEMO || location.protocol==='file:';
   const DEF_TEAM=DEMO?['Sofia','Daniel','Maya','Leo'].map(n=>({name:n,role:'Customer support',photo:'media/team/ai-'+n.toLowerCase()+'.png',ai:true})) /* round 20: the demo shows the 4 AI teammates */
     :[{name:'Maya',role:'Customer success',photo:''},{name:'Daniel',role:'Tracking specialist',photo:''},{name:'Sofia',role:'Billing',photo:''}]; /* _t('Customer success') _t('Tracking specialist') _t('Billing') */
-  let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours='Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
+  let team=DEF_TEAM, replyTime='Usually replies in a few minutes', hours=DEMO?'Open 24/7':'Every day, 8am–10pm', online=false; /* _t('Usually replies in a few minutes') _t('Every day, 8am–10pm') */
   let ticket=null, seen=new Set(), lastId=0, poll=null, loaded=false, sending=false, asked=false, aiMode=false, tRow=null;
 
   /* illustrated default avatar: a simple drawn face on a brand-tinted circle (never a stock photo) */
@@ -1311,7 +1325,10 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
 
   const time=ts=>{ try{ return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{ return ''; } };
   /* round 20: only jump to the newest message when the reader is already near the bottom (or sent it themselves) */
-  const scroll=(force)=>{ if(force===true||body.scrollHeight-body.scrollTop-body.clientHeight<120) body.scrollTop=body.scrollHeight; };
+  const near=()=>body.scrollHeight-body.scrollTop-body.clientHeight<120;
+  const scroll=(force)=>{ if(force===true||near()) body.scrollTop=body.scrollHeight; };
+  /* add a row: decide BEFORE adding it whether the reader was at the bottom (a tall new bubble must still be scrolled into view) */
+  const add=(el,force)=>{ const n=force===true||near(); body.appendChild(el); if(n) body.scrollTop=body.scrollHeight; };
   const PHOTO='📷 Photo';
   function msg(who,txt,ts,agent,html,img){ const r=document.createElement('div'); r.className='sp-row '+(who==='me'?'me':'them');
     const a=who==='me'?'':av(agent||team[0]); const name=who==='me'?'':`<span class="sp-name">${esc((agent&&agent.name)||team[0].name)}${agent&&agent.ai?' <em class="sp-ai">AI</em>':''}${agent&&agent.bot?' · '+_t('instant answer'):''}</span>`;
@@ -1320,9 +1337,9 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
       if(txt&&txt!==PHOTO){ const c=document.createElement('span'); c.className='sp-cap'; c.textContent=txt; m.appendChild(c); } }
     else if(html) m.innerHTML=txt; else m.textContent=txt;
     if(ts){ const s=document.createElement('small'); s.textContent=time(ts); m.appendChild(s); }
-    body.appendChild(r); scroll(who==='me'); return r; }
-  function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; body.appendChild(d); scroll(); }
-  function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(r); scroll(); setTimeout(()=>{ r.remove(); res(); },ms); }); }
+    add(r,who==='me'); return r; }
+  function sys(t){ const d=document.createElement('div'); d.className='sp-sys'; d.textContent=t; add(d); }
+  function typing(agent,ms){ return new Promise(res=>{ const r=document.createElement('div'); r.className='sp-row them'; r.innerHTML=av(agent||team[0])+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; add(r); setTimeout(()=>{ r.remove(); res(); },ms); }); }
   function showErr(m){ err.textContent=m||''; err.hidden=!m; }
 
   /* quick starts: instant answers for common questions, then a person if they want one */
@@ -1340,7 +1357,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   async function api(method,payload){ const r=await fetch('/api/support'+(method==='GET'?'?after='+lastId:''),{method,headers:payload?{'content-type':'application/json'}:{},credentials:'same-origin',body:payload?JSON.stringify(payload):undefined});
     const ct=r.headers.get('content-type')||''; if(!ct.includes('json')) throw Object.assign(new Error('no api'),{noapi:true}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||'Something went wrong.'),j); return j; }
   /* the AI teammate's "typing…" comes from the server while it answers */
-  function setTyping(who){ if(tRow){ tRow.remove(); tRow=null; } if(!who) return; const a=team.find(m=>m.name===who.name)||team[0]; tRow=document.createElement('div'); tRow.className='sp-row them'; tRow.innerHTML=av(a)+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; body.appendChild(tRow); scroll(); }
+  function setTyping(who){ if(tRow){ tRow.remove(); tRow=null; } if(!who) return; const a=team.find(m=>m.name===who.name)||team[0]; tRow=document.createElement('div'); tRow.className='sp-row them'; tRow.innerHTML=av(a)+'<div class="sp-col"><div class="sp-msg sp-typing"><i></i><i></i><i></i></div></div>'; add(tRow); }
   function ingest(j){ if(j.ticket) ticket=j.ticket; if(j.online!==undefined) online=!!j.online; if(j.ticket&&j.ticket.ai!==undefined) aiMode=!!j.ticket.ai; applySupport(j); emRow.hidden=!!ticket;
     if(tRow){ tRow.remove(); tRow=null; }
     (j.messages||[]).forEach(m=>{ lastId=Math.max(lastId,m.id); if(seen.has(m.id)) return; seen.add(m.id); msg(m.from_admin?'them':'me',m.body,m.created_at,m.from_admin?(m.agent||team[0]):null,false,m.image); });
@@ -1353,7 +1370,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   /* round 20: phones (iPhone keyboard): the full-screen chat follows the visible area, and iOS's leftover page offset is reset when the keyboard closes */
   (function(){ const vv=window.visualViewport, phone=()=>matchMedia('(max-width:560px)').matches; let raf=0;
     const fit=()=>{ raf=0; const on=panel.classList.contains('open')&&phone(); if(!on||!vv){ panel.style.top=panel.style.height=panel.style.bottom=''; return; }
-      panel.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; panel.style.height=Math.round(vv.height)+'px'; panel.style.bottom='auto'; scroll(); };
+      const n=near(); panel.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; panel.style.height=Math.round(vv.height)+'px'; panel.style.bottom='auto'; if(n) body.scrollTop=body.scrollHeight; };
     const q=()=>{ if(!raf) raf=requestAnimationFrame(fit); };
     if(vv){ vv.addEventListener('resize',q); vv.addEventListener('scroll',q); } addEventListener('resize',q);
     panel.addEventListener('focusin',()=>{ q(); setTimeout(q,320); });
@@ -1374,18 +1391,23 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   function needEmail(payload){ if(ticket) return false; const v=em.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emRow.hidden=false; em.setAttribute('aria-invalid','true'); showErr(_t('Add your email so we can reply if you leave.')); em.focus(); return true; } em.removeAttribute('aria-invalid'); payload.email=v; return false; }
   const att=$('spAtt'), file=$('spFile');
   att.onclick=()=>{ showErr(''); file.click(); };
-  file.onchange=async()=>{ const f=file.files&&file.files[0]; file.value=''; if(!f||sending) return; showErr('');
-    let data; try{ data=await shrink(f); }catch(x){ showErr(x.message||_t('That photo couldn’t be opened. Try a screenshot instead.')); return; }
-    const cap=text.value.trim();
+  let pendPhoto=null; /* a photo picked before the email was filled in: kept and sent with the next tap on send */
+  async function sendPhotoData(data,cap){
     if(DEMO){ msg('me',cap||PHOTO,Date.now(),null,false,data); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
       msg('them',_t('Got your screenshot, thanks! (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
-    const payload={body:cap,image:data}; if(needEmail(payload)) return;
-    sending=true; const b=msg('me',cap||PHOTO,Date.now(),null,false,data); b.querySelector('.sp-msg').classList.add('sp-up'); text.value=''; text.style.height='';
+    const payload={body:cap,image:data}; if(needEmail(payload)){ pendPhoto=data; sys(_t('Add your email above, then tap send and your photo goes with it.')); return; }
+    pendPhoto=null; sending=true; const b=msg('me',cap||PHOTO,Date.now(),null,false,data); b.querySelector('.sp-msg').classList.add('sp-up'); text.value=''; text.style.height='';
     try{ const j=await api('POST',payload); if(j.id) seen.add(j.id); b.querySelector('.sp-msg').classList.remove('sp-up'); ticket=ticket||{id:0}; emRow.hidden=true; if(j.online!==undefined) online=!!j.online; render();
       if(j.ai){ aiMode=true; setTyping({name:team[0].name}); } else if(!asked){ asked=true; sys(online?_t('Sent. Someone from the team will reply here shortly.'):_t('Sent.')+' '+_t(replyTime)+'. '+_t('We’ll also email you.')); } startPoll(); }
-    catch(x){ b.remove(); if(cap&&!text.value) text.value=cap; if(x.need_email){ emRow.hidden=false; em.focus(); } showErr(x.message||_t('Couldn’t send. Try again.')); }
-    finally{ sending=false; } };
-  form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(!t||sending) return; showErr('');
+    catch(x){ b.remove(); if(cap&&!text.value) text.value=cap; pendPhoto=/too big|photo or screenshot/i.test(x.message||'')?null:data; /* keep it so the next tap on send retries */
+      if(x.need_email){ emRow.hidden=false; em.focus(); } showErr((x.message||_t('Couldn’t send. Try again.'))+(pendPhoto&&!x.need_email?' '+_t('Tap send to try the photo again.'):'')); }
+    finally{ sending=false; } }
+  file.onchange=async()=>{ const f=file.files&&file.files[0]; file.value=''; if(!f||sending) return; showErr('');
+    let data; try{ data=await shrink(f); }catch(x){ showErr(x.message||_t('That photo couldn’t be opened. Try a screenshot instead.')); return; }
+    await sendPhotoData(data,text.value.trim()); };
+  form.addEventListener('submit',async e=>{ e.preventDefault(); const t=text.value.trim(); if(sending) return; showErr('');
+    if(pendPhoto){ await sendPhotoData(pendPhoto,t); return; }
+    if(!t) return;
     if(DEMO){ msg('me',t,Date.now()); text.value=''; text.style.height=''; const a=team[0]; await typing(a,1300);
       msg('them',_t('Thanks! In the live chat I’d answer this in seconds, and a teammate can take over any time. (This is the demo, so nothing was sent.)'),Date.now(),a); return; }
     const payload={body:t}; if(needEmail(payload)) return;

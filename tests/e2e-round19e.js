@@ -38,5 +38,14 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   const sys = calls[0].system.map((x) => x.text).join('\n');
   assert(/Today is \d{4}-\d{2}-\d{2}/.test(sys), 'Joe is told today’s date');
   assert(/LIVE SNAPSHOT/.test(sys) && /Today so far: 5 ad clicks, 3 joins from ads/.test(sys) && /ads ARE running/.test(sys), 'Joe always sees a live ads snapshot (5 clicks, 3 joins today) and is told never to say ads aren’t running');
+  // round 20: AI support sees the same live numbers (support said "no traffic today" while ads were running)
+  await put(ADM, '/api/admin/support-ai', { settings: { on: true, speed: 'instant' } });
+  calls = []; global.INPUT = { from: '2024-01-01', to: '2024-01-01' }; // a model guessing the wrong dates
+  await post(U, '/api/support', { body: 'is there any traffic today?' }); await sleep(3500);
+  const sup = calls.find((c) => Array.isArray(c.system) && c.system[1] && /THIS CHAT/.test(c.system[1].text));
+  const dyn = sup ? sup.system[1].text : '', st2 = sup ? sup.system[0].text : '';
+  assert(/LIVE SNAPSHOT/.test(dyn) && /Today so far: 5 ad clicks, 3 joins from ads/.test(dyn), 'AI support sees the live snapshot: 5 clicks and 3 joins today, same as the dashboard');
+  assert(new RegExp('Today is ' + today).test(dyn) || /Today is \d{4}-\d{2}-\d{2}/.test(dyn), 'AI support knows today’s date in the customer’s time zone');
+  assert(/Never say they have no traffic/.test(st2) && /SETUP STATUS/.test(dyn), 'and is told never to say “no traffic” when the snapshot shows clicks, plus their setup status');
   ai.close(); console.log('done');
 })().catch((e) => { console.log('FAIL: crashed', e); process.exitCode = 1; ai.close(); });

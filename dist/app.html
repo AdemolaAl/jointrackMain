@@ -1048,7 +1048,7 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
 @media (max-width:700px){.sup-launch .lf .face:nth-child(3){display:none}.chat-h h3{font-size:22px}}
 .nav-a .sup-on{width:8px;height:8px;border-radius:50%;background:#2fbf71;box-shadow:0 0 0 3px rgba(47,191,113,.22);flex:none;margin-left:auto}
 .nav-a .sup-on+.nb:not([hidden]){margin-left:8px}
-.shell.col .nav-a .sup-on{position:absolute;top:8px;right:9px;margin:0;box-shadow:0 0 0 2px var(--surface)}
+.shell.col .nav-a .sup-on{position:absolute;bottom:9px;right:10px;top:auto;margin:0;box-shadow:0 0 0 2px var(--surface)}
 @media (max-width:700px){html.chat-on,html.chat-on body{overflow:hidden;overscroll-behavior:none}}
 .msgs{scroll-behavior:auto}
 @media (max-width:700px){#jcmsgs{scroll-behavior:auto}}
@@ -9749,8 +9749,9 @@ function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiS
   const vv=window.visualViewport, phone=()=>matchMedia('(max-width:700px)').matches; let raf=0;
   const fit=()=>{ raf=0; const c=$('#chat'); document.documentElement.classList.toggle('chat-on',!!c&&phone()); if(!c) return;
     if(!phone()||!vv){ c.style.top=c.style.height=c.style.bottom=''; return; }
+    const m=$('#msgs'), n=m&&m.scrollHeight-m.scrollTop-m.clientHeight<90; /* measure BEFORE shrinking for the keyboard */
     c.style.top=Math.max(0,Math.round(vv.offsetTop))+'px'; c.style.height=Math.round(vv.height)+'px'; c.style.bottom='auto';
-    const m=$('#msgs'); if(m&&m.scrollHeight-m.scrollTop-m.clientHeight<90){ m.style.scrollBehavior='auto'; m.scrollTop=m.scrollHeight; m.style.scrollBehavior=''; } };
+    if(n){ m.style.scrollBehavior='auto'; m.scrollTop=m.scrollHeight; m.style.scrollBehavior=''; } };
   const q=()=>{ if(!raf) raf=requestAnimationFrame(fit); };
   if(vv){ vv.addEventListener('resize',q); vv.addEventListener('scroll',q); } addEventListener('resize',q);
   document.addEventListener('focusin',e=>{ if(e.target&&e.target.id==='chatin'){ q(); setTimeout(q,320); } });
@@ -9759,6 +9760,12 @@ function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiS
 })();
 { const _oc=openChat; openChat=function(){ if(!$('#chat')) window._chatSY=scrollY; const r=_oc.apply(this,arguments); try{ window._chatFitQ(); }catch{} return r; }; }
 { const _cc=closeChat; closeChat=function(){ const r=_cc.apply(this,arguments); try{ document.documentElement.classList.remove('chat-on'); }catch{} return r; }; }
+
+/* ---------- round 20: save the customer's time zone the first time they open the dashboard ----------
+   Without it the account stays on UTC, so the daily report's "yesterday" and the day totals can be a day off for people in Lagos, Doha, Manila… */
+{ let tzDone=false; const _ra3=renderApp; renderApp=function(){ const r=_ra3.apply(this,arguments);
+  try{ if(!tzDone&&!DEMO&&S.me&&!S.me.tz){ tzDone=true; const z=Intl.DateTimeFormat().resolvedOptions().timeZone; if(z) api('PATCH','/api/me',{tz:z}).then(()=>{ if(S.me) S.me.tz=z; }).catch(()=>{}); } }catch{}
+  return r; }; }
 
 
 /* ================= DEMO BACKEND (sample data, in the browser) ================= */
@@ -10249,7 +10256,7 @@ const Demo = (() => {
         bub.forEach((t,i)=>{ at+=Math.min(3800,900+t.length*22); mine.push(setTimeout(()=>{ if(D.timers===mine) D.started=true; support.push({id:sid++,from_admin:1,body:t,created_at:Date.now(),agent:{name:ag,role:'Customer support',photo:'',ai:true}}); if(i===bub.length-1){ supTyping=Math.max(0,supTyping-1); if(D.timers===mine){ D.timers=[]; D.started=false; } } }, at)); });
         D.end=Date.now()+at;
         return {ok:true,id:msg.id,online:true,ai:true}; }
-      const after=+qs.get('after')||0; return {ticket:support.length?{id:1,status:'open',email:'alex@example.com',ai:true}:null,typing:supTyping>0?{name:'Sofia'}:null,online:true,support:'',team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Mon–Sat, 8am–10pm',messages:support.filter(x=>x.id>after).map(m=>m.from_admin&&!m.agent?{...m,agent:{name:'Maya',photo:''}}:m)}; }
+      const after=+qs.get('after')||0; return {ticket:support.length?{id:1,status:'open',email:'alex@example.com',ai:true}:null,typing:supTyping>0?{name:'Sofia'}:null,online:true,support:'',team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Open 24/7',messages:support.filter(x=>x.id>after).map(m=>m.from_admin&&!m.agent?{...m,agent:{name:'Maya',photo:''}}:m)}; }
     if (p==='/api/referrals'){ const D=864e5, ppl=sample?[
         {email:'lu•••@gmail.com',joined_at:Date.now()-71*D,active:true,spend_cents:62800,earned_cents:12560},
         {email:'so•••@outlook.com',joined_at:Date.now()-58*D,active:true,spend_cents:48600,earned_cents:9720},
@@ -10365,7 +10372,7 @@ const Demo = (() => {
       {id:'landvoo',name:'Landvoo',tagline:'Landing pages that convert.',headline:'Fast pages for your ads, built in minutes.',url:'',color:'#EEF0F6',color2:'#E2E6F0',ink:'dark',logo:'landvoo',badge:'Coming soon',offer:'',status:'soon',enabled:true},
       {id:'voosquare',name:'VooSquare',tagline:'One login for all Zedapex tools',url:'https://voosquare.com',color:'#0fae6b',color2:'#c6f45a',ink:'dark',logo:'voosquare',status:'live',enabled:true}];
     const voo={login:'off',home:'https://voosquare.com',referrals:qa.get('refs')==='voo'?'voosquare':'local'};
-    return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Mon–Sat, 8am–10pm',contact:'',ai:true,powered_by:'Replyvoo'},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
+    return {signup:true,features,apps,voo:qa.get('apps')==='0'?undefined:voo,sister:{enabled:new URLSearchParams(location.search).get('sister')!=='0',name:'Replyvoo',url:'https://replyvoo.com',tagline:'Sky-rocket your sales. On autopilot.',promo_code:new URLSearchParams(location.search).get('promo')||''},support:{team:TEAM,reply_time:'Replies in seconds, day and night',hours:'Open 24/7',contact:'',ai:true,powered_by:'Replyvoo'},brand:{company:'Zedapex',support_email:'support@joinvoo.com'},pricing:{base_cents:3000,included:2000,per_join_cents:2,free_joins:500}};
   }
   /* ---------- Round 11: plan limits, remove channel / disconnect bot, click IDs + match keys, leaves split, showcase ----------
      Basic allows 3 channels and 3 bots on a fresh demo account; the sample account is set to 6 channels / 3 bots, so adding a new bot shows the limit sheet.

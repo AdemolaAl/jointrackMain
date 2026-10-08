@@ -50,7 +50,7 @@ Filtered joins are recorded (People → Filtered) but never sent to Meta, TikTok
 Channel banned or full? Open the channel in Channels → Backup channel and pick another of your channels. Your existing ad link keeps working and new visitors join the backup channel, using its invite links and pixel settings, with joins counted there. No need to edit or re-review your ads. Send the traffic back any time.
 
 ## Ad spend, ROAS and cost per FTD
-Enter what you spent per day and campaign on the Compare page, or import a CSV (date, platform, campaign, amount, currency).
+Add spend on the Results page (Ad spend → Add spend) or on the Compare page, import a CSV (date, platform, campaign, amount, currency), or connect Meta so spend comes in automatically.
 With spend in, Joinvoo shows cost per join, cost per FTD and ROAS (revenue ÷ spend) for every campaign and platform. Without spend, those numbers stay empty: Joinvoo never estimates them.
 
 ## Compare and reports
@@ -70,8 +70,8 @@ One trial per account and per ad account or pixel.
 
 ## Credits, free joins and billing
 New accounts get their first tracked joins free after confirming their email. After that, the monthly plan applies, and each tracked join beyond the plan’s included joins costs a small number of credits. Organic joins are free.
-If the wallet runs out, tracking pauses: visitors still reach Telegram, but joins aren’t tracked or sent until you top up.
-Buy credits in Wallet. Bigger top-ups get bonus credits. Credits pay for tracking; they can’t be withdrawn, and refunds only happen in the cases on the Refunds page.
+If the credits run out, tracking pauses: visitors still reach Telegram, but joins aren’t tracked or sent until you top up.
+Buy credits on the Credits page. Bigger top-ups get bonus credits. Credits pay for tracking; they can’t be withdrawn, and refunds only happen in the cases on the Refunds page.
 
 ## Levels
 Your level shows how big you are as a media buyer, by leads in the rolling last 30 days (tracked ad joins plus bot Starts; filtered fake joins don’t count):
@@ -85,10 +85,10 @@ Ranks (Bronze, Silver, Gold, Platinum, Diamond) follow your lifetime paid top-up
 Share your link from Earn. You earn a share of what the people you invite spend with real money (not bonus or gift credits). Earnings settle for a holding period first (14 days by default), then you can move them to your wallet or withdraw them in USDT or BTC.
 
 ## Telegram alerts
-Connect the Joinvoo alerts bot in Settings → Telegram alerts to get: broken tokens or platforms refusing events, invite links running low, tracking paused, no joins for 2 hours on a channel that usually has them, a campaign with deposits yesterday but none by 18:00 today, live FTD pings, and a morning summary at 08:00 in your time zone (joins, FTDs, revenue, spend, ROAS, cost per FTD).
+Connect the Joinvoo alerts bot in Settings → Telegram alerts to get: broken tokens or platforms refusing events, invite links running low, tracking paused, no joins for 2 hours on a channel that usually has them, a campaign with deposits yesterday but none by 18:00 today, live FTD pings. The daily summary is the Daily report (in More): set its hour there, 8:00 by default.
 
 ## Profile, Joomoji and language
-Make your Joomoji (your Joinvoo avatar), set a nickname and pick your language (English, Русский, Français, Português, Español) in your profile. Emails and Telegram messages from Joinvoo use your language. Your time zone sets when your morning summary arrives.
+Make your Joomoji (your Joinvoo avatar), set a nickname and pick your language (English, Русский, Français, Português, Español) in your profile. Emails and Telegram messages from Joinvoo use your language. Your time zone sets the day boundaries for your numbers and when the Daily report arrives.
 
 ## Troubleshooting: joins not showing
 - Is the bot still an admin with “Invite users”? Channels shows “needs admin rights” if not.
@@ -119,13 +119,13 @@ The bell at the top of the dashboard opens the inbox. It has tabs: Updates (anno
 The Learn page in the menu has articles about tracking Telegram joins, Conversions API, postbacks, UTM naming, scaling ad sets, backup channels and reading your numbers. Point people to Learn when they ask "how do I" questions about media buying.
 
 ## Country and payment methods
-Each account has a country, chosen at sign-up and changeable in My profile once every 30 days. The Credits page only shows the payment methods available in that country. Card payments (Stripe) and Paystack confirm themselves within a minute. Bank transfer and crypto (USDT) are checked by the team, usually within a few hours. If a method someone expects is missing, check that their country is right in My profile.
+Each account has a country, chosen at sign-up and changeable in My profile once every 30 days. The Credits page only shows the payment methods available in that country. When switched on (LIVE FACTS), card payments (Stripe) and Paystack confirm themselves within a minute. Bank transfer and crypto (USDT) are checked by the team, usually within a few hours. If a method someone expects is missing, check that their country is right in My profile.
 
 ## Tracking link domain
 Tracking links may use a separate link domain (for example gojoinly.com/c/…) instead of joinvoo.com. This protects the main site if an ad platform blocks a link domain. Old links keep working. Always copy the link shown on the channel card, because it already uses the right domain.
 
 ## My profile
-"My profile" in the menu (or tapping your face at the top) opens the Joomoji face editor, nickname, gender, country, language and notification settings. The level badge can be shown or hidden from the Levels page.
+"My profile" in the menu (or tapping your face at the top) opens the Joomoji face editor, nickname, gender, country, language, time zone and notification settings. The time zone decides the day boundaries for numbers and the Daily report; opening the dashboard saves it automatically. The level badge can be shown or hidden from the Levels page.
 
 ## Zedapex apps
 Joinvoo is made by Zedapex. Sister tools: Replyvoo (AI Closers that reply to Telegram leads in seconds and send the payment link), Castvoo (broadcasts, drips and follow-ups for Telegram), Vooads/Advoo (AI ad creatives: videos, images and hooks in any language), Affleego (affiliate deals) and Landvoo (landing pages, coming soon). Suggest one only when it clearly helps: for example Replyvoo when someone gets many joins but replies slowly, or Castvoo when they want to follow up with new subscribers. Never push them.
@@ -150,7 +150,7 @@ To check Meta is receiving joins: Meta Events Manager → your dataset → Subsc
 "Left" shows people who joined in the chosen period and have since left, as a share of new joins. "+N older members" counts people who left but joined before that period or before Joinvoo tracked them.
 
 ## Paying with crypto (Gatevoo)
-Credits → Top up → "USDT or Bitcoin" opens a secure Gatevoo checkout. Pay the exact amount shown in USDT (TRC20) or Bitcoin; the credits arrive automatically once the network confirms (usually a few minutes for USDT, longer for Bitcoin). No transaction ID to paste.
+(Only when the Gatevoo checkout is switched on in LIVE FACTS.) Credits → Top up → "USDT or Bitcoin" opens a secure Gatevoo checkout. Pay the exact amount shown in USDT (TRC20) or Bitcoin; the credits arrive automatically once the network confirms (usually a few minutes for USDT, longer for Bitcoin). No transaction ID to paste.
 
 ## Affiliates vs referrals
 Referrals: customers invite friends from the Earn page inside Joinvoo. Affiliates: marketers and creators promote Joinvoo through the VooSquare affiliate program and can earn up to 50% for life (with conditions, see affiliate.voosquare.com). Joinvoo's page about it is /affiliates.

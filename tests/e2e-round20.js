@@ -20,7 +20,9 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   const images = blocks.filter((x) => x.type === 'image'), text = blocks.filter((x) => x.type === 'text').map((x) => x.text).join(' | ');
   seen.push({ images, text, tools: (b.tools || []).map((t) => t.name), system: (b.system || []).map((x) => x.text).join('\n') });
   let out = images.length ? 'Thanks for the screenshot! 👀\n~~\nI can see it clearly.' : 'Hi there! 👋\n~~\nHow can I help?';
-  if (Array.isArray(last.content) && last.content[0].type === 'tool_result') out = 'Checked.';
+  if (Array.isArray(last.content) && last.content[0].type === 'tool_result') { out = 'Checked.'; global.TOOLRES = JSON.parse(last.content[0].content); }
+  else if (global.CALL) { const c = global.CALL; global.CALL = null; res.writeHead(200, { 'content-type': 'application/json' });
+    return res.end(JSON.stringify({ id: 'm', type: 'message', role: 'assistant', stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'tu' + Date.now(), name: c.name, input: c.input || {} }], usage: { input_tokens: 900, output_tokens: 20 } })); }
   res.writeHead(200, { 'content-type': 'application/json' });
   res.end(JSON.stringify({ id: 'm', type: 'message', role: 'assistant', stop_reason: 'end_turn', content: [{ type: 'text', text: out }], usage: { input_tokens: 900, output_tokens: 40 } })); }); }).listen(4962);
 
@@ -43,7 +45,7 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   r = await post(U, '/api/support', { body: 'x', image: 'data:image/png;base64,' + Buffer.from('<script>alert(1)</script>').toString('base64') });
   assert(r.s === 400 && /photo or screenshot/i.test(r.j.error), 'a file that isn’t really an image is refused');
   r = await post(U, '/api/support', { image: 'data:image/png;base64,' + Buffer.concat([Buffer.from(PNG, 'base64'), Buffer.alloc(5.2 * 1024 * 1024)]).toString('base64') });
-  assert(r.s === 400 && /too big/.test(r.j.error), 'a photo over 5 MB is refused');
+  assert((r.s === 400 || r.s === 413) && /too big/.test(r.j.error), 'a photo that’s too big is refused with a clear message');
   r = await post(U, '/api/support', { image: 'https://evil.example/x.png' }); assert(r.s === 400, 'only uploaded data, never a link to fetch');
 
 
@@ -62,6 +64,8 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   assert(/\(sent a photo\) my pixel shows nothing/.test(seen[0].text), 'and the caption, marked as sent with a photo');
   assert(/PHOTOS AND SCREENSHOTS/.test(seen[0].system) && /NEVER proof of payment/.test(seen[0].system), 'its rules: read screenshots carefully, a screenshot is never proof of payment');
   assert(!seen[0].tools.some((t) => /credit|refund|bonus/.test(t)), 'still no tool that can give credits (a fake payment screenshot can’t unlock anything)');
+  assert(['campaign_breakdown', 'deposits_and_postbacks', 'referrals_and_payouts', 'account_settings', 'channels_and_bots', 'billing_history', 'get_stats'].every((t) => seen[0].tools.includes(t)), 'support can look up campaigns, deposits/postbacks, referrals/payouts, settings, channels, billing and stats');
+  assert(/Never reveal or ask for secrets/.test(seen[0].system), 'and is told never to reveal secrets (tokens, keys, passwords)');
   g = (await U('/api/support')).j;
   assert(g.messages.some((x) => x.from_admin && /I can see it clearly/.test(x.body)), 'the AI answers about the screenshot');
   // only the newest 3 photos are sent to the AI
@@ -97,6 +101,7 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   // ---- 4 AI teammates with their own faces; new chats are shared between them
   const cfg = (await fetch(B + '/api/config').then((x) => x.json())).support;
   const aiTeam = cfg.team.filter((m) => m.ai);
+  assert(cfg.hours === 'Open 24/7', 'with AI support on, the chat header says Open 24/7 (' + cfg.hours + ')');
   assert(aiTeam.length === 4 && aiTeam.map((m) => m.name).join() === 'Sofia,Daniel,Maya,Leo', 'default AI team: Sofia, Daniel, Maya and Leo');
   let facesOk = true; for (const m of aiTeam) { const f = await fetch(B + m.photo); facesOk = facesOk && f.status === 200 && f.headers.get('content-type') === 'image/png'; }
   assert(facesOk, 'each AI teammate has their own face picture');
@@ -115,7 +120,7 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   const sysPay = seen.length ? seen[seen.length - 1].system : '';
   const onBlock = (/PAYMENT METHODS SWITCHED ON RIGHT NOW[^\n]*\n((?:  • .*\n)+)/.exec(sysPay) || [])[1] || '';
   assert(/USDT \(TRC20\) test/.test(onBlock) && !/Paystack|Stripe/i.test(onBlock), 'the AI is told the live payment methods: only the one switched on (USDT), not Paystack');
-  assert(/switched OFF at the moment: never say they can pay with it/.test(sysPay), 'and told never to offer a method that is switched off');
+  assert(/Never say they can pay with a switched-off method/.test(sysPay), 'and told never to offer a method that is switched off');
   assert(/TOP-UP METHODS THIS CUSTOMER SEES[^\n]*USDT \(TRC20\) test/.test(sysPay), 'it also knows exactly which methods this customer sees');
   // ---- reviewer fix: rejected posts never leave a photo on disk, and big posts are limited per network
   const DIR = __dirname + '/.run/data/media/support', nfiles = () => { try { return fs.readdirSync(DIR).length; } catch { return 0; } };
@@ -123,5 +128,29 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   for (let i = 0; i < 16; i++) { const rr = await fetch(B + '/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image: IMG + 'A'.repeat(70000) }) }); codes.push(rr.status); }
   assert(nfiles() === before, 'cookieless visitors without an email can’t leave photos on the disk (' + (nfiles() - before) + ' files written)');
   assert(codes.includes(429), 'big posts from one network are limited before the upload is read (' + [...new Set(codes)].join('/') + ')');
+  // ---- final audit fixes: an IPv6 /64 counts as one address; a Telegram chat id can't be used as a cookie
+  let c6 = [];
+  for (let i = 0; i < 16; i++) { const rr = await fetch(B + '/api/support', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': `2001:db8:1:2::${(i + 1).toString(16)}` }, body: JSON.stringify({ image: IMG + 'A'.repeat(70000) }) }); c6.push(rr.status); }
+  assert(c6.filter((x) => x === 429).length >= 3, 'many addresses inside one IPv6 /64 share one photo limit (' + [...new Set(c6)].join('/') + ')');
+  const tgImg = (await ADM('/api/admin/support/' + tt.id)).j.messages.find((x) => !x.from_admin && x.image);
+  const pub = tgImg.image.replace('/api/admin/support/image/', '/api/support/image/');
+  const sneaky = await fetch(B + pub, { headers: { cookie: 'jv_vis=tg_7771' } });
+  assert(sneaky.status === 404, 'a Telegram user’s photo can’t be opened by faking a tg_ cookie');
+  // ---- round 20 training: account health check, postback setup per program, Teach AI from a teammate's answer
+  global.CALL = { name: 'diagnose_account' }; global.TOOLRES = null;
+  await post(U2, '/api/support', { body: 'something is wrong with my account' }); await sleep(4000);
+  assert(global.TOOLRES && Array.isArray(global.TOOLRES.problems) && global.TOOLRES.problems.some((p) => /time zone|Email not confirmed|Tracking is paused/.test(p.what)) && global.TOOLRES.problems.every((p) => p.fix), 'diagnose_account checks the whole account and gives each problem with its fix');
+  global.CALL = { name: 'postback_setup', input: { network: 'pocket option' } }; global.TOOLRES = null;
+  await post(U2, '/api/support', { body: 'how do I connect pocket option postback?' }); await sleep(4000);
+  assert(global.TOOLRES && /Pocket/.test(global.TOOLRES.program) && /YOUR_POSTBACK_URL\?sub1=\{sub_id1\}/.test(global.TOOLRES.url_template) && global.TOOLRES.steps.length >= 3 && !/\/pb\//.test(JSON.stringify(global.TOOLRES)), 'postback_setup gives the exact Pocket Option template and steps, never the private postback link');
+  // a teammate answers, then "Teach AI"
+  const tk2 = (await ADM('/api/admin/support')).j.tickets.find((x) => x.email === 'aisha@x.com' || (x.user_name === 'Aisha'));
+  r = await post(U2, '/api/support', { body: 'Do you support Exness rebates? my email is aisha@x.com' });
+  r = await post(ADM, '/api/admin/support/' + tk2.id, { body: 'Yes! Exness works with the standard postback: Conversions → Integrations → Exness.' });
+  const det = (await ADM('/api/admin/support/' + tk2.id)).j, staffMsg = det.messages.filter((x) => x.from_admin && !x.internal && !(x.agent && x.agent.ai)).pop();
+  r = await post(ADM, '/api/admin/support-ai/teach', { ticket_id: tk2.id, msg_id: staffMsg.id });
+  assert(r.s === 200 && /Lessons from real chats/.test(r.j.knowledge) && /Q: .*Exness rebates/.test(r.j.knowledge) && /A: Yes! Exness works/.test(r.j.knowledge) && !/aisha@x\.com/.test(r.j.knowledge), 'Teach AI saves the question + the teammate’s answer as a lesson (customer email removed)');
+  r = await post(ADM, '/api/admin/support-ai/teach', { ticket_id: tk2.id, msg_id: staffMsg.id }); assert(r.j.already === true, 'the same lesson isn’t saved twice');
+  r = await post(U, '/api/admin/support-ai/teach', { ticket_id: tk2.id, msg_id: staffMsg.id }); assert([401, 403].includes(r.s), 'only staff can teach the AI');
   ai.close(); console.log('done');
 })().catch((e) => { console.log('FAIL: crashed', e); process.exitCode = 1; ai.close(); });
