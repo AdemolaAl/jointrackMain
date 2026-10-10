@@ -18,13 +18,47 @@ function platFields(p, c, full){
     <div class="field"><label for="pf-px">Pixel ID</label><input class="inp mono" id="pf-px" inputmode="numeric" autocomplete="off" placeholder="1234567890123456" value="${esc(c.pixel_id||(DEMO&&!full?'884210395527140':''))}"><span class="hint">Events Manager → Data sources → your pixel. The number under its name.</span></div>
     <div class="field"><label for="pf-tok">Conversions API access token</label><input class="inp" id="pf-tok" type="password" autocomplete="off" placeholder="${c.has_token?'Saved. Paste a new one to replace it':'Paste token'}" ${DEMO&&!full?'value="EAAGdemo"':''}><span class="hint">Your pixel → Settings → Conversions API → Generate access token.</span></div>
     <div class="field"><label for="pf-ev">A join counts as</label>${sel(c.event_name)}</div>
-    ${full?`<div class="field"><label for="pf-test">Test event code <span class="faint" style="font-weight:400">(optional)</span></label><input class="inp mono" id="pf-test" value="${esc(c.test_code)}" placeholder="TEST12345"><span class="hint">Only while testing. Clear it before you go live.</span></div>`:''}`;
+    ${full?`<div class="field"><label for="pf-test">Test event code <span class="faint" style="font-weight:400">(optional)</span></label><input class="inp mono" id="pf-test" value="${esc(c.test_code)}" placeholder="TEST12345"><span class="hint">Only while testing. Clear it before you go live.</span></div>`:''}
+    ${full?mxBlock(c):''}`;
+}
+/* round 20i: more Meta pixels for one channel (e.g. a pixel of another ad account). Every join goes to each of them too. */
+const MX_MAX = 4;
+function mxRow(x){
+  x=x||{};
+  return `<div class="mx-row" data-mx style="display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)">
+    <input class="inp mono" data-mx-px inputmode="numeric" autocomplete="off" placeholder="Pixel ID, e.g. 1234567890123456" aria-label="Extra pixel ID" value="${esc(x.pixel_id||'')}">
+    <button type="button" class="btn ghost sm" data-mx-del aria-label="Remove this pixel" title="Remove" style="padding:0 12px">✕</button>
+    <input class="inp" data-mx-tok type="password" autocomplete="off" style="grid-column:1/-1" aria-label="Access token for this pixel" placeholder="${x.has_token?'Token saved. Paste a new one to replace it':'Conversions API access token for this pixel'}">
+  </div>`;
+}
+function mxBlock(c){
+  const list=(c.meta_extra||[]);
+  return `<div class="field" id="pf-mx" style="gap:10px">
+    <label style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">More pixels <span class="faint" style="font-weight:400">(optional)</span></label>
+    <span class="hint" style="margin-top:-4px">Running ads from another ad account? Add that account’s pixel here. Every join is also sent to these pixels, with the same event.</span>
+    <div id="pf-mx-list" style="display:flex;flex-direction:column;gap:8px">${list.map(mxRow).join('')}</div>
+    <button type="button" class="btn ghost sm" data-mx-add style="align-self:flex-start" ${list.length>=MX_MAX?'hidden':''}>+ Add another pixel</button>
+  </div>`;
+}
+document.addEventListener('click',e=>{
+  const add=e.target.closest('[data-mx-add]'), del=e.target.closest('[data-mx-del]');
+  if(!add&&!del) return;
+  e.preventDefault();
+  const box=(add||del).closest('#pf-mx'); if(!box) return;
+  const list=box.querySelector('#pf-mx-list');
+  if(add){ list.insertAdjacentHTML('beforeend',mxRow()); const r=list.lastElementChild; r&&r.querySelector('[data-mx-px]').focus(); }
+  else del.closest('[data-mx]').remove();
+  box.querySelector('[data-mx-add]').hidden=list.children.length>=MX_MAX;
+});
+function mxBody(){
+  const box=$('#pf-mx'); if(!box) return {};
+  return {meta_extra:[...box.querySelectorAll('[data-mx]')].map(r=>({pixel_id:r.querySelector('[data-mx-px]').value.trim(),token:r.querySelector('[data-mx-tok]').value.trim()})).filter(x=>x.pixel_id||x.token)};
 }
 function platBody(p){
   const v=id=>{ const e=$('#'+id); return e?e.value.trim():undefined; };
   if (p==='tiktok') return {platform:'tiktok',tt_pixel:v('pf-px'),tt_token:v('pf-tok'),tt_event:v('pf-ev'),...($('#pf-test')?{tt_test_code:v('pf-test')}:{})};
   if (p==='snap') return {platform:'snap',sc_pixel:v('pf-px'),sc_token:v('pf-tok'),sc_event:v('pf-ev'),sc_test:$('#pf-sct').getAttribute('aria-checked')==='true'};
-  return {pixel_id:v('pf-px'),capi_token:v('pf-tok'),event_name:v('pf-ev'),...($('#pf-test')?{test_code:v('pf-test')}:{})};
+  return {pixel_id:v('pf-px'),capi_token:v('pf-tok'),event_name:v('pf-ev'),...($('#pf-test')?{test_code:v('pf-test')}:{}),...mxBody()};
 }
 const platOn = (c,p) => p==='tiktok' ? !!(c.tt_pixel&&c.tt_has_token) : p==='snap' ? !!(c.sc_pixel&&c.sc_has_token) : !!(c.pixel_id&&c.has_token);
 const platEvent = (c,p) => p==='tiktok' ? c.tt_event : p==='snap' ? (c.sc_event||'SUBSCRIBE') : c.event_name;

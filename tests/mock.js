@@ -24,5 +24,7 @@ http.createServer((req,res)=>{let b='';req.on('data',c=>b+=c);req.on('end',()=>{
   if(u.startsWith('/__set')){Object.assign(state,j);return res.end('{}');}
   if(u.startsWith('/__state')) return res.end(JSON.stringify(state));
   if(u.startsWith('/open_api/v1.3/event/track')){state.tt=(state.tt||[]).concat(j.data);state.ttHdr=req.headers['access-token'];return res.end(JSON.stringify({code:0,message:'OK'}));}
-  if(/\/events$/.test(u)){state.events.push(...j.data);return res.end(JSON.stringify({events_received:j.data.length,fbtrace_id:'x'}));}
+  if(/\/events$/.test(u)){const px=(/\/(\d+)\/events$/.exec(u)||[])[1]||'';state.byPixel=state.byPixel||{};state.tokens=state.tokens||{};state.tokens[px]=j.access_token; // round 20i: events per pixel, and pixels that refuse
+    if((state.badPixels||[]).includes(px)){res.statusCode=400;return res.end(JSON.stringify({error:{message:'Invalid OAuth access token',code:190}}));}
+    (state.byPixel[px]=state.byPixel[px]||[]).push(...j.data);state.events.push(...j.data);return res.end(JSON.stringify({events_received:j.data.length,fbtrace_id:'x'}));}
   res.statusCode=404;res.end('{}');});}).listen(4000,()=>console.log('mock up'));

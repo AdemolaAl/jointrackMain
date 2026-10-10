@@ -259,6 +259,8 @@ for (const sql of [
   `CREATE INDEX IF NOT EXISTS hook_queue_due ON hook_queue(status, next_at)`, `CREATE INDEX IF NOT EXISTS hook_queue_hook ON hook_queue(hook_id, status, created_at)`, `CREATE INDEX IF NOT EXISTS hook_queue_age ON hook_queue(created_at)`,
   `CREATE TRIGGER IF NOT EXISTS r19_owner_gone AFTER DELETE ON users BEGIN DELETE FROM hook_queue WHERE owner_id=OLD.id; DELETE FROM webhooks WHERE owner_id=OLD.id; END`,
   `ALTER TABLE ticket_msgs ADD COLUMN image TEXT`, `CREATE INDEX IF NOT EXISTS ticket_msgs_image ON ticket_msgs(image) WHERE image IS NOT NULL`, // round 20: photos/screenshots in the support chat (file name in DATA_DIR/media/support)
+  // round 20i: more Meta pixels per channel (each join also goes to up to 4 extra pixels, e.g. pixels of other ad accounts)
+  `ALTER TABLE channels ADD COLUMN meta_extra TEXT`, `ALTER TABLE capi_queue ADD COLUMN target TEXT`,
 ]) { try { db.exec(sql); } catch { /* already there */ } }
 const Q = (sql) => { const s = db.prepare(sql); return { get: (...a) => s.get(...a), all: (...a) => s.all(...a), run: (...a) => s.run(...a) }; };
 
@@ -1816,6 +1818,19 @@ async function postSnap(c, events) {
   const ok = r.ok && !j.error && (!j.status || j.status === 'VALID' || j.status === 'SUCCESS');
   return { ok, err: ok ? '' : (j.reason || j.message || (j.error && (j.error.message || j.error)) || 'HTTP ' + r.status) };
 }
+/** round 20i: the extra Meta pixels of a channel: [{pixel_id, token, test_code}] (max 4, never the main pixel). */
+const META_EXTRA_MAX = 4;
+function metaExtras(c) {
+  let a = []; try { a = JSON.parse((c && c.meta_extra) || '[]'); } catch { a = []; }
+  return (Array.isArray(a) ? a : []).filter((x) => x && /^\d{5,20}$/.test(x.pixel_id || '') && x.token && x.pixel_id !== (c.pixel_id || '')).slice(0, META_EXTRA_MAX);
+}
+async function postMetaExtra(c, events) {
+  const x = metaExtras(c).find((p) => p.pixel_id === c.target);
+  if (!x) return { ok: false, err: 'This pixel was removed from the channel', drop: true };
+  return postMeta({ pixel_id: x.pixel_id, capi_token: x.token, test_code: x.test_code || '' }, events);
+}
+/** Extra pixels get their own queue rows (platform 'meta_x', target = pixel ID). They never change the join's Meta status or the counters. */
+const META_X = { post: postMetaExtra, label: 'Meta', extra: true };
 const PLATFORMS = {
   meta: { post: postMeta, has: (c) => c.pixel_id && c.capi_token, col: 'capi_status', ecol: 'capi_error', conv: 'meta_status', ok: 'capi_ok', fail: 'capi_fail', label: 'Meta' },
   tiktok: { post: postTikTok, has: (c) => c.tt_pixel && c.tt_token, col: 'tt_status', ecol: 'tt_error', conv: 'tt_status', ok: 'tt_ok', fail: 'tt_fail', label: 'TikTok' },
@@ -1825,12 +1840,22 @@ let capiBusy = false;
 async function sendCapi() {
   if (capiBusy) return; capiBusy = true;
   try {
-    const rows = Q(`SELECT q.*, c.pixel_id, c.capi_token, c.test_code, c.tt_pixel, c.tt_token, c.tt_test_code, c.sc_pixel, c.sc_token, c.sc_test, c.owner_id FROM capi_queue q
+    const rows = Q(`SELECT q.*, c.pixel_id, c.capi_token, c.test_code, c.tt_pixel, c.tt_token, c.tt_test_code, c.sc_pixel, c.sc_token, c.sc_test, c.meta_extra, c.owner_id FROM capi_queue q
       JOIN channels c ON c.id=q.channel_id WHERE q.status='pending' AND q.next_at<=? ORDER BY q.id LIMIT 1000`).all(now());
     const groups = new Map();
-    for (const r of rows) { const k = r.channel_id + ':' + (r.platform || 'meta'); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+    for (const r of rows) { const k = r.channel_id + ':' + (r.platform || 'meta') + ':' + (r.target || ''); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
     const settle = (P, b, res) => {
       const ts = (JSON.parse(b.payload).event_time || 0) * (b.platform === 'snap' ? 1 : 1000);
+      if (P.extra) { // round 20i: an extra Meta pixel: only its own queue row changes
+        if (res.ok) return void Q(`UPDATE capi_queue SET status='sent' WHERE id=?`).run(b.id);
+        if (res.drop) return void Q(`UPDATE capi_queue SET status='dropped' WHERE id=?`).run(b.id);
+        const attempts = b.attempts + 1, err = String(res.err).slice(0, 300);
+        if (attempts >= 6) {
+          Q(`UPDATE capi_queue SET status='failed', attempts=? WHERE id=?`).run(attempts, b.id);
+          alertUser(b.owner_id, 'token_errors', tr(userLang(b.owner_id), 'alert.platform_refused', { platform: 'Meta (pixel ' + b.target + ')', err }), { every: 6 * 3600000 });
+        } else Q(`UPDATE capi_queue SET attempts=?, next_at=? WHERE id=?`).run(attempts, now() + 15000 * 2 ** attempts, b.id);
+        return;
+      }
       if (res.ok) {
         Q(`UPDATE capi_queue SET status='sent' WHERE id=?`).run(b.id);
         if (b.conv_id) Q(`UPDATE conversions SET ${P.conv}='sent' WHERE id=?`).run(b.conv_id);
@@ -1851,7 +1876,7 @@ async function sendCapi() {
     };
     const post = async (P, c, list) => { try { return await P.post(c, list.map((b) => JSON.parse(b.payload))); } catch (e) { return { ok: false, err: 'Network error: ' + e.message, net: true }; } };
     for (const [, list] of groups) {
-      const P = PLATFORMS[list[0].platform || 'meta'] || PLATFORMS.meta;
+      const P = list[0].platform === 'meta_x' ? META_X : PLATFORMS[list[0].platform || 'meta'] || PLATFORMS.meta;
       for (let i = 0; i < list.length; i += 500) {
         const batch = list.slice(i, i + 500);
         const res = await post(P, batch[0], batch);
@@ -1909,9 +1934,14 @@ function enqueueEvents(ch, click, user, ts, joinId, convId, o = {}) {
   for (const [k, P] of Object.entries(PLATFORMS)) {
     if (!click || off[k]) { st[k] = 'none'; continue; }
     if (!P.has(ch) || (o.skip && o.skip.includes(k))) { st[k] = k === 'meta' && !convId ? 'no_pixel' : 'none'; continue; }
+    const payload = JSON.stringify(BUILDERS[k](ch, click, user, ts, o));
     Q(`INSERT INTO capi_queue(channel_id,join_id,conv_id,payload,next_at,created_at,platform) VALUES(?,?,?,?,?,?,?)`)
-      .run(ch.id, joinId, convId || null, JSON.stringify(BUILDERS[k](ch, click, user, ts, o)), now(), now(), k);
+      .run(ch.id, joinId, convId || null, payload, now(), now(), k);
     st[k] = 'pending';
+    if (k === 'meta') for (const x of metaExtras(ch)) { // round 20i: the same event, once per extra pixel
+      Q(`INSERT INTO capi_queue(channel_id,join_id,conv_id,payload,next_at,created_at,platform,target) VALUES(?,?,?,?,?,?,?,?)`)
+        .run(ch.id, joinId, convId || null, payload, now(), now(), 'meta_x', x.pixel_id);
+    }
   }
   return st;
 }
@@ -3426,6 +3456,7 @@ function channelsView(user) {
       welcome: c.welcome || '', btn_text: c.btn_text || '', btn_url: c.btn_url || '', forward_url: c.forward_url || '', has_forward_secret: !!c.forward_secret,
       external: !!c.ext, hook_start: c.ext && pbk ? `${BASE_URL}/hook/${pbk}/start` : '', hook_blocked: c.ext && pbk ? `${BASE_URL}/hook/${pbk}/blocked` : '',
       pixel_id: c.pixel_id || '', has_token: !!c.capi_token, test_code: c.test_code || '', event_name: c.event_name || 'Subscribe',
+      meta_extra: metaExtras(c).map((x) => ({ pixel_id: x.pixel_id, has_token: true, test_code: x.test_code || '' })), meta_extra_max: META_EXTRA_MAX,
       tt_pixel: c.tt_pixel || '', tt_has_token: !!c.tt_token, tt_test_code: c.tt_test_code || '', tt_event: c.tt_event || 'Subscribe',
       sc_pixel: c.sc_pixel || '', sc_has_token: !!c.sc_token, sc_test: !!c.sc_test, sc_event: c.sc_event || 'SUBSCRIBE',
       has_fallback: !!c.fallback_link, landing: c.landing || 'auto',
@@ -3533,6 +3564,15 @@ async function testSnap(ch) {
   } catch (e) { return { error: 'Could not reach Snapchat: ' + e.message }; }
 }
 async function testCapi(ch) {
+  const main = await testCapiOne(ch);
+  const extra = metaExtras(ch);
+  if (!extra.length || main.error) return main;
+  const res = await Promise.all(extra.map(async (x) => ({ x, r: await testCapiOne({ ...ch, pixel_id: x.pixel_id, capi_token: x.token, test_code: x.test_code || '' }) })));
+  const bad = res.filter((o) => o.r.error);
+  if (bad.length) return { error: `Your main pixel worked, but ${bad.map((o) => `pixel ${o.x.pixel_id}: ${o.r.error}`).join(' · ')}`, pixels: res.map((o) => ({ pixel_id: o.x.pixel_id, ok: !o.r.error })) };
+  return { ok: true, message: `${main.message} Your ${extra.length} extra pixel${extra.length > 1 ? 's' : ''} received it too.`, pixels: res.map((o) => ({ pixel_id: o.x.pixel_id, ok: true })) };
+}
+async function testCapiOne(ch) {
   if (!ch.pixel_id || !ch.capi_token) return { error: 'Add your Pixel ID and access token first.' };
   const body = {
     data: [{ event_name: ch.event_name || 'Subscribe', event_time: Math.floor(now() / 1000), event_id: 'jp_test_' + rid(6),
@@ -3713,7 +3753,7 @@ function joeInsights(uid) {
   const st = trackingState(uid);
   if (!st.ok && ['need_plan', 'empty'].includes(st.reason)) items.push({ id: 'paused', level: 'bad', title: 'Tracking is paused', body: 'Your credits ran out. Visitors still reach Telegram, but joins aren’t tracked or sent to your ads until you top up.', action: { label: 'Buy credits', tab: 'credits' } });
   const fails = Q(`SELECT q.platform, COUNT(*) n FROM capi_queue q JOIN channels c ON c.id=q.channel_id WHERE c.owner_id=? AND q.status='failed' AND q.created_at>? GROUP BY q.platform`).all(uid, now() - 864e5);
-  for (const f of fails) items.push({ id: 'fail_' + f.platform, level: 'bad', title: `${(PLATFORMS[f.platform] || PLATFORMS.meta).label} is refusing your events`, body: `${$num(f.n)} events failed in the last 24 hours. Check the pixel ID and access token on the channel.`, action: { label: 'Open channels', tab: 'channels' } });
+  for (const f of fails) items.push({ id: 'fail_' + f.platform, level: 'bad', title: `${f.platform === 'meta_x' ? 'One of your extra Meta pixels' : (PLATFORMS[f.platform] || PLATFORMS.meta).label} is refusing your events`, body: `${$num(f.n)} events failed in the last 24 hours. Check the pixel ID and access token on the channel.`, action: { label: 'Open channels', tab: 'channels' } });
   for (const b of Q(`SELECT username FROM bots WHERE owner_id=? AND status='invalid'`).all(uid)) items.push({ id: 'bot_' + b.username, level: 'bad', title: `@${b.username} stopped working`, body: 'Telegram no longer accepts its token. Reconnect the bot so tracking continues.', action: { label: 'Open channels', tab: 'channels' } });
   for (const c of chans.filter((x) => x.status === 'no_rights' && x.type === 'dm')) items.push({ id: 'rights_' + c.id, level: 'bad', title: `${c.title}: the bot is turned off`, body: 'The manager removed or paused your bot in Telegram Business, so their messages aren’t tracked. In Telegram: Settings → Telegram Business → Chatbots → add the bot again.', action: { label: 'Open Channels', tab: 'channels' } });
   for (const c of chans.filter((x) => x.status === 'no_rights' && x.type !== 'dm')) items.push({ id: 'rights_' + c.id, level: 'bad', title: `${c.title} needs admin rights`, body: 'Your bot lost the “Invite users” right, so it can’t make invite links. Make it an admin again.', action: { label: 'Open channels', tab: 'channels' } });
@@ -5068,9 +5108,28 @@ async function api(req, res, url, user) {
         if (b.pixel_id === undefined && b.capi_token === undefined && b.landing === undefined) return send(res, 200, { ok: true, join_mode: jm });
       }
       if (b.landing !== undefined) { Q(`UPDATE channels SET landing=? WHERE id=?`).run(b.landing === 'button' ? 'button' : 'auto', ch.id); if (b.pixel_id === undefined && b.capi_token === undefined) return send(res, 200, { ok: true }); }
+      let extras; // round 20i: more Meta pixels for the same channel
+      if (b.meta_extra !== undefined) {
+        if (!Array.isArray(b.meta_extra)) return send(res, 400, { error: 'Extra pixels must be a list.' });
+        const old = metaExtras(ch), seen = new Set([pixel]);
+        extras = [];
+        for (const raw of b.meta_extra) {
+          const px = String((raw && raw.pixel_id) || '').trim(); if (!px) continue;
+          if (!/^\d{5,20}$/.test(px)) return send(res, 400, { error: `Pixel ID ${px.slice(0, 24)} is not right. Pixel IDs are numbers only, like 1234567890123456.` });
+          if (!pixel) return send(res, 400, { error: 'Add your main pixel first, then the extra ones.' });
+          if (seen.has(px)) return send(res, 400, { error: px === pixel ? `Pixel ${px} is already your main pixel.` : `Pixel ${px} is in the list twice.` });
+          seen.add(px);
+          const tok = String((raw && raw.token) || '').trim() || ((old.find((o) => o.pixel_id === px) || {}).token) || '';
+          if (!tok) return send(res, 400, { error: `Add the Conversions API access token for pixel ${px}.` });
+          extras.push({ pixel_id: px, token: tok.slice(0, 600), test_code: String((raw && raw.test_code) || '').trim().slice(0, 40) });
+        }
+        if (extras.length > META_EXTRA_MAX) return send(res, 400, { error: `You can add up to ${META_EXTRA_MAX} extra pixels per channel.` });
+      }
       Q(`UPDATE channels SET pixel_id=?, capi_token=?, test_code=?, event_name=? WHERE id=?`)
         .run(pixel || null, token || null, String(b.test_code ?? ch.test_code ?? '').trim() || null, ev, ch.id);
-      return send(res, 200, { ok: true });
+      if (extras !== undefined) Q(`UPDATE channels SET meta_extra=? WHERE id=?`).run(extras.length ? JSON.stringify(extras) : null, ch.id);
+      else if (!pixel && ch.meta_extra) Q(`UPDATE channels SET meta_extra=NULL WHERE id=?`).run(ch.id); // no main pixel = no extras
+      return send(res, 200, { ok: true, meta_extra: (extras || metaExtras({ ...ch, pixel_id: pixel })).map((x) => ({ pixel_id: x.pixel_id, has_token: true })) });
     }
     if (m === 'DELETE') {
       Q(`UPDATE channels SET status='removed', locked=0, removed_by_user=1 WHERE id=?`).run(ch.id);
@@ -9081,7 +9140,7 @@ async function prune() {
       done.clicks_slimmed = n;
     }
     await loop('links_deleted', () => Q(`DELETE FROM links WHERE id IN (SELECT id FROM links WHERE status IN ('used','expired','dead') AND COALESCE(assigned_at, created_at)<? LIMIT ?)`).run(slimBefore, PRUNE_BATCH).changes);
-    await loop('queue_deleted', () => Q(`DELETE FROM capi_queue WHERE id IN (SELECT id FROM capi_queue WHERE (status='sent' AND created_at<?) OR (status='failed' AND created_at<?) LIMIT ?)`).run(now() - 7 * 864e5, now() - 30 * 864e5, PRUNE_BATCH).changes);
+    await loop('queue_deleted', () => Q(`DELETE FROM capi_queue WHERE id IN (SELECT id FROM capi_queue WHERE (status IN ('sent','dropped') AND created_at<?) OR (status='failed' AND created_at<?) LIMIT ?)`).run(now() - 7 * 864e5, now() - 30 * 864e5, PRUNE_BATCH).changes);
     await loop('outbox_deleted', () => Q(`DELETE FROM voo_outbox WHERE id IN (SELECT id FROM voo_outbox WHERE (sent_at IS NOT NULL OR failed=1) AND created_at<? LIMIT ?)`).run(now() - 30 * 864e5, PRUNE_BATCH).changes
       + Q(`DELETE FROM voo_support_out WHERE id IN (SELECT id FROM voo_support_out WHERE (sent_at IS NOT NULL OR failed=1) AND created_at<? LIMIT ?)`).run(now() - 30 * 864e5, PRUNE_BATCH).changes);
     try { db.exec('PRAGMA wal_checkpoint(PASSIVE)'); } catch { /* busy: next time */ }
