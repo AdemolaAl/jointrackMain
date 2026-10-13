@@ -14,6 +14,7 @@ Demo pages live in dist/blog/ and link with relative paths (../guide.html, ../me
 
 Markdown supported: ## / ### / #### headings, paragraphs, **bold**, *italic*, `code`, [links](url), - and 1. lists,
 > quotes, > [!TIP] / [!NOTE] / [!WARNING] / [!TAKEAWAYS] callouts, ``` fences, | tables |, ---.
+Figures: a line with only ![Caption](media:file.webp) shows public/media/blog/file.webp with the caption under it (a "-phone" file stays phone-width).
 Link placeholders inside posts: {{GUIDE}}, {{SIGNUP}}, {{BLOG}}, {{POST:<slug>}}, {{TAG:<tag>}}.
 """
 import datetime as dt, html, json, os, re
@@ -163,6 +164,11 @@ def markdown(src, toc=None, used_ids=None):
                 else: break
             tag = 'ol' if ordered else 'ul'
             out.append('<%s>%s</%s>' % (tag, ''.join('<li>%s</li>' % inline(it) for it in items), tag)); continue
+        fm = re.match(r'^!\[([^\]]+)\]\(media:([\w.-]+)\)\s*$', l.strip())
+        if fm:  # a figure: an image from public/media/blog on its own line; the alt text is also the caption
+            cls = ' narrow' if '-phone' in fm.group(2) else ''  # phone screenshots (file name has "-phone") stay phone-sized
+            out.append('<figure class="pfig%s"><img src="{{MEDIA}}%s" alt="%s" loading="lazy" decoding="async"><figcaption>%s</figcaption></figure>' % (cls, fm.group(2), E(fm.group(1)), inline(fm.group(1))))
+            i += 1; continue
         buf = [l.strip()]; i += 1
         while i < n and lines[i].strip() and not is_block_start(lines[i]): buf.append(lines[i].strip()); i += 1
         out.append('<p>%s</p>' % inline(' '.join(buf)))
@@ -377,6 +383,10 @@ a.tg:hover{background:color-mix(in srgb,#5b3df5 18%,var(--lilac))}
 .prose blockquote p:last-child{margin-bottom:0}
 .prose hr{border:0;height:1px;background:var(--line);margin:2.4em 0}
 .prose img{border-radius:18px}
+.pfig{margin:2em 0 2.2em;padding:0}
+.pfig img{display:block;width:100%;height:auto;border-radius:20px;border:1px solid var(--line);background:#fff;box-shadow:0 1px 2px rgba(20,20,18,.04),0 24px 60px -30px rgba(40,20,120,.35)}
+.pfig figcaption{margin-top:12px;font-size:14px;line-height:1.5;color:var(--muted);text-align:center;text-wrap:balance}
+.pfig.narrow{max-width:400px;margin-left:auto;margin-right:auto}
 .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 1.6em;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
 .prose table{width:100%;border-collapse:collapse;font-size:15.5px;line-height:1.5}
 .prose th,.prose td{padding:12px 16px;text-align:left;border-top:1px solid var(--line);vertical-align:top}
@@ -666,6 +676,7 @@ def fill_links(s, T):
     s = re.sub(r'\{\{TAG:([^}]+)\}\}', lambda m: T.tag(m.group(1)), s)
     for k in ('GUIDE', 'SIGNUP', 'LOGIN', 'HOME'):
         s = s.replace('{{%s}}' % k, T.u(k))
+    s = s.replace('{{MEDIA}}', T.media(''))
     return s.replace('{{BLOG}}', T.index())
 
 

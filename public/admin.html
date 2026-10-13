@@ -975,6 +975,7 @@ const FEAT = {
   dm_tracking: ['DM tracking', 'Track the first message people send a manager, through Telegram Business. Off: business messages are ignored and the option hides.', IC.chat, 'mint'],
   miniapp: ['Mini apps', 'Ad links can open a Telegram mini app that knows exactly who tapped. Off: links open the chat or bot directly.', IC.bolt, 'sky'],
   support_ai: ['AI support (Replyvoo)', 'The AI teammate in the chat and the Telegram support bot (still needs switching on in Settings → Support). Off: the chat goes to your team only.', IC.bot, 'mint'],
+  unique_report: ['Unique people report', 'Results → Unique people: how many different people joined across all funnels, who is in more than one, and which funnels share the most people. Read-only. Off: the tab hides.', IC.users, 'sky'],
   webhooks: ['Custom webhooks', 'Customers can send joins, DMs and deposits to their own server. Off: nothing is sent and the card hides.', IC.send || IC.link, 'sky'],
   joe: ['Joe, the assistant', 'Insights from each customer’s own numbers, all day, and a chat in the dashboard. With an Anthropic key (Settings → Joe), the chat answers with AI.', IC.bot, 'mint'],
 };
@@ -1402,15 +1403,16 @@ async function vAudit(f = S.auf || {}) {
 }
 
 /* ---------- inbox / broadcast ---------- */
-const TABLINKS = [['', 'No button'], ['#tab:overview', 'Dashboard: Overview'], ['#tab:wallet', 'Dashboard: Credits'], ['#tab:campaigns', 'Dashboard: Campaigns'], ['#tab:channels', 'Dashboard: Channels'], ['#tab:conversions', 'Dashboard: Conversions'], ['#tab:compare', 'Dashboard: Compare'], ['#tab:joe', 'Dashboard: Joe'], ['#tab:learn', 'Dashboard: Learn'], ['#tab:earn', 'Dashboard: Earn'], ['#tab:help', 'Dashboard: Help'], ['custom', 'Another link…']];
+const TABLINKS = [['', 'No button'], ['#tab:overview', 'Dashboard: Overview'], ['#tab:unique', 'Dashboard: Unique people'], ['#tab:wallet', 'Dashboard: Credits'], ['#tab:campaigns', 'Dashboard: Campaigns'], ['#tab:channels', 'Dashboard: Channels'], ['#tab:conversions', 'Dashboard: Conversions'], ['#tab:compare', 'Dashboard: Compare'], ['#tab:joe', 'Dashboard: Joe'], ['#tab:learn', 'Dashboard: Learn'], ['#tab:earn', 'Dashboard: Earn'], ['#tab:help', 'Dashboard: Help'], ['custom', 'Another link…']];
 const mdPrev = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<u>$1</u>');
 async function vBroadcast() {
   const r = await api('GET', '/api/admin/broadcasts');
-  const B = S.bc = S.bc || { title: '', body: '', image: '', cta_label: '', cta_url: '', important: false, also_email: false, audience: { plan: 'all', lang: 'all', level: 'all', active_days: '', countries: [] } };
+  const B = S.bc = S.bc || { title: '', body: '', image: '', cta_label: '', cta_url: '', important: false, also_email: false, design: 'standard', audience: { plan: 'all', lang: 'all', level: 'all', active_days: '', countries: [] } };
   const A = B.audience, sel = (name, opts, v) => `<select name="${name}">${opts.map(([k, l]) => `<option value="${k}" ${String(v) === String(k) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
   const custom = B.cta_url && !TABLINKS.some(([k]) => k === B.cta_url);
   $('#view').innerHTML = `<div class="hrow"><div><h1>Inbox / Broadcast</h1><p class="sub">Every customer has an inbox in the dashboard (the bell). Account events land there by themselves; here you send news to everyone or to a group.</p></div></div>
   <div class="bcw"><form class="acard" id="bcf"><div class="sec-h"><div><h2>New message</h2><p>Short and useful. **bold** and [links](https://…) work.</p></div></div>
+    <div class="frow"><span class="fic mint">${I(IC.users)}</span><span><b>Ready-made: Unique people announcement</b><small>Fills in the inbox message and turns on the designed email. Check the audience, then Send.</small></span><button type="button" class="btn sm" id="bcready">Use it</button></div>
     <label class="fld"><span>Title</span><input name="title" maxlength="120" value="${esc(B.title)}" placeholder="e.g. Snapchat reports are here" required></label>
     <label class="fld"><span>Message</span><textarea name="body" rows="5" maxlength="4000" placeholder="What changed, and what they should do.">${esc(B.body)}</textarea></label>
     <label class="fld"><span>Image (optional)</span><span class="upl"><input name="image" value="${esc(B.image)}" placeholder="https://… or upload" aria-label="Image link"><label class="btn sm" style="cursor:pointer">${I(IC.upload)} Upload<input type="file" id="bcimg" accept="image/png,image/jpeg,image/webp" hidden></label></span><small>Shown as a thumbnail in the inbox and on top of the email. PNG, JPG or WebP under 1.5 MB.</small></label>
@@ -1418,6 +1420,7 @@ async function vBroadcast() {
     <label class="fld" id="ctaurlw" ${custom ? '' : 'hidden'}><span>Button link</span><input name="cta_url" value="${esc(custom ? B.cta_url : '')}" placeholder="https://… or /guide"></label>
     <div class="frow"><span class="fic coral">${I(IC.bolt)}</span><span><b>Important</b><small>Pops up once at their next visit, then sits in the inbox.</small></span>${sw(B.important, 'id="bcimp" aria-label="Important"')}</div>
     <div class="frow"><span class="fic sky">${I(IC.mail)}</span><span><b>Also email it</b><small>Skips people who turned off update emails.</small></span>${sw(B.also_email, 'id="bcmail" aria-label="Also email it"')}</div>
+    <label class="fld" id="bcdesw" ${B.also_email ? '' : 'hidden'}><span>Email design</span>${sel('design', [['standard', 'Standard: your title, message, image and button'], ['unique_people', 'Unique people announcement (designed email, in each customer’s language)']], B.design || 'standard')}<small>Preview it in Emails → “Announcement: Unique people”, or send yourself a test there.</small></label>
     <h3 style="margin:16px 0 2px;font-size:16px">Who gets it</h3>
     <div class="aud"><label class="fld"><span>Plan</span>${sel('plan', [['all', 'Everyone'], ['basic', 'Basic'], ['pro', 'Pro'], ['trial', 'On a Pro trial']], A.plan)}</label>
       <label class="fld"><span>Language</span>${sel('lang', [['all', 'All languages'], ...r.langs.map((l) => [l, { en: 'English', ru: 'Русский', fr: 'Français', pt: 'Português', es: 'Español' }[l] || l])], A.lang)}</label>
@@ -1431,7 +1434,7 @@ async function vBroadcast() {
   const f = $('#bcf');
   let bcc = null;
   const read = () => { const cs = f.ctasel.value; return { title: f.title.value.trim(), body: f.body.value.trim(), image: f.image.value.trim(), cta_label: f.cta_label.value.trim(),
-    cta_url: cs === 'custom' ? f.cta_url.value.trim() : cs, important: $('#bcimp').getAttribute('aria-checked') === 'true', also_email: $('#bcmail').getAttribute('aria-checked') === 'true',
+    cta_url: cs === 'custom' ? f.cta_url.value.trim() : cs, important: $('#bcimp').getAttribute('aria-checked') === 'true', also_email: $('#bcmail').getAttribute('aria-checked') === 'true', design: f.design.value,
     audience: { plan: f.plan.value, lang: f.lang.value, level: f.level.value, active_days: f.active_days.value, countries: bcc ? bcc.get() : [] } }; };
   const prev = () => { const v = read(); S.bc = v;
     $('#bcprev').innerHTML = `<div class="ibx"><div class="ibh"><span class="dot"></span>Inbox · Updates<span style="margin-left:auto;color:var(--faint);font-weight:600">now</span></div><div class="it"><div style="min-width:0">${v.important ? '<span class="imp">Important</span>' : ''}<b class="ttl">${esc(v.title || 'Your title')}</b><p>${mdPrev(v.body || 'Your message shows here.')}</p>${v.cta_url && v.cta_label ? `<span class="btn sm primary cta">${esc(v.cta_label)}</span>` : ''}</div>${v.image ? `<img src="${esc(v.image)}" alt="">` : '<span></span>'}</div></div>`; };
@@ -1441,11 +1444,14 @@ async function vBroadcast() {
   f.oninput = () => { prev(); }; f.onchange = (e) => { if (e.target.name === 'ctasel') $('#ctaurlw').hidden = f.ctasel.value !== 'custom'; prev(); if (['plan', 'lang', 'level', 'active_days'].includes(e.target.name)) reach(); };
   f.active_days.oninput = reach;
   bcc = countryPicker($('#bcc'), { selected: A.countries || [], placeholder: 'Search countries to target', onChange: () => { S.bc = read(); reach(); } });
-  for (const id of ['bcimp', 'bcmail']) $('#' + id).onclick = () => { const b = $('#' + id); b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); prev(); if (id === 'bcmail') reach(); };
+  for (const id of ['bcimp', 'bcmail']) $('#' + id).onclick = () => { const b = $('#' + id); b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); prev(); if (id === 'bcmail') { reach(); $('#bcdesw').hidden = b.getAttribute('aria-checked') !== 'true'; } };
   $('#bcimg').onchange = async (e) => { const file = e.target.files[0]; if (!file) return; if (file.size > 1.5 * 1024 * 1024) return toast('Use an image under 1.5 MB.');
     const data = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(file); });
     try { const x = await api('POST', '/api/admin/broadcasts/image', { data }); f.image.value = x.url; prev(); toast('Image uploaded'); } catch (err) { toast(err.message); } };
   $('#bcclear').onclick = () => { S.bc = null; vBroadcast(); };
+  $('#bcready').onclick = () => { S.bc = { ...read(), title: 'New: see how many people you really have',
+    body: 'If you run more than one funnel, some people join more than one. **Results → Unique people** now counts every person once across all your channels, groups, bots and DM links: your real audience, who is in 2+ funnels, and which funnels share the most people.\n\nFree on every plan and it already works on everything you’ve tracked. Read the guide: [Five funnels, one audience](/blog/unique-people-across-telegram-funnels)',
+    cta_label: 'Open Unique people', cta_url: '#tab:unique', image: '', also_email: true, design: 'unique_people' }; vBroadcast(); toast('Ready. Check who gets it, then Send.'); };
   f.onsubmit = async (e) => { e.preventDefault(); const v = read(), n = $('#reachn').textContent;
     if (!v.title) return toast('Add a title first.');
     if (!confirm(`Send “${v.title}” to ${n} ${n === '1' ? 'person' : 'people'}${v.also_email ? ', with an email' : ''}?`)) return;
@@ -2569,7 +2575,7 @@ const DM = (() => {
     3: { state: 'plan_due', balance_cents: 3000, joins_month: 0, paid_cents: 0, free_joins_left: 120, plan_paid: false, channels: [{ title: 'Fit in 30', status: 'active', meta: 1, snap: 1 }], last_joins: [], last_deposit: null },
   };
   const view = (t) => { const last = t.msgs[t.msgs.length - 1], la = [...t.msgs].reverse().find((m) => m.from_admin); return { id: t.id, user_id: t.user_id, email: t.email, name: t.name, user_name: t.user_name, status: t.status, tag: t.tag || null, source: t.source || null, meta: t.meta || null, last_at: last.created_at, unread_admin: t.unread_admin, last_body: last.body, last_from_admin: last.from_admin, agent: la ? la.agent : null }; };
-  const settings = { features: { signup: true, referrals: true, tiktok: true, snapchat: true, support_chat: true, ftd: true, bot_no_token: true, withdrawals: true, join_requests: true, integrations: true, spend: true, fake_filter: true, credits_bonus: true, ranks: true, enterprise: true, alerts: false, sister_promo: true, dm_tracking: true, webhooks: true, support_ai: true, miniapp: true },
+  const settings = { features: { signup: true, referrals: true, tiktok: true, snapchat: true, support_chat: true, ftd: true, bot_no_token: true, withdrawals: true, join_requests: true, integrations: true, spend: true, fake_filter: true, credits_bonus: true, ranks: true, enterprise: true, alerts: false, sister_promo: true, dm_tracking: true, webhooks: true, support_ai: true, miniapp: true, unique_report: true },
     alerts_bot: false, credits: { bonus_tiers: [{ min_cents: 10000, bonus_pct: 5 }, { min_cents: 50000, bonus_pct: 10 }, { min_cents: 100000, bonus_pct: 15 }, { min_cents: 500000, bonus_pct: 20 }],
       ranks: [{ name: 'Bronze', min_cents: 0, join_discount_pct: 0, perks: ['Live chat support'] }, { name: 'Silver', min_cents: 25000, join_discount_pct: 0, perks: ['Priority replies in chat'] }, { name: 'Gold', min_cents: 100000, join_discount_pct: 5, perks: ['5% off every tracked join', 'Priority replies in chat'] },
         { name: 'Platinum', min_cents: 500000, join_discount_pct: 10, perks: ['10% off every tracked join', 'Setup help on a call'] }, { name: 'Diamond', min_cents: 2000000, join_discount_pct: 15, perks: ['15% off every tracked join', 'Dedicated account manager'] }] },

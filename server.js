@@ -305,6 +305,7 @@ const SETTING_DEFS = {
   'feature.dm_tracking': { def: () => envBool('FEATURE_DM_TRACKING', true), v: bool },
   'feature.miniapp': { def: () => envBool('FEATURE_MINIAPP', true), v: bool },
   'feature.webhooks': { def: () => envBool('FEATURE_WEBHOOKS', true), v: bool },
+  'feature.unique_report': { def: () => envBool('FEATURE_UNIQUE_REPORT', true), v: bool },
   'feature.support_ai': { def: () => envBool('FEATURE_SUPPORT_AI', true), v: bool },
   'dm.plan': { def: () => (env.DM_PLAN === 'pro' ? 'pro' : 'all'), v: (x) => { if (!['all', 'pro'].includes(x)) throw new Error('Pick who can track manager chats and mini apps: all plans or Pro only.'); return x; } },
   'limits': { def: () => ({ basic: { channels: envNum('BASIC_MAX_CHANNELS', 3), bots: envNum('BASIC_MAX_BOTS', 3), domains: envNum('BASIC_MAX_DOMAINS', 1) }, pro: { channels: envNum('PRO_MAX_CHANNELS', 0), bots: envNum('PRO_MAX_BOTS', 0), domains: envNum('PRO_MAX_DOMAINS', 0) } }),
@@ -475,7 +476,7 @@ function setSetting(key, value) {
 }
 const feature = (k) => (k === 'alerts' && !ALERT_BOT_TOKEN ? false : !!setting('feature.' + k));
 const FEATURE_KEYS = ['signup', 'referrals', 'tiktok', 'snapchat', 'support_chat', 'ftd', 'bot_no_token', 'withdrawals',
-  'integrations', 'join_requests', 'spend', 'fake_filter', 'alerts', 'credits_bonus', 'ranks', 'enterprise', 'joe', 'sister_promo', 'link_names', 'dm_tracking', 'miniapp', 'webhooks', 'support_ai'];
+  'integrations', 'join_requests', 'spend', 'fake_filter', 'alerts', 'credits_bonus', 'ranks', 'enterprise', 'joe', 'sister_promo', 'link_names', 'dm_tracking', 'miniapp', 'webhooks', 'support_ai', 'unique_report'];
 const features = () => Object.fromEntries(FEATURE_KEYS.map((k) => [k, feature(k)]));
 /** Live values. Read these at the moment of use; they change when an admin saves Settings. */
 const C = {
@@ -1327,7 +1328,7 @@ function tr(lang, key, vars) {
 const userLang = (uid) => normLang(uid ? (Q(`SELECT lang FROM users WHERE id=?`).get(uid) || {}).lang : 'en');
 
 // Header illustrations (public/media/email/<art>.gif|png, 600×260). Only used when the file exists, so a missing one never leaves a broken image.
-const EMAIL_ART = { welcome: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
+const EMAIL_ART = { announce_unique: 'unique_people', welcome: 'welcome', password_reset: 'reset', password_changed: 'password_changed', payment_received: 'payment', topup_review: 'review', topup_rejected: 'rejected',
   low_balance: 'low_balance', tracking_paused: 'paused', free_joins_80: 'free_80', free_joins_used: 'free_done', payout_requested: 'payout_requested', payout_sent: 'payout_sent',
   payout_rejected: 'payout_rejected', support_reply: 'support_reply', weekly_summary: 'weekly', trial_started: 'trial_started', trial_ending: 'trial_ending', trial_ended: 'trial_ended',
   pro_welcome: 'pro_welcome', plan_changed: 'plan_changed', meet_joe: 'meet_joe', rank_up: 'rank_up', level_up: ['level_up', 'rank_up'], credits_added: ['credits_added', 'payment'], staff_invite: ['staff_invite', 'welcome'] };
@@ -1346,6 +1347,8 @@ function emailArt(name) {
  * Email design: one table-based layout (600px, inline styles, works in Gmail/Outlook/Apple Mail), a violet header with the
  * wordmark, an optional header illustration, a white card, one big button, and a footer. Every template returns blocks; renderMail() turns them into HTML + plain text.
  */
+/** One stat box of an email (round 21: shared so a template can place its numbers under the intro). */
+const STAT_TD = (st) => ([v, l], i) => `<td class="jst" width="${Math.floor(100 / st.length)}%" valign="top" style="padding:${i ? '0 0 0 8px' : '0'}"><div style="background:${[EM.tone.violet, EM.tone.sky, EM.tone.amber, EM.tone.mint][i % 4][0]};border-radius:16px;padding:14px 12px"><div style="font-family:${EM.font};font-size:22px;font-weight:800;letter-spacing:-0.5px;color:${[EM.tone.violet, EM.tone.sky, EM.tone.amber, EM.tone.mint][i % 4][1]}">${esc(v)}</div><div style="font-family:${EM.font};font-size:12.5px;font-weight:600;color:${EM.body};margin-top:2px">${esc(l)}</div></div></td>`;
 function renderMail(b, lang = 'en') {
   const T = (k, v) => tr(lang, k, v);
   const company = C.COMPANY, se = setting('brand.support_email'), contact = C.SUPPORT_CONTACT;
@@ -1356,6 +1359,8 @@ function renderMail(b, lang = 'en') {
   if (b.icon && !b.art) inner += `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr><td width="52" height="52" align="center" valign="middle" bgcolor="${tone[0]}" style="width:52px;height:52px;border-radius:16px;background:${tone[0]};font-size:26px;line-height:52px">${b.icon}</td></tr></table>`;
   inner += `<h1 style="margin:0 0 12px;font-family:${EM.font};font-size:26px;line-height:1.25;font-weight:800;letter-spacing:-0.5px;color:${EM.ink}">${esc(b.title)}</h1>`;
   if (b.lead) inner += `<p style="margin:0 0 16px;font-family:${EM.font};font-size:17px;line-height:1.6;color:${EM.ink}">${b.lead}</p>`;
+  const statsHtml = () => { const st = b.stats; return st ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 14px"><tr>${st.map(STAT_TD(st)).join('')}</tr></table>` : ''; };
+  if (b.statsFirst) inner += statsHtml(); // round 21: the numbers right under the intro
   for (const p of b.paras || []) inner += P(p);
   if (b.quote) {
     const a = b.quote.agent || {};
@@ -1363,8 +1368,8 @@ function renderMail(b, lang = 'en') {
 <td valign="top"><p style="margin:0 0 6px;font-family:${EM.font};font-size:14px;color:${EM.ink}"><b>${esc(a.name || T('mail.support'))}</b>${a.role ? ` <span style="color:${EM.muted}">· ${esc(a.role)}</span>` : ''}</p>
 <div style="background:${EM.soft};border:1px solid ${EM.line};border-radius:4px 18px 18px 18px;padding:14px 16px;font-family:${EM.font};font-size:15px;line-height:1.6;color:${EM.ink};white-space:pre-wrap">${esc(b.quote.body)}</div></td></tr></table>`;
   }
-  if (b.stats) {
-    inner += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 14px"><tr>${b.stats.map(([v, l], i) => `<td class="jst" width="${Math.floor(100 / b.stats.length)}%" valign="top" style="padding:${i ? '0 0 0 8px' : '0'}"><div style="background:${[EM.tone.violet, EM.tone.sky, EM.tone.amber, EM.tone.mint][i % 4][0]};border-radius:16px;padding:14px 12px"><div style="font-family:${EM.font};font-size:22px;font-weight:800;letter-spacing:-0.5px;color:${[EM.tone.violet, EM.tone.sky, EM.tone.amber, EM.tone.mint][i % 4][1]}">${esc(v)}</div><div style="font-family:${EM.font};font-size:12.5px;font-weight:600;color:${EM.body};margin-top:2px">${esc(l)}</div></div></td>`).join('')}</tr></table>`;
+  if (b.stats && !b.statsFirst) {
+    inner += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 14px"><tr>${b.stats.map(STAT_TD(b.stats)).join('')}</tr></table>`;
   }
   if (b.progress) {
     const pct = Math.max(2, Math.min(100, Math.round(b.progress.pct)));
@@ -1579,6 +1584,15 @@ function mdHtml(s) {
   return esc(String(s || '').trim()).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/\[([^\]]{1,120})\]\((https:\/\/[^\s)]{1,500}|\/[^\s)]{0,300})\)/g, (m, txt, u) => `<a href="${u.startsWith('/') ? BASE_URL + u : u}" style="color:${EM.brand};font-weight:600">${txt}</a>`).replace(/\n/g, '<br>');
 }
+EMAILS.announce_unique = { title: 'Announcement: Unique people', when: 'Admin → Inbox / Broadcast with “Also email it” on and the email design “Unique people announcement” (round 21)',
+  sample: () => ({ title: 'New: see how many people you really have', name: 'Alex' }),
+  build: (d, t) => ({ subject: t('uqm.subject'), preheader: t('uqm.preheader'), tone: 'violet', title: t('uqm.title'), lead: t('uqm.lead'), statsFirst: true,
+    stats: [['9,500', t('uqm.s_joins')], ['6,000', t('uqm.s_people')], ['37%', t('uqm.s_multi')]],
+    paras: [`<span style="color:${EM.muted};font-size:13px">${esc(t('uqm.example'))}</span>`,
+      `<b style="color:${EM.ink}">${esc(t('uqm.see_h'))}</b><br>` + ['uqm.see1', 'uqm.see2', 'uqm.see3', 'uqm.see6', 'uqm.see4', 'uqm.see5'].map((k) => `<span style="color:${EM.brand};font-weight:800">✓</span>  ${esc(t(k))}`).join('<br>')],
+    callout: { tone: 'mint', html: `<b>${esc(t('uqm.why_h'))}</b><br>${esc(t('uqm.why'))}` },
+    cta: { text: t('uqm.cta'), url: `${BASE_URL}/app#unique` },
+    after: [esc(t('uqm.free')), `${esc(t('uqm.blog'))} <a href="${BASE_URL}/blog/unique-people-across-telegram-funnels" style="color:${EM.brand};font-weight:700;text-decoration:none">${esc(t('uqm.blog_link'))} →</a>`] }) };
 /** '#tab:wallet' and '/path' → full URLs for emails. */
 const absUrl = (u) => (/^#tab:/.test(u) ? `${BASE_URL}/app#${u.slice(5)}` : u.startsWith('/') ? BASE_URL + u : u);
 function templateBlocks(name, data, L) {
@@ -1592,7 +1606,7 @@ function renderTemplate(name, data, lang = 'en') { const L = normLang(lang); ret
 /** Which inbox tab each email belongs to. Security emails (welcome, password) never go to the inbox and always go out by email. */
 const EMAIL_KIND = { payment_received: 'account', topup_review: 'account', topup_rejected: 'account', credits_added: 'account', free_joins_80: 'account', free_joins_used: 'account',
   trial_started: 'account', trial_ending: 'account', trial_ended: 'account', pro_welcome: 'account', plan_changed: 'account', rank_up: 'account', level_up: 'account',
-  payout_requested: 'account', payout_sent: 'account', payout_rejected: 'account', support_reply: 'account', low_balance: 'alert', tracking_paused: 'alert', meet_joe: 'joe', weekly_summary: 'update', broadcast: 'update' };
+  payout_requested: 'account', payout_sent: 'account', payout_rejected: 'account', support_reply: 'account', low_balance: 'alert', tracking_paused: 'alert', meet_joe: 'joe', weekly_summary: 'update', broadcast: 'update', announce_unique: 'update' };
 const SECURITY_EMAILS = new Set(['welcome', 'password_reset', 'password_changed', 'staff_invite']);
 const INBOX_KINDS = ['update', 'account', 'alert', 'joe'];
 const DEFAULT_PREFS = { update: { email: true }, account: { email: true }, alert: { email: true }, joe: { email: true } };
@@ -1985,9 +1999,9 @@ function joinSuspect(ch, click, user, ts, telegram) {
   if (click.suspect && ['bot_ua', 'datacenter'].includes(click.suspect_reason)) return 'fake_click';
   const fn = String(user.first_name || '').trim();
   if (/^deleted account$/i.test(fn) || (telegram && !fn && !user.username && !user.last_name)) return 'deleted_account';
-  // A manager chat only counts repeats in that same chat: someone who joined your channel from one ad and then messages your manager from another is a real new message.
-  if (ch.type === 'dm' ? Q(`SELECT 1 FROM joins WHERE channel_id=? AND tg_user_id=? AND joined_at>? LIMIT 1`).get(ch.id, user.id, ts - 7 * 864e5)
-    : Q(`SELECT 1 FROM joins j WHERE j.owner_id=? AND j.tg_user_id=? AND j.joined_at>? AND j.channel_id NOT IN (SELECT id FROM channels WHERE owner_id=? AND type='dm') LIMIT 1`).get(ch.owner_id, user.id, ts - 7 * 864e5, ch.owner_id)) return 'repeat_user';
+  // Round 21: a repeat only counts in the SAME funnel (channel, group, bot or DM link): someone who left and came back from an ad within 7 days.
+  // Joining a different funnel from that funnel's own ad is a real new lead for it: sent to its ad platform and charged like any join.
+  if (Q(`SELECT 1 FROM joins WHERE channel_id=? AND tg_user_id=? AND joined_at>? LIMIT 1`).get(ch.id, user.id, ts - 7 * 864e5)) return 'repeat_user';
   // Burst: far more ad joins on this channel in 10 seconds than its normal pace (at least fraud.burst_min, default 50 = 5 joins a second,
   // and 10× the last day's average). Kept high so a big real campaign on a fresh channel is never filtered; admin can tune it.
   const bmin = Math.max(5, +setting('fraud.burst_min') || 50);
@@ -3142,6 +3156,151 @@ function joinsQuery(user, qs, limit, offset) {
       click_code: clickCode(r.click_id), link_name: r.link_name || (r.click_id && r.link_url ? 'joinvoo' : null), match: r.click_id ? { fbc: !!r.fbc, fbp: !!r.fbp, ip: !!r.ip, ua: !!r.ua } : null }; }) };
 }
 
+// ---------- round 21: Unique people (one person counted once across all funnels) ----------
+// Read-only. Counts people by Telegram user ID across every channel, group, bot and DM link of the account in the date range.
+// A "funnel join" is one person in one funnel (rejoining the same funnel counts once). Fake joins (fake click, deleted account,
+// burst) are left out; "repeat_user" joins ARE kept: real people who left and rejoined the same funnel within 7 days (not charged
+// again, not sent again; counted once here anyway). Media buyers only see their own channels.
+// The work runs in a background thread on its own READ-ONLY database connection, so a big account never slows down clicks,
+// joins or webhooks on the main thread. If the thread can't start, it runs here instead (same code, same answers).
+const UNIQ_CODE = String.raw`
+function uniqRun(db, job) {
+  const P = (sql) => db.prepare(sql);
+  const sc = Array.isArray(job.scope) ? ' AND j.channel_id IN (' + (job.scope.length ? job.scope.map((x) => Math.floor(+x)).join(',') : '-1') + ')' : '';
+  db.exec('CREATE TEMP TABLE IF NOT EXISTS uniq_p(u INTEGER NOT NULL, c INTEGER NOT NULL, ad INTEGER NOT NULL, t INTEGER NOT NULL, PRIMARY KEY(u, c)) WITHOUT ROWID');
+  db.exec('DELETE FROM temp.uniq_p');
+  try {
+    P("INSERT INTO temp.uniq_p(u, c, ad, t) SELECT j.tg_user_id, j.channel_id, MAX(j.click_id IS NOT NULL), MIN(j.joined_at) FROM joins j" +
+      " WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<? AND j.tg_user_id>0 AND (j.suspect IS NULL OR j.suspect=0 OR j.suspect_reason='repeat_user')" +
+      (job.ads ? ' AND j.click_id IS NOT NULL' : '') + sc + ' GROUP BY j.tg_user_id, j.channel_id').run(job.uid, job.from, job.to);
+    db.exec('CREATE TEMP TABLE IF NOT EXISTS uniq_n(u INTEGER PRIMARY KEY, n INTEGER NOT NULL, first_at INTEGER NOT NULL)');
+    db.exec('DELETE FROM temp.uniq_n');
+    db.exec('INSERT INTO temp.uniq_n(u, n, first_at) SELECT u, COUNT(*), MIN(t) FROM temp.uniq_p GROUP BY u');
+    const titles = new Map(P('SELECT id, title, type, status FROM channels WHERE owner_id=?').all(job.uid).map((c) => [c.id, c]));
+    if (job.kind === 'csv') {
+      const name = (id) => { const c = titles.get(id); return c ? c.title || 'Funnel' : 'Removed funnel'; };
+      const cell = (v) => { v = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      const rows = P('SELECT x.u, x.n, x.first_at, (SELECT json_group_array(c) FROM (SELECT c FROM temp.uniq_p WHERE u=x.u ORDER BY t, c)) cs,' +
+        " (SELECT json_object('username', j.username, 'first_name', j.first_name, 'last_name', j.last_name) FROM joins j WHERE j.owner_id=? AND j.tg_user_id=x.u" + sc + ' ORDER BY j.id DESC LIMIT 1) who' +
+        ' FROM temp.uniq_n x WHERE x.n>=?' + (job.in ? ' AND EXISTS(SELECT 1 FROM temp.uniq_p q WHERE q.u=x.u AND q.c=?)' : '') + ' ORDER BY x.n DESC, x.first_at LIMIT 100000')
+        .all(job.uid, job.min, ...(job.in ? [job.in] : []));
+      const lines = ['tg_user_id,username,first_name,last_name,funnels,funnel_names,first_funnel,first_joined'];
+      for (const r of rows) {
+        let who = {}, cs = []; try { who = JSON.parse(r.who || '{}') || {}; } catch {} try { cs = JSON.parse(r.cs || '[]') || []; } catch {}
+        lines.push([r.u, who.username || '', who.first_name || '', who.last_name || '', r.n, cs.map(name).join(' | '), cs.length ? name(cs[0]) : '', r.first_at ? new Date(r.first_at).toISOString() : ''].map(cell).join(','));
+      }
+      return { csv: lines.join('\n') };
+    }
+    const dist = new Map(); let people = 0, joins = 0;
+    for (const r of P('SELECT MIN(n, 5) k, COUNT(*) people, SUM(n) j FROM temp.uniq_n GROUP BY k').all()) { dist.set(r.k, r.people); people += r.people; joins += r.j; }
+    const funnelsRaw = P('SELECT p.c id, COUNT(*) people, SUM(x.n=1) only_here, SUM(p.ad) from_ads FROM temp.uniq_p p JOIN temp.uniq_n x ON x.u=p.u GROUP BY p.c').all();
+    const pairsRaw = P('SELECT a.c a, b.c b, COUNT(*) n FROM temp.uniq_p a JOIN temp.uniq_p b ON b.u=a.u AND b.c>a.c GROUP BY a.c, b.c ORDER BY n DESC, a.c, b.c LIMIT 12').all();
+    const nm = (id) => { const c = titles.get(id); return { id, title: c ? c.title || 'Funnel' : 'Removed funnel', type: c ? c.type || 'channel' : 'channel', removed: !c || c.status === 'removed' }; };
+    const funnels = funnelsRaw.map((f) => Object.assign(nm(f.id), { people: f.people, only_here: f.only_here, shared: f.people - f.only_here, from_ads: f.from_ads,
+      shared_pct: f.people ? Math.round((f.people - f.only_here) / f.people * 1000) / 10 : 0 })).sort((a, b) => b.people - a.people || a.id - b.id);
+    const size = new Map(funnels.map((f) => [f.id, f.people]));
+    const pairs = pairsRaw.map((p) => ({ a: nm(p.a), b: nm(p.b), people: p.n, pct_of_smaller: Math.round(p.n / Math.max(1, Math.min(size.get(p.a) || 0, size.get(p.b) || 0)) * 1000) / 10 }));
+    const repeat = people - (dist.get(1) || 0);
+    const repeat_filtered = P("SELECT COUNT(*) n FROM joins j WHERE j.owner_id=? AND j.joined_at>=? AND j.joined_at<? AND j.suspect=1 AND j.suspect_reason='repeat_user'" + sc).get(job.uid, job.from, job.to).n;
+    // round 21b: who deposits. For the people above (joined in these dates), everything they deposited since, matched to their joins.
+    // Grouped by how many funnels they joined: 1, 2, 3+. "multi_earn" = people whose deposits came through 2+ different funnels.
+    const has_deposits = !!P("SELECT 1 FROM conversions v WHERE v.owner_id=? AND v.matched=1 AND v.event IN ('ftd','dep','sale')" + sc.replace(/j\.channel_id/g, 'v.channel_id') + ' LIMIT 1').get(job.uid);
+    let quality = { has_deposits, locked: !!job.locked, buckets: [], multi_earn: 0 };
+    if (has_deposits) {
+      db.exec('CREATE TEMP TABLE IF NOT EXISTS uniq_q(u INTEGER PRIMARY KEY, dep INTEGER NOT NULL, rev INTEGER NOT NULL, chs INTEGER NOT NULL)');
+      db.exec('DELETE FROM temp.uniq_q');
+      P("INSERT INTO temp.uniq_q(u, dep, rev, chs) SELECT j.tg_user_id, SUM(v.event IN ('ftd','dep','sale')), SUM(CASE WHEN v.event IN ('ftd','dep','sale') THEN COALESCE(v.value_cents,0) ELSE 0 END)," +
+        " COUNT(DISTINCT v.channel_id) FROM conversions v JOIN joins j ON j.id=v.join_id" +
+        " WHERE v.owner_id=? AND v.matched=1 AND v.event IN ('ftd','dep','sale') AND COALESCE(v.rejected,0)=0 AND j.owner_id=? AND j.tg_user_id IN (SELECT u FROM temp.uniq_n)" +
+        sc.replace(/j\.channel_id/g, 'v.channel_id') + ' GROUP BY j.tg_user_id').run(job.uid, job.uid);
+      const rows = P('SELECT MIN(x.n, 3) k, COUNT(*) people, COALESCE(SUM(q.dep > 0), 0) depositors, COALESCE(SUM(q.dep), 0) deposits, COALESCE(SUM(q.rev), 0) rev, COALESCE(SUM(q.chs >= 2), 0) multi' +
+        ' FROM temp.uniq_n x LEFT JOIN temp.uniq_q q ON q.u=x.u GROUP BY k ORDER BY k').all();
+      quality.buckets = [1, 2, 3].map((k) => { const r = rows.find((x) => x.k === k) || { people: 0, depositors: 0, deposits: 0, rev: 0 };
+        return { funnels: k === 3 ? '3+' : String(k), people: r.people, depositors: r.depositors, deposits: r.deposits,
+          deposit_rate: r.people ? Math.round(r.depositors / r.people * 1000) / 10 : 0,
+          revenue_cents: job.locked ? null : r.rev, value_per_person_cents: job.locked || !r.people ? null : Math.round(r.rev / r.people) }; });
+      quality.multi_earn = rows.reduce((a, r) => a + (r.multi || 0), 0);
+      const one = quality.buckets[0], more = rows.filter((r) => r.k >= 2).reduce((a, r) => ({ people: a.people + r.people, depositors: a.depositors + r.depositors, rev: a.rev + r.rev }), { people: 0, depositors: 0, rev: 0 });
+      quality.multi = { people: more.people, depositors: more.depositors, deposit_rate: more.people ? Math.round(more.depositors / more.people * 1000) / 10 : 0,
+        value_per_person_cents: job.locked || !more.people ? null : Math.round(more.rev / more.people) };
+      quality.rate_lift = one.deposit_rate > 0 && more.people ? Math.round(quality.multi.deposit_rate / one.deposit_rate * 100) / 100 : null; // e.g. 1.8 = deposit 1.8× as often
+      db.exec('DELETE FROM temp.uniq_q');
+    }
+    return {
+      people, funnel_joins: joins, repeat_people: repeat, extra_joins: joins - people,
+      repeat_rate: people ? Math.round(repeat / people * 1000) / 10 : 0,
+      avg_funnels: people ? Math.round(joins / people * 100) / 100 : 0,
+      dist: [1, 2, 3, 4, 5].map((n) => ({ funnels: n, plus: n === 5, people: dist.get(n) || 0 })),
+      funnels, pairs, funnel_count: funnels.length, src: job.ads ? 'ads' : 'all', repeat_filtered, quality,
+    };
+  } finally { db.exec('DELETE FROM temp.uniq_p'); try { db.exec('DELETE FROM temp.uniq_n'); } catch {} try { db.exec('DELETE FROM temp.uniq_q'); } catch {} }
+}`;
+const uniqRun = new Function(UNIQ_CODE + '\nreturn uniqRun;')();
+let uniqW = null, uniqSeq = 0, uniqNoThreads = false; const uniqCrashes = [];
+const uniqWait = new Map();
+function uniqWorker() {
+  if (uniqW) return uniqW;
+  if (env.UNIQUE_THREAD === 'off' || uniqNoThreads) return null; // escape hatch / no threads on this Node: run on the main thread
+  while (uniqCrashes.length && uniqCrashes[0] < now() - 300000) uniqCrashes.shift();
+  if (uniqCrashes.length >= 3) return false; // crashed 3 times in 5 minutes: pause the report instead of risking the main thread
+  let Worker; try { ({ Worker } = require('node:worker_threads')); } catch { uniqNoThreads = true; return null; }
+  try {
+    const w = new Worker(`const { parentPort, workerData } = require('node:worker_threads'); const { DatabaseSync } = require('node:sqlite');
+${UNIQ_CODE}
+const db = new DatabaseSync(workerData.file, { readOnly: true }); db.exec('PRAGMA busy_timeout=5000');
+parentPort.on('message', (m) => { try { parentPort.postMessage({ id: m.id, ok: uniqRun(db, m.job) }); } catch (e) { parentPort.postMessage({ id: m.id, err: String(e && e.message || e) }); } });`,
+      { eval: true, workerData: { file: path.join(DATA_DIR, 'joinvoo.db') } });
+    w.unref();
+    w.on('message', (m) => { const p = uniqWait.get(m.id); if (!p) return; uniqWait.delete(m.id); clearTimeout(p.timer); m.err ? p.reject(new Error(m.err)) : p.resolve(m.ok); });
+    const dead = (e) => { if (uniqW !== w) return; uniqW = null; if (!w._jvStopped) uniqCrashes.push(now()); log('unique report thread stopped', e && e.message || e);
+      for (const [id, p] of uniqWait) { clearTimeout(p.timer); p.reject(new Error('stopped')); uniqWait.delete(id); } };
+    w.on('error', dead); w.on('exit', (c) => dead('exit ' + c));
+    uniqW = w; return w;
+  } catch (e) { uniqCrashes.push(now()); log('unique report thread', e.message); return false; }
+}
+/** Runs one job in the background thread (or here when the thread is unavailable). */
+function uniqJob(job) {
+  const w = uniqWorker();
+  if (w === null) return Promise.resolve().then(() => Object.assign(uniqRun(db, job), { engine: 'main' }));
+  if (w === false) return Promise.reject(new Error('busy'));
+  if (uniqWait.size >= 8) return Promise.reject(new Error('busy')); // a queue that long means something is slow: answer "try again" rather than pile up
+  return new Promise((resolve, reject) => {
+    const id = ++uniqSeq;
+    const timer = setTimeout(() => { // stop the stuck job so other accounts' reports aren't stuck behind it; a fresh thread starts on the next request
+      if (!uniqWait.has(id)) return; log('unique report timed out', job.uid, job.kind); w._jvStopped = true; uniqWait.get(id).reject(new Error('too long')); uniqWait.delete(id); w.terminate().catch(() => {});
+    }, +env.UNIQUE_TIMEOUT_MS || 60000);
+    uniqWait.set(id, { resolve: (r) => resolve(Object.assign(r, { engine: 'thread' })), reject, timer });
+    w.postMessage({ id, job });
+  });
+}
+const uniqCache = new Map(), uniqBusy = new Map();
+function uniqParams(user, qs) {
+  const r = parseRange(qs), to = r.to, from = Math.max(r.from, to - 400 * 864e5); // at most ~13 months per report
+  return { uid: user.id, scope: Array.isArray(user._scope) ? user._scope.map((x) => Math.floor(+x)) : null, from, to, ads: qs.get('src') === 'ads', locked: isLocked(user.id) };
+}
+async function uniqueReport(user, qs) {
+  const job = { ...uniqParams(user, qs), kind: 'report' };
+  const key = [job.uid, job.scope ? job.scope.join('.') : '*', job.from, job.to, job.ads ? 1 : 0, job.locked ? 1 : 0].join('|');
+  const hit = uniqCache.get(key), ttl = job.to > now() - 864e5 ? 180000 : 900000; // ranges that include today refresh every 3 minutes
+  if (hit && now() - hit.at < ttl) return hit.data;
+  if (uniqBusy.has(key)) return uniqBusy.get(key); // the same report is already being worked out: share it
+  const t0 = Date.now();
+  const p = uniqJob(job).then((data) => {
+    data.from = job.from; data.to = job.to; data.computed_at = now(); data.ms = Date.now() - t0;
+    if (data.ms > 3000) log('unique report slow', job.uid, data.ms + 'ms', data.funnel_joins);
+    if (uniqCache.size > 400) uniqCache.delete(uniqCache.keys().next().value);
+    uniqCache.set(key, { at: now(), data });
+    return data;
+  }).finally(() => uniqBusy.delete(key));
+  uniqBusy.set(key, p);
+  return p;
+}
+/** CSV: people in 2+ funnels (min), or everyone in one funnel (in=<channel id>&min=1). One row per person, funnels in the order they joined. */
+async function uniqueCsv(user, qs) {
+  const job = { ...uniqParams(user, qs), kind: 'csv', min: Math.max(1, Math.min(50, parseInt(qs.get('min') || '2', 10) || 2)), in: parseInt(qs.get('in') || '', 10) || null };
+  return (await uniqJob(job)).csv;
+}
+
 /** Local calendar keys in the viewer's time zone (tz = minutes, like getTimezoneOffset). */
 function periodKey(ts, tz, group) {
   const d = new Date(ts - tz * 60000);
@@ -3765,7 +3924,7 @@ function joeInsights(uid) {
   }
   const low = chans.find((c) => c.status === 'active' && !['bot', 'dm'].includes(c.type) && c.pool < POOL_SIZE * 0.25);
   if (low) items.push({ id: 'links_' + low.id, level: 'warn', title: `Invite links running low on ${low.title}`, body: `${$num(low.pool)} of ${$num(POOL_SIZE)} ready. New ones are being made and nobody is blocked; add a second bot if you plan to scale.`, action: { label: 'Open channels', tab: 'channels' } });
-  if (BILLING && !isAdmin(u) && !(u.free_joins > 0) && st.ok && (u.balance_cents || 0) < 500) items.push({ id: 'credits', level: 'warn', title: 'Credits are running low', body: `${$num(u.balance_cents || 0)} credits left. Top up so tracking never pauses.`, metric: { name: 'Credits', value: u.balance_cents || 0, delta_pct: null }, action: { label: 'Buy credits', tab: 'credits' } });
+  if (BILLING && !isAdmin(u) && !(u.free_joins > 0) && st.ok && (u.balance_cents || 0) < 500) items.push({ id: 'credits', level: 'warn', title: 'Credits are running low', body: `${$num(u.balance_cents || 0)} credits (about ${usdOf(u.balance_cents || 0)}) left. Top up so tracking never pauses.`, metric: { name: 'Credits', value: u.balance_cents || 0, delta_pct: null }, action: { label: 'Buy credits', tab: 'credits' } });
   const d = joeData(u);
   if (d.today.joins > 0) {
     const dp = pctOf(d.today.joins, d.yday_same.joins);
@@ -3916,6 +4075,8 @@ const JOE_TOOLS = [
   { name: 'billing_summary', description: 'Credits balance (1 credit = $0.01), plan (Basic/Pro), Pro trial, whether tracking is running, this month’s usage, free joins left and level.', input_schema: { type: 'object', properties: {} } },
   { name: 'conversions_summary', description: 'Deposits and other conversions reported by postbacks for a date range: counts per event, revenue, unmatched postbacks, and the latest few.',
     input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } } } },
+  { name: 'unique_people', description: 'Unique people across ALL funnels (each channel, group, bot or DM link) for a date range, each Telegram ID counted once: unique people vs joins across funnels, people in 2+ funnels and %, funnels per person, how many joined 1/2/3/4/5+ funnels, each funnel only-here vs shared, the funnel pairs sharing the most people. src "ads" = only joins from ads. Same numbers as Results → Unique people.',
+    input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' }, src: { type: 'string', enum: ['all', 'ads'] } } } },
 ];
 // ----- Joe playbooks: built-in files in joe/playbooks/ (INDEX.md lists them) + custom ones from the admin (same name wins) -----
 const PLAYBOOK_DIR = env.JOE_PLAYBOOKS_DIR || path.join(__dirname, 'joe', 'playbooks');
@@ -3971,6 +4132,19 @@ function joeTool(u, name, inp = {}) {
   const from = ok(inp.from) ? inp.from : ymdLocal(lc.dayStart - 6 * 864e5, off), to = ok(inp.to) ? inp.to : lc.date;
   const locked = isLocked(u.id), lockNote = locked ? 'Basic plan after the Pro trial: deposit counts are visible, but revenue/ROAS and which ads drove deposits are locked. Do not guess them; suggest upgrading to Pro.' : undefined;
   const q = (o) => new URLSearchParams({ tz: String(off), ...o });
+  if (name === 'unique_people') { // round 21: answered by the same background report as the dashboard
+    if (!feature('unique_report')) return { error: 'The Unique people report is switched off right now.' };
+    return uniqueReport(u, q({ from, to, ...(inp.src === 'ads' ? { src: 'ads' } : {}) })).then((r) => ({ from, to, src: r.src, unique_people: r.people, joins_across_funnels: r.funnel_joins,
+      people_in_2_plus_funnels: r.repeat_people, pct_in_2_plus: r.repeat_rate, funnels_per_person: r.avg_funnels, repeat_joins: r.extra_joins,
+      by_funnel_count: r.dist.map((x) => ({ funnels: x.plus ? '5+' : x.funnels, people: x.people })),
+      funnels: r.funnels.slice(0, 12).map((f) => ({ title: f.title, type: f.type, people: f.people, only_here: f.only_here, also_in_another_pct: f.shared_pct })),
+      top_pairs: r.pairs.slice(0, 5).map((p) => ({ funnels: p.a.title + ' + ' + p.b.title, shared_people: p.people })),
+      deposits_by_funnels_joined: !r.quality || !r.quality.has_deposits ? 'No deposit tracking connected yet (postbacks), so there is no deposit data. Suggest Conversions → Integrations to connect postbacks.'
+        : { groups: r.quality.buckets.map((b) => ({ funnels: b.funnels, people: b.people, depositors: b.depositors, deposit_rate_pct: b.deposit_rate, value_per_person: b.value_per_person_cents == null ? (r.quality.locked ? 'Pro only' : null) : usdOf(b.value_per_person_cents) })),
+          people_in_2_plus_deposit_x_as_often: r.quality.rate_lift, people_who_deposited_through_2_plus_funnels: r.quality.multi_earn },
+      note: 'Counted by Telegram ID; joins only (not clicks); fake joins left out. Overlap is not bad by default: people in several funnels can earn the customer more than once. Deposits = everything the people who joined in these dates deposited since, matched to their joins.' }),
+      () => ({ error: 'The report is busy. Try again in a minute.' }));
+  }
   if (name === 'list_playbooks') return { playbooks: allPlaybooks().map(({ name, use_when, source }) => ({ name, use_when, source })) };
   if (name === 'read_playbook') return readPlaybook(inp.name);
   if (name === 'get_stats') { const qq = q({ from, to, ...(inp.channel_id ? { channel: String(inp.channel_id) } : {}) }), r = stats(u, qq);
@@ -4000,7 +4174,7 @@ function joeTool(u, name, inp = {}) {
   }
   if (name === 'billing_summary') {
     const b = billing(u);
-    return { credits_balance: b.balance_cents, plan: b.plan, trial: b.trial, tracking: b.tracking, state: b.state, this_month: b.month, free_joins_left: b.free_joins_left, level: levelView(u.id) };
+    return { balance: balView(b.balance_cents), plan: b.plan, trial: b.trial, tracking: b.tracking, state: b.state, this_month: b.month, free_joins_left: b.free_joins_left, level: levelView(u.id) };
   }
   if (name === 'conversions_summary') {
     const r = parseRange(q({ from, to }));
@@ -4028,7 +4202,7 @@ Example (deposits not connected, no spend): "Traffic side looks healthy: 113 of 
 How you work:
 - For anything about this user's performance, call the tools first and answer from what they return. You only ever see this user's own data.
 - Never invent or estimate numbers. If a tool returns nothing or a value is null or locked, say plainly that you don't have it (and what would unlock it, e.g. adding ad spend or upgrading to Pro).
-- Money from tools is in cents (credits: 1 credit = $0.01). Show dollars, e.g. 1240 → $12.40.
+- Money from tools is in cents (credits: 1 credit = $0.01). Show dollars, e.g. 1240 → $12.40. The BALANCE is the exception: tools give it ready-made in balance.say_it_like_this, e.g. "5,000,000 credits (about $50,000.00)". Use that wording exactly; never call dollars "credits" or "coins", and never divide the credits number and call the result credits.
 - Think like a senior traffic banker (a media buyer who treats traffic as capital): read the numbers, find the one thing that matters most, say what to do with budget, creatives and funnel, and what to watch next. Diagnose before prescribing; separate "the data says" from "my hunch is".
 - Always check SETUP STATUS first. Never give advice built on data that isn't connected (see the rules there); say what's missing in one line and still give the best advice from what IS tracked.
 - Be practical, like a senior media buyer: lead with the answer, then 1–3 concrete next steps. Keep everyday answers under about 160 words. When the user asks why or how (for example why people drop off in Telegram), explain properly with numbered steps, and ask one short clarifying question if you need it. Use **bold** sparingly and simple numbered or • lists. No tables, no headings.
@@ -4207,7 +4381,7 @@ async function joeAi(u, history, message, opts = {}) {
   let last = 0;
   // stop using tools when one more tool round plus the final answer (each ≈ the last round) would push cost × 1.2 past the most we can charge
   const overBudget = () => opts.budgetUsd && (joeCostUsd(usage, model, provider) + 2 * last) * 1.2 > opts.budgetUsd;
-  const exec = (name, args) => { tools.push(name); let out; try { out = name === 'read_playbook' ? playbookForAnswer(ctx, (args || {}).name) : joeTool(u, name, args || {}); } catch (e) { out = { error: e.message }; } return JSON.stringify(out).slice(0, 14000); };
+  const exec = async (name, args) => { tools.push(name); let out; try { out = name === 'read_playbook' ? playbookForAnswer(ctx, (args || {}).name) : await joeTool(u, name, args || {}); } catch (e) { out = { error: e.message }; } return JSON.stringify(out).slice(0, 14000); }; // round 21: async (unique_people runs in the background thread)
   const fail = (m) => { const e = new Error(m); e.usage = usage; e.rounds = res0.rounds; throw e; };
   if (provider === 'openai') {
     const msgs = [{ role: 'system', content: sp.stat + '\n\n' + sp.ctx }, ...turns];
@@ -4221,7 +4395,7 @@ async function joeAi(u, history, message, opts = {}) {
       const calls = Array.isArray(msg.tool_calls) ? msg.tool_calls.filter((c) => c && c.function) : [];
       if (calls.length && !final) {
         msgs.push({ role: 'assistant', content: msg.content || null, tool_calls: calls });
-        for (const c of calls) { let args = {}; try { args = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { args = {}; } msgs.push({ role: 'tool', tool_call_id: c.id, content: exec(c.function.name, args) }); }
+        for (const c of calls) { let args = {}; try { args = c.function.arguments ? JSON.parse(c.function.arguments) : {}; } catch { args = {}; } msgs.push({ role: 'tool', tool_call_id: c.id, content: await exec(c.function.name, args) }); }
         continue;
       }
       const text = String(msg.content || '').trim(); if (!text) fail(calls.length ? 'Too many tool calls' : 'Empty answer');
@@ -4242,7 +4416,7 @@ async function joeAi(u, history, message, opts = {}) {
     if (res.stop_reason === 'tool_use' && uses.length && !final) {
       for (const m of msgs) if (Array.isArray(m.content)) for (const c of m.content) if (c.type === 'tool_result') delete c.cache_control; // one moving breakpoint
       msgs.push({ role: 'assistant', content });
-      const results = uses.map((tu) => ({ type: 'tool_result', tool_use_id: tu.id, content: exec(tu.name, tu.input) }));
+      const results = await Promise.all(uses.map(async (tu) => ({ type: 'tool_result', tool_use_id: tu.id, content: await exec(tu.name, tu.input) })));
       results[results.length - 1].cache_control = { type: 'ephemeral' };
       msgs.push({ role: 'user', content: results });
       continue;
@@ -4445,14 +4619,15 @@ function broadcastValidate(b) {
   const cta_label = t(b.cta_label, 40), cta_url = t(b.cta_url, 500);
   if (cta_url && !/^(https:\/\/\S+|#tab:[\w-]{2,30}|\/[\w./#?=&-]*)$/.test(cta_url)) return { error: 'The button link must start with https://, / or #tab: (e.g. #tab:wallet).' };
   if (cta_label && !cta_url) return { error: 'Add a link for the button.' };
-  return { title, body, image: image || null, cta_label: cta_label || null, cta_url: cta_url || null, important: b.important ? 1 : 0, also_email: b.also_email ? 1 : 0, audience: audienceOf(b.audience) };
+  const design = b.design === 'unique_people' ? 'unique_people' : 'standard'; // round 21: the email can use a ready-made designed template
+  return { title, body, image: image || null, cta_label: cta_label || null, cta_url: cta_url || null, important: b.important ? 1 : 0, also_email: b.also_email ? 1 : 0, design, audience: audienceOf(b.audience) };
 }
 function broadcastView(r) {
   let audience = {}; try { audience = JSON.parse(r.audience || '{}'); } catch { /* ignore */ }
   const read = Q(`SELECT COUNT(*) n FROM inbox WHERE broadcast_id=? AND read_at IS NOT NULL`).get(r.id).n;
   return { id: r.id, title: r.title, body: r.body, image: r.image, cta_label: r.cta_label, cta_url: r.cta_url, important: !!r.important, also_email: !!r.also_email, audience,
     created_by: r.created_by, created_at: r.created_at, sent_count: r.sent_count, read_count: Math.max(read, r.read_count || 0),
-    emailed: Q(`SELECT COUNT(*) n FROM email_log WHERE kind='broadcast' AND ref=? AND ok IS NOT 2`).get('bc:' + r.id).n };
+    emailed: Q(`SELECT COUNT(*) n FROM email_log WHERE kind IN ('broadcast','announce_unique') AND ref=? AND ok IS NOT 2`).get('bc:' + r.id).n };
 }
 function sendBroadcast(v, by) {
   const users = audienceUsers(v.audience);
@@ -4461,7 +4636,7 @@ function sendBroadcast(v, by) {
   const id = Number(r.lastInsertRowid);
   tx(() => { for (const u of users) inboxAdd(u.id, { kind: 'update', title: v.title, body: v.body, image: v.image, cta_label: v.cta_label, cta_url: v.cta_url, important: v.important, broadcast_id: id }); });
   if (v.also_email) { // emails go out a few at a time, and only to people who keep update emails on
-    const list = users.slice(), step = () => { for (const u of list.splice(0, 40)) sendTemplate(u.email, 'broadcast', v, { userId: u.id, ref: 'bc:' + id, noInbox: true }); if (list.length) setTimeout(step, 250).unref(); };
+    const list = users.slice(), step = () => { for (const u of list.splice(0, 40)) sendTemplate(u.email, v.design === 'unique_people' ? 'announce_unique' : 'broadcast', v, { userId: u.id, ref: 'bc:' + id, noInbox: true }); if (list.length) setTimeout(step, 250).unref(); };
     step();
   }
   log('broadcast', id, by, users.length, 'users');
@@ -4815,6 +4990,17 @@ async function api(req, res, url, user) {
     return send(res, 200, { ok: true, amount_cents: r.balance_cents });
   }
   if (p === '/api/stats') return send(res, 200, stats(user, qs));
+  if (p === '/api/unique' || p === '/api/unique.csv') { // round 21: Unique people across all funnels (read-only)
+    if (!feature('unique_report')) return send(res, 403, { error: 'The Unique people report is switched off right now.', off: true });
+    if (m !== 'GET' && m !== 'HEAD') return send(res, 405, { error: 'Use GET.' });
+    if (limited('uniq:' + user.id, 60, 60)) return send(res, 429, { error: 'Too many refreshes. Wait a minute and try again.' });
+    if (p === '/api/unique.csv' && limited('uniqcsv:' + user.id, 6, 600)) return send(res, 429, { error: 'You’ve downloaded this a few times already. Try again in 10 minutes.' });
+    try {
+      if (p === '/api/unique') return send(res, 200, await uniqueReport(user, qs));
+      return send(res, 200, await uniqueCsv(user, qs), { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="joinvoo-unique-people.csv"' });
+    } catch (e) { if (e.message !== 'busy') log('unique report', e.message);
+      return send(res, 503, { error: e.message === 'too long' ? 'This report took too long. Try a shorter date range.' : 'The report is busy right now. Try again in a minute.' }); }
+  }
   if (p === '/api/compare/periods') { const r = comparePeriods(user, qs); return send(res, r.error ? 400 : 200, r); }
   if (p === '/api/compare/insights') { const r = compareInsights(user, qs); return send(res, r.error ? 400 : 200, r); }
   if (p === '/api/compare/campaigns') return send(res, 200, compareCampaigns(user, qs));
@@ -5667,6 +5853,8 @@ const SUP_TOOLS_USER = [
   { name: 'retry_failed_events', description: 'Retry their events that failed to reach Meta, TikTok or Snapchat in the last 7 days (for example after they fixed a wrong token).', input_schema: { type: 'object', properties: {} } },
   { name: 'get_stats', description: 'Their totals for a date range (clicks, joins, organic, fake filtered, registrations, deposits, revenue, spend). Dates YYYY-MM-DD in their time zone (today is in THIS CHAT). Leave both dates out for the last 7 days.', input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } } } },
   // round 20: read-only lookups so support can answer almost any account question (nothing here can change anything)
+  { name: 'unique_people', description: 'Unique people across all their funnels (each channel, group, bot or DM link) for a date range, each Telegram ID counted once: unique people vs joins across funnels, people in 2+ funnels, funnels per person, each funnel only-here vs shared, top shared pairs. src "ads" = only joins from ads. Same as Results → Unique people.',
+    input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' }, src: { type: 'string', enum: ['all', 'ads'] } } } },
   { name: 'campaign_breakdown', description: 'Their numbers split by campaign, ad set, ad, source, country, platform, channel or language for a date range (clicks, joins, join rate, deposits, revenue, spend, cost per join). Leave dates out for the last 7 days.', input_schema: { type: 'object', properties: { dim: { type: 'string', enum: ['campaign', 'adset', 'ad', 'source', 'country', 'platform', 'channel', 'lang'] }, from: { type: 'string' }, to: { type: 'string' }, limit: { type: 'integer' } }, required: ['dim'] } },
   { name: 'deposits_and_postbacks', description: 'Deposits and other conversions their tracker/broker reported by postback for a date range: counts per event, revenue, unmatched postbacks (and why), the last postbacks received. Use for "my deposits aren\'t showing" / "postback not working".', input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } } } },
   { name: 'referrals_and_payouts', description: 'Their referral program: link, people invited/active, tier and rate, earnings (on hold, withdrawable, moved to wallet) and their withdrawal requests with status.', input_schema: { type: 'object', properties: {} } },
@@ -5679,7 +5867,10 @@ const SUP_TOOLS_TG_LINK = [
   { name: 'link_account_send_code', description: 'On Telegram only: the person wants help with their Joinvoo account. Email a 6-digit code to the address they gave, if an account exists there (never say whether it exists).', input_schema: { type: 'object', properties: { email: { type: 'string' } }, required: ['email'] } },
   { name: 'link_account_verify_code', description: 'On Telegram only: check the 6-digit code they received by email. When it matches, this chat is linked to their account and the account tools work.', input_schema: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
 ];
-const supAccount = (u) => { const st = trackingState(u.id); return { email: u.email, name: u.name || null, email_confirmed: !!u.verified_at, status: u.status, created: new Date(u.created_at).toISOString().slice(0, 10), plan: planView(u.id), trial: trialInfo(u.id), tracking: { ok: st.ok, reason: st.reason }, ...customerContext(u), credits: u.balance_cents || 0 }; };
+const supAccount = (u) => { const st = trackingState(u.id), cx = customerContext(u), { balance_cents, paid_cents, last_deposit, ...rest } = cx; // round 21: balance first and spelled out (it used to come last and could be cut off)
+  return { balance: balView(balance_cents), total_paid_in: usdOf(paid_cents), email: u.email, name: u.name || null, email_confirmed: !!u.verified_at, status: u.status, created: new Date(u.created_at).toISOString().slice(0, 10),
+    plan: planView(u.id), trial: trialInfo(u.id), tracking: { ok: st.ok, reason: st.reason }, ...rest,
+    last_top_up: last_deposit ? { amount: usdOf(last_deposit.amount_cents), status: last_deposit.status, at: new Date(last_deposit.created_at).toISOString().slice(0, 16).replace('T', ' '), method: last_deposit.label } : null }; };
 /** round 20: one-step account health check for the support AI (read-only). Problems ranked high → low, each with the fix. */
 function supDiagnose(u) {
   const out = [], add = (severity, what, fix) => out.push({ severity, what, fix }), D = 864e5, t = now();
@@ -5763,6 +5954,7 @@ async function supTool(t, name, inp = {}) {
   if (name === 'account_overview') return supAccount(u);
   if (name === 'channels_and_bots') return joeTool(u, 'channels_health', {});
   if (name === 'get_stats') return joeTool(u, 'get_stats', inp);
+  if (name === 'unique_people') return joeTool(u, 'unique_people', inp);
   if (name === 'campaign_breakdown') return joeTool(u, 'get_breakdown', inp);
   if (name === 'deposits_and_postbacks') return joeTool(u, 'conversions_summary', inp);
   if (name === 'referrals_and_payouts') { const r = referrals(u);
@@ -5969,6 +6161,7 @@ function supFacts() {
   const off = KNOWN.filter(([ty]) => !onTypes.has(ty)).map(([, n]) => n).concat(onTypes.has('manual') || onTypes.has('crypto_manual') ? [] : ['manual bank/crypto transfers']);
   return [pay.length ? `- PAYMENT METHODS SWITCHED ON RIGHT NOW (live from the admin settings; these are the ONLY ways to top up):\n${pay.map((x) => '  • ' + x).join('\n')}\n  SWITCHED OFF right now: ${off.join(', ') || 'nothing else'}. Never say they can pay with a switched-off method or send them to it, even if the knowledge below describes it (that part is history). If they ask for it, say it isn't available right now and offer the ones that are on. An older payment made with a switched-off method can still be rechecked. Each method charges in its own currency (shown above); if that currency doesn't suit them, offer another method from their list. Each customer only sees the methods allowed for their account's country (see THIS CHAT).`
       : `- No payment methods are switched on right now. Don't promise any way to top up: hand top-up questions to the team.`,
+    `- BALANCE: read it only from account_overview → balance.say_it_like_this (e.g. "5,000,000 credits (about $50,000.00)") and say it that way. 1 credit = $0.01. Never call the dollar amount credits or coins, never call credits dollars, and never work the number out yourself from other fields.`,
     `- Credits: 1 credit = $0.01. Minimum top-up ${d(setting('price.min_deposit_cents') || 0)}. Credits pay for tracking; they can't be withdrawn. Refunds only as described on the Refunds page (${BASE_URL}/refunds). For a refund they don't need to email anyone: collect the payment reference and the reason here, then hand over. Never promise a refund or say money "will come back"; the team reviews it.`,
     `- ${P.basic.name}: ${d(P.basic.base_cents)}/month, ${P.basic.included.toLocaleString('en-US')} tracked joins included, then ${P.basic.per_join_cents} credits per extra join. ${P.pro.name}: ${d(P.pro.base_cents)}/month, ${(P.pro.included || 0).toLocaleString('en-US')} joins included, then ${P.pro.per_join_cents} credits per extra join. The monthly fee is taken on the first tracked ad click of the month.`,
     C.FREE_JOINS ? `- New accounts get their first ${C.FREE_JOINS.toLocaleString('en-US')} tracked joins free after confirming their email.` : '',
@@ -6566,6 +6759,14 @@ function pmSecrets(type, b, id) {
   if (type === 'flutterwave') { if (has(b.secret)) setSetting('pay.flw_secret', b.secret.trim()); if (has(b.webhook_hash)) setSetting('pay.flw_webhook_hash', b.webhook_hash.trim()); if (b.local_currency) setSetting('pay.flw_currency', b.local_currency); }
 }
 /** What support needs to know about a customer at a glance. */
+/** Round 21: a balance the way the dashboard shows it, so Joe and support never mix up dollars and credits (1 credit = $0.01). */
+function balView(cents) {
+  const c = Math.round(+cents || 0), usd = (c < 0 ? '-$' : '$') + (Math.abs(c) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const cr = c.toLocaleString('en-US');
+  return { credits: c, usd, say_it_like_this: `${cr} credits (about ${usd})`,
+    rule: '1 credit = $0.01, so the dollar value is credits ÷ 100. The dashboard top bar shows credits (e.g. "5M credits") and the Credits page shows credits with the dollar value. Never call the dollar number "credits" or "coins", and never call the credits number dollars.' };
+}
+const usdOf = (cents) => (cents == null ? null : balView(cents).usd);
 function customerContext(u) {
   const m = monthKey(), st = trackingState(u.id);
   return {
@@ -8048,7 +8249,7 @@ function teamCtx(req, actor) {
 }
 /** What managers and media buyers may call inside a team workspace (everything else answers 403). Owners are never gated. */
 const TEAM_ROUTES = [
-  ['GET', /^\/api\/(stats|compare|compare\/periods|compare\/insights|compare\/campaigns|funnel|cohorts|breakdown|conversions|joins|joins\.csv|clicks\.csv|conversions\.csv|channels|spend|audience-guide|team\/leaderboard|report-settings)$/, ['manager', 'buyer']],
+  ['GET', /^\/api\/(stats|compare|compare\/periods|compare\/insights|compare\/campaigns|funnel|cohorts|breakdown|conversions|joins|joins\.csv|clicks\.csv|conversions\.csv|unique|unique\.csv|channels|spend|audience-guide|team\/leaderboard|report-settings)$/, ['manager', 'buyer']],
   ['PATCH', /^\/api\/report-settings$/, ['manager', 'buyer']], ['POST', /^\/api\/report-settings\/test$/, ['manager', 'buyer']],
   ['PATCH', /^\/api\/channels\/\d+$/, ['manager', 'buyer']], ['POST', /^\/api\/channels\/\d+\/(test|switch-back)$/, ['manager', 'buyer']],
   ['POST', /^\/api\/joins\/\d+\/convert$/, ['manager', 'buyer']],

@@ -3982,6 +3982,129 @@ body:has(.joe-page) .sup-launch{display:none!important}
 .icon-btn{padding:0;-webkit-appearance:none;appearance:none;display:inline-flex;align-items:center;justify-content:center;line-height:0}.icon-btn>svg{display:block;flex:none;margin:0}
 .bell svg{transform-origin:50% 8%;transform-box:fill-box}
 </style>
+<style>
+/* ================= Round 21: Results → Unique people ================= */
+.uq21{display:flex;flex-direction:column;gap:16px}
+.uq-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.uq-top .filters{margin:0;min-width:0;max-width:100%}
+.uq-src{flex:none}
+.uq-hh{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.uq-hh .uq-src{padding:3px}.uq-hh .uq-src button{height:30px;padding:0 12px;font-size:12.5px}
+/* hero: joins vs people */
+.uq-hero{padding:20px 20px 18px;display:flex;flex-direction:column;gap:16px;border:1px solid color-mix(in srgb,var(--brand) 16%,var(--line));
+  background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--brand-soft) 85%,transparent),transparent 60%),var(--surface);overflow:hidden}
+.uq-eb{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-text)}
+.uq-big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:4px}
+.uq-big .kn{font-size:clamp(34px,5vw,48px);font-weight:800;letter-spacing:-.05em;line-height:1}
+.uq-big span{font-size:18px;font-weight:800;color:var(--muted);letter-spacing:-.02em}
+.uq-lead{margin:6px 0 0;color:var(--muted);font-size:15px;line-height:1.5;max-width:62ch}
+.uq-lead b{color:var(--ink)}
+.uq-bars{display:flex;flex-direction:column;gap:12px}
+.uq-row{display:grid;grid-template-columns:minmax(118px,170px) 1fr;gap:12px;align-items:center}
+.uq-row>span{font-size:13px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;line-height:1.25}
+.uq-row>span b{font-size:17px;color:var(--ink);font-weight:800;letter-spacing:-.02em}
+.uq-track{position:relative;height:30px;border-radius:12px;background:var(--sunk);overflow:hidden;display:flex}
+.uq-track i{display:block;height:100%;transform-origin:left center;transition:transform .9s var(--ease)}
+.uq-track .j{background:linear-gradient(90deg,var(--brand),color-mix(in srgb,var(--brand) 70%,var(--sky-ink)))}
+.uq-track .p{background:linear-gradient(90deg,var(--mint-ink),var(--mint))}
+.uq-track .r{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--coral) 30%,transparent) 0 6px,transparent 6px 12px);display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;font-weight:800;color:var(--coral-ink);white-space:nowrap;overflow:hidden;padding:0 6px}
+.uq-pre .uq-track i{transform:scaleX(0)}
+.uq-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.uq-stat{padding:10px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.uq-stat small{font-size:11.5px;color:var(--faint);font-weight:700;line-height:1.3}
+.uq-stat b{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.uq-note{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:14px;background:var(--mint-soft);color:var(--ink);font-size:13.5px;line-height:1.45}
+.uq-note svg{width:18px;height:18px;flex:none;color:var(--mint-ink);margin-top:1px}
+/* cards */
+.uq-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.uq-dist{list-style:none;margin:0;padding:6px 20px 18px;display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;gap:9px 12px;align-items:center}
+.uq-dist li{display:contents;font-size:13.5px}.uq-dist li>span{font-size:13.5px}
+.uq-dist .k{font-weight:700;color:var(--muted);white-space:nowrap}
+.uq-dist .v{text-align:right;font-weight:800;white-space:nowrap}.uq-dist .v small{font-weight:700;color:var(--faint);margin-left:4px}
+.uq-mini{height:10px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.uq-mini i{display:block;height:100%;border-radius:99px;background:var(--brand);transform-origin:left;transition:transform .8s var(--ease)}
+.uq-dist li:first-child .uq-mini i{background:var(--mint-ink)}
+.uq-pairs{list-style:none;margin:0;padding:4px 12px 14px;display:flex;flex-direction:column;gap:4px}
+.uq-pair{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:14px}
+.uq-pair:hover{background:var(--sunk)}
+.uq-venn{position:relative;width:40px;height:26px;flex:none}
+.uq-venn i{position:absolute;top:0;width:26px;height:26px;border-radius:50%;opacity:.75}
+.uq-venn i:first-child{left:0;background:var(--brand)}.uq-venn i:last-child{right:0;background:var(--mint-ink)}
+.uq-pt{flex:1;min-width:0;display:flex;flex-direction:column}
+.uq-pt b{font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uq-pt small{color:var(--muted);font-size:12.5px}
+.uq-pn{text-align:right;flex:none}.uq-pn b{font-size:16px;font-weight:800;display:block}.uq-pn small{font-size:11.5px;color:var(--faint);font-weight:700}
+.uq-fl{display:flex;flex-direction:column;padding:2px 8px 12px}
+.uq-f{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px;border-radius:14px}
+.uq-f+.uq-f{border-top:1px solid var(--line)}
+.uq-fn{display:flex;gap:10px;align-items:center;min-width:0}
+.uq-fi{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--sunk);color:var(--muted);flex:none}.uq-fi svg{width:17px;height:17px}
+.uq-fn span{display:flex;flex-direction:column;min-width:0}
+.uq-fn b{font-size:14.5px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uq-fn small{font-size:12.5px;color:var(--muted)}
+.uq-split{display:flex;flex-direction:column;gap:5px;min-width:0}
+.uq-split .uq-mini{display:flex}.uq-split .uq-mini i{border-radius:0}.uq-split .uq-mini i.o{background:var(--mint-ink)}.uq-split .uq-mini i.s{background:var(--brand)}
+.uq-split small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uq-fv{text-align:right}.uq-fv b{font-size:17px;font-weight:800;display:block}.uq-fv small{font-size:11.5px;color:var(--faint);font-weight:700}
+.uq-key{display:flex;gap:14px;flex-wrap:wrap;padding:0 20px 2px;font-size:12px;color:var(--muted);font-weight:700}
+.uq-key i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.uq-how{padding:16px 20px}
+.uq-how summary{display:flex;align-items:center;gap:12px;cursor:pointer;list-style:none}
+.uq-how summary::-webkit-details-marker{display:none}
+.uq-how summary .mr-ic{flex:none}
+.uq-how summary>span:nth-child(2){flex:1;display:flex;flex-direction:column;min-width:0}
+.uq-how summary b{font-size:15.5px;font-weight:800}.uq-how summary small{color:var(--muted);font-size:13.5px}
+.uq-how summary>svg{width:18px;height:18px;color:var(--faint);transition:transform .2s;flex:none}
+.uq-how[open] summary>svg{transform:rotate(180deg)}
+.uq-how .au-steps{margin-top:14px}
+.uq-how .sel{max-width:100%;margin-top:12px}
+.uq-how .uq-keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.uq-foot{font-size:12.5px;color:var(--faint);text-align:center;margin:2px 0 6px;line-height:1.5}
+/* Overview strip */
+.uq-strip{display:flex;align-items:center;gap:12px;padding:12px 16px;width:100%;text-align:left;cursor:pointer;border:1px solid var(--line);font:inherit;color:inherit;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--brand-soft) 70%,var(--surface)),var(--surface) 75%);transition:transform .15s var(--ease),box-shadow .15s}
+.uq-strip:hover{box-shadow:var(--sh2);transform:translateY(-1px)}
+.uq-strip .mr-ic{flex:none}
+.uq-strip>span:nth-child(2){flex:1;min-width:0;font-size:14px;color:var(--muted);line-height:1.4}
+.uq-strip b{color:var(--ink);font-weight:800}
+.uq-strip>svg{width:18px;height:18px;color:var(--brand-text);flex:none}
+.uq-strip[hidden]{display:none}
+/* Who deposits */
+.uq-dep-lead{margin:2px 20px 10px;font-size:14.5px;line-height:1.5;color:var(--muted)}.uq-dep-lead b{color:var(--ink)}
+.uq-dep{display:flex;flex-direction:column;padding:4px 12px 14px}
+.uq-dep-r{display:grid;grid-template-columns:minmax(90px,1fr) minmax(120px,1.6fr) 90px 110px;gap:12px;align-items:center;padding:10px 8px;border-radius:12px}
+.uq-dep-r+.uq-dep-r{border-top:1px solid var(--line)}
+.uq-dep-r.h{padding-top:4px;padding-bottom:6px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.uq-dep-r.h>span:nth-child(n+3){text-align:right}
+.uq-dep-r .k{display:flex;flex-direction:column;font-weight:800;font-size:14px}.uq-dep-r .k small{font-weight:600;color:var(--muted);font-size:12px}
+.uq-dep-r .rt{display:flex;align-items:center;gap:10px;min-width:0}.uq-dep-r .rt .uq-mini{flex:1}.uq-dep-r .rt .uq-mini i{background:var(--mint-ink)}.uq-dep-r .rt b{font-size:14px;min-width:46px;text-align:right}.uq-dep-r .rt .rl{display:none;font-size:11.5px;font-weight:700;color:var(--faint);white-space:nowrap}
+.uq-dep-r>span:nth-child(3),.uq-dep-r>span:nth-child(4){text-align:right;font-weight:700;font-size:14px}
+.uq-dep-r .v{font-weight:800}.uq-dep-r .v .pp{display:none;font-size:11px;font-weight:600;color:var(--faint)}.uq-dep-r .v svg{width:15px;height:15px;color:var(--faint);vertical-align:-2px}
+@media (max-width:640px){.uq-dep{padding:2px 6px 12px}.uq-dep-r{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px}.uq-dep-r.h{display:none}
+  .uq-dep-r .rt{grid-column:1 / -1;order:3}.uq-dep-r>span:nth-child(3){display:none}.uq-dep-r .v{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}.uq-dep-r .v .pp{display:block}.uq-dep-r .rt .rl{display:block}.uq-dep-lead{margin:0 16px 8px}}
+/* blog figures in the dashboard's Blog reader (round 21 post) */
+.prose .pfig{margin:1.6em 0 1.8em}
+.prose .pfig img{display:block;width:100%;height:auto;border-radius:16px;border:1px solid var(--line);background:#fff}
+.prose .pfig figcaption{margin-top:10px;font-size:13.5px;line-height:1.5;color:var(--muted);text-align:center}
+.prose .pfig.narrow{max-width:380px;margin-left:auto;margin-right:auto}
+@media (max-width:900px){.uq-g{grid-template-columns:1fr}}
+@media (max-width:640px){
+  .uq21{gap:12px}
+  .uq-hero{padding:14px 14px 16px;gap:12px}
+  .uq-big{margin-top:2px}.uq-big .kn{font-size:36px}.uq-big span{font-size:16px}
+  .uq-lead{font-size:14px;line-height:1.45;margin-top:4px}
+  .uq-hh .uq-src button{height:28px;padding:0 10px;font-size:12px}
+  .uq-track{height:24px;border-radius:10px}
+  .uq-row{grid-template-columns:1fr;gap:6px}.uq-row>span{flex-direction:row;align-items:baseline;justify-content:space-between}
+  .uq-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.uq-stat{padding:9px 10px}.uq-stat b{font-size:16px}
+  .uq-f{grid-template-columns:minmax(0,1fr) auto;gap:8px 12px}.uq-split{grid-column:1 / -1;order:3}
+  .uq-dist{gap:9px 8px}
+  .uq-how .uq-keys{grid-template-columns:1fr}
+  .uq-strip>span:nth-child(2){font-size:13.5px}
+}
+@media (prefers-reduced-motion:reduce){.uq-track i,.uq-mini i{transition:none}}
+</style>
 
 <div id="root"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
@@ -8061,7 +8184,7 @@ Object.assign(PAGES,{
   report:{t:'Daily report',fn:()=>viewReport()},
 });
 PAGES.help.t='Help & tutorials'; PAGES.wallet.t='Credits & billing';
-const RES_TABS = () => [['results',tt('res.t.sum','Summary')],['people',tt('res.t.people','People')],['campaigns',tt('res.t.camp','Campaigns')],FEAT('ftd')&&['conversions',tt('res.t.dep','Deposits')],['compare',tt('res.t.cmp','Compare')],teamOn()&&['leaderboard',tt('res.t.team','Team')]].filter(Boolean);
+const RES_TABS = () => [['results',tt('res.t.sum','Summary')],['people',tt('res.t.people','People')],FEAT('unique_report')&&['unique',tt('res.t.uniq','Unique people')],['campaigns',tt('res.t.camp','Campaigns')],FEAT('ftd')&&['conversions',tt('res.t.dep','Deposits')],['compare',tt('res.t.cmp','Compare')],teamOn()&&['leaderboard',tt('res.t.team','Team')]].filter(Boolean);
 const RES_SET = new Set(['results','people','campaigns','conversions','compare','leaderboard']);
 const MORE_SET = new Set(['more','team','report','wallet','earn','help','me','levels','learn','apps','replyvoo']);
 const teamOn = () => !isOwner() || !!(R17.team&&R17.team.members&&R17.team.members.some(m=>m.status==='active'));
@@ -9801,6 +9924,171 @@ function r20SupDot(){ const d=$('.side .sup-nav .sup-on'); if (d) d.hidden=!(aiS
   try{ if(!tzDone&&!DEMO&&S.me&&!S.me.tz){ tzDone=true; const z=Intl.DateTimeFormat().resolvedOptions().timeZone; if(z) api('PATCH','/api/me',{tz:z}).then(()=>{ if(S.me) S.me.tz=z; }).catch(()=>{}); } }catch{}
   return r; }; }
 
+/* ================= round 21: Results → Unique people =================
+   One person (Telegram ID) is counted once, however many funnels they joined. Read-only report: GET /api/unique.
+   Also a one-line strip under the Overview tiles that opens it. Admin switch: features.unique_report. */
+const UQ_ON = () => FEAT('unique_report');
+PAGES.unique = {t:'Unique people', fn:()=>viewUnique()};
+RES_SET.add('unique');
+const UQ = { src: store.get('uq.src','all')==='ads'?'ads':'all' };
+const uqPct = v => (Math.round((v||0)*10)/10).toLocaleString('en-US')+'%';
+const uqType = t => t==='dm'?tt('uq.t.dm','DM link'):t==='bot'?tt('uq.t.bot','Bot'):t==='group'||t==='supergroup'?tt('uq.t.group','Group'):tt('uq.t.ch','Channel');
+/* Everyone / From ads: sits in the report card's top row (one row less above the numbers on phones) */
+const uqSrcSeg = () => `<div class="seg uq-src" role="group" aria-label="${esc(tt('uq.src','Who to count'))}"><button data-act="uq-src" data-v="all" aria-pressed="${UQ.src==='all'}">${tt('uq.src.all','Everyone')}</button><button data-act="uq-src" data-v="ads" aria-pressed="${UQ.src==='ads'}">${tt('uq.src.ads','From ads')}</button></div>`;
+const uqIcon = t => t==='dm'?(typeof ICO_DM!=='undefined'?ICO_DM:I.chat):t==='bot'?I.bot:t==='group'||t==='supergroup'?I.people:I.channels;
+function uqQuery(src=UQ.src){ const [f,t]=range(); return `from=${f}&to=${t}&${tzq()}${src==='ads'?'&src=ads':''}`; }
+
+/* ---- demo account: a believable overlap built from the sample channels' own numbers ---- */
+async function uqDemo(src){
+  const [f,t]=range(), list=visChans(S.chans).filter(c=>c.status!=='removed');
+  const hsh=s=>{ let x=2166136261; for(const c of String(s)){ x^=c.charCodeAt(0); x=Math.imul(x,16777619);} return (x>>>0)/4294967296; };
+  const fun=[];
+  for (const c of list){ let st; try { st=await api('GET',`/api/stats?from=${f}&to=${t}&${tzq()}&channel=${c.id}`); } catch { continue; }
+    const P=Math.round(((st.totals.joins||0)+(src==='ads'?0:(st.totals.organic||0)))*.94); if(!P) continue;
+    const s=.2+hsh(c.id+'s')*.28, sh=Math.round(P*s); fun.push({id:c.id,title:c.title,type:c.type,removed:false,people:P,shared:sh,only_here:P-sh,from_ads:Math.round((st.totals.joins||0)*.94),shared_pct:Math.round(sh/P*1000)/10}); }
+  if (fun.length<2) fun.forEach(x=>{ x.only_here=x.people; x.shared=0; x.shared_pct=0; });
+  const S2=fun.reduce((a,x)=>a+x.shared,0), w=[0,0,.8,.15,.04,.01], m=[0,0,0,0,0,0];
+  for (let k=2;k<=5;k++) m[k]=Math.round(S2*w[k]/(k===5?5.4:k));
+  const only=fun.reduce((a,x)=>a+x.only_here,0), people=only+m[2]+m[3]+m[4]+m[5], joins=only+2*m[2]+3*m[3]+4*m[4]+Math.round(5.4*m[5]);
+  const pairs=[]; for(let i=0;i<fun.length;i++) for(let j=i+1;j<fun.length;j++){ const a=fun[i],b=fun[j], n=Math.round(a.shared*b.shared/Math.max(1,S2)*1.7*(.6+hsh(a.id+'-'+b.id)*.8)); if(n>0) pairs.push({a:{id:a.id,title:a.title,type:a.type},b:{id:b.id,title:b.title,type:b.type},people:Math.min(n,a.people,b.people),pct_of_smaller:Math.round(Math.min(n,a.people,b.people)/Math.min(a.people,b.people)*1000)/10}); }
+  pairs.sort((x,y)=>y.people-x.people);
+  const rep=people-only;
+  return { people, funnel_joins:joins, repeat_people:rep, extra_joins:joins-people, repeat_rate:people?Math.round(rep/people*1000)/10:0, avg_funnels:people?Math.round(joins/people*100)/100:0,
+    dist:[1,2,3,4,5].map(n=>({funnels:n,plus:n===5,people:n===1?only:m[n]})), funnels:fun.sort((a,b)=>b.people-a.people), pairs:pairs.slice(0,12), funnel_count:fun.length, src,
+    repeat_filtered:Math.round(people*.004), /* demo: a few people left and rejoined the same funnel */
+    quality:(()=>{ const R=[.078,.131,.184], V=[540,1020,1610], P=[only,m[2],m[3]+m[4]+m[5]];
+      const buckets=P.map((p,i)=>({funnels:i===2?'3+':String(i+1),people:p,depositors:Math.round(p*R[i]),deposits:Math.round(p*R[i]*1.4),deposit_rate:Math.round(R[i]*1000)/10,revenue_cents:p*V[i],value_per_person_cents:V[i]}));
+      const mp=P[1]+P[2], md=buckets[1].depositors+buckets[2].depositors;
+      return {has_deposits:true,locked:false,buckets,multi_earn:Math.round(md*.42),multi:{people:mp,depositors:md,deposit_rate:mp?Math.round(md/mp*1000)/10:0},rate_lift:mp&&buckets[0].deposit_rate?Math.round((md/mp*100)/buckets[0].deposit_rate*100)/100:null}; })(), computed_at:Date.now(), demo:true };
+}
+const uqMem = new Map();
+async function uqLoad(src=UQ.src){
+  const k=uqQuery(src)+'|'+(R17.ws&&R17.ws.current?R17.ws.current.owner_id:'');
+  const m=uqMem.get(k); if (m && Date.now()-m.at<120000) return m.d;
+  const d = DEMO ? await uqDemo(src) : await api('GET','/api/unique?'+uqQuery(src));
+  if (uqMem.size>20) uqMem.clear(); uqMem.set(k,{d,at:Date.now()}); return d;
+}
+
+/* ---- the page ---- */
+async function viewUnique(){
+  S.redraw=[];
+  if (!UQ_ON()){ go('results'); return; }
+  $('#view').innerHTML=`<div class="view uq21">
+    <div class="uq-top">${rangePills()}</div>
+    <section class="card uq-hero uq-pre" id="uqhero"><div class="sk" style="height:22px;width:140px"></div><div class="sk" style="height:46px;width:60%"></div><div class="sk" style="height:70px"></div></section>
+    <div id="uqrest"><div class="uq-g"><section class="card"><div class="sk" style="height:180px;margin:16px"></div></section><section class="card"><div class="sk" style="height:180px;margin:16px"></div></section></div></div>
+  </div>`;
+  let d; try { d=await uqLoad(); } catch(e){ if (S.page!=='unique') return; const h=$('#uqhero'); if(h){ h.classList.remove('uq-pre'); h.innerHTML=`<div class="empty"><span class="ei">${I.people}</span><h3>${esc(e.message||tt('uq.err','The report couldn’t load just now.'))}</h3><button class="btn sm" data-act="uq-retry">${I.refresh} ${tt('uq.retry','Try again')}</button></div>`; } $('#uqrest').innerHTML=''; return; }
+  if (S.page!=='unique' || !$('#uqhero')) return;
+  uqDraw(d);
+}
+function uqDraw(d){
+  const hero=$('#uqhero'), rest=$('#uqrest'); if(!hero||!rest) return;
+  const ads=d.src==='ads';
+  if (!d.people){
+    hero.classList.remove('uq-pre');
+    hero.innerHTML=`<div class="uq-hh"><span class="uq-eb">${ads?tt('uq.eb.ads','Unique people from ads'):tt('uq.eb','Unique people')}</span>${uqSrcSeg()}</div><div class="empty" style="padding:24px 12px"><span class="ei">${I.people}</span><h3>${ads?tt('uq.e.ads','No one joined from your ads in these dates'):tt('uq.e','No one joined in these dates')}</h3><p>${tt('uq.e.p','Pick a longer date range, or check back once people start joining.')}</p></div>`;
+    rest.innerHTML=''; return;
+  }
+  const one=d.funnel_count<2, share=d.funnel_joins?d.people/d.funnel_joins:1;
+  hero.innerHTML=`<div><div class="uq-hh"><span class="uq-eb">${ads?tt('uq.eb.ads','Unique people from ads'):tt('uq.eb','Unique people')}</span>${uqSrcSeg()}</div>
+      <div class="uq-big"><b class="kn num" id="uqn">${fmt(d.people)}</b><span>${d.people===1?tt('uq.person','person'):tt('uq.people','people')}</span></div>
+      <p class="uq-lead">${one?tt('uq.lead1','All your joins in these dates came through one funnel, so everyone is counted once.')
+        :tt('uq.lead','You got <b>{j}</b> joins across <b>{f}</b> funnels, from <b>{p}</b> different people. <b>{r}</b> of them ({rp}) joined more than one funnel.',{j:fmt(d.funnel_joins),f:fmt(d.funnel_count),p:fmt(d.people),r:fmt(d.repeat_people),rp:uqPct(d.repeat_rate)})}</p></div>
+    <div class="uq-bars" aria-hidden="true">
+      <div class="uq-row"><span>${tt('uq.bar.j','Joins across funnels')}<b class="num">${fmt(d.funnel_joins)}</b></span><div class="uq-track"><i class="j" style="width:100%"></i></div></div>
+      <div class="uq-row"><span>${tt('uq.bar.p','Different people')}<b class="num">${fmt(d.people)}</b></span><div class="uq-track"><i class="p" style="width:${(share*100).toFixed(2)}%"></i>${d.extra_joins>0?`<i class="r" style="width:${((1-share)*100).toFixed(2)}%">${share<.82?tt('uq.bar.r','{n} repeat joins',{n:fmt(d.extra_joins)}):''}</i>`:''}</div></div>
+    </div>
+    <div class="uq-stats">
+      <div class="uq-stat"><small>${tt('uq.s.multi','In 2+ funnels')}</small><b class="num">${fmt(d.repeat_people)}</b></div>
+      <div class="uq-stat"><small>${tt('uq.s.avg','Funnels per person')}</small><b class="num">${(d.avg_funnels||0).toFixed(2)}</b></div>
+      <div class="uq-stat"><small>${tt('uq.s.rep','Repeat joins')}</small><b class="num">${fmt(d.extra_joins)}</b></div>
+    </div>
+    ${d.repeat_filtered>0?`<div class="uq-note">${I.checkc}<span>${tt('uq.free','{n} people left a funnel and rejoined the same funnel from an ad within 7 days. Joinvoo counted them once and didn’t charge you twice.',{n:fmt(d.repeat_filtered)})}</span></div>`:''}`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>hero.classList.remove('uq-pre')));
+  if (!reduced){ const n=$('#uqn'); if(n) count(n, d.people, ''); }
+
+  const maxD=Math.max(1,...d.dist.map(x=>x.people));
+  const dist=`<section class="card"><div class="card-h"><h2>${tt('uq.dist.h','Funnels per person')}</h2><span class="sub">${tt('uq.dist.s','How many of your funnels each person joined')}</span></div>
+    <ol class="uq-dist">${d.dist.map(x=>`<li><span class="k">${x.plus?tt('uq.dist.5','5 or more'):x.funnels===1?tt('uq.dist.1','1 funnel'):tt('uq.dist.n','{n} funnels',{n:x.funnels})}</span><span class="uq-mini"><i style="transform:scaleX(${x.people/maxD})"></i></span><span class="v num">${fmt(x.people)}<small>${uqPct(d.people?x.people/d.people*100:0)}</small></span></li>`).join('')}</ol></section>`;
+  const pairs=d.pairs.filter(p=>p.people>0);
+  const pr=`<section class="card"><div class="card-h"><h2>${tt('uq.pairs.h','Funnels sharing people')}</h2><span class="sub">${tt('uq.pairs.s','Most shared first')}</span></div>
+    ${pairs.length?`<ul class="uq-pairs">${pairs.slice(0,6).map(p=>`<li class="uq-pair"><span class="uq-venn"><i></i><i></i></span><span class="uq-pt"><b>${esc(p.a.title)} + ${esc(p.b.title)}</b><small>${tt('uq.pairs.pct','{p} of the smaller funnel',{p:uqPct(p.pct_of_smaller)})}</small></span><span class="uq-pn"><b class="num">${fmt(p.people)}</b><small>${tt('uq.people','people')}</small></span></li>`).join('')}</ul>`
+      :`<div class="empty" style="padding:28px 18px"><p>${one?tt('uq.pairs.one','Add a second funnel to see who joins more than one.'):tt('uq.pairs.none','No one is in more than one of your funnels. Every join is a new person.')}</p></div>`}</section>`;
+  const fl=`<section class="card"><div class="card-h"><h2>${tt('uq.f.h','Each funnel')}</h2>${DEMO?'':`<button class="btn sm" data-act="uq-csv" ${d.repeat_people?'':'disabled'}>${I.download} ${tt('uq.csv','People in 2+ funnels')}</button>`}</div>
+    <div class="uq-key"><span><i style="background:var(--mint-ink)"></i>${tt('uq.k.only','Only in this funnel')}</span><span><i style="background:var(--brand)"></i>${tt('uq.k.shared','Also in another funnel')}</span></div>
+    <div class="uq-fl">${d.funnels.map(f=>`<div class="uq-f"><div class="uq-fn"><span class="uq-fi">${uqIcon(f.type)}</span><span><b>${esc(f.title)}</b><small>${uqType(f.type)}${f.removed?' · '+tt('uq.removed','removed'):''}</small></span></div>
+      <div class="uq-split"><span class="uq-mini"><i class="o" style="width:${f.people?f.only_here/f.people*100:0}%"></i><i class="s" style="width:${f.people?f.shared/f.people*100:0}%"></i></span><small>${f.shared?tt('uq.f.sh','{p} also in another funnel',{p:uqPct(f.shared_pct)}):tt('uq.f.only','Everyone here is only here')}</small></div>
+      <div class="uq-fv"><b class="num">${fmt(f.people)}</b><small>${tt('uq.people','people')}</small></div></div>`).join('')}</div></section>`;
+  rest.innerHTML=`<div class="uq-g">${dist}${pr}</div>${uqDeposits(d)}${fl}${!one&&d.repeat_people?uqHow(d):''}
+    <p class="uq-foot">${tt('uq.foot','Counted by Telegram ID, so each person counts once. Someone with two Telegram accounts counts twice. Fake joins are left out. Clicks without a join aren’t included.')}</p>`;
+}
+/* Who deposits: people in 1 vs 2 vs 3+ funnels (everything the people who joined in these dates deposited since) */
+function uqDeposits(d){
+  const q=d.quality||{}, head=`<div class="card-h"><h2>${tt('uq.dep.h','Who deposits')}</h2><span class="sub">${tt('uq.dep.s','People who joined in these dates, and what they deposited since')}</span></div>`;
+  if (!q.has_deposits) return `<section class="card">${head}<div class="empty" style="padding:22px 18px 26px"><span class="ei">${I.coin}</span><h3>${tt('uq.dep.none','See whether people in 2+ funnels deposit more')}</h3><p>${tt('uq.dep.none.p','Connect deposit tracking and this shows the deposit rate and value per person for people in 1, 2 and 3+ funnels.')}</p>${FEAT('ftd')?`<button class="btn sm primary" data-act="nav" data-p="conversions">${tt('uq.dep.setup','Set up deposit tracking')} ${I.arrow}</button>`:''}</div></section>`;
+  const B=q.buckets||[], maxR=Math.max(0.1,...B.map(b=>b.deposit_rate||0)), L=q.rate_lift;
+  const lead = L==null ? '' : L>=1.05 ? tt('uq.dep.more','People in 2+ funnels deposit <b>{x}×</b> as often as people in one funnel.',{x:L.toFixed(1)})
+    : L<=0.95 ? tt('uq.dep.less','People in 2+ funnels deposit less often than people in one funnel (<b>{x}×</b>).',{x:L.toFixed(1)}) : tt('uq.dep.same','People in 2+ funnels deposit about as often as people in one funnel.');
+  const lbl=f=>f==='1'?tt('uq.dist.1','1 funnel'):f==='3+'?tt('uq.dep.3','3 or more'):tt('uq.dist.n','{n} funnels',{n:f});
+  return `<section class="card">${head}
+    ${lead||q.multi_earn?`<p class="uq-dep-lead">${lead}${q.multi_earn?` ${tt('uq.dep.multi','<b>{n}</b> people deposited through 2 or more of your funnels.',{n:fmt(q.multi_earn)})}`:''}</p>`:''}
+    <div class="uq-dep" role="table"><div class="uq-dep-r h" role="row"><span role="columnheader">${tt('uq.dep.c1','Joined')}</span><span role="columnheader">${tt('uq.dep.c2','Deposit rate')}</span><span role="columnheader">${tt('uq.dep.c3','Depositors')}</span><span role="columnheader">${tt('uq.dep.c4','Value per person')}</span></div>
+    ${B.map(b=>`<div class="uq-dep-r" role="row"><span class="k" role="cell">${lbl(b.funnels)}<small>${fmt(b.people)} ${tt('uq.people','people')}</small></span>
+      <span role="cell" class="rt"><small class="rl">${tt('uq.dep.c2','Deposit rate')}</small><span class="uq-mini"><i style="transform:scaleX(${(b.deposit_rate||0)/maxR})"></i></span><b class="num">${uqPct(b.deposit_rate)}</b></span>
+      <span role="cell" class="num">${fmt(b.depositors)}</span>
+      <span role="cell" class="num v">${b.value_per_person_cents==null?(q.locked?I.lock:'—'):money(b.value_per_person_cents)}<small class="pp">${tt('uq.dep.pp','per person')}</small></span></div>`).join('')}</div>
+    ${q.locked?`<p class="hint" style="padding:0 20px 16px">${tt('uq.dep.lock','Value per person is a Pro detail.')} <button class="link" data-act="plan-up">${tt('pro.unlock','Unlock with Pro')}</button></p>`:''}</section>`;
+}
+/* Optional: exclude people already in one funnel from another funnel's ads (Meta custom audience from Joinvoo’s own events) */
+function uqHow(d){
+  const chs=visChans(S.chans).filter(c=>c.status!=='removed'&&c.pixel_id);
+  const top=d.pairs[0], pick=(top&&chs.find(c=>c.id===top.a.id||c.id===top.b.id))||chs[0];
+  return `<details class="card uq-how"><summary><span class="mr-ic">${I.target}</span><span><b>${tt('uq.how.h','Want a funnel to find only new people?')}</b><small>${tt('uq.how.s','Optional. People in more than one funnel can earn you more than once, so often they’re worth it. When a funnel should only reach new people, exclude the ones already in another funnel.')}</small></span>${I.chev}</summary>
+    ${pick?`<label class="hint" for="uqch" style="display:block;margin-top:14px">${tt('uq.how.pick','People already in')}</label><select class="sel" id="uqch" data-uq-how>${chs.map(c=>`<option value="${c.id}" ${c.id===pick.id?'selected':''}>${esc(c.title)}</option>`).join('')}</select><div id="uqhow">${uqSteps(pick)}</div>`
+      :`<p class="hint" style="margin-top:12px">${tt('uq.how.nopx','Connect Meta to your funnels first (Channels → Settings → Ad platforms). Joinvoo then sends every join to your pixel, and you can build the audience from it.')}</p>`}</details>`;
+}
+function uqSteps(c){
+  const ev=c.event_name||(c.type==='dm'?'Lead':'Subscribe');
+  return `<div class="uq-keys"><div class="dm-rec"><span class="dm-k">${tt('au.ev','Event')}</span><div class="codebox"><code>${esc(ev)}</code><button class="btn sm" data-act="copy" data-v="${esc(ev)}">${I.copy}</button></div></div>
+    <div class="dm-rec"><span class="dm-k">content_name</span><div class="codebox"><code>${esc(c.title)}</code><button class="btn sm" data-act="copy" data-v="${esc(c.title)}">${I.copy}</button></div></div></div>
+    <ol class="au-steps">${[tt('uq.st1','In Meta Ads Manager, open Audiences → Create audience → Custom audience → Website.'),
+      tt('uq.st2','Pick your pixel ({px}) and the event {ev}.',{px:esc(c.pixel_id),ev:`<b>${esc(ev)}</b>`}),
+      tt('uq.st3','Tap Refine by → Parameters, and choose content_name contains “{t}”. Joinvoo sends the funnel name with every join.',{t:esc(c.title)}),
+      tt('uq.st4','Keep people for 180 days and name it “Already in {t}”.',{t:esc(c.title)}),
+      tt('uq.st5','In your other funnel’s ad set, go to Audience → Exclude and add this audience.')].map((s,i)=>`<li><span class="n">${i+1}</span><span>${s}</span></li>`).join('')}</ol>
+    <p class="hint" style="margin-top:10px">${tt('uq.st.note','Meta can only exclude the people it can match, so the audience is usually a bit smaller than your real number.')}</p>`;
+}
+function uqCsv(){
+  if (DEMO){ toast(tt('r19.dl.demo','Downloads work on your live account'),false); return; }
+  toast(tt('r19.dl.wait','Preparing your download…'));
+  fetch('/api/unique.csv?'+uqQuery(),{credentials:'same-origin'}).then(async r=>{
+    if(!r.ok){ let m=''; try{ m=(await r.json()).error; }catch{} throw new Error(m||tt('r19.dl.err','Download failed. Try again.')); }
+    const b=await r.blob(), a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='joinvoo-unique-people.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500);
+  }).catch(e=>toast(e.message,false));
+}
+document.addEventListener('click', e=>{
+  const a=e.target.closest('[data-act]'); if(!a) return;
+  switch(a.dataset.act){
+    case 'uq-src': { const v=a.dataset.v==='ads'?'ads':'all'; if (v===UQ.src) break; UQ.src=v; store.set('uq.src',v); viewUnique(); break; }
+    case 'uq-retry': uqMem.clear(); viewUnique(); break;
+    case 'uq-csv': uqCsv(); break;
+  }
+});
+document.addEventListener('change', e=>{ const s=e.target.closest('[data-uq-how]'); if(!s) return; const c=chById(s.value), el=$('#uqhow'); if(c&&el) el.innerHTML=uqSteps(c); });
+
+/* ---- Overview: one quiet line under the tiles, only when there are 2+ funnels ---- */
+async function uqStrip(){
+  if (!UQ_ON() || S.page!=='overview') return;
+  const k=$('#kpis'); if(!k || $('#uqstrip')) return;
+  if (visChans(S.chans).filter(c=>c.status!=='removed').length<2) return;
+  k.insertAdjacentHTML('afterend',`<button class="card uq-strip" id="uqstrip" data-act="nav" data-p="unique" hidden><span class="mr-ic">${I.people}</span><span></span>${I.arrow}</button>`);
+  let d; try { d=await uqLoad('all'); } catch { return; }
+  const el=$('#uqstrip'); if(!el || S.page!=='overview' || !d.people || d.funnel_count<2) return;
+  el.querySelector('span:nth-child(2)').innerHTML=tt('uq.strip','<b>{p}</b> unique people · <b>{r}</b> joined more than one funnel',{p:fmt(d.people),r:uqPct(d.repeat_rate)});
+  el.hidden=false;
+}
+{ const vo=viewOverview; viewOverview=async function(){ const p=vo(); try { await p; } finally { uqStrip(); } }; }
 
 /* ================= DEMO BACKEND (sample data, in the browser) ================= */
 const Demo = (() => {

@@ -32,6 +32,7 @@ dashboard (/app), admin (/admin), website, blog ──► server.js (JSON API + 
 | telegram webhook | `onUpdate` → `onBotUpdate` (bot Starts), `chat_member` joins, `onJoinRequest` (request-to-join mode); all joins go through `recordJoin` (fraud filter, send, count, charge) |
 | conversions | `recordConversion` (postback or manual: reg, ftd, dep, sale, qualified, rejected), `onPostback` |
 | click page | `clickPage` (pixels + redirect), `onClick` (records click, hands out an invite link), fake-click flags |
+| unique people (round 21) | `uniqueReport`, `uniqueCsv`: `UNIQ_CODE` runs in a `worker_threads` Worker on a read-only connection (temp tables `uniq_p`, `uniq_n`), cached per account + scope + range; main-thread fallback only with `UNIQUE_THREAD=off` |
 | reports | `stats`, `breakdown` (campaign, adset, ad, lang, source, country, platform, channel), `comparePeriods`, `compareInsights`, `compareCampaigns`, `compare` (months), `funnel`, `cohorts`, `joinsQuery`, `conversionsView` |
 | profile, levels, Joe | `profileChanges`, `meView`, `levelView`/`updateLevel`, `giveCredits`, Joe (`joeInsights`, `joeRules`, `joeAi`, tools) |
 | `api()` | every `/api/*` route for customers; `adminApi()` for `/api/admin/*` |

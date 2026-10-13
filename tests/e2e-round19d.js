@@ -24,7 +24,7 @@ function brain(b) {
     if (prev.name === 'billing_history') { const d = (res.topups || []).find((x) => x.status !== 'paid'); return d ? use('recheck_payment', { reference: d.reference }) : say('I can’t see a pending top-up on your account.'); }
     if (prev.name === 'recheck_payment') return say(res.credited ? `Good news!\n~~\nYour payment of $${res.amount_usd} is confirmed and the credits are on your account now ✅` : 'The payment provider hasn’t confirmed it yet.\n~~\nCrypto can take a few minutes, want me to check again shortly?');
     if (prev.name === 'handoff_to_human') return say('Thanks for your patience 🙏\n~~\nI’ll get my team on this right away and get back to you here.');
-    if (prev.name === 'account_overview') return say(`Your balance is ${res.credits} credits and tracking is ${res.tracking && res.tracking.ok ? 'on' : 'off'}.`);
+    if (prev.name === 'account_overview') return say(`Your balance is ${res.balance && res.balance.say_it_like_this} and tracking is ${res.tracking && res.tracking.ok ? 'on' : 'off'}.`);
     if (prev.name === 'link_account_send_code') return say('I’ve sent a 6-digit code to that email if there’s an account there.\n~~\nPaste it here when you get it 🙂');
     if (prev.name === 'link_account_verify_code') return say(res.linked ? 'Perfect, you’re verified ✅\n~~\nWhat can I help you with?' : 'Hmm, that code didn’t work. Want a new one?');
     if (prev.name === 'fix_bot') return say(res.note || 'Done.');
@@ -155,7 +155,7 @@ const ai = http.createServer((req, res) => { let raw = ''; req.on('data', (c) =>
   assert(sent.some((m) => /you’re verified/.test(m.text)), 'right code → this Telegram chat is linked to the account');
   seen.length = 0; await tgm('what is my balance'); await sleep(5000);
   sent = (await ms()).msgs.filter((m) => m.chat_id === 5551);
-  assert(seen.some((x) => x.tools.includes('account_overview')) && sent.some((m) => /Your balance is 2000 credits/.test(m.text)), 'linked → it can look at the account and answer');
+  assert(seen.some((x) => x.tools.includes('account_overview')) && sent.some((m) => /Your balance is 2,000 credits \(about \$20\.00\)/.test(m.text)), 'linked → it can look at the account and answer, with the balance in credits AND dollars (round 21)');
   assert((await ms()).actions ? true : true, 'Telegram typing indicator sent before messages');
   r = await ADM('/api/admin/support-ai'); assert(r.j.telegram && r.j.today.calls > 0 && r.j.stats_7d.chats > 0, 'admin shows the bot, today’s AI use and 7-day stats');
   r = await post(ADM, '/api/admin/support-ai/try', { message: 'how much is pro?' }); assert(r.j.ok && r.j.bubbles.length === 3, 'admin “Try it” box answers like a customer would see');

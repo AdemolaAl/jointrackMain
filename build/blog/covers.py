@@ -511,12 +511,41 @@ def manager_chat(c):
     c.spark(1130, 110, 22); c.spark(70, 590, 14, WHITE); c.spark(700, 560, 12, LIME)
 
 
+def overlap(c):
+    """Three overlapping funnel circles full of people dots, the shared middle lit up, and a 'unique people' card."""
+    c.glow(420, 330, 320, VIOLET2, 110, 110); c.glow(980, 420, 240, MINT, 60, 100); c.dots(a=18)
+    c.brand()
+    circles = [(330, 270, LILAC2), (500, 270, MINT), (415, 420, LIME)]
+    for x, y, col in circles: c.circle(x, y, 150, col, 46, outline=col, ow=4, oa=230)
+    import random; r = random.Random(21)
+    for _ in range(140):
+        x, y = r.uniform(170, 660), r.uniform(110, 580)
+        inside = [(x - cx) ** 2 + (y - cy) ** 2 < 140 ** 2 for cx, cy, _ in circles]
+        n = sum(inside)
+        if not n: continue
+        c.circle(x, y, 6 if n == 1 else 8, WHITE if n == 1 else LIME, 150 if n == 1 else 255)
+    c.circle(415, 320, 30, WHITE); c.text(415, 320, '3', 26, INK, anchor='mm')
+    c.line(smooth([(470, 330), (620, 300), (760, 260)], 16), LIME, w=6, dash=(14, 10))
+    c.poly([(774, 256), (750, 246), (754, 272)], LIME)
+    c.shadow(780, 170, 340, 190, 28)
+    c.card(780, 170, 340, 190, 28, WHITE, shadow=False)
+    c.text(812, 210, 'Unique people', 22, (110, 100, 150), anchor='lm')
+    c.text(812, 262, '6,000', 52, INK, anchor='lm')
+    c.rr(812, 304, 276, 14, 7, LILAC); c.rr(812, 304, 174, 14, 7, MINT)
+    c.text(812, 338, 'from 9,500 joins', 20, (110, 100, 150), anchor='lm')
+    c.shadow(820, 400, 260, 120, 24)
+    c.card(820, 400, 260, 120, 24, WHITE, shadow=False)
+    for i, (h, col) in enumerate([(70, MINT), (44, VIOLET), (22, VIOLET), (12, VIOLET)]):
+        c.rr(850 + i * 54, 500 - h, 34, h, 8, col)
+    c.spark(1140, 110, 22); c.spark(80, 590, 14, WHITE); c.spark(720, 560, 12, LIME)
+
+
 SCENES = {
     'meta_joins': (meta_joins, VIOLET, DEEP), 'capi': (capi, DEEP, VIOLET), 'fake_joins': (fake_joins, INK, VIOLET),
     'tiktok': (tiktok, DEEP, (60, 30, 140)), 'snapchat': (snapchat, LILAC, LILAC), 'cost_ftd': (cost_ftd, VIOLET, INK),
     'postbacks': (postbacks, (70, 44, 210), DEEP), 'utm': (utm, DEEP, (76, 50, 220)), 'scaling': (scaling, (80, 52, 230), INK),
     'bot_vs_channel': (bot_vs_channel, INK, (70, 44, 210)), 'backup': (backup, DEEP, (88, 58, 240)), 'numbers': (numbers, VIOLET, (40, 24, 110)),
-    'manager_chat': (manager_chat, DEEP, (70, 44, 210)),
+    'manager_chat': (manager_chat, DEEP, (70, 44, 210)), 'overlap': (overlap, DEEP, VIOLET),
 }
 
 
@@ -535,6 +564,7 @@ COVERS = {
     'backup-channels-ban-proof-telegram-funnel': 'backup',
     'reading-your-numbers-roas-cpl-ftd-rate': 'numbers',
     'track-telegram-dms-and-mini-apps-from-ads': 'manager_chat',
+    'unique-people-across-telegram-funnels': 'overlap',
 }
 
 

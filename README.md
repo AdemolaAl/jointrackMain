@@ -158,7 +158,7 @@ Rookie (0) → Hustler (1,000) → Operator (5,000) → Shark (25,000) → Whale
 Joe gives every customer insights from their own numbers (always on, no AI needed) and a chat. With `ANTHROPIC_API_KEY` (or a key saved in /admin → Settings → Joe) the chat uses the Anthropic Messages API with read-only tools over that customer’s data. Without a key it answers from their numbers and `joe/knowledge.md`. Free Joe chats every day per plan, then pay-as-you-go: each AI answer is priced from its real token cost × your markup and paid in credits (Settings → Joe → Pricing, with a Joe earnings report); “Test Joe” console in admin. Joe never invents numbers. See [TRAINING.md](TRAINING.md).
 
 ## Fake joins, smart links, alerts
-- Joins that look fake (bursts, deleted accounts, repeat users within 7 days, joins from bot or data-centre clicks) are recorded but **not sent** to the ad platforms and not charged. See them in People → Filtered.
+- Joins that look fake (bursts, deleted accounts, people rejoining the same channel or bot from an ad within 7 days, joins from bot or data-centre clicks) are recorded but **not sent** to the ad platforms and not charged. See them in People → Filtered.
 - **Backup channel**: point a channel’s tracking link at another channel (`redirect_to`) and the ads keep working without edits.
 - Telegram alerts add: no joins for 2 hours on a channel that usually has them, a campaign with FTDs yesterday and none by 18:00 local, and a morning summary at 08:00 in the customer’s time zone.
 

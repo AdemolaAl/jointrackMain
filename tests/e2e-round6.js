@@ -100,7 +100,10 @@ const ai = http.createServer((req, res) => { let b = ''; req.on('data', (c) => b
   for (const [id, name, lang, q] of people) { const go = await click(slugA, q); await join(-100601, 'Daily Deals Club', go.url, { id, first_name: name, username: name.toLowerCase(), language_code: lang }); }
   let go = await click(slugA, '&utm_campaign=Spring&utm_term=Lookalike'); await join(-100601, 'Daily Deals Club', go.url, { id: 6004, first_name: 'Deleted Account' });
   go = await click(slugA, '&utm_campaign=Spring&utm_term=Lookalike', { ua: 'python-requests/2.31' }); await join(-100601, 'Daily Deals Club', go.url, { id: 6005, first_name: 'Chloe', username: 'chloe_c' });
+  // round 21: a repeat only counts in the SAME channel. Sofia joining the other channel from its own ad is a real join; leaving and rejoining Daily Deals Club is the repeat.
   go = await click(slugB, '&utm_campaign=Spring'); await join(-100602, 'Deals Backup', go.url, { id: 6001, first_name: 'Sofia', username: 'sofia' });
+  await tgPost({ update_id: upd++, chat_member: { chat: { id: -100601, title: 'Daily Deals Club', type: 'channel' }, from: { id: 6001 }, date: Math.floor(Date.now() / 1000), old_chat_member: { status: 'member', user: { id: 6001 } }, new_chat_member: { status: 'left', user: { id: 6001, is_bot: false, first_name: 'Sofia' } } } });
+  go = await click(slugA, '&utm_campaign=Spring'); await join(-100601, 'Daily Deals Club', go.url, { id: 6001, first_name: 'Sofia', username: 'sofia' });
   // a burst of 16 bot Starts within seconds
   const codes = []; for (let i = 0; i < 16; i++) codes.push(new URL((await click(slugBot, '&utm_campaign=Botty')).url).searchParams.get('start'));
   await Promise.all(codes.map((c, i) => tgPost({ update_id: upd++, message: { message_id: i + 1, date: Math.floor(Date.now() / 1000), chat: { id: 7100 + i, type: 'private' }, from: { id: 7100 + i, first_name: 'Mateo' + i, username: 'mateo' + i }, text: '/start ' + c } })));
@@ -109,12 +112,16 @@ const ai = http.createServer((req, res) => { let b = ''; req.on('data', (c) => b
   const reasons = new Set(jr.rows.map((x) => x.suspect_reason));
   assert(['deleted_account', 'fake_click', 'repeat_user', 'burst'].every((x) => reasons.has(x)) && jr.rows.every((x) => x.suspect === 1), 'filtered joins: deleted account, fake click, repeat user and burst (' + [...reasons].join(', ') + ')');
   assert(jr.rows.filter((x) => x.channel_id !== BT.id).every((x) => x.capi_status === 'filtered'), 'filtered joins get status “filtered” instead of being sent');
+  { const rp = jr.rows.filter((x) => x.suspect_reason === 'repeat_user');
+    assert(rp.length === 1 && rp[0].tg_user_id === 6001 && rp[0].channel_id === A.id, 'round 21: the only repeat is Sofia rejoining the SAME channel');
+    const other = (await U(`/api/joins?from=${today}&to=${today}&tz=0&channel=${Bk.id}&limit=50`)).j.rows.find((x) => x.tg_user_id === 6001);
+    assert(other && other.suspect === 0 && other.click_id && other.capi_status !== 'filtered', 'round 21: Sofia joining the OTHER channel from its ad is a normal join, sent to Meta'); }
   st = await ms();
   const ev = (st.events || []).filter((e) => /^tgjoin_-10060[12]_|^tgjoin_7712046001_/.test(e.event_id || ''));
-  assert(ev.some((e) => e.event_id === 'tgjoin_-100601_6001') && !ev.some((e) => /_6004$|_6005$/.test(e.event_id)) && !ev.some((e) => e.event_id === 'tgjoin_-100602_6001'), 'filtered joins are never sent to Meta; real ones are');
+  assert(ev.some((e) => e.event_id === 'tgjoin_-100601_6001') && !ev.some((e) => /_6004$|_6005$/.test(e.event_id)) && ev.some((e) => e.event_id === 'tgjoin_-100602_6001') && ev.filter((e) => e.event_id === 'tgjoin_-100601_6001').length === 1, 'filtered joins are never sent to Meta (the same-channel rejoin isn’t sent twice); real ones are, incl. the other channel (round 21)');
   let s1 = (await U(`/api/stats?from=${today}&to=${today}&tz=0`)).j;
   const nBurst = jr.rows.filter((x) => x.suspect_reason === 'burst').length;
-  assert(s1.totals.filtered_joins === 3 + nBurst && s1.totals.joins === 3 + 16 - nBurst, `stats: ${s1.totals.joins} tracked joins, ${s1.totals.filtered_joins} filtered`);
+  assert(s1.totals.filtered_joins === 3 + nBurst && s1.totals.joins === 4 + 16 - nBurst, `stats: ${s1.totals.joins} tracked joins, ${s1.totals.filtered_joins} filtered`);
   const allj = (await U(`/api/joins?from=${today}&to=${today}&tz=0&limit=100`)).j;
   assert(allj.rows.every((x) => x.suspect === 0 || x.suspect === 1) && allj.rows.some((x) => x.suspect === 1 && x.suspect_reason), '/api/joins rows carry suspect + suspect_reason');
   let bd = (await U(`/api/breakdown?dim=adset&from=${today}&to=${today}&tz=0`)).j.rows;
@@ -167,7 +174,7 @@ const ai = http.createServer((req, res) => { let b = ''; req.on('data', (c) => b
   let ci = (await U(`/api/compare/insights?a_from=${today}&a_to=${today}&b_from=${yday}&b_to=${yday}&tz=0`)).j;
   assert(Array.isArray(ci.sentences) && ci.sentences.some((x) => /joins, up from none/.test(x)) && ci.highlights.some((h) => h.metric === 'joins' && h.a === cp.a.totals.joins && h.good === true), 'compare insights: sentences + highlights from real numbers');
   let cc = (await U(`/api/compare/campaigns?names=Spring,Autumn&from=${yday}&to=${today}&tz=0&group=day`)).j;
-  assert(cc.series.Spring.length === 2 && cc.series.Spring[1].key === today && cc.series.Spring[1].joins === 2 && cc.series.Spring[1].spend_cents === 5000 && cc.series.Autumn[1].joins === 1 && cc.series.Spring[0].joins === 0, 'campaign lines: joins and spend per day');
+  assert(cc.series.Spring.length === 2 && cc.series.Spring[1].key === today && cc.series.Spring[1].joins === 3 && cc.series.Spring[1].spend_cents === 5000 && cc.series.Autumn[1].joins === 1 && cc.series.Spring[0].joins === 0, 'campaign lines: joins and spend per day');
   cc = (await U(`/api/compare/campaigns?names=Spring&from=${today}&to=${today}&tz=0&group=week`)).j;
   assert(cc.series.Spring.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(cc.series.Spring[0].key) && new Date(cc.series.Spring[0].key + 'T00:00:00Z').getUTCDay() === 1, 'campaign lines by week (week starts Monday)');
 
@@ -194,7 +201,7 @@ const ai = http.createServer((req, res) => { let b = ''; req.on('data', (c) => b
   s1 = (await U(`/api/stats?from=${today}&to=${today}&tz=0`)).j;
   assert(s1.totals.ftd === 2 && s1.totals.ftd_locked === true && s1.totals.revenue_cents === null, 'stats keep the FTD count, lock the revenue');
   bd = (await U(`/api/breakdown?dim=campaign&from=${today}&to=${today}&tz=0`)).j;
-  assert(bd.locked && bd.rows.every((x) => x.locked === true && x.ftd === null && x.revenue_cents === null && x.roas === null) && bd.rows.find((x) => x.key === 'Spring').joins === 2, 'campaign rows hide FTD/revenue/ROAS, keep joins');
+  assert(bd.locked && bd.rows.every((x) => x.locked === true && x.ftd === null && x.revenue_cents === null && x.roas === null) && bd.rows.find((x) => x.key === 'Spring').joins === 3, 'campaign rows hide FTD/revenue/ROAS, keep joins');
   cp = (await U(`/api/compare/periods?a_from=${today}&a_to=${today}&b_from=${yday}&b_to=${yday}&tz=0`)).j;
   assert(cp.locked && cp.a.totals.revenue_cents === null && cp.a.totals.ftd === 2, 'compare locks revenue, keeps the FTD count');
   jr = (await U(`/api/joins?from=${today}&to=${today}&tz=0&type=ftd`)).j;

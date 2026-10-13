@@ -2,6 +2,69 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
+## Round 21 — Unique people report (13 October 2026)
+
+**Nothing changes for existing users, and nothing in the database changes.** No new tables or columns, no migrations. The report only reads the `joins` table that already exists. Tracking, billing, links and every other screen work exactly as before.
+
+### ⚠️ One tracking rule changes: repeat joins (decided by Ejiro)
+**Before:** if someone joined ANY of the customer's funnels (channel, group, bot) from an ad and then joined a DIFFERENT funnel from an ad within 7 days, the second join was filtered as `repeat_user`: not sent to Meta/TikTok/Snapchat and not charged.
+**Now:** a repeat only counts in the **same** funnel (someone who leaves and rejoins the same channel/bot/DM link from an ad within 7 days). Joining a **different** funnel from that funnel's own ad is a normal join: sent to that funnel's ad platform and charged like any join. Reason: it's a real lead for that funnel's ads, and its campaign should learn from it. Joins already recorded don't change; this applies to new joins after the deploy. Code: `joinSuspect()` in server.js (search "Round 21: a repeat"). Tests: `e2e-round6.js`, `e2e-round21.js`.
+
+### Who deposits (part of the Unique people page)
+- For the people who joined in the chosen dates: everything they deposited since (`ftd`, `dep`, `sale`, matched to their joins, chargebacks excluded), split by 1 / 2 / 3+ funnels: people, depositors, deposit rate, value per person. Plus how many people deposited through 2+ different funnels, and how often 2+ funnel people deposit compared with 1-funnel people (`rate_lift`).
+- No deposit tracking yet: the card offers "Set up deposit tracking". Basic after the trial: counts show, money values are hidden (same rule as the rest of Joinvoo). Media buyers: only their channels' deposits.
+- Same background thread, read-only. Tested with 300,000 joins + 40,000 deposits: 1.5 s in the thread, live server delay 5 ms. API: `quality` in `GET /api/unique`. Joe's/support's `unique_people` tool includes it. Tests in `e2e-round21.js` (real deposits, a chargeback, a locked account, a media buyer).
+
+### Support AI and Joe: smarter about balance and the new report
+- **Balance was confusing them.** They got the balance as raw numbers under two names (`balance_cents` and `credits`, the same value) and sometimes said "50,000 coins" for a $50,000 balance. On busy accounts the balance also came last in a snapshot cut at 4,000 characters, so support sometimes couldn't see it. Now both tools return `balance: { credits, usd, say_it_like_this: "5,000,000 credits (about $50,000.00)" }` first, total paid and last top-up as dollar text, and both prompts say to use that wording exactly. Joe's low-credit tip also shows the dollar value.
+- **New tool `unique_people`** for Joe and support: the same numbers as Results → Unique people (runs in the background thread). Joe's tool step can now wait for it (`exec` is async; every other tool works as before).
+- **Knowledge:** `joe/knowledge.md` (Joining more than one funnel, Unique people, balance wording) and `joe/support.md` (Balance questions, "Why was I charged for someone already in my other channel?").
+- Tests: `e2e-round19d.js` checks support says "2,000 credits (about $20.00)"; `e2e-round21.js` checks Joe's `unique_people` and "5,000,000 credits (about $50,000.00)" with a fake AI on port 4963.
+
+### What it is
+- **Results → Unique people** (new tab after People). Counts each person once by Telegram ID across all of an account's channels, groups, bots and DM links in the chosen dates:
+  - unique people vs joins across funnels, people in 2+ funnels, funnels per person, repeat joins
+  - how many people joined 1, 2, 3, 4 or 5+ funnels
+  - the funnel pairs that share the most people
+  - each funnel: % only here vs % also in another funnel
+  - **Everyone / From ads** switch, the usual date pills
+  - **Download people in 2+ funnels** (CSV: Telegram ID, username, name, how many funnels, which ones in join order)
+  - an optional "Want a funnel to find only new people?" card: step-by-step Meta custom audience from the funnel's own `Subscribe`/`Lead` events (`content_name` = funnel name, which Joinvoo already sends) to exclude in another funnel's ads
+- **Overview**: one small line under the tiles, only for accounts with 2+ funnels: "27,693 unique people · 13.5% joined more than one funnel →".
+- Fake joins (fake click, deleted account, burst) are left out. People who left and rejoined the same funnel count once.
+- Media buyers only see their own channels; managers and setup helpers see everything; other accounts see nothing.
+
+### How it runs (why it can't slow down tracking)
+- `GET /api/unique` and `GET /api/unique.csv` run in a **background thread** with its own **read-only** database connection (`node:worker_threads` + `node:sqlite`, both built in). The main thread that handles clicks, joins and webhooks never waits for it. Tested with 300,000 joins: report 1.2 s, main thread delay during it 39 ms (it was 1.6 s before moving it to the thread).
+- Results are cached 3 minutes (15 minutes for past ranges). Max range 400 days. A job over 60 s is stopped and the thread restarts by itself. Limits: 60 report loads/min and 6 CSV downloads per 10 min per account.
+- Admin switch: **Overview → Features → "Unique people report"** (`FEATURE_UNIQUE_REPORT`, default on). Off = tab and Overview line hide, API answers 403.
+- `UNIQUE_THREAD=off` runs it on the main thread instead (emergency only; not needed normally). `UNIQUE_TIMEOUT_MS` is for tests.
+
+### Blog post (goes live with this update)
+New post by Dchessking: **"Five funnels, one audience: how many people do you really have?"** (`build/blog/unique-people-across-telegram-funnels.md`, cover drawn by `build/blog/covers.py`). It's already built into `public/blog/`. After deploy it shows on /blog and in the dashboard's Blog, and within an hour every customer gets an in-app inbox note about it (the hourly blog job; no email).
+
+**The announcement email (designed, in each customer's language) does not send by itself.** After deploying and checking:
+1. **Admin → Emails → "Announcement: Unique people"**: look at the preview (desktop + phone, any language) and send yourself a test.
+2. **Admin → Inbox / Broadcast → Ready-made: Unique people announcement → Use it.** This fills the inbox message, switches on "Also email it" and picks the email design "Unique people announcement".
+3. Check who gets it (default: everyone), then **Send**. People who turned off update emails get the inbox message only.
+
+Email details: template `announce_unique` in server.js (`EMAILS`), header art `public/media/email/unique_people.png` (drawn by `build/email_art_unique.py`), texts `uqm.*` in `public/i18n/server.<lang>.json` (EN, RU, FR, PT, ES). It uses the same layout as every Joinvoo email (600px tables, phone layout, plain-text part). Every other email was checked byte-for-byte: unchanged in all 5 languages. The broadcast API takes an optional `design: "unique_people"` (anything else = the standard email).
+
+**Blog figures.** The post has 3 real screenshots of the report with captions (`public/media/blog/unique-people-*.webp`). `build/blog/blog.py` now supports a figure line: `![Caption](media:file.webp)` (a file with "-phone" in its name stays phone-width). No other post uses it, so nothing else changes.
+
+**Phone layout.** The Everyone / From ads switch sits inside the report card, and the card is tighter on phones, so the numbers start higher on the screen.
+
+### Files
+`server.js` (search "round 21"), `src/dashboard/p2f.css.html` + `p8i.round21.html` (new), one line in `p8e.round17.html` (the tab), `make.sh` (the two new parts), `build/admin.html` (switch label), `public/` + `dist/` rebuilt, translations RU/FR/PT/ES in `public/i18n/app.*.json`, `tests/e2e-round21.js` (42 checks).
+
+### Tests
+`bash tests/runall.sh` → **1,897 ok, 1 FAIL**. The one FAIL is the same old date-related check noted in round 20i (`e2e-audit.js`, "referrer earns on the $50…": the Pro charge is prorated mid-month). It fails the same way on the round 20i code and has nothing to do with this update. Upgrade tested: round 20i database → this version → back to round 20i → this version again, same login, no errors.
+
+### Check after deploying (2 minutes)
+1. Log in to an account with 2+ channels → Overview shows the "unique people" line → tap it.
+2. Results → Unique people loads; switch to "From ads"; change dates.
+3. Admin → Features → turn "Unique people report" off and on: the tab hides and comes back.
+
 ## Round 19 — DM tracking + mini apps, webhooks, downloads, link tags (7 October 2026)
 
 **Nothing changes for existing users.** Their channels, bots, links and ads work exactly as before, and nobody needs to do anything. The database only gets new columns (`bots.ma_app`, `bots.ma_seen_at`, `channels.biz_conn`, `channels.go_via`, `channels.app_url`, `channels.dm_text`, `hourly.opens`) and one new table (`ma_opens`). On first start the server re-registers every active bot's webhook once (setting `tg.updates_v` → 3) so Telegram also sends `business_connection` and `business_message`. Bots that never turn on Business Mode receive nothing new.

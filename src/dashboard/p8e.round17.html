@@ -36,7 +36,7 @@ Object.assign(PAGES,{
   report:{t:'Daily report',fn:()=>viewReport()},
 });
 PAGES.help.t='Help & tutorials'; PAGES.wallet.t='Credits & billing';
-const RES_TABS = () => [['results',tt('res.t.sum','Summary')],['people',tt('res.t.people','People')],['campaigns',tt('res.t.camp','Campaigns')],FEAT('ftd')&&['conversions',tt('res.t.dep','Deposits')],['compare',tt('res.t.cmp','Compare')],teamOn()&&['leaderboard',tt('res.t.team','Team')]].filter(Boolean);
+const RES_TABS = () => [['results',tt('res.t.sum','Summary')],['people',tt('res.t.people','People')],FEAT('unique_report')&&['unique',tt('res.t.uniq','Unique people')],['campaigns',tt('res.t.camp','Campaigns')],FEAT('ftd')&&['conversions',tt('res.t.dep','Deposits')],['compare',tt('res.t.cmp','Compare')],teamOn()&&['leaderboard',tt('res.t.team','Team')]].filter(Boolean);
 const RES_SET = new Set(['results','people','campaigns','conversions','compare','leaderboard']);
 const MORE_SET = new Set(['more','team','report','wallet','earn','help','me','levels','learn','apps','replyvoo']);
 const teamOn = () => !isOwner() || !!(R17.team&&R17.team.members&&R17.team.members.some(m=>m.status==='active'));

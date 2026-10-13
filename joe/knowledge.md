@@ -41,9 +41,25 @@ Joins: Subscribe (Meta, by default), Subscribe or CompleteRegistration (TikTok),
 First deposits and sales: Purchase / CompletePayment / PURCHASE with the value. Repeat deposits: a Meta custom “Deposit” event. Registrations: CompleteRegistration / SIGN_UP.
 Only people who came from an ad are sent. Organic joins are recorded but not sent.
 
+## Joining more than one funnel
+A funnel is anything tracked separately in Joinvoo: each channel, group, bot or DM link.
+When someone already in one funnel joins a DIFFERENT funnel from that funnel's own ad, it's a normal join: it's sent to that funnel's ad platform (so that campaign learns from it) and charged like any tracked join.
+Only leaving and rejoining the SAME funnel from an ad within 7 days counts as a repeat: recorded under People → Filtered, not sent again and not charged twice.
+To see how many joins are the same people, use Results → Unique people.
+
+## Unique people (Results → Unique people)
+Counts every person once by their Telegram ID across all funnels in the chosen dates. If Bola joins five funnels, he's one person.
+Shows: unique people vs joins across funnels; people in 2+ funnels and the %; funnels per person (e.g. 1.6); how many people joined 1, 2, 3, 4 or 5+ funnels; the funnel pairs sharing the most people; for each funnel, the % only there vs also in another funnel.
+Switch Everyone / From ads. Use the date pills like other reports. "People in 2+ funnels" downloads a CSV (Telegram ID, username, name, how many funnels, which ones in the order they joined).
+Overview shows one line for accounts with 2+ funnels: "N unique people · X% joined more than one funnel". Tap it to open the report.
+Counts joins only (people who clicked but didn't join have no Telegram ID). Fake joins are left out. Someone with two Telegram accounts counts twice. It isn't Meta's "reach", which counts people who saw an ad, so the numbers never match.
+Who deposits (needs deposit tracking): for the people who joined in the dates, everything they deposited since, split by 1 / 2 / 3+ funnels: people, depositors, deposit rate and value per person (value is Pro only after the trial). Also how many people deposited through 2+ funnels, and how often people in 2+ funnels deposit compared with people in one (e.g. 1.8×). A chargeback removes the deposit.
+Free on every plan, no setup: it works on all joins already tracked. Media buyers in a team see only their own channels.
+People in more than one funnel are often good, not waste: if each funnel promotes a different offer, one person can earn the customer more than once. Never tell a customer overlap is bad by default. If a customer wants a funnel to reach only new people, the report has optional steps: a Meta website custom audience from the funnel's join event (Subscribe, or Lead for DM links) refined by content_name = the funnel's name (Joinvoo sends it with every join), then Exclude it in the other funnel's ad set.
+
 ## Fake clicks and fake joins
 Clicks from bots, data centres, repeat clicks and scripts are marked as suspect (never blocked).
-Joins are filtered when they look fake: a burst of joins far above the channel’s normal pace, a deleted Telegram account, the same person joining your channels again within 7 days, or a join that came from a bot or data-centre click.
+Joins are filtered when they look fake: a burst of joins far above the channel’s normal pace, a deleted Telegram account, the same person leaving and rejoining the SAME channel, group, bot or DM link from an ad within 7 days, or a join that came from a bot or data-centre click.
 Filtered joins are recorded (People → Filtered) but never sent to Meta, TikTok or Snapchat and never charged, so your pixels learn from real people.
 
 ## Backup channel (smart link)
@@ -69,6 +85,7 @@ After the trial, deposits are still matched and sent to Meta, TikTok and Snapcha
 One trial per account and per ad account or pixel.
 
 ## Credits, free joins and billing
+Balance: 1 credit = $0.01, so 5,000,000 credits = $50,000.00. The top bar shows credits (e.g. "5M credits"); the Credits page shows credits and the dollar value. Always say a balance as credits with the dollars, e.g. "5,000,000 credits (about $50,000.00)". Never call dollars credits or coins.
 New accounts get their first tracked joins free after confirming their email. After that, the monthly plan applies, and each tracked join beyond the plan’s included joins costs a small number of credits. Organic joins are free.
 If the credits run out, tracking pauses: visitors still reach Telegram, but joins aren’t tracked or sent until you top up.
 Buy credits on the Credits page. Bigger top-ups get bonus credits. Credits pay for tracking; they can’t be withdrawn, and refunds only happen in the cases on the Refunds page.
