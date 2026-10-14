@@ -9,7 +9,7 @@ const MET = {
   leaves:{l:'Leaves',noun:'leaves',get:m=>m.leaves,f:fmt,c:compact,proj:1,up:0},
 };
 const mDate = k => { const [y,m]=k.split('-').map(Number); return new Date(y,m-1,1); };
-const mName = (k,o={month:'long'}) => mDate(k).toLocaleDateString('en-US',o);
+const mName = (k,o={month:'long'}) => mDate(k).toLocaleDateString(LOC(),o);
 const dim = k => { const d=mDate(k); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); };
 const elapsed = m => { const n=new Date(); return Math.max(.25,(m.days_in-1)+(n.getHours()*60+n.getMinutes())/1440); };
 const projOf = (m,M) => M.proj && m.partial && m.days_in ? M.get(m)/elapsed(m)*dim(m.month) : M.get(m);
@@ -38,19 +38,21 @@ function drawCompareAll(anim){
   const cmpV=M.proj?proj:curV, d=prevV?deltaPct(cmpV,prevV):NaN, up=d>0, good=up===!!M.up;
   const complete=ms.filter(m=>!m.partial), best=complete.reduce((a,b)=>M.get(b)>M.get(a)?b:a, complete[0]||cur);
   const ce=mName(cur.month), pe=prev?mName(prev.month):'';
+  /* round 23b: month names come from the browser in the user's language, so every sentence with a month is a tt() key with {m}/{p} (the old English text + month only matched in October) */
+  const MK=S.cmpM in MET?S.cmpM:'joins', NOUN=tt('cmp.noun.'+MK,M.noun), LBL=tt('cmp.lbl.'+MK,M.l);
   // headline
   let h2, p;
   const any=ms.some(m=>M.get(m)>0);
   if (!any){ h2=`No ${M.noun} yet`; p=`When ${M.noun} start coming in, each month appears here so you can compare them side by side.`; }
-  else if (!prevV){ h2=`${M.f(curV)} <span class="serif">${M.noun}</span> so far`; p=`${ce} is your first month with ${M.noun}. Next month you’ll see how it compares.`; }
-  else if (Math.abs(d)<0.5){ h2=`${M.l} <span class="serif">level</span> with ${pe}`; p=M.proj?`On pace for ${M.f(proj)} in ${ce}, the same as ${pe}.`:`${M.f(curV)} in ${ce} so far, the same as ${pe}.`; }
-  else { h2=`${M.l} <span class="serif ${good?'':'dn'}">${up?'up':'down'} ${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0)}%</span> vs ${pe}`;
-    p=M.proj?`On pace for ${M.f(proj)} in ${ce}: ${M.f(curV)} so far, day ${cur.days_in} of ${dim(cur.month)}. ${pe} finished at ${M.f(prevV)}.`:`${M.f(curV)} in ${ce} so far, against ${M.f(prevV)} for all of ${pe}.`; }
+  else if (!prevV){ h2=`${M.f(curV)} <span class="serif">${M.noun}</span> so far`; p=tt('cmp.first','{m} is your first month with {noun}. Next month you’ll see how it compares.',{m:ce,noun:NOUN}); }
+  else if (Math.abs(d)<0.5){ h2=tt('cmp.h.level','{l} <span class="serif">level</span> with {p}',{l:LBL,p:esc(pe)}); p=M.proj?tt('cmp.p.pace.same','On pace for {v} in {m}, the same as {p}.',{v:M.f(proj),m:ce,p:pe}):tt('cmp.p.sofar.same','{v} in {m} so far, the same as {p}.',{v:M.f(curV),m:ce,p:pe}); }
+  else { const dp=(Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0))+'%'; h2=tt(up?'cmp.h.up':'cmp.h.down',up?'{l} <span class="serif {c}">up {d}</span> vs {p}':'{l} <span class="serif {c}">down {d}</span> vs {p}',{l:LBL,c:good?'':'dn',d:dp,p:esc(pe)});
+    p=M.proj?tt('cmp.p.pace','On pace for {v} in {m}: {c} so far, day {d} of {n}. {p} finished at {pv}.',{v:M.f(proj),m:ce,c:M.f(curV),d:cur.days_in,n:dim(cur.month),p:pe,pv:M.f(prevV)}):tt('cmp.p.against','{c} in {m} so far, against {pv} for all of {p}.',{c:M.f(curV),m:ce,pv:M.f(prevV),p:pe}); }
   const pace=elapsed(cur)/dim(cur.month)*100;
-  $('#cmphero').innerHTML=`<div class="cmp-hl"><span class="eb">${esc(ce)} vs ${esc(pe||'last month')}</span><h2>${h2}</h2><p>${p}</p>
+  $('#cmphero').innerHTML=`<div class="cmp-hl"><span class="eb">${pe?tt('cmp.eb','{m} vs {p}',{m:esc(ce),p:esc(pe)}):tt('cmp.eb0','{m} vs last month',{m:esc(ce)})}</span><h2>${h2}</h2><p>${p}</p>
     <div class="pace"><span>Month progress</span><span class="pt"><i style="width:${anim?0:pace}%" data-w="${pace}"></i></span><span class="num">${Math.round(pace)}%</span></div></div>
-    <div class="cmp-nums"><div class="cmp-n"><small>${esc(ce)} so far</small><b>${M.f(curV)}</b><span>${cur.days_in} day${cur.days_in===1?'':'s'} in</span></div>
-      <div class="cmp-n"><small>${M.proj?'Projected '+esc(ce):'Change'}</small><b>${M.proj?'≈ '+M.f(proj):(prevV?(curV-prevV>=0?'+':'')+(curV-prevV).toFixed(1)+' pts':'—')}</b><span>${M.proj?'At today’s pace':'vs '+esc(pe)}</span></div>
+    <div class="cmp-nums"><div class="cmp-n"><small>${tt('cmp.msofar','{m} so far',{m:esc(ce)})}</small><b>${M.f(curV)}</b><span>${cur.days_in===1?tt('cmp.dayin1','1 day in'):tt('cmp.dayin','{n} days in',{n:cur.days_in})}</span></div>
+      <div class="cmp-n"><small>${M.proj?tt('cmp.projm','Projected {m}',{m:esc(ce)}):tt('cmp.change','Change')}</small><b>${M.proj?'≈ '+M.f(proj):(prevV?(curV-prevV>=0?'+':'')+(curV-prevV).toFixed(1)+' pts':'—')}</b><span>${M.proj?tt('cmp.atpace','At today’s pace'):tt('cmp.vsp','vs {p}',{p:esc(pe)})}</span></div>
       <div class="cmp-n"><small>${esc(pe||'Last month')}</small><b>${prev?M.f(prevV):'—'}</b><span>${prev?'Full month':'No data'}</span></div>
       <div class="cmp-n"><small>Best month</small><b>${best&&M.get(best)?M.f(M.get(best)):'—'}</b><span>${best&&M.get(best)?esc(mName(best.month,{month:'long',year:'numeric'})):'Not yet'}</span></div></div>`;
   if (anim) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const i=$('#cmphero .pt i'); if(i) i.style.width=i.dataset.w+'%'; }));
@@ -103,7 +105,7 @@ function drawCompare(el, ms, M, py, anim){
       if (v && (showAll || v===Math.max(...vals) || i===n-2)) g+=`<text class="vl" x="${x0+bw/2}" y="${T+H1-h-7}" text-anchor="middle" ${anim&&!reduced?`style="animation:fade .5s ${i*55+500}ms both"`:''}>${M.c(v)}</text>`;
     }
     g+='</g>';
-    const d=mDate(m.month); g+=`<text class="ml ${m.partial?'cur':''}" x="${cx}" y="${T+H1+17}" text-anchor="middle">${d.toLocaleDateString('en-US',{month:'short'})}</text>`;
+    const d=mDate(m.month); g+=`<text class="ml ${m.partial?'cur':''}" x="${cx}" y="${T+H1+17}" text-anchor="middle">${d.toLocaleDateString(LOC(),{month:'short'})}</text>`;
     if (d.getMonth()===0 || i===0) g+=`<text class="ax" x="${cx}" y="${T+H1+31}" text-anchor="middle" style="font-size:10px">${d.getFullYear()}</text>`;
   });
   if (avg){ g+=`<line class="avg" x1="${L}" x2="${W-R}" y1="${y(avg)}" y2="${y(avg)}"/><text class="avgl" x="${W-R}" y="${y(avg)-5}" text-anchor="end">avg ${M.c(avg)}</text>`; }
@@ -112,10 +114,10 @@ function drawCompare(el, ms, M, py, anim){
   const show=i=>{ const m=ms[i], p=ms[i-1], v=vals[i], pvv=p?M.get(p):0, dd=pvv?deltaPct(M.proj&&m.partial?proj:v,pvv):NaN;
     svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=x.dataset.g==i?1:.45);
     if(!tip){ tip=document.createElement('div'); tip.className='tip'; el.appendChild(tip); }
-    tip.innerHTML=`<div class="th">${esc(mName(m.month,{month:'long',year:'numeric'}))}${m.partial?' · so far':''}</div><div class="tr"><span><i style="background:${cj}"></i>${M.l}</span><b>${M.f(v)}</b></div>
+    tip.innerHTML=`<div class="th">${esc(mName(m.month,{month:'long',year:'numeric'}))}${m.partial?' · '+tt('cmp.sofar','so far'):''}</div><div class="tr"><span><i style="background:${cj}"></i>${M.l}</span><b>${M.f(v)}</b></div>
       ${m.partial&&M.proj?`<div class="tr"><span><i style="border:1.5px dashed ${cj};background:none"></i>Projected</span><b>≈ ${M.f(proj)}</b></div>`:''}
       ${py?`<div class="tr"><span><i style="background:${cc}"></i>${esc(mName(py[i].month,{month:'short',year:'numeric'}))}</span><b>${M.f(pv[i])}</b></div>`:''}
-      <div class="tf">${isFinite(dd)?`${dd>=0?'▲':'▼'} ${Math.abs(dd).toFixed(1)}% vs ${esc(mName(p.month,{month:'short'}))}${m.partial&&M.proj?' (at pace)':''}`:'No earlier month to compare'}${m.partial?` · day ${m.days_in} of ${dim(m.month)}`:''}</div>`;
+      <div class="tf">${isFinite(dd)?`${dd>=0?'▲':'▼'} ${tt('cmp.tip.vs','{d} vs {p}',{d:Math.abs(dd).toFixed(1)+'%',p:esc(mName(p.month,{month:'short'}))})}${m.partial&&M.proj?' '+tt('cmp.tip.pace','(at pace)'):''}`:tt('cmp.tip.none','No earlier month to compare')}${m.partial?' · '+tt('cmp.tip.day','day {d} of {n}',{d:m.days_in,n:dim(m.month)}):''}</div>`;
     const cx=L+slot*i+slot/2, tw=tip.offsetWidth; let lx=cx-tw/2; lx=Math.max(4,Math.min(el.clientWidth-tw-4,lx)); tip.style.left=lx+'px'; tip.style.top=Math.max(0,y(Math.max(v,m.partial&&M.proj?proj:0,py?pv[i]:0))-tip.offsetHeight-10+14)+'px'; };
   const hide=()=>{ tip&&tip.remove(); tip=null; svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=1); };
   svg.querySelectorAll('.slot').forEach(s=>{ s.addEventListener('pointerenter',()=>show(+s.dataset.i)); s.addEventListener('pointerdown',()=>show(+s.dataset.i)); });

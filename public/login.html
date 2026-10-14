@@ -1,16 +1,17 @@
 <script>
 /* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
 (function(){
-  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  var L=['en','ru','fr','pt','es','ar','hi','id','tr','vi','sw'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇧🇷','Português'],es:['🇪🇸','Español'],ar:['🇸🇦','العربية'],hi:['🇮🇳','हिन्दी'],id:['🇮🇩','Bahasa Indonesia'],tr:['🇹🇷','Türkçe'],vi:['🇻🇳','Tiếng Việt'],sw:['🇰🇪','Kiswahili']};
   function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
   function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
   var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
-  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
-  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  var navs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']), nav=null;
+  for(var ni=0;ni<navs.length&&!nav;ni++){ var c2=String(navs[ni]).slice(0,2).toLowerCase(); if(L.indexOf(c2)>=0) nav=c2; }
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:nav||'en';
   if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
   var D={};
   if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
-  document.documentElement.lang=lang; window.JV_LANG=lang;
+  document.documentElement.lang=lang; if(lang==='ar') document.documentElement.dir='rtl'; window.JV_LANG=lang;
   window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
   function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
     for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
@@ -162,6 +163,9 @@ h1,h2,h3{overflow-wrap:break-word}
 /* small pills and inline nav links keep their look but get a 44px hit area */
 .hit44{position:relative}
 .hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+/* round 23 review: Arabic (right to left): arrows in buttons point the other way, on every page (moved here from home.html so sign-up and login get it) */
+[dir=rtl] .btn svg:not(.pi svg){transform:scaleX(-1)}
+[dir=rtl] .btn:hover svg:not(.pi svg){transform:scaleX(-1) translateX(3px)}
 
 /* Layout: split screen in the former look. Left: the dark illustration panel he loved (person + laptop, floating join/deposit cards, orbiting badges).
    Right: the light warm form. Phones: a short dark band with the illustration, then the form slides up over it as a rounded sheet. */
@@ -710,7 +714,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   <div class="sp-body" id="spBody" aria-live="polite">
     <div class="sp-card" id="spWelcome">
       <div class="sp-who" id="spWho"></div>
-      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <p data-i18n="1tyl46s" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat.</p>
       <div class="sp-quick" id="spQuick">
         <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
         <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>

@@ -131,7 +131,9 @@ async function login(f, claims, q = 'return_to=/dashboard') {
     const rf = await until(() => evs().find((e) => e.type === 'refund'));
     const bill = (await V('/api/billing')).j;
     assert(r.s === 200 && rf && rf.event_id === `jv_rf_${dep.id}_1` && rf.original_event_id === 'jv_topup_' + dep.id && rf.value_usd === 10, 'refund $10 → refund event pointing at the top-up', rf);
-    assert(bill.balance_cents === balBefore - 1000, 'wallet goes down by the refund', [balBefore, bill.balance_cents]);
+    // round 23 review: a refund also takes back the same share of that top-up's bonus credits
+    const bonusBack = -(db.prepare(`SELECT COALESCE(SUM(amount_cents),0) n FROM ledger WHERE ref LIKE ?`).get(`bonusback:dep:${dep.id}:%`).n || 0);
+    assert(bill.balance_cents === balBefore - 1000 - bonusBack, 'wallet goes down by the refund (plus its share of the bonus)', [balBefore, bill.balance_cents, bonusBack]);
 
     // ---------- chargeback → chargeback events against the spends that money paid for ----------
     r = await post(V, '/api/billing/deposit', { provider: 'crypto', amount: 20 });

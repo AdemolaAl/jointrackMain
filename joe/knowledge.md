@@ -28,7 +28,7 @@ Telegram limits how fast one bot can make links. For big campaigns, add a second
 
 ## Request-to-join mode
 In request-to-join mode each click gets an invite link that asks to join. Joinvoo’s bot approves the request instantly and sends the person a welcome message with your offer link, where {tg_id} is replaced by their Telegram ID.
-Your affiliate program receives the Telegram ID as sub1 and reports deposits back with it, so deposits match for channels, not just bots. Turn it on in Channels → Join mode.
+Your affiliate program receives the Telegram ID as sub1 and reports deposits back with it, so deposits match for channels, not just bots. Turn it on in channel card → Settings → Join method → Request-to-join.
 
 ## Postbacks and deposits (FTD)
 Copy your postback URL from Conversions and paste it into your affiliate program or tracker: `…/pb/<key>?sub1={telegram_id}&status=ftd&payout={amount}&currency=USD&txid={id}`.
@@ -40,6 +40,14 @@ You can also mark a person as deposited by hand in People.
 Joins: Subscribe (Meta, by default), Subscribe or CompleteRegistration (TikTok), SUBSCRIBE (Snapchat), with the click ID, browser ID, IP and user agent and a hashed Telegram ID.
 First deposits and sales: Purchase / CompletePayment / PURCHASE with the value. Repeat deposits: a Meta custom “Deposit” event. Registrations: CompleteRegistration / SIGN_UP.
 Only people who came from an ad are sent. Organic joins are recorded but not sent.
+
+## By ad platform: are Facebook and TikTok paying for the same people? (Results → Unique people → From ads)
+Card "By ad platform" on Results → Unique people when "From ads" is on. Shows when 2 or more ad platforms (Facebook, TikTok, Snapchat) brought people in the chosen dates; in the Everyone view a one-line link opens it.
+Each paid person is counted once across platforms. The platform comes from the ad click Joinvoo tracked: Facebook click ID (fbclid), TikTok click ID (ttclid), Snapchat click ID (ScCid). "Other ads" = a tracked link click without one of those.
+Shows: platforms added up vs different people (e.g. 1,150 vs 1,080); people who clicked ads on 2+ platforms and the %; a diagram of Facebook only / both / TikTok only; for each platform: people, new to you (no other platform brought them) vs also from another platform, deposit rate, cost per new person and cost per person (needs ad spend); real cost per paid person vs the cost if you add the platforms up; how often people from 2+ platforms deposit compared with people from one.
+Spend comes from Add spend (by hand, CSV or Meta sync) with its platform. A media buyer sees only their channels' joins and spend.
+Only people who joined through an ad click. Someone who saw an ad but joined without clicking it can't be tied to a platform. The download "People in 2+ funnels" has an ad_platforms column.
+Being in both isn't bad by default: those people often deposit more. It tells a media buyer the real number of paid leads and what each new person costs on each platform.
 
 ## Joining more than one funnel
 A funnel is anything tracked separately in Joinvoo: each channel, group, bot or DM link.

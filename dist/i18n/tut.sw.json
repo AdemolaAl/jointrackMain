@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Tengeneza bot yako ya kufuatilia",
+  "where": "Hatua ya 1 ya kuweka",
+  "sents": [
+   "Karibu Joinvoo.",
+   "Kwanza, tutengeneze bot yako ya kufuatilia.",
+   "Inachukua kama dakika moja tu.",
+   "Fungua Telegram na utafute BotFather, ile yenye tiki ya bluu.",
+   "Gusa \"Start\", yaani anza, kisha tuma amri slash new bot.",
+   "Ipe bot yako jina lolote, kisha username inayoishia na neno bot.",
+   "BotFather atakutumia token ndefu.",
+   "Inakili, rudi kwenye Joinvoo, ibandike kwenye kisanduku, kisha gusa Unganisha.",
+   "Ni hivyo tu.",
+   "Bot yako iko tayari."
+  ]
+ },
+ "t2": {
+  "title": "Ongeza bot yako kwenye chaneli yako",
+  "where": "Hatua ya 2 ya kuweka",
+  "sents": [
+   "Sasa ongeza bot yako kwenye chaneli yako.",
+   "Kwenye Telegram, fungua chaneli yako kisha gusa jina lake.",
+   "Gusa \"Administrators\", yaani wasimamizi, kisha \"Add Admin\" ili kuongeza msimamizi.",
+   "Tafuta bot yako na uiongeze.",
+   "Hakikisha \"Invite users via link\", yaani kualika watumiaji kupitia kiungo, imewashwa, kisha gusa \"Save\" ili kuhifadhi.",
+   "Rudi kwenye Joinvoo.",
+   "Joinvoo itaipata chaneli yako yenyewe ndani ya sekunde chache.",
+   "Kama unataka kufuatilia bot badala ya chaneli, chagua \"Bot yangu\" na ufuate hatua zile zile rahisi."
+  ]
+ },
+ "t3": {
+  "title": "Unganisha Meta",
+  "where": "Hatua ya 3 ya kuweka · Mipangilio ya chaneli › Majukwaa ya matangazo",
+  "sents": [
+   "Inayofuata, unganisha Meta, ili kila mtu anayejiunga aripotiwe kwenye matangazo yako.",
+   "Kwenye Meta Events Manager, nakili Pixel ID yako.",
+   "Kisha fungua \"Settings\", yaani mipangilio, tafuta Conversions API, na utengeneze access token.",
+   "Bandika vyote viwili kwenye Joinvoo kisha gusa Tuma jaribio.",
+   "Ukiona \"Jaribio limepokelewa\", umemaliza.",
+   "Sasa nakili kiungo cha tangazo kutoka kwenye kadi ya chaneli yako, na ukiweke kwenye tangazo lako.",
+   "Kila mtu anayejiunga anaonekana kwenye Meta, akilinganishwa na mbofyo halisi."
+  ]
+ },
+ "t4": {
+  "title": "Fuatilia amana kwa omba kujiunga",
+  "where": "Mipangilio ya chaneli › Njia ya kujiunga",
+  "sents": [
+   "Unataka kuona nani anaweka amana, si tu nani anajiunga?",
+   "Washa omba kujiunga.",
+   "Fungua Mipangilio ya chaneli yako, kisha Njia ya kujiunga.",
+   "Chagua nani anawaruhusu watu kuingia.",
+   "Joinvoo inaweza kuwaruhusu kuingia papo hapo, na kutuma ujumbe wako wa kukaribisha pamoja na kiungo chako cha ofa.",
+   "Au, kama tayari una bot yako ya kukaribisha, chagua \"Bot yangu mwenyewe\", na Joinvoo itafuatilia tu.",
+   "Acha tagi ya Telegram ID kwenye kiungo chako cha ofa, na kila amana italinganishwa na mtu sahihi na tangazo sahihi."
+  ]
+ },
+ "t5": {
+  "title": "Tuma watu kutoka kwenye tovuti yako mwenyewe",
+  "where": "Mipangilio ya chaneli › Website yako mwenyewe",
+  "sents": [
+   "Tayari una landing page yako mwenyewe?",
+   "Endelea kuitumia.",
+   "Fungua Mipangilio ya chaneli yako, kisha \"Tovuti yako mwenyewe\".",
+   "Chagua lini watu waende Telegram: papo hapo, wanapogusa kitufe chako, au baada ya sekunde chache.",
+   "Nakili mstari mmoja wa msimbo, na uubandike kwenye ukurasa wako.",
+   "Wageni wanafika kwenye ukurasa wako, kisha wanaenda moja kwa moja kwenye Telegram.",
+   "Na kila mtu anayejiunga bado analinganishwa na mbofyo halisi wa tangazo."
+  ]
+ },
+ "t6": {
+  "title": "Tumia kikoa chako mwenyewe",
+  "where": "Chaneli › Kikoa cha kiungo chako",
+  "sents": [
+   "Unaweza kuendesha viungo vya matangazo yako kwenye kikoa chako mwenyewe, kama go nukta brand yako nukta com.",
+   "Fungua Chaneli, kisha \"Kikoa cha kiungo chako\", na uandike kikoa chako kidogo.",
+   "Joinvoo itakuonyesha rekodi mbili.",
+   "Ziongeze pale uliponunua kikoa chako, kwenye mipangilio ya DNS.",
+   "Kisha gusa Kagua sasa.",
+   "Ikionyesha Hewani, viungo vyako vipya vinatumia kikoa chako mwenyewe, na viungo vya zamani vinaendelea kufanya kazi.",
+   "Basic inajumuisha kikoa kimoja.",
+   "Pro inakupa vikoa visivyo na kikomo."
+  ]
+ },
+ "t7": {
+  "title": "Unganisha Start ya bot yako mwenyewe",
+  "where": "Mipangilio ya bot › Ishara ya Start ya bot",
+  "sents": [
+   "Unaelekeza matangazo yako kwenye bot yako mwenyewe, na hutaki kushiriki token yake?",
+   "Hakuna shida.",
+   "Fungua Mipangilio ya bot, kisha \"Unganisha Start ya bot yako mwenyewe\".",
+   "Nakili msimbo ulio tayari kwa bot yako, au anwani ya wavuti kwa zana zisizohitaji msimbo kama ManyChat au SendPulse.",
+   "Gusa Tuma jaribio.",
+   "Sasa, kila mara mtu anapobonyeza \"Start\", bot yako inaiambia Joinvoo, na kujiunga huko kunalinganishwa na tangazo halisi."
+  ]
+ },
+ "t8": {
+  "title": "Ongeza timu yako",
+  "where": "Zaidi › Timu",
+  "sents": [
+   "Unafanya kazi na timu?",
+   "Fungua Zaidi, kisha Timu, na uguse Alika.",
+   "Weka barua pepe ya mnunuzi wako wa matangazo na uchague jukumu.",
+   "Mameneja wanaona kila chaneli.",
+   "Wanunuzi wa matangazo wanaona tu chaneli unazowapa.",
+   "Pro inajumuisha wanachama watatu wa timu, na unaweza kuongeza zaidi wakati wowote.",
+   "Kwenye Matokeo, linganisha wanunuzi wako bega kwa bega, na uone nani anakuletea amana za bei nafuu zaidi."
+  ]
+ },
+ "t9": {
+  "title": "Soma matokeo yako",
+  "where": "Matokeo",
+  "sents": [
+   "Hivi ndivyo unavyosoma takwimu zako.",
+   "Fungua Matokeo.",
+   "Juu kabisa, unaona waliojiunga, amana, na gharama kwa kila amana.",
+   "Weka matumizi yako ya matangazo, au unganisha akaunti yako ya matangazo, na Joinvoo itakokotoa gharama kwa kila anayejiunga na mapato kwa matumizi yako ya matangazo.",
+   "Gusa mtu yeyote ili kuona tangazo, kampeni na mbofyo hasa uliomleta.",
+   "Na kila asubuhi, Joinvoo inaweza kutuma muhtasari huu moja kwa moja kwenye Telegram yako.",
+   "Iwashe kwenye Zaidi, kisha Ripoti ya kila siku."
+  ]
+ },
+ "t10": {
+  "title": "Alika msaidizi wa kuweka",
+  "where": "Zaidi › Timu",
+  "sents": [
+   "Unahitaji mtu akuwekee Joinvoo, bila kushiriki nenosiri lako?",
+   "Fungua Zaidi, kisha Timu, na uguse Alika.",
+   "Chagua Msaidizi wa kuweka.",
+   "Ni bure kwenye kila mpango.",
+   "Weka barua pepe yake, au nakili kiungo cha mwaliko na ukitume kwenye WhatsApp.",
+   "Msaidizi wako anaweza kuweka bot, chaneli na matangazo yako, lakini hawezi kuona bili zako wala pesa zako.",
+   "Kama anasaidia wateja wengi, anaona akaunti zao zote mahali pamoja.",
+   "Unaweza kumwondoa wakati wowote."
+  ]
+ },
+ "t11": {
+  "title": "Kwa nini ufuatilie jumbe kwa meneja wako",
+  "where": "Hatua ya 2 ya kuweka · Ufuatiliaji wa DM",
+  "sents": [
+   "Je, matangazo yako yanawapeleka watu moja kwa moja kwenye gumzo la meneja kwenye Telegram?",
+   "Basi hii ni muhimu.",
+   "Kwa sasa, Meta inaona tu mguso kwenye kiungo chako.",
+   "Haiwezi kuona nani hasa alimtumia meneja wako ujumbe, kwa hiyo inajifunza kutafuta watu wanaogusa kisha kuondoka.",
+   "Unalipia mibofyo, huku meneja wako akikaa akisubiri mazungumzo ya kweli.",
+   "Joinvoo inatatua hilo kwa kufuatilia kila ujumbe wa kwanza.",
+   "Kwanza, kwenye BotFather, fungua mipangilio ya bot yako na uwashe Business Mode.",
+   "Kisha, kwenye Telegram ya meneja, fungua \"Settings\", yaani mipangilio, kisha \"Telegram Business\", kisha \"Chatbots\", na uongeze bot yako.",
+   "Ukirudi kwenye Joinvoo, gusa Ndiyo, huyo ni meneja wangu, na utapata kiungo kipya cha tangazo.",
+   "Unganisha Meta, na uweke kiungo hicho kwenye tangazo lako.",
+   "Mtu anapogusa tangazo lako na kutuma ujumbe wake wa kwanza, Joinvoo inaulinganisha na tangazo halisi, na kutuma Lead kwa Meta.",
+   "Sasa Meta inajifunza kutoka kwa watu wanaoanzisha mazungumzo kweli, kwa hiyo gharama yako kwa kila ujumbe inashuka na meneja wako anapata wateja watarajiwa bora zaidi.",
+   "Na Joinvoo haijibu kamwe, wala haihifadhi kile watu wanachoandika."
+  ]
+ },
+ "t12": {
+  "title": "Weka mini app yako",
+  "where": "Mipangilio ya chaneli › Jinsi inavyofunguka",
+  "sents": [
+   "Kwa ufuatiliaji sahihi zaidi, wapeleke watu kwa meneja wako kupitia mini app.",
+   "Fungua Mipangilio ya gumzo, kisha Jinsi inavyofunguka, na uchague Kupitia mini app yako.",
+   "Nakili anwani ya wavuti ambayo Joinvoo inakuonyesha.",
+   "Kwenye BotFather, tuma amri slash new app, chagua bot yako, na ubandike anwani hiyo.",
+   "BotFather atakutumia kiungo.",
+   "Kibandike tena kwenye Joinvoo, kisha gusa Hifadhi.",
+   "Fungua mini app mara moja, na itageuka kijani.",
+   "Sasa Telegram inaiambia Joinvoo hasa nani aligusa tangazo lako, kwa hiyo kila ujumbe unalinganishwa."
+  ]
+ },
+ "t13": {
+  "title": "Tuma matukio kwenye server yako mwenyewe",
+  "where": "Ubadilishaji › Miunganisho",
+  "sents": [
+   "Unataka kila anayejiunga, kila ujumbe na kila amana vitumwe kwenye server yako mwenyewe papo hapo vinapotokea?",
+   "Fungua Ubadilishaji, kisha Miunganisho, na usogeze chini hadi Tuma matukio kwenye server yako mwenyewe.",
+   "Gusa Ongeza webhook, na ubandike anwani ya server yako, kama CRM yako, bot yako mwenyewe, au kiungo cha Zapier au Make.",
+   "Weka tiki kwenye matukio unayotaka, kama kujiunga, jumbe za kwanza na amana za kwanza, kisha gusa Ongeza webhook.",
+   "Nakili siri ya kusaini, ili server yako iweze kuhakikisha kila tukio linatoka kweli kwa Joinvoo.",
+   "Sasa gusa Tuma jaribio, na server yako ikijibu, kadi itaonyesha Inafanya kazi.",
+   "Kuanzia sasa, kila tukio linafika na mtu husika, Telegram ID yake, pamoja na kampeni na tangazo alilotoka.",
+   "Na kama server yako itazimika wakati wowote, Joinvoo itajaribu tena kwa ajili yako, kwa hiyo hakuna kinachopotea."
+  ]
+ },
+ "t14": {
+  "title": "Pitisha taarifa za tangazo lako kwa ofa yako",
+  "where": "Mipangilio ya chaneli › Kiungo cha ofa",
+  "sents": [
+   "Unataka ofa yako au tracker yako ijue kila mtu alitoka kwenye kampeni gani na tangazo gani?",
+   "Fungua mipangilio ya chaneli yako, na utafute kiungo chako cha ofa, au kiungo cha kitufe cha bot yako.",
+   "Chini ya kiungo, gusa tagi, kama kampeni, tangazo, au sub moja, na Joinvoo itaiongeza kwenye kiungo kwa ajili yako.",
+   "Kwenye tangazo lako, endelea kuweka vigezo vyako vya kawaida vya URL kwenye kiungo chako cha Joinvoo, kama jina la kampeni na jina la tangazo.",
+   "Mtu anapogusa tangazo lako, Joinvoo inajaza kila tagi kwa taarifa za mtu huyo.",
+   "Sasa ofa yako inaona kampeni, tangazo na Telegram ID nyuma ya kila ziara, kwa hiyo kila amana inalinganishwa na tangazo lake.",
+   "Tagi zinafanya kazi pia kwenye ujumbe wako wa kukaribisha."
+  ]
+ }
+}

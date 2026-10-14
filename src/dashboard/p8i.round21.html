@@ -33,7 +33,19 @@ async function uqDemo(src){
     quality:(()=>{ const R=[.078,.131,.184], V=[540,1020,1610], P=[only,m[2],m[3]+m[4]+m[5]];
       const buckets=P.map((p,i)=>({funnels:i===2?'3+':String(i+1),people:p,depositors:Math.round(p*R[i]),deposits:Math.round(p*R[i]*1.4),deposit_rate:Math.round(R[i]*1000)/10,revenue_cents:p*V[i],value_per_person_cents:V[i]}));
       const mp=P[1]+P[2], md=buckets[1].depositors+buckets[2].depositors;
-      return {has_deposits:true,locked:false,buckets,multi_earn:Math.round(md*.42),multi:{people:mp,depositors:md,deposit_rate:mp?Math.round(md/mp*1000)/10:0},rate_lift:mp&&buckets[0].deposit_rate?Math.round((md/mp*100)/buckets[0].deposit_rate*100)/100:null}; })(), computed_at:Date.now(), demo:true };
+      return {has_deposits:true,locked:false,buckets,multi_earn:Math.round(md*.42),multi:{people:mp,depositors:md,deposit_rate:mp?Math.round(md/mp*1000)/10:0},rate_lift:mp&&buckets[0].deposit_rate?Math.round((md/mp*100)/buckets[0].deposit_rate*100)/100:null}; })(),
+    platforms:uqDemoPlat(src==='ads'?people:Math.round(people*.86)), computed_at:Date.now(), demo:true };
+}
+/* demo: Facebook and TikTok with a believable overlap, spend and deposit rates */
+function uqDemoPlat(N){
+  if (!N) return {people:0,known:0,list:[],combos:[],claimed:0,multi:0,multi_pct:0};
+  const both=Math.round(N*.071), fb=Math.round(N*.63)+Math.round(both/2), tk=N-fb+both, pc=(a,b)=>b?Math.round(a/b*1000)/10:0;
+  const sF=Math.round(fb*178), sT=Math.round(tk*131), dF=Math.round(fb*.094), dT=Math.round(tk*.071);
+  const row=(key,people,sp,d)=>({key,name:key==='meta'?'Facebook':'TikTok',people,only_here:people-both,shared:both,shared_pct:pc(both,people),depositors:d,deposit_rate:pc(d,people),revenue_cents:null,spend_cents:sp,cost_per_person_cents:Math.round(sp/people),cost_per_new_cents:Math.round(sp/Math.max(1,people-both))});
+  const one=N-both, d1=Math.round(one*.079), d2=Math.round(both*.138);
+  return {people:N,claimed:fb+tk,known:2,multi:both,multi_pct:pc(both,N),list:[row('meta',fb,sF,dF),row('tiktok',tk,sT,dT)],combos:[{keys:['meta','tiktok'],people:both}],
+    has_deposits:true,locked:false,has_spend:true,spend_cents:sF+sT,cost_per_person_cents:Math.round((sF+sT)/N),cost_if_added_cents:Math.round((sF+sT)/(fb+tk)),
+    quality:{one:{people:one,depositors:d1,deposit_rate:pc(d1,one)},multi:{people:both,depositors:d2,deposit_rate:pc(d2,both)},rate_lift:Math.round(pc(d2,both)/pc(d1,one)*100)/100}};
 }
 const uqMem = new Map();
 async function uqLoad(src=UQ.src){
@@ -87,15 +99,90 @@ function uqDraw(d){
     <ol class="uq-dist">${d.dist.map(x=>`<li><span class="k">${x.plus?tt('uq.dist.5','5 or more'):x.funnels===1?tt('uq.dist.1','1 funnel'):tt('uq.dist.n','{n} funnels',{n:x.funnels})}</span><span class="uq-mini"><i style="transform:scaleX(${x.people/maxD})"></i></span><span class="v num">${fmt(x.people)}<small>${uqPct(d.people?x.people/d.people*100:0)}</small></span></li>`).join('')}</ol></section>`;
   const pairs=d.pairs.filter(p=>p.people>0);
   const pr=`<section class="card"><div class="card-h"><h2>${tt('uq.pairs.h','Funnels sharing people')}</h2><span class="sub">${tt('uq.pairs.s','Most shared first')}</span></div>
-    ${pairs.length?`<ul class="uq-pairs">${pairs.slice(0,6).map(p=>`<li class="uq-pair"><span class="uq-venn"><i></i><i></i></span><span class="uq-pt"><b>${esc(p.a.title)} + ${esc(p.b.title)}</b><small>${tt('uq.pairs.pct','{p} of the smaller funnel',{p:uqPct(p.pct_of_smaller)})}</small></span><span class="uq-pn"><b class="num">${fmt(p.people)}</b><small>${tt('uq.people','people')}</small></span></li>`).join('')}</ul>`
+    ${pairs.length?`<ul class="uq-pairs">${pairs.slice(0,6).map(p=>`<li class="uq-pair"><span class="uq-venn"><i></i><i></i></span><span class="uq-pt"><b translate="no">${esc(p.a.title)} + ${esc(p.b.title)}</b><small>${tt('uq.pairs.pct','{p} of the smaller funnel',{p:uqPct(p.pct_of_smaller)})}</small></span><span class="uq-pn"><b class="num">${fmt(p.people)}</b><small>${tt('uq.people','people')}</small></span></li>`).join('')}</ul>`
       :`<div class="empty" style="padding:28px 18px"><p>${one?tt('uq.pairs.one','Add a second funnel to see who joins more than one.'):tt('uq.pairs.none','No one is in more than one of your funnels. Every join is a new person.')}</p></div>`}</section>`;
   const fl=`<section class="card"><div class="card-h"><h2>${tt('uq.f.h','Each funnel')}</h2>${DEMO?'':`<button class="btn sm" data-act="uq-csv" ${d.repeat_people?'':'disabled'}>${I.download} ${tt('uq.csv','People in 2+ funnels')}</button>`}</div>
     <div class="uq-key"><span><i style="background:var(--mint-ink)"></i>${tt('uq.k.only','Only in this funnel')}</span><span><i style="background:var(--brand)"></i>${tt('uq.k.shared','Also in another funnel')}</span></div>
-    <div class="uq-fl">${d.funnels.map(f=>`<div class="uq-f"><div class="uq-fn"><span class="uq-fi">${uqIcon(f.type)}</span><span><b>${esc(f.title)}</b><small>${uqType(f.type)}${f.removed?' · '+tt('uq.removed','removed'):''}</small></span></div>
+    <div class="uq-fl">${d.funnels.map(f=>`<div class="uq-f"><div class="uq-fn"><span class="uq-fi">${uqIcon(f.type)}</span><span><b translate="no">${esc(f.title)}</b><small>${uqType(f.type)}${f.removed?' · '+tt('uq.removed','removed'):''}</small></span></div>
       <div class="uq-split"><span class="uq-mini"><i class="o" style="width:${f.people?f.only_here/f.people*100:0}%"></i><i class="s" style="width:${f.people?f.shared/f.people*100:0}%"></i></span><small>${f.shared?tt('uq.f.sh','{p} also in another funnel',{p:uqPct(f.shared_pct)}):tt('uq.f.only','Everyone here is only here')}</small></div>
       <div class="uq-fv"><b class="num">${fmt(f.people)}</b><small>${tt('uq.people','people')}</small></div></div>`).join('')}</div></section>`;
-  rest.innerHTML=`<div class="uq-g">${dist}${pr}</div>${uqDeposits(d)}${fl}${!one&&d.repeat_people?uqHow(d):''}
+  rest.innerHTML=`${ads?uqPlat(d):uqPlatTease(d)}<div class="uq-g">${dist}${pr}</div>${uqDeposits(d)}${fl}${!one&&d.repeat_people?uqHow(d):''}
     <p class="uq-foot">${tt('uq.foot','Counted by Telegram ID, so each person counts once. Someone with two Telegram accounts counts twice. Fake joins are left out. Clicks without a join aren’t included.')}</p>`;
+}
+/* ---- round 22: By ad platform (From ads). Each paid person once across Facebook, TikTok and Snapchat. ---- */
+const UQ_PC = { meta:'#0866FF', tiktok:'var(--ink)', snapchat:'#E0A800', other:'var(--faint)' };
+const uqPlName = k => k==='meta'?'Facebook':k==='tiktok'?'TikTok':k==='snapchat'?'Snapchat':tt('uq.pl.other','Other ads');
+const uqPlDot = k => `<i class="uq-pd" style="background:${UQ_PC[k]||UQ_PC.other}"></i>`;
+/* Everyone view: one line that opens the platform view, only when 2+ ad platforms brought people */
+function uqPlatTease(d){
+  const pl=d.platforms; if(!pl||pl.known<2||!pl.people) return '';
+  const names=pl.list.filter(x=>x.key!=='other'&&x.people).map(x=>uqPlName(x.key)).join(' + ');
+  return `<button class="card uq-strip uq-plt" data-act="uq-src" data-v="ads"><span class="mr-ic">${I.target}</span><span>${pl.multi
+    ?tt('uq.pl.tease','<b>{n}</b> people came from more than one ad platform ({names}).',{n:fmt(pl.multi),names:esc(names)})
+    :tt('uq.pl.tease0','See your paid people by ad platform: {names}.',{names:esc(names)})} <b>${tt('uq.pl.tease.go','See by ad platform')}</b></span>${I.arrow}</button>`;
+}
+/* proportional two-circle diagram: areas match people, the overlap matches people from both */
+function uqVenn(a,b,both){
+  const lens=(r1,r2,d)=>{ if(d>=r1+r2) return 0; if(d<=Math.abs(r1-r2)) return Math.PI*Math.min(r1,r2)**2;
+    const x=r1*r1*Math.acos(Math.min(1,Math.max(-1,(d*d+r1*r1-r2*r2)/(2*d*r1)))), y=r2*r2*Math.acos(Math.min(1,Math.max(-1,(d*d+r2*r2-r1*r1)/(2*d*r2))));
+    return x+y-.5*Math.sqrt(Math.max(0,(-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2))); };
+  const big=Math.max(a.people,b.people,1), s=78/Math.sqrt(big/Math.PI);
+  const r1=Math.max(18,Math.sqrt(a.people/Math.PI)*s), r2=Math.max(18,Math.sqrt(b.people/Math.PI)*s), target=both*s*s;
+  let lo=Math.abs(r1-r2), hi=r1+r2;
+  if (both<=0) lo=hi; else for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(lens(r1,r2,m)>target) lo=m; else hi=m; }
+  const dd=both<=0?r1+r2+10:(lo+hi)/2, W=320, x1=(W-(dd+r1+r2))/2+r1, x2=x1+dd, cy=92;
+  const bl=tt('uq.pl.both','{n} both',{n:fmt(both)}), pw=Math.min(W-8,Math.max(92,bl.length*8+26));
+  const mid = both>0 ? Math.min(Math.max((x1+r1+x2-r2)/2,pw/2+4),W-pw/2-4) : W/2;
+  const lab=(x,r,n,c)=> r>=30?`<text x="${x.toFixed(1)}" y="${cy+6}" text-anchor="middle" class="uq-vn" style="fill:${c}">${fmt(n)}</text>`:'';
+  return `<svg class="uq-venn2" viewBox="0 0 ${W} 196" role="img" aria-label="${esc(tt('uq.pl.venn','{a}: {an} people. {b}: {bn} people. {n} from both.',{a:uqPlName(a.key),an:fmt(a.people),b:uqPlName(b.key),bn:fmt(b.people),n:fmt(both)}))}">
+    <circle cx="${x1.toFixed(1)}" cy="${cy}" r="${r1.toFixed(1)}" style="fill:${UQ_PC[a.key]};stroke:${UQ_PC[a.key]}" class="c"/>
+    <circle cx="${x2.toFixed(1)}" cy="${cy}" r="${r2.toFixed(1)}" style="fill:${UQ_PC[b.key]};stroke:${UQ_PC[b.key]}" class="c"/>
+    ${lab(x1-(both>0?Math.min(r1*.25,dd*.2):0),r1,a.only_here,UQ_PC[a.key])}${lab(x2+(both>0?Math.min(r2*.25,dd*.2):0),r2,b.only_here,UQ_PC[b.key])}
+    ${both>0?`<line x1="${mid.toFixed(1)}" y1="${cy+8}" x2="${mid.toFixed(1)}" y2="174" class="ln"/><g class="uq-vb"><rect x="${(mid-pw/2).toFixed(1)}" y="168" width="${pw.toFixed(1)}" height="26" rx="13"/><text x="${mid.toFixed(1)}" y="185.5" text-anchor="middle">${esc(bl)}</text></g>`:''}
+  </svg>`;
+}
+function uqPlat(d){
+  const pl=d.platforms;
+  if(!pl||!pl.people) return '';
+  if(pl.known<2) return ''; // one ad platform: nothing to compare, so no empty card
+  const head=`<div class="card-h"><h2>${tt('uq.pl.h','By ad platform')}</h2><span class="sub">${tt('uq.pl.s','People from your ad clicks, each counted once')}</span></div>`;
+  const L=pl.list.filter(x=>x.people||x.spend_cents), known=L.filter(x=>x.key!=='other'&&x.people);
+  const two = known.length===2 && pl.combos.every(c=>c.keys.every(k=>k===known[0].key||k===known[1].key));
+  const bothN = two ? (pl.combos.find(c=>c.keys.length===2)||{people:0}).people : 0;
+  const pic = two ? uqVenn(known[0],known[1],bothN)
+    : `<ul class="uq-combos">${pl.combos.length?pl.combos.slice(0,5).map(c=>`<li><span class="dots">${c.keys.map(uqPlDot).join('')}</span><b>${c.keys.map(uqPlName).map(esc).join(' + ')}</b><span class="num">${fmt(c.people)}</span></li>`).join('')
+      :`<li class="none">${tt('uq.pl.nocombo','No one came from more than one platform.')}</li>`}</ul>`;
+  /* round 23 review: "Platforms added up" counts Facebook/TikTok/Snapchat only, so it is compared with the people from those three (known_people) */
+  const dep=pl.has_deposits, sp=pl.has_spend;
+  const say=`<div class="uq-pl-say">
+      <div class="uq-pl-nums"><div class="cl"><small>${tt('uq.pl.claim','Platforms added up')}</small><b class="num">${fmt(pl.claimed)}</b></div>
+        <span class="ar" aria-hidden="true">${I.arrow}</span>
+        <div class="rl"><small>${tt('uq.pl.real','Different people')}</small><b class="num">${fmt(pl.known_people??pl.people)}</b></div></div>
+      <p>${pl.multi?tt('uq.pl.lead','<b>{n}</b> people ({p}) clicked ads on more than one platform. Added up, your platforms count them more than once. Here each person counts once.',{n:fmt(pl.multi),p:uqPct(pl.multi_pct)})
+        :tt('uq.pl.lead0','No one clicked your ads on more than one platform. Every platform brought you different people.')}</p>
+      ${sp&&pl.cost_per_person_cents?`<div class="uq-pl-cost"><span><small>${tt('uq.pl.cpp','Real cost per paid person')}</small><b class="num">${money(pl.cost_per_person_cents)}</b></span>${pl.multi&&pl.cost_if_added_cents?`<span class="was"><small>${tt('uq.pl.cpa','If you add the platforms up')}</small><b class="num">${money(pl.cost_if_added_cents)}</b></span>`:''}</div>`:''}
+    </div>`;
+  const cols=['k','s', ...(dep?['d']:[]), ...(sp?['c']:[])];
+  const hdr={k:tt('uq.pl.c.k','Platform'),s:tt('uq.pl.c.s','New to you vs also elsewhere'),d:tt('uq.dep.c2','Deposit rate'),c:tt('uq.pl.c.c','Cost per new person')};
+  const cell=(x,c)=>{
+    if(c==='k') return `<span class="k" role="cell">${uqPlDot(x.key)}<span><b>${esc(uqPlName(x.key))}</b><small>${fmt(x.people)} ${x.people===1?tt('uq.person','person'):tt('uq.people','people')}</small></span></span>`;
+    if(c==='s') return `<span class="sp" role="cell"><span class="uq-mini"><i class="o" style="width:${x.people?x.only_here/x.people*100:0}%"></i><i class="s" style="width:${x.people?x.shared/x.people*100:0}%"></i></span><small>${x.people?tt('uq.pl.new','{n} new to you · {s} also from another platform',{n:fmt(x.only_here),s:fmt(x.shared)}):tt('uq.pl.nojoin','Spend, but no one joined from it in these dates')}</small></span>`;
+    if(c==='d') return `<span class="r num" role="cell"><small class="rl">${hdr.d}</small>${x.deposit_rate==null?'—':uqPct(x.deposit_rate)}</span>`;
+    return `<span class="r num v" role="cell"><small class="rl">${hdr.c}</small>${x.cost_per_new_cents?money(x.cost_per_new_cents):'—'}${x.cost_per_person_cents&&x.cost_per_new_cents!==x.cost_per_person_cents?`<small class="pp">${tt('uq.pl.cpp.s','{m} per person',{m:money(x.cost_per_person_cents)})}</small>`:''}</span>`;
+  };
+  const grid=`<div class="uq-plt-t c${cols.length}" role="table"><div class="uq-plr h" role="row">${cols.map(c=>`<span role="columnheader">${hdr[c]}</span>`).join('')}</div>
+    ${L.map(x=>`<div class="uq-plr" role="row">${cols.map(c=>cell(x,c)).join('')}</div>`).join('')}</div>`;
+  const q=pl.quality, lift=q&&q.rate_lift;
+  const ql = q&&q.multi.people ? (lift!=null&&lift>=1.05?tt('uq.pl.q.more','People who clicked on 2+ platforms deposit <b>{x}×</b> as often ({a} vs {b}).',{x:lift.toFixed(1),a:uqPct(q.multi.deposit_rate),b:uqPct(q.one.deposit_rate)})
+    : lift!=null&&lift<=0.95?tt('uq.pl.q.less','People who clicked on 2+ platforms deposit less often ({a} vs {b}).',{a:uqPct(q.multi.deposit_rate),b:uqPct(q.one.deposit_rate)})
+    : lift!=null?tt('uq.pl.q.same','People who clicked on 2+ platforms deposit about as often as everyone else.'):'') : '';
+  return `<section class="card uq-pl">${head}
+    <div class="uq-pl-top"><div class="uq-pl-pic">${pic}${two?`<div class="uq-pl-key">${known.map(x=>`<span>${uqPlDot(x.key)}<b>${esc(uqPlName(x.key))}</b> ${fmt(x.people)}</span>`).join('')}</div>`:''}</div>${say}</div>
+    ${grid}
+    ${ql?`<p class="uq-pl-q">${I.coin}<span>${ql}</span></p>`:''}
+    ${!sp&&FEAT('spend')&&!DEMO?`<p class="hint uq-pl-hint">${tt('uq.pl.nospend','Add your ad spend and this shows what each new person really costs on each platform.')} <button class="link" data-act="spend">${tt('uq.pl.addspend','Add spend')}</button></p>`:''}
+    <p class="uq-pl-how">${tt('uq.pl.how','The platform comes from the ad click Joinvoo tracked (Facebook click ID, TikTok click ID or Snapchat click ID). “New to you” = people no other platform brought in these dates. People who saw an ad but joined without clicking it aren’t included.')}</p>
+  </section>`;
 }
 /* Who deposits: people in 1 vs 2 vs 3+ funnels (everything the people who joined in these dates deposited since) */
 function uqDeposits(d){
@@ -119,13 +206,13 @@ function uqHow(d){
   const chs=visChans(S.chans).filter(c=>c.status!=='removed'&&c.pixel_id);
   const top=d.pairs[0], pick=(top&&chs.find(c=>c.id===top.a.id||c.id===top.b.id))||chs[0];
   return `<details class="card uq-how"><summary><span class="mr-ic">${I.target}</span><span><b>${tt('uq.how.h','Want a funnel to find only new people?')}</b><small>${tt('uq.how.s','Optional. People in more than one funnel can earn you more than once, so often they’re worth it. When a funnel should only reach new people, exclude the ones already in another funnel.')}</small></span>${I.chev}</summary>
-    ${pick?`<label class="hint" for="uqch" style="display:block;margin-top:14px">${tt('uq.how.pick','People already in')}</label><select class="sel" id="uqch" data-uq-how>${chs.map(c=>`<option value="${c.id}" ${c.id===pick.id?'selected':''}>${esc(c.title)}</option>`).join('')}</select><div id="uqhow">${uqSteps(pick)}</div>`
+    ${pick?`<label class="hint" for="uqch" style="display:block;margin-top:14px">${tt('uq.how.pick','People already in')}</label><select class="sel" id="uqch" data-uq-how>${chs.map(c=>`<option value="${c.id}" ${c.id===pick.id?'selected':''} translate="no">${esc(c.title)}</option>`).join('')}</select><div id="uqhow">${uqSteps(pick)}</div>`
       :`<p class="hint" style="margin-top:12px">${tt('uq.how.nopx','Connect Meta to your funnels first (Channels → Settings → Ad platforms). Joinvoo then sends every join to your pixel, and you can build the audience from it.')}</p>`}</details>`;
 }
 function uqSteps(c){
   const ev=c.event_name||(c.type==='dm'?'Lead':'Subscribe');
   return `<div class="uq-keys"><div class="dm-rec"><span class="dm-k">${tt('au.ev','Event')}</span><div class="codebox"><code>${esc(ev)}</code><button class="btn sm" data-act="copy" data-v="${esc(ev)}">${I.copy}</button></div></div>
-    <div class="dm-rec"><span class="dm-k">content_name</span><div class="codebox"><code>${esc(c.title)}</code><button class="btn sm" data-act="copy" data-v="${esc(c.title)}">${I.copy}</button></div></div></div>
+    <div class="dm-rec"><span class="dm-k">content_name</span><div class="codebox"><code translate="no">${esc(c.title)}</code><button class="btn sm" data-act="copy" data-v="${esc(c.title)}">${I.copy}</button></div></div></div>
     <ol class="au-steps">${[tt('uq.st1','In Meta Ads Manager, open Audiences → Create audience → Custom audience → Website.'),
       tt('uq.st2','Pick your pixel ({px}) and the event {ev}.',{px:esc(c.pixel_id),ev:`<b>${esc(ev)}</b>`}),
       tt('uq.st3','Tap Refine by → Parameters, and choose content_name contains “{t}”. Joinvoo sends the funnel name with every join.',{t:esc(c.title)}),

@@ -271,8 +271,8 @@ const Demo = (() => {
       if (body.approve_after!==undefined) c.approve_after=Math.round(+body.approve_after);
       if (ap!=='joinvoo' && c.pending_requests==null) c.pending_requests=ap==='own'?3:0; return {ok:true}; }
     if (p==='/api/billing'&&method==='GET'){ const b=await handle0(method,path,body); const bonus=bonusRows.reduce((a,x)=>a+x.amount_cents,0);
-      b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $300 top-up',amount_cents:1500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
-      const sb=sample?1500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
+      b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $1,500 top-up',amount_cents:7500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
+      const sb=sample?7500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
       b.credits={balance:b.balance_cents,bought:b.deposited_cents,bonus:bonus+sb,used:b.used_cents};
       b.rank={name:R.name,next:N?{name:N.name,need_cents:N.min_cents-life}:null,lifetime_cents:life,join_discount_pct:R.join_discount_pct,perks:R.perks};
       b.bonus_tiers=TIERS; b.ranks=RANKS; b.custom_pricing=null; b.promo={code:'LAUNCH10',bonus_pct:10,ends_at:Date.now()+4*864e5+5*3600e3}; return b; }
@@ -284,7 +284,7 @@ const Demo = (() => {
 
   /* ---------- Round 6 demo: profile, plans/trial, locks, fraud joins, smart links, compare insights, Joe ---------- */
   const qp6=new URLSearchParams(location.search);
-  let profile={nickname:'',gender:'male',avatar:null,lang:'en',tz:null};
+  let profile={nickname:'',gender:'male',avatar:null,lang:null,tz:null};
   /* Round 6 A: levels (leads = joins + bot starts, rolling 30 days) */
   const LEVELS6=[{id:'rookie',name:'Rookie',from:0},{id:'hustler',name:'Hustler',from:1000},{id:'operator',name:'Operator',from:5000},{id:'shark',name:'Shark',from:25000},{id:'whale',name:'Whale',from:100000},{id:'kraken',name:'Kraken',from:300000},{id:'legend',name:'Legend',from:1000000}];
   let showLevel=true;
@@ -495,7 +495,7 @@ const Demo = (() => {
         {email:'mi•••@gmail.com',joined_at:Date.now()-26*D,active:true,spend_cents:37350,earned_cents:7470},
         {email:'om•••@yahoo.com',joined_at:Date.now()-12*D,active:true,spend_cents:31000,earned_cents:6200},
         {email:'ha•••@gmail.com',joined_at:Date.now()-26*3600e3,active:false,spend_cents:0,earned_cents:0}]:[];
-      const tiers=[{name:'Starter',min:0,rate:.1},{name:'Pro',min:3,rate:.2},{name:'Elite',min:10,rate:.3}]; const active=ppl.filter(x=>x.active).length;
+      const tiers=[{name:'Starter',min:0,rate:.05},{name:'Growth',min:30,rate:.1},{name:'Pro',min:100,rate:.15},{name:'Elite',min:250,rate:.2},{name:'Legend',min:500,rate:.3}]; const active=ppl.filter(x=>x.active).length;
       const tier=[...tiers].reverse().find(t=>active>=t.min), next=tiers.find(t=>t.min>active);
       const earned=ppl.reduce((a,b)=>a+b.earned_cents,0), paidOut=payouts.reduce((a,b)=>a+b.amount_cents,0), bal=Math.max(0,earned-paidOut-credit), month=sample?14280:0;
       return {link:'https://joinvoo.com/r/em7k2q',code:'em7k2q',invited:ppl.length,active,tier:tier.name,rate:tier.rate,next_tier:next&&{name:next.name,rate:next.rate,need:next.min-active},tiers,
@@ -515,13 +515,13 @@ const Demo = (() => {
       extraConvs.push({...c,ch:row&&row.channel_id,row:{id:80000+extraConvs.length,event:e2,value_cents:c.value_cents,currency:c.currency,txid:null,source:'manual',matched:1,created_at:c.at,meta_status:row&&row.click_id&&ch&&on(ch,'meta')?'sent':'none',tt_status:row&&row.click_id&&ch&&on(ch,'tiktok')&&e2!=='dep'?'sent':'none',sc_status:row&&row.click_id&&ch&&on(ch,'snap')&&e2!=='dep'?'sent':'none',error:null,tg_user_id:row&&row.tg_user_id,first_name:row&&row.first_name,last_name:row&&row.last_name,username:row&&row.username,click_id:row&&row.click_id,channel_title:row&&row.channel_title}});
       return {ok:true,id:Date.now(),event:e2,attributed:!!(row&&row.click_id)}; }
     if (p==='/api/billing'){ const st=stats(new URLSearchParams(`from=${ymd(new Date(new Date().getFullYear(),new Date().getMonth(),1))}&to=${ymd(new Date())}`)); const j=st.totals.joins; const mc=3000+Math.max(0,j-2000)*2;
-      const used=sample?mc+42000:(!sample&&j<500?0:(j||liveClicks.length?mc:0)); const dep=deposits.filter(d=>d.status==='paid').reduce((a,b)=>a+b.amount_cents,0)+(sample?60000:0);
+      const used=sample?mc+42000:(!sample&&j<500?0:(j||liveClicks.length?mc:0)); const dep=deposits.filter(d=>d.status==='paid').reduce((a,b)=>a+b.amount_cents,0)+(sample?250000:0); /* round 23b: the sample account has a healthy balance (was negative: "wallet empty" on a demo looked broken) */
       const free=sample?0:Math.max(0,500-j), active=free===0&&!!(j||liveClicks.length||sample), D=864e5, now=Date.now(), welcome=0;
       const history=[...(active?[{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime()+9*3600e3}]:[]),
         ...(j>2000?[{kind:'joins',note:`${fmt(j-2000)} extra joins`,amount_cents:-(j-2000)*2,created_at:now-3600e3}]:[]),
         ...deposits.filter(d=>d.status==='paid').map(d=>({kind:'deposit',note:'Top-up via '+(d.method_label||(d.provider==='crypto'?'USDT':d.provider[0].toUpperCase()+d.provider.slice(1))),amount_cents:d.amount_cents,created_at:d.created_at})),
         ...(credit?[{kind:'refcredit',note:'From referral earnings',amount_cents:credit,created_at:now-60e3}]:[]),
-        ...(sample?[{kind:'deposit',note:'Top-up via Paystack',amount_cents:30000,created_at:now-20*D},{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:now-31*D},{kind:'deposit',note:'Top-up via USDT',amount_cents:30000,created_at:now-48*D}]:[]),
+        ...(sample?[{kind:'deposit',note:'Top-up via Paystack',amount_cents:150000,created_at:now-20*D},{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:now-31*D},{kind:'deposit',note:'Top-up via USDT',amount_cents:100000,created_at:now-48*D}]:[]),
         {kind:'welcome',note:'Welcome gift: first 500 tracked joins free',amount_cents:0,created_at:sample?now-60*D:now-5*60e3}].sort((x,y)=>y.created_at-x.created_at);
       const bal=dep+credit+welcome-used;
       return {free_joins_left:free,free_joins_gift:500,balance_cents:bal,deposited_cents:dep,credit_cents:credit+welcome,welcome_cents:welcome,used_cents:used,tracking:free>0||bal>0||!active,state:free>0?'trial':bal>0?'active':'empty',billing_on:true,history,month:{joins:j,cents:active?mc:0,plan_paid:active,extra_joins:Math.max(0,j-2000),included:2000,base_cents:3000,per_join_cents:2},methods:{paystack:true,flutterwave:true,crypto:true},pay_methods:PAYM,usdt_address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',min_deposit_cents:1000,ngn_per_usd:1600,deposits:sample&&!deposits.length?[{provider:'paystack',method_id:'paystack',method_label:'Paystack',amount_cents:30000,status:'paid',created_at:Date.now()-20*864e5},{provider:'manual',method_id:'m_usdt',method_label:'USDT (TRC20)',amount_cents:30037,status:'paid',created_at:Date.now()-48*864e5}]:deposits}; }
@@ -867,6 +867,9 @@ const Demo = (() => {
   }
   function useSampleQuiet(){ sample=true; db=sampleDb(); }
   if (H18) useSampleQuiet();
+  /* round 23b: "Try the live demo" opens a full sample account straight away (an empty new account looked like a real sign-up and confused visitors).
+     ?setup=1 starts empty to try the setup; the demo bar switches between the two. */
+  else if (!q11.has('setup')) { useSampleQuiet(); support=[{id:sid++,from_admin:1,demo:true,body:'Hi Alex 👋 Your Snapchat pixel on Fit in 30 is still in test mode. Switch it off on the Channels page when you’re ready to go live, and shout if you want a hand with the deposit postback.',created_at:Date.now()-50*60e3}]; }
   return {handle:handle19,addChannel,addDM,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 

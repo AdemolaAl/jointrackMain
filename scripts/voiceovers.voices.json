@@ -1,0 +1,14 @@
+{
+ "_note": "Voices for the tutorial voice-overs. male = tutorials t1–t10, female = t11–t14 (same as the English). Empty = the script picks the most used educational voice for that language from the ElevenLabs Voice Library and prints its name. model: eleven_multilingual_v2 (best for most languages) or eleven_v3 (needed for Swahili and Vietnamese).",
+ "_fallback": { "male": "JBFqnCBsd6RMkjVDRZzb", "female": "EXAVITQu4vr4xnSDxMaL" },
+ "es": { "male": "qIViwRC6Yj0rDEwrCiEN", "female": "attjAvEwtUIAm108to6B", "model": "eleven_multilingual_v2", "names": "Emiliano (Latin American, tutorials) / Andrea (Latin American)" },
+ "pt": { "male": "abaIlsBKdPrtlWNar7Ea", "female": "nczLZ6GvJGozyc3FlLte", "model": "eleven_multilingual_v2", "names": "Cristian (Brazilian, tech tutorials) / Juliana (Brazilian, e-learning)" },
+ "ru": { "male": "WTn2eCRCpoFAC50VD351", "female": "IExsTwnJMk9vWMW4SzsN", "model": "eleven_multilingual_v2", "names": "Artem (tech explainers) / Vera (calm professional)" },
+ "ar": { "male": "pO3ZuaXj0mFWxTrn1tPt", "female": "w4LX7bK479eHGM1k15Em", "model": "eleven_multilingual_v2", "names": "Mehdi (Modern Standard Arabic) / Habibah (Modern Standard Arabic)" },
+ "tr": { "male": "xDxe3l0RE5XWpryAjJQp", "female": "", "model": "eleven_multilingual_v2", "names": "Ömer (Istanbul) / auto" },
+ "sw": { "male": "h65Hy3wCmpuo1Fce3en3", "female": "i5oE89JoUCpIgvSOemWx", "model": "eleven_v3", "names": "Juma (narrator) / Halima (warm)" },
+ "fr": { "male": "", "female": "", "model": "eleven_multilingual_v2" },
+ "hi": { "male": "", "female": "", "model": "eleven_multilingual_v2" },
+ "id": { "male": "", "female": "", "model": "eleven_multilingual_v2" },
+ "vi": { "male": "", "female": "", "model": "eleven_v3" }
+}

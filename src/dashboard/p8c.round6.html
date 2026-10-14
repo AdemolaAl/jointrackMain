@@ -183,7 +183,7 @@ function jCost(m){ if (m.role!=='joe'||m.kind) return ''; const b=JB(); if(m.cos
   const paid=+m.cost_credits>0; if (paid&&b&&b.show_cost===false) return '';
   return `<span class="jm-cost ${paid?'paid':''}">${m.deep?'✨ ':''}${paid?tt('jb.cost','Cost {n} credits',{n:fmt(m.cost_credits)}):tt('jb.freec','Free')}</span>`; }
 function jmsg(m){
-  if (m.role==='user') return `<div class="jmr me"><div class="jbub me">${esc(m.text)}</div></div>`;
+  if (m.role==='user') return `<div class="jmr me"><div class="jbub me" translate="no">${esc(m.text)}</div></div>`;
   if (m.kind==='confirm') return `<div class="jmr them"><span class="jav">${joeFace(32,{animate:false})}</span><div class="jcard-msg confirm"><div class="jbub them">${mdx(m.text)}</div>
     <div class="jcm-b"><span class="jcm-i">${I.coin}</span><span><b>${tt('jb.cont.t','Keep chatting with paid answers')}</b><small>${tt('jb.cont.p','Every answer shows what it cost. Set a monthly limit any time in chat settings.')}</small></span></div>
     <div class="jcm-a"><button class="btn primary" data-act="joe-confirm" data-q="${esc(m.q||'')}" ${m.done?'disabled':''}>${tt('jb.cont','Continue with credits')} ${I.arrow}</button><button class="btn" data-act="joe-go" data-v="credits">${I.plus} ${tt('jb.topup','Top up')}</button></div></div></div>`;
@@ -215,7 +215,7 @@ function drawJoeCta(){
   if (c.enabled===false){ el.innerHTML=''; return; }
   const msgs=(c.messages||[]).filter(m=>m.text&&!m.kind), last=msgs[msgs.length-1], today=new Date().toDateString();
   const cont=!!last && (!last.at || new Date(+last.at||last.at).toDateString()===today);
-  const prev=cont?`${last.role==='user'?`<em>${tt('joe.you','You')}:</em> `:''}${esc(joePlain(last.text).slice(0,140))}`:esc(tt('joe.cta.p','Ask about your joins, deposits and ads, in plain words.'));
+  const prev=cont?`${last.role==='user'?`<em>${tt('joe.you','You')}:</em> <span translate="no">${esc(joePlain(last.text).slice(0,140))}</span>`:esc(joePlain(last.text).slice(0,140))}`:esc(tt('joe.cta.p','Ask about your joins, deposits and ads, in plain words.'));
   el.innerHTML=`<button class="jcta" data-act="joe-dm"><span class="jcta-av">${joeFace(44,{animate:false,mood:(JOE.ins&&JOE.ins.mood)||'good'})}${cont?'':'<i class="jc-on"></i>'}</span><span class="jcta-t"><b>${cont?tt('joe.cta.cont','Continue chat with Joe'):tt('joe.cta','Chat with Joe')}</b><small>${prev}</small></span><span class="jcta-go">${I.arrow}</span></button>`;
 }
 function joeDM(on, push=true){
@@ -403,7 +403,7 @@ function backupSection(c){
   if (!others.length || c.type==='bot') return '';
   return `<details class="chan-sec bk-sec"><summary><span class="bk-t"><b>${tt('bk.title','Backup channel')}</b><small>${tt('bk.sub','Channel banned? Move your ads to a backup channel in one tap.')}</small></span>${I.chev}</summary>
     <div class="bk-body"><p class="hint">${tt('bk.p','This link’s visitors go into the channel you pick: its invite links and pixel settings, with joins counted there. No need to edit your ads.')}</p>
-      <div class="row-in"><select class="sel" id="bk-${c.id}" aria-label="${tt('bk.title','Backup channel')}">${others.map(o=>`<option value="${o.id}">${esc(o.title)}</option>`).join('')}</select><button class="btn sm primary" data-act="bk-go" data-id="${c.id}">${tt('bk.go','Move traffic')}</button></div></div></details>`;
+      <div class="row-in"><select class="sel" id="bk-${c.id}" aria-label="${tt('bk.title','Backup channel')}">${others.map(o=>`<option value="${o.id}" translate="no">${esc(o.title)}</option>`).join('')}</select><button class="btn sm primary" data-act="bk-go" data-id="${c.id}">${tt('bk.go','Move traffic')}</button></div></div></details>`;
 }
 async function backupSet(id, to){
   try { await api('PATCH','/api/channels/'+id,{redirect_to:to}); await refreshChans(); drawChannels(); toast(to?tt('bk.done','Traffic moved. Your ads keep running.'):tt('bk.back','Traffic is back on this channel')); }
@@ -1039,7 +1039,7 @@ function pzList(mode){
   const ans=mode==='answered';
   return `<div class="pz-tg ${ans?'answered':''}" ${ans?'':'data-climb'}><div class="pz-tgh"><b>Telegram</b><span class="pz-unr"><i class="pz-tot">${ans?0:3}</i> ${tt('pz.unread','unread')}</span></div>
     ${rows.map(([p,t],i)=>`<div class="pz-row" style="--i:${i}"><span class="pz-av">${pzPerson(PZ_AV[i])}</span><span class="pz-rb"><b>${tt('pz.lead','New lead')}</b><small class="pz-prev">${esc(p)}</small><small class="pz-rep">${sisLogo(12)} ${tt('pz.rep','Closer: here’s your link 👇')}</small></span><span class="pz-rm"><small>${t}</small><i class="pz-badge">1</i><i class="pz-ok">✓✓</i></span></div>`).join('')}
-    <div class="pz-foot"><span class="pz-late">${I.clock} ${tt('pz.last','Last reply')} <b class="pz-timer">3h 02m</b> ${tt('pz.ago','ago')}</span><span class="pz-fast">${I.bolt} ${tt('pz.replied','Replied in')} <b class="pz-sw">00:00:02</b></span></div></div>`;
+    <div class="pz-foot"><span class="pz-late">${I.clock} ${tt('pz.lastago','Last reply {t} ago',{t:'<b class="pz-timer">3h 02m</b>'})}</span><span class="pz-fast">${I.bolt} ${tt('pz.replied','Replied in')} <b class="pz-sw">00:00:02</b></span></div></div>`;
 }
 const PZ={
   wait:()=>`<div class="pz pz-wait" data-k="wait">${pzList('drown')}</div>`,
@@ -1254,7 +1254,7 @@ function limitsCard(d){
   const plan=planName(L.plan), part=(o,one,many)=>o.max==null?nNoun(o.used||0,one,many):`${fmt(o.used||0)} of ${nNoun(o.max,one,many)}`;
   const locked=visChans(d).filter(c=>c.locked).length, full=k=>{ const o=k==='c'?ch:bt; return o.max!=null&&(o.used||0)>=o.max; };
   const sub = locked ? tt('lim.sub.over','{n} over your {p} limit and not tracking. Upgrade, or remove one you don’t use.',{n:nNoun(locked,'channel is','channels are'),p:plan})
-    : full('c')||full('b') ? tt('lim.sub.full','You’ve used every {k} on {p}. Upgrade for unlimited, or remove one to make room.',{k:full('c')&&full('b')?'channel and bot':full('c')?'channel':'bot',p:plan})
+    : full('c')||full('b') ? (full('c')&&full('b')?tt('lim.sub.full.cb','You’ve used every channel and bot on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}):full('c')?tt('lim.sub.full.c','You’ve used every channel on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}):tt('lim.sub.full.b','You’ve used every bot on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}))
     : tt('lim.sub.ok','Room for {a} and {b} more on {p}.',{a:ch.max==null?'unlimited channels':nNoun(Math.max(0,ch.max-(ch.used||0)),'channel','channels'),b:bt.max==null?'unlimited bots':nNoun(Math.max(0,bt.max-(bt.used||0)),'bot','bots'),p:plan});
   const meter=(lab,o)=>{ const used=o.used||0, max=o.max, p=max?Math.min(100,used/max*100):100, st=max==null?'':used>max?'over':used>=max?'full':'';
     return `<div class="lm-m ${st}"><span class="lm-t"><span>${lab}</span><b class="num">${max==null?fmt(used)+' · ∞':`${fmt(used)}<small> / ${fmt(max)}</small>`}</b></span><span class="lm-bar" role="progressbar" aria-label="${esc(lab)}" aria-valuenow="${used}" aria-valuemin="0" ${max!=null?`aria-valuemax="${max}"`:''}><i style="--w:${p}%"></i></span></div>`; };
@@ -1276,7 +1276,7 @@ function botsCard(d){
   const L=d.limits, bmax=L&&!L.unlimited&&L.bots?L.bots.max:null;
   return `<section class="card bots-card"><div class="card-h"><h2>${I.bot} ${tt('bots.title','Your bots')}</h2><span class="sub">${bmax!=null?tt('bots.of','{a} of {b} on {p}',{a:fmt(bots.filter(b=>b.status==='active').length),b:fmt(bmax),p:planName(L.plan)}):tt('bots.n','{n} connected',{n:fmt(bots.length)})}</span></div>
     <div class="bot-list">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length, ok=b.status==='active';
-      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
+      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
         <button class="btn sm ghost bot-x" data-act="bot-rm" data-id="${b.id}">${UNPLUG}<span>${tt('bots.disc','Disconnect')}</span></button></div>`; }).join('')}</div>
     <button class="bot-add" data-act="bot-new">${I.plus} ${tt('bots.add','Add a new bot')}</button></section>`;
 }
@@ -1287,7 +1287,7 @@ function botPickStep(){
     <span class="step-ico">${I.bot}</span>
     <h1>${tt('bp.h','Which bot should track it?')}</h1><p class="lede">${tt('bp.p','Use a bot you already connected, or add a new one. One bot can track many channels.')}</p>
     <div class="bpick">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length;
-      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
+      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
       <button class="bpk-row bpk-new" data-act="bot-pick-new"><span class="bot-av new">${I.plus}</span><span class="bot-n"><b>${tt('bp.new','Add a new bot')}</b><small>${bfull?tt('bp.new.full','{a} of {b} bots used',{a:fmt(bt.used),b:fmt(bt.max)}):tt('bp.new.p','Paste a token from @BotFather')}</small></span>${bfull?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${planName(L.plan)}</span>`:`<span class="bpk-go">${I.chevr}</span>`}</button></div></div>`;
 }
 /* ---------- 402 limit sheet: never a dead end ---------- */
@@ -1311,8 +1311,8 @@ function drawLimitSheet(){
     return; }
   if (X.view==='list'){
     const d=S.chans||{bots:[],channels:[]};
-    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
-      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b>${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
+    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
+      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b translate="no">${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
     sheet(head, `<button class="link" style="align-self:flex-start" data-act="lim-back">${I.chevl} ${tt('common.back','Back')}</button>
       <div><h3 class="rm-h">${isB?tt('lim.bt.pick','Which bot can go?'):tt('lim.ch.pick','Which channel can go?')}</h3><p class="muted" style="font-size:14px;margin-top:4px">${tt('lim.pick.p','Past stats stay in your reports. Only new tracking stops.')}</p></div>
       <div class="rm-list">${rows||`<div class="note">${tt('lim.none','Nothing to remove.')}</div>`}</div>`);
@@ -1335,7 +1335,7 @@ function goUpgrade(){
 /* ---------- remove channel / disconnect bot ---------- */
 function openRemoveChannel(id, from){
   const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)); if(!c) return; closePop();
-  sheet(`<h2>${tt('rm.h','Remove channel')}<small>${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
+  sheet(`<h2>${tt('rm.h','Remove channel')}<small translate="no">${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
     ${c.tracking_url?`<div class="rm-link"><span class="lbl">${tt('rm.link','This link stops working')}</span><code>${esc(c.tracking_url)}</code></div>`:''}
     ${c.type!=='bot'?`<div class="note">${tt('rm.tg','Joinvoo stops making invite links for it. You can remove the bot from the channel’s admins in Telegram too.')}</div>`:''}
     <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="ch-rm-go" data-id="${c.id}" data-from="${esc(from||'')}">${TRASH} ${tt('rm.go','Remove channel')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
@@ -1356,8 +1356,8 @@ function afterRemove(){
 function openRemoveBot(id, from){
   const d=S.chans||{bots:[],channels:[]}, b=d.bots.find(x=>String(x.id)===String(id)); if(!b) return; closePop();
   const only=botOnly(d,b);
-  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small>@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
-    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li>${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
+  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small translate="no">@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
+    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li translate="no">${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
     <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="bot-rm-go" data-id="${b.id}" data-from="${esc(from||'')}">${UNPLUG} ${tt('rmb.go','Disconnect bot')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
 }
 async function removeBotGo(btn){

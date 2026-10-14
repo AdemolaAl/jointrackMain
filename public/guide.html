@@ -1,16 +1,17 @@
 <script>
 /* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
 (function(){
-  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  var L=['en','ru','fr','pt','es','ar','hi','id','tr','vi','sw'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇧🇷','Português'],es:['🇪🇸','Español'],ar:['🇸🇦','العربية'],hi:['🇮🇳','हिन्दी'],id:['🇮🇩','Bahasa Indonesia'],tr:['🇹🇷','Türkçe'],vi:['🇻🇳','Tiếng Việt'],sw:['🇰🇪','Kiswahili']};
   function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
   function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
   var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
-  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
-  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  var navs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']), nav=null;
+  for(var ni=0;ni<navs.length&&!nav;ni++){ var c2=String(navs[ni]).slice(0,2).toLowerCase(); if(L.indexOf(c2)>=0) nav=c2; }
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:nav||'en';
   if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
   var D={};
   if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
-  document.documentElement.lang=lang; window.JV_LANG=lang;
+  document.documentElement.lang=lang; if(lang==='ar') document.documentElement.dir='rtl'; window.JV_LANG=lang;
   window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
   function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
     for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
@@ -157,6 +158,9 @@ h1,h2,h3{overflow-wrap:break-word}
 /* small pills and inline nav links keep their look but get a 44px hit area */
 .hit44{position:relative}
 .hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+/* round 23 review: Arabic (right to left): arrows in buttons point the other way, on every page (moved here from home.html so sign-up and login get it) */
+[dir=rtl] .btn svg:not(.pi svg){transform:scaleX(-1)}
+[dir=rtl] .btn:hover svg:not(.pi svg){transform:scaleX(-1) translateX(3px)}
 
 /* Layout: a manual. Dark glowing header; then a left rail (sticky table of contents with progress) and numbered steps, each with plain instructions beside a drawn mock of the exact screen. Under 900px the rail becomes a sticky chip strip. */
 body{font-size:16.5px}
@@ -170,6 +174,7 @@ body{font-size:16.5px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;height:72px}
 .top nav{display:flex;gap:6px;align-items:center}
 .top .login{background:transparent;border-color:transparent;color:var(--ink)}
+.top nav .btn{white-space:nowrap}@media (max-width:440px){html:not([lang="en"]) .top nav a.login:not(.blogl){display:none}.top nav{gap:4px}} /* round 23: longer words in other languages */
 .hero{padding-top:clamp(30px,5vw,56px);display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:end}
 .hero h1{font-size:clamp(42px,6.6vw,80px);letter-spacing:-.05em;line-height:.98;margin-top:14px}
 .hero h1 span{background:linear-gradient(100deg,#5b3df5,#8f7bff,#5b3df5);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 6s linear infinite}
@@ -532,7 +537,7 @@ footer .fl{display:flex;flex-wrap:wrap;gap:6px 16px}footer a{color:var(--muted);
         <div><span data-i18n="1jj7gzg" class="n"><b>+</b>Good to know</span><h2 data-i18n="f71o4">More things Joinvoo can do</h2>
           <div class="faq">
             <details id="webhooks"><summary data-i18n="v8kve8">Send events to your own server (webhooks)</summary><p data-i18n="hyf9b5">Open <b>Conversions → Integrations</b> and scroll to <b>Send events to your own server</b>. Tap <b>Add webhook</b>, paste your server’s <code>https://</code> address (your CRM, your own bot, or a Zapier or Make link) and tick the events you want: joins, bot Starts, first DMs, registrations and deposits. Each event is sent as JSON the moment it happens, with the person, their Telegram ID and the campaign and ad they came from.</p><p data-i18n="1hgaphv">Every event carries an <code>X-Joinvoo-Signature</code> header: an HMAC-SHA256 of the <code>X-Joinvoo-Timestamp</code> value, a dot and the body, made with your signing secret. Check it to know the event is really from Joinvoo. If your server is down, Joinvoo tries again a few times. Tap <b>Send test</b> to check it works.</p></details>
-            <details id="tags"><summary data-i18n="116bwyk">Pass your ad’s details to your offer link</summary><p>Your offer link, your bot’s button link and your mini app address can carry tags. Under the link, tap a tag to add it: <code>{tg_id}</code>, <code>{click_id}</code>, <code>{utm_source}</code>, <code>{utm_campaign}</code>, <code>{utm_term}</code>, <code>{utm_content}</code> and <code>{sub1}</code> to <code>{sub9}</code>. Joinvoo fills each one in for every person, from the ad link they tapped. Keep your usual URL parameters on your Joinvoo link in your ads (for example <code>utm_campaign={{campaign.name}}</code> on Meta), and your offer or tracker sees the campaign and ad behind every visit. Tags work in welcome messages too.</p></details>
+            <details id="tags"><summary data-i18n="116bwyk">Pass your ad’s details to your offer link</summary><p data-i18n="14ap3ys">Your offer link, your bot’s button link and your mini app address can carry tags. Under the link, tap a tag to add it: <code>{tg_id}</code>, <code>{click_id}</code>, <code>{utm_source}</code>, <code>{utm_campaign}</code>, <code>{utm_term}</code>, <code>{utm_content}</code> and <code>{sub1}</code> to <code>{sub9}</code>. Joinvoo fills each one in for every person, from the ad link they tapped. Keep your usual URL parameters on your Joinvoo link in your ads (for example <code>utm_campaign=&#123;&#123;campaign.name&#125;&#125;</code> on Meta), and your offer or tracker sees the campaign and ad behind every visit. Tags work in welcome messages too.</p></details>
             <details id="csv"><summary data-i18n="1aar1gw">Download your data</summary><p data-i18n="106ytyd">Every list can be downloaded as a CSV file for Excel or Google Sheets, for the dates you picked: everyone who joined or wrote (<b>People → Download CSV</b>), every ad tap with its campaign, ad and result (<b>Results → Download</b>), and every registration and deposit (<b>Conversions → Download CSV</b>).</p></details>
             <details id="requests"><summary data-i18n="xmposh">Join-request mode: deposits from channels</summary><p data-i18n="1sfy8xy">In <b>Channels</b>, open your channel and switch <b>Join mode</b> to <b>Join requests</b>. Add a welcome message and your offer link with <code>{tg_id}</code> where your program expects the sub ID. Joinvoo approves each request in about a second and sends the person their own link, so their deposit is matched to them and to the ad. Already have a welcome bot? Choose <b>My own bot</b> and Joinvoo only tracks.</p></details>
             <details id="integrations"><summary data-i18n="1cm2yhf">Connect your affiliate program</summary><p data-i18n="1m4834g">Open <b>Integrations</b>, pick your program (1win Partners, Kingfin, Affstore, Pocket Option, Olymp Trade, Exness and more) or tracker (Keitaro, Binom) and <b>Copy postback</b>. Paste it in the program’s postback settings for registrations and deposits. Not listed? Use <b>Custom postback</b>: any network or CRM that can call a URL works.</p></details>
@@ -700,7 +705,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   <div class="sp-body" id="spBody" aria-live="polite">
     <div class="sp-card" id="spWelcome">
       <div class="sp-who" id="spWho"></div>
-      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <p data-i18n="1tyl46s" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat.</p>
       <div class="sp-quick" id="spQuick">
         <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
         <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>
@@ -870,9 +875,16 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   addEventListener('scroll', spy, { passive: true }); spy();
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('play'); io.unobserve(e.target); } }), { threshold: 0.35 });
   document.querySelectorAll('[data-play]').forEach((el) => io.observe(el));
-  document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
-    navigator.clipboard && navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); });
-  }));
+  // round 23 review: "Copy"/"Copied" in the visitor's language, and a fallback when the Clipboard API is missing or refused (older
+  // in-app browsers, http): a hidden textarea + execCommand('copy').
+  const T = (s) => (typeof _t === 'function' ? _t(s) : s); /* for build/i18n.py: _t('Copy') _t('Copied') */
+  const copied = (b) => { b.textContent = T('Copied'); setTimeout(() => (b.textContent = T('Copy')), 1400); };
+  const oldCopy = (txt) => { const ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); return ok; };
+  document.querySelectorAll('[data-copy]').forEach((b) => { b.textContent = T('Copy'); b.addEventListener('click', () => {
+    const txt = b.dataset.copy, fb = () => { if (oldCopy(txt)) copied(b); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => copied(b)).catch(fb); else fb();
+  }); });
 })();
 </script>
 <script>JVI();/* open every page at the top (no leftover scroll from the last page) unless a #section was asked for */(function(){try{if('scrollRestoration' in history)history.scrollRestoration='manual'}catch(e){}if(location.hash)return;var t=function(){window.scrollTo(0,0);var f=document.body&&document.body.firstElementChild;if(f&&f.scrollIntoView)try{f.scrollIntoView({block:'start'})}catch(e){}};var n=0,u=function(){n=1},w=function(){if(!n)t()};addEventListener('touchstart',u,{passive:true,once:true});addEventListener('wheel',u,{passive:true,once:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',t);else t();addEventListener('load',w);setTimeout(w,80);setTimeout(w,300);setTimeout(w,800);addEventListener('pageshow',w)})();</script>

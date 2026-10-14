@@ -308,7 +308,7 @@ form.step .lede{margin:-8px 0 0;color:var(--muted);font-size:17px}
   }
   async function create(){
     if(DEMO){ await new Promise(r=>setTimeout(r,900)); return; }
-    const body={email:F.email,password:F.password,ref:F.ref,lang:window.JV_LANG||'en',country:F.country,...(TEAM?{team_token:TEAM}:{})};
+    const body={email:F.email,password:F.password,ref:F.ref,...((()=>{ const l=window.JV_LANG||'en', en=(navigator.languages||[navigator.language||'']).some(x=>/^en/i.test(x)); let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch(e){} return (l!=='en'||en||saved)?{lang:l}:{}; })()),country:F.country,...(TEAM?{team_token:TEAM}:{})};
     const r=await fetch('/api/signup',{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(body)});
     const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||_t('Something went wrong. Try again.'));
     return j;

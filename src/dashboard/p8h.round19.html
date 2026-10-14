@@ -121,7 +121,7 @@ function dmStep(u, pick){
 
 /* ---- "Is this your manager?" (anyone with Telegram Premium can add a bot, so the owner confirms) ---- */
 function dmAsk(c){
-  return `<div class="r19-ask" role="group"><span class="r19-ask-ic">${ICO_DM}</span><span class="r19-ask-t"><b>${tt('r19.ask','Is this your manager?')}</b><small>${tt('r19.ask.p','{n} connected your bot in Telegram Business.',{n:`<b>${esc(c.title)}</b>${c.username?' (@'+esc(c.username)+')':''}`})}</small></span>
+  return `<div class="r19-ask" role="group"><span class="r19-ask-ic">${ICO_DM}</span><span class="r19-ask-t"><b>${tt('r19.ask','Is this your manager?')}</b><small>${tt('r19.ask.p','{n} connected your bot in Telegram Business.',{n:`<b translate="no">${esc(c.title)}</b>${c.username?' (@'+esc(c.username)+')':''}`})}</small></span>
     <span class="r19-ask-b"><button class="btn sm primary" data-act="r19-ok" data-id="${c.id}">${tt('r19.yes','Yes, that’s my manager')}</button><button class="btn sm ghost" data-act="r19-no" data-id="${c.id}">${tt('r19.no','Not mine')}</button></span></div>`;
 }
 async function dmApprove(id, a){

@@ -164,6 +164,7 @@ textarea.inp{height:auto;padding:12px 14px;resize:vertical;line-height:1.5}
 .demo b::before{content:"";width:7px;height:7px;border-radius:50%;background:#c8f169;box-shadow:0 0 0 3px rgba(200,241,105,.2)}
 .demo button,.demo a{border:1px solid rgba(255,255,255,.3);background:none;color:inherit;border-radius:99px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:none}
 .demo button:hover,.demo a:hover{background:rgba(255,255,255,.1)}
+.demo a.dm-go{background:#fff;color:#4a2fe0;border-color:#fff}.demo a.dm-go:hover{background:#efeaff}
 .shell{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100vh;transition:grid-template-columns .3s var(--ease)}
 .shell.col{--side:84px}
 .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px;padding:20px 14px 16px;border-right:1px solid var(--line);background:var(--bg);overflow:hidden;z-index:30}
@@ -889,7 +890,7 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
   .kpi .ks{white-space:normal;font-size:12.5px}
   .kpi .kd{flex-wrap:wrap;row-gap:4px}
   .demo{font-size:12px;gap:6px;padding:7px 10px}
-  .demo a{display:none}
+  .demo a:not(.dm-go){display:none}
   .topbar .icon-btn[data-act="chat"],.topbar .tb-ava{display:none}
   .balchip{padding:0 5px 0 13px;height:40px;font-size:14px}
   .balchip .plus{width:28px;height:28px}
@@ -4104,6 +4105,106 @@ body:has(.joe-page) .sup-launch{display:none!important}
   .uq-strip>span:nth-child(2){font-size:13.5px}
 }
 @media (prefers-reduced-motion:reduce){.uq-track i,.uq-mini i{transition:none}}
+/* ================= Round 22: Unique people → By ad platform ================= */
+.uq-plt{border-color:color-mix(in srgb,var(--brand) 22%,var(--line))}
+.uq-plt>span:nth-child(2) b:last-child{color:var(--brand-text);white-space:nowrap}
+.uq-pl{overflow:hidden}
+.uq-pd{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.uq-pl-top{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px;align-items:center;padding:4px 20px 14px}
+.uq-pl-pic{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.uq-venn2{width:100%;max-width:340px;height:auto;display:block;overflow:visible}
+.uq-venn2 .c{fill-opacity:.13;stroke-width:2.5;transform-origin:center;transform-box:fill-box;animation:uqPop .7s var(--ease) both}
+.uq-venn2 .c+.c{animation-delay:.12s}
+.uq-venn2 .uq-vn{font-size:22px;font-weight:800;letter-spacing:-.03em;font-family:inherit}
+.uq-venn2 .ln{stroke:var(--brand);stroke-width:1.5;stroke-dasharray:3 3}
+.uq-venn2 .uq-vb rect{fill:var(--brand)}.uq-venn2 .uq-vb text{fill:#fff;font-size:12.5px;font-weight:800;font-family:inherit}
+.uq-venn2 .uq-vb{animation:uqFade .5s .5s both}
+@keyframes uqPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes uqFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.uq-venn2 .c,.uq-venn2 .uq-vb{animation:none}}
+.uq-pl-key{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:13px;color:var(--muted)}
+.uq-pl-key span{display:inline-flex;align-items:center;gap:6px}.uq-pl-key b{color:var(--ink);font-weight:800}
+.uq-combos{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:6px}
+.uq-combos li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--sunk);font-size:13.5px}
+.uq-combos li b{flex:1;min-width:0;font-weight:700}.uq-combos li .num{font-weight:800}.uq-combos .dots{display:inline-flex;gap:3px}
+.uq-combos li.none{color:var(--muted);justify-content:center}
+.uq-pl-say{display:flex;flex-direction:column;gap:12px;min-width:0}
+.uq-pl-nums{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.uq-pl-nums>div{display:flex;flex-direction:column;line-height:1.1}
+.uq-pl-nums small{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.uq-pl-nums b{font-size:clamp(26px,3.4vw,34px);font-weight:800;letter-spacing:-.04em}
+.uq-pl-nums .cl b{color:var(--faint);text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:color-mix(in srgb,var(--coral) 70%,transparent)}
+.uq-pl-nums .rl b{color:var(--mint-ink)}
+.uq-pl-nums .ar svg{width:20px;height:20px;color:var(--faint)}
+.uq-pl-say p{margin:0;font-size:14px;line-height:1.5;color:var(--muted)}.uq-pl-say p b{color:var(--ink)}
+.uq-pl-cost{display:flex;gap:10px;flex-wrap:wrap}
+.uq-pl-cost>span{display:flex;flex-direction:column;padding:10px 14px;border-radius:14px;background:var(--mint-soft);min-width:0;flex:1 1 0}
+.uq-pl-cost>span.was{background:var(--sunk)}
+.uq-pl-cost small{font-size:11.5px;font-weight:700;color:var(--muted)}
+.uq-pl-cost b{font-size:20px;font-weight:800;letter-spacing:-.03em}.uq-pl-cost .was b{color:var(--muted)}
+.uq-plt-t{display:flex;flex-direction:column;padding:2px 12px 10px;border-top:1px solid var(--line)}
+.uq-plr{display:grid;gap:12px;align-items:center;padding:11px 8px}
+.uq-plt-t.c2 .uq-plr{grid-template-columns:minmax(120px,.8fr) minmax(0,2fr)}
+.uq-plt-t.c3 .uq-plr{grid-template-columns:minmax(120px,.8fr) minmax(0,2fr) 110px}
+.uq-plt-t.c4 .uq-plr{grid-template-columns:minmax(120px,.8fr) minmax(0,2fr) 96px 130px}
+.uq-plr+.uq-plr{border-top:1px solid var(--line)}
+.uq-plr.h{padding-top:10px;padding-bottom:4px;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.uq-plr.h>span:nth-child(n+3){text-align:right}
+.uq-plr .k{display:flex;align-items:center;gap:10px;min-width:0}.uq-plr .k>span{display:flex;flex-direction:column;min-width:0}
+.uq-plr .k b{font-size:14.5px;font-weight:800}.uq-plr .k small{font-size:12px;color:var(--muted);font-weight:600}
+.uq-plr .sp{display:flex;flex-direction:column;gap:6px;min-width:0}.uq-plr .sp small{font-size:12px;color:var(--muted)}
+.uq-plr .sp .uq-mini{display:flex}.uq-plr .sp .uq-mini i{transform:none;border-radius:0}
+.uq-plr .sp .uq-mini .o{background:var(--mint-ink)}.uq-plr .sp .uq-mini .s{background:var(--brand)}
+.uq-plr .r{text-align:right;font-weight:800;font-size:14.5px;display:flex;flex-direction:column;align-items:flex-end;line-height:1.25}
+.uq-plr .r .rl{display:none;font-size:11px;font-weight:700;color:var(--faint)}
+.uq-plr .r .pp{font-size:11.5px;font-weight:600;color:var(--faint)}
+.uq-pl-q{display:flex;gap:10px;align-items:flex-start;margin:0 20px 12px;padding:10px 14px;border-radius:14px;background:var(--mint-soft);font-size:13.5px;line-height:1.45;color:var(--ink)}
+.uq-pl-q svg{width:18px;height:18px;flex:none;color:var(--mint-ink);margin-top:1px}
+.uq-pl-hint{margin:0 20px 12px}
+.uq-pl-how{margin:0;padding:10px 20px 16px;font-size:12px;line-height:1.5;color:var(--faint)}
+@media (max-width:760px){.uq-pl-top{grid-template-columns:1fr;padding:2px 16px 12px}.uq-venn2{max-width:300px}}
+@media (max-width:640px){
+  .uq-plt-t{padding:2px 6px 8px}.uq-plr.h{display:none}
+  .uq-plt-t .uq-plr,.uq-plt-t.c2 .uq-plr,.uq-plt-t.c3 .uq-plr,.uq-plt-t.c4 .uq-plr{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .uq-plr .k,.uq-plr .sp,.uq-plt-t.c3 .uq-plr .r{grid-column:1 / -1}
+  .uq-plr .r{align-items:flex-start;text-align:left;padding:8px 12px;border-radius:12px;background:var(--sunk);min-width:0}
+  .uq-plr .r .rl{display:block}
+  .uq-pl-q,.uq-pl-hint{margin-left:16px;margin-right:16px}.uq-pl-how{padding:8px 16px 14px}}
+</style>
+<style>
+/* ================= Round 23: My profile → Where you're logged in ================= */
+.sec .card-h h2{display:flex;align-items:center;gap:8px}.sec .card-h h2 svg{width:18px;height:18px;color:var(--brand-text)}
+.sec-list{display:flex;flex-direction:column;padding:2px 16px 14px}
+.sec-row{display:flex;align-items:center;gap:14px;padding:12px 6px}
+.sec-row+.sec-row{border-top:1px solid var(--line)}
+.sec-ic{flex:none;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--sunk);color:var(--muted)}
+.sec-ic svg{width:21px;height:21px}
+.sec-row.cur .sec-ic{background:var(--brand-soft);color:var(--brand-text)}
+.sec-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sec-t b{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec-t small{font-size:12.5px;color:var(--muted);line-height:1.4;overflow-wrap:anywhere}.sec-t small.sec-when{color:var(--faint)}
+.sec-me{font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--mint-soft);color:var(--mint-ink)}
+.sec-row .btn{flex:none}
+.sec-foot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 6px 2px;border-top:1px solid var(--line);margin-top:2px}
+.sec-note{display:flex;align-items:center;gap:6px;margin:10px 6px 0}.sec-note svg{width:15px;height:15px;flex:none}
+@media (max-width:520px){.sec-list{padding:2px 10px 12px}.sec-row{gap:10px;align-items:flex-start}.sec-ic{width:36px;height:36px;border-radius:12px}
+  .sec-row .btn{padding:0 10px}.sec-foot .btn{flex:1 1 auto;justify-content:center}}
+/* ================= round 23 review: Arabic, right to left ([dir=rtl] is set on <html> by loadLang) ================= */
+[dir=rtl] .side{border-right:0;border-left:1px solid var(--line)}
+[dir=rtl] .shell.col .side .collapse svg{transform:none}
+[dir=rtl] .side .collapse svg{transform:rotate(180deg)}
+[dir=rtl] .fab{right:auto;left:26px}                                   /* support launcher on the left */
+[dir=rtl] .chat{right:auto;left:18px}
+[dir=rtl] .sup-launch{padding:0 9px 0 6px}
+[dir=rtl] .sup-launch .badge{right:auto;left:-3px}
+[dir=rtl] svg.rtl-flip{transform:scaleX(-1)}                            /* arrows / chevrons */
+[dir=rtl] .num,[dir=rtl] .money{unicode-bidi:isolate;direction:ltr}  /* "-5,778" stays "-5,778", not "5,778-" */
+@media (max-width:900px){
+  [dir=rtl] .side{left:auto;right:0;transform:translateX(102%)}           /* phone drawer slides in from the right */
+  [dir=rtl] .shell.open .side{transform:none}
+  [dir=rtl] .fab{right:auto;left:16px}
+  [dir=rtl] .chat{left:0}
+}
 </style>
 
 <div id="root"></div>
@@ -4117,29 +4218,51 @@ const DEMO = !!window.JP_DEMO;
 /* ---------- i18n: tt('key','English') everywhere; English is the source, app.<lang>.json adds translations.
    Language: ?lang= > saved (localStorage jv_lang / users.lang) > browser > en. Static English text already in templates
    is translated by the same dictionaries (auto.* keys) through a light text-node pass. ---------- */
-const LANGS=[['en','🇬🇧','English'],['ru','🇷🇺','Русский'],['fr','🇫🇷','Français'],['pt','🇵🇹','Português'],['es','🇪🇸','Español']];
+const LANGS=[['en','🇬🇧','English'],['ru','🇷🇺','Русский'],['fr','🇫🇷','Français'],['pt','🇧🇷','Português'],['es','🇪🇸','Español'],['ar','🇸🇦','العربية'],['hi','🇮🇳','हिन्दी'],['id','🇮🇩','Bahasa Indonesia'],['tr','🇹🇷','Türkçe'],['vi','🇻🇳','Tiếng Việt'],['sw','🇰🇪','Kiswahili']];
 const I18N={lang:'en', dict:{}, rev:null, en:null};
+/* round 23 review: dates ("Oct 13") in the user's language; Latin digits everywhere, like the rest of the numbers */
+const LOC=()=>I18N.lang==='en'?'en-US':I18N.lang+'-u-nu-latn';
 function tt(k, en, vars){ let s=(I18N.lang!=='en'&&I18N.dict[k]!=null)?I18N.dict[k]:en; if(s==null) s=k; if(vars) s=String(s).replace(/\{(\w+)\}/g,(m,x)=>vars[x]!=null?vars[x]:m); return s; }
 const pickLang = () => { const q=new URLSearchParams(location.search).get('lang'); let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{}
-  const nav=(navigator.language||'en').slice(0,2).toLowerCase(), ok=l=>LANGS.some(x=>x[0]===l); return ok(q)?q:ok(saved)?saved:ok(nav)?nav:'en'; };
+  const ok=l=>LANGS.some(x=>x[0]===l), nav=navLang(); return ok(q)?q:ok(saved)?saved:nav||'en'; };
+/* round 23b: the first language in the browser's list that Joinvoo speaks (a German+English browser gets English, not nothing) */
+const navLang = () => { const ls=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']).map(x=>String(x).slice(0,2).toLowerCase()); return ls.find(l=>LANGS.some(x=>x[0]===l))||null; };
+/* …and when the browser speaks none of our languages, the account's country decides (only where one language clearly fits) */
+const COUNTRY_LANG={BR:'pt',PT:'pt',AO:'pt',MZ:'pt',MX:'es',AR:'es',CO:'es',CL:'es',PE:'es',VE:'es',EC:'es',GT:'es',CU:'es',BO:'es',DO:'es',HN:'es',PY:'es',SV:'es',NI:'es',CR:'es',PA:'es',UY:'es',ES:'es',RU:'ru',BY:'ru',KZ:'ru',KG:'ru',FR:'fr',SN:'fr',CI:'fr',ML:'fr',BF:'fr',NE:'fr',TG:'fr',BJ:'fr',GA:'fr',CD:'fr',CG:'fr',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',JO:'ar',KW:'ar',QA:'ar',BH:'ar',OM:'ar',YE:'ar',LY:'ar',SY:'ar',LB:'ar',PS:'ar',SD:'ar',ID:'id',TR:'tr',VN:'vi',TZ:'sw'};
 async function loadLang(l){
-  I18N.lang=LANGS.some(x=>x[0]===l)?l:'en'; document.documentElement.lang=I18N.lang;
+  I18N.lang=LANGS.some(x=>x[0]===l)?l:'en'; document.documentElement.lang=I18N.lang; document.documentElement.dir=I18N.lang==='ar'?'rtl':'ltr'; /* round 23: Arabic reads right to left */
   if (I18N.lang==='en'){ I18N.dict={}; return; }
   try { const [d,e]=await Promise.all([fetch(`i18n/app.${I18N.lang}.json`).then(r=>r.ok?r.json():{}), I18N.en?Promise.resolve(I18N.en):fetch('i18n/app.en.json').then(r=>r.ok?r.json():{})]);
-    I18N.dict=d||{}; I18N.en=e||{}; I18N.rev=new Map(); for (const [k,v] of Object.entries(I18N.en)) if (!I18N.rev.has(v)||k.startsWith('auto.')) I18N.rev.set(v,k); }
+    I18N.dict=d||{}; I18N.en=e||{}; I18N.rev=new Map(); I18N.pats=[];
+    for (const [k,v] of Object.entries(I18N.en)){ if (!I18N.rev.has(v)||k.startsWith('auto.')) I18N.rev.set(v,k);
+      /* round 23: "Clicks on {x0} stopped." style strings: {xN} matches any text, {N} a number */
+      if (k.startsWith('auto.')&&/\{x\d+\}/.test(v)&&I18N.dict[k]){ const names=[]; const lits=v.split(/\{x?\d+\}/).filter(Boolean).sort((a,b)=>b.length-a.length);
+        const src='^'+v.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\\?\{(x?\d+)\\?\}/g,(m,n)=>{ names.push(n); return n[0]==='x'?'(.+?)':'([$€£₦]?\\d[\\d,.:]*(?:%|×)?)'; })+'$';
+        try { I18N.pats.push({re:new RegExp(src), names, k, lit:lits[0]||''}); } catch {} } } }
   catch { I18N.dict={}; }
 }
 function trNode(root){
   if (I18N.lang==='en' || !I18N.rev || !root) return;
   /* exact match first; then numbers become {0},{1}… so "12 of 20 deposits" finds "{0} of {1} deposits" */
   const tr=s=>{ const v=s.trim(); let k=I18N.rev.get(v); if (k&&I18N.dict[k]) return s.replace(v,I18N.dict[k]);
-    if (!/\d/.test(v)) return null; const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?(?:%|×|[kKmMh]\b)?/g,m=>'{'+(nums.push(m)-1)+'}');
-    k=I18N.rev.get(p); if (!k||!I18N.dict[k]) return null; return s.replace(v,I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m)); };
-  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>n.parentNode&&/^(SCRIPT|STYLE|CODE|TEXTAREA|PRE)$/i.test(n.parentNode.nodeName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+    if (/\d/.test(v)){ const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?(?:%|×|[kKmMh]\b)?/g,m=>'{'+(nums.push(m)-1)+'}');
+      k=I18N.rev.get(p); if (k&&I18N.dict[k]) return s.replace(v,I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m)); }
+    return /[A-Za-z]{2}/.test(v)?trPat(s,v):null; };
+  const trPat=(s,v)=>{ for (const P of I18N.pats||[]){ if (P.lit&&!v.includes(P.lit)) continue; const m=P.re.exec(v); if(!m) continue;
+      const val={}; P.names.forEach((n,i)=>{ let x=m[i+1]; const kk=I18N.rev.get(x); if (n[0]==='x'&&kk&&I18N.dict[kk]) x=I18N.dict[kk]; val[n]=x; });
+      return s.replace(v,I18N.dict[P.k].replace(/\{(x?\d+)\}/g,(mm,n)=>val[n]!=null?val[n]:mm)); }
+    return null; };
+  /* round 23 review: never touch the customer's own data (channel/campaign/people names, chat messages…): skip anything inside translate="no" */
+  const noTr=el=>!!(el&&el.closest&&el.closest('[translate="no"]'));
+  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>n.parentNode&&(/^(SCRIPT|STYLE|CODE|TEXTAREA|PRE)$/i.test(n.parentNode.nodeName)||noTr(n.parentNode))?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
   const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   for (const n of nodes){ const v=n.nodeValue; if (!v||v.trim().length<2) continue; const x=tr(v); if (x!=null) n.nodeValue=x; }
-  (root.querySelectorAll?root.querySelectorAll('[placeholder],[aria-label],[title]'):[]).forEach(el=>{ for (const a of ['placeholder','aria-label','title']){ const v=el.getAttribute(a); if(v){ const x=tr(v); if(x!=null) el.setAttribute(a,x); } } });
+  /* round 23b: include the added element itself (a chart <svg aria-label> added on its own was skipped) */
+  [...(root.getAttribute?[root]:[]),...(root.querySelectorAll?root.querySelectorAll('[placeholder],[aria-label],[title],[data-l]'):[])].forEach(el=>{ if (noTr(el)) return; for (const a of ['placeholder','aria-label','title','data-l']){ /* data-l: phone table column labels */ const v=el.getAttribute(a); if(v){ const x=tr(v); if(x!=null) el.setAttribute(a,x); } } });
 }
+/* round 23b: translate one English UI label (exact, or with numbers) — for labels glued into a longer line */
+function trS(s){ if (I18N.lang==='en'||!I18N.rev||s==null) return s; const v=String(s); let k=I18N.rev.get(v); if (k&&I18N.dict[k]) return I18N.dict[k];
+  const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?%?/g,m=>'{'+(nums.push(m)-1)+'}'); k=I18N.rev.get(p); return k&&I18N.dict[k]?I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m):v; }
 let trQ=null; const trObs=new MutationObserver(ms=>{ if (I18N.lang==='en') return; if (!trQ){ trQ=new Set(); requestAnimationFrame(()=>{ const q=trQ; trQ=null; q.forEach(n=>trNode(n)); }); }
   for (const m of ms) for (const n of m.addedNodes){ if (n.nodeType===1) trQ.add(n); else if (n.nodeType===3&&n.parentNode) trQ.add(n.parentNode); } });
 trObs.observe(document.body,{childList:true,subtree:true});
@@ -4148,6 +4271,8 @@ const HOME_LINK = DEMO ? '' : '/';
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* round 23 review: the customer's own text (campaign / ad names, people) inside a line: escaped and never auto-translated. Our "(no campaign tag)" style labels still are. */
+const ud = s => /^\(no /.test(String(s ?? '')) ? esc(s) : `<span translate="no">${esc(s)}</span>`;
 const fmt = n => Math.round(n||0).toLocaleString('en-US');
 const pct = (a,b) => b ? a/b*100 : 0;
 const pctS = (a,b,d=1) => b ? pct(a,b).toFixed(d)+'%' : '—';
@@ -4213,6 +4338,8 @@ const I = {
   globe:sv('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.3 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.3-3.5-8.5s1-6 3.5-8.5z"/>'),
   filter:sv('<path d="M4 5.5h16l-6.2 7.3v5.2l-3.6 1.8v-7z"/>'),
 };
+/* round 23 review: arrows and chevrons point the other way in Arabic (right to left): CSS flips svg.rtl-flip under [dir=rtl] */
+for (const k of ['arrow','chevl','chevr','send']) I[k]=I[k].replace('<svg ','<svg class="rtl-flip" ');
 /* Simplified platform marks (generic shapes, labelled with text wherever shown) */
 const PM = {
   meta:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M3.5 12.5c0-3 1.6-5 3.5-5 3.2 0 6.8 10 10 10 1.9 0 3.5-2 3.5-5s-1.6-5-3.5-5c-3.2 0-6.8 10-10 10-1.9 0-3.5-2-3.5-5z"/></svg>',
@@ -4255,12 +4382,13 @@ const rq = () => { const [f,t]=range(); return `from=${f}&to=${t}&${tzq()}${chq(
 function prevRange(){ const [f0,t0]=range(), span=Math.round((parseYmd(t0)-parseYmd(f0))/864e5)+1; return [ymd(addDays(parseYmd(f0),-span)), ymd(addDays(parseYmd(f0),-1)), span]; }
 function rangeLabel(){
   if (S.preset!=='custom') return PRESETS.find(p=>p[0]===S.preset)[1];
-  const [f,t]=range(), o={month:'short',day:'numeric'}; return parseYmd(f).toLocaleDateString('en-US',o)+' – '+parseYmd(t).toLocaleDateString('en-US',o);
+  const [f,t]=range(), o={month:'short',day:'numeric'}; return parseYmd(f).toLocaleDateString(LOC(),o)+' – '+parseYmd(t).toLocaleDateString(LOC(),o);
 }
 const vsLabel = () => S.preset==='today' ? 'vs yesterday' : S.preset==='custom' ? 'vs previous period' : 'vs previous '+({'7d':'7 days','30d':'30 days','90d':'3 months','180d':'6 months','365d':'12 months'})[S.preset];
-function ago(ts){ const s=Math.max(0,(Date.now()-ts)/1000); if(s<45) return 'just now'; if(s<3600) return Math.max(1,Math.floor(s/60))+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago'; const d=Math.floor(s/86400); return d<30?d+'d ago':new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function ago(ts){ const s=Math.max(0,(Date.now()-ts)/1000);
+  if (typeof I18N!=='undefined'&&I18N.lang&&I18N.lang!=='en'){ try { const rf=new Intl.RelativeTimeFormat(I18N.lang,{numeric:'auto',style:'short'}); if(s<45) return rf.format(0,'second'); if(s<3600) return rf.format(-Math.max(1,Math.floor(s/60)),'minute'); if(s<86400) return rf.format(-Math.floor(s/3600),'hour'); const d=Math.floor(s/86400); if(d<30) return rf.format(-d,'day'); return new Date(ts).toLocaleDateString(I18N.lang,{month:'short',day:'numeric'}); } catch {} } /* round 23: in the user's language */ if(s<45) return 'just now'; if(s<3600) return Math.max(1,Math.floor(s/60))+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago'; const d=Math.floor(s/86400); return d<30?d+'d ago':new Date(ts).toLocaleDateString(LOC(),{month:'short',day:'numeric'}); }
 function dur(ms){ const s=Math.max(0,Math.round(ms/1000)); if(s<60) return s+'s'; if(s<3600) return Math.round(s/60)+'m'; return (s/3600).toFixed(1)+'h'; }
-const when = ts => new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const when = ts => new Date(ts).toLocaleString(LOC(),{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const clock = ts => new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 const flag = cc => cc && /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map(c=>127397+c.charCodeAt(0))) : '';
 const COUNTRY = {US:'United States',GB:'United Kingdom',DE:'Germany',FR:'France',ES:'Spain',IT:'Italy',NL:'Netherlands',BR:'Brazil',MX:'Mexico',IN:'India',AE:'UAE',SA:'Saudi Arabia',ZA:'South Africa',KE:'Kenya',NG:'Nigeria',GH:'Ghana',CA:'Canada',AU:'Australia',PH:'Philippines',ID:'Indonesia',TR:'Türkiye',PL:'Poland',JP:'Japan',EG:'Egypt',MA:'Morocco',CM:'Cameroon'};
@@ -4302,7 +4430,8 @@ async function boot(){
   if (!S.cfgLoaded){ S.cfgLoaded=true; await Promise.all([loadConfig(), loadLang(pickLang())]); }
   const rt=qp.get('reset'); if (rt && !DEMO) return renderReset(rt);
   try { S.me = await api('GET','/api/me'); } catch(e){ if(!DEMO && e.status!==401) renderAuth('login'); return; }
-  { let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{} if (S.me && S.me.lang && S.me.lang!==I18N.lang && !saved && !qp.get('lang')) await loadLang(S.me.lang); }
+  { let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{} if (S.me && S.me.lang && S.me.lang!==I18N.lang && !saved && !qp.get('lang')) await loadLang(S.me.lang);
+    else if (S.me && !S.me.lang && !saved && !qp.get('lang') && !navLang()){ const cl=COUNTRY_LANG[String(S.me.country||'').toUpperCase()]; if (cl && cl!==I18N.lang) await loadLang(cl); } }
   const v=qp.get('verified');
   if (v){ qp.delete('verified'); history.replaceState(null,'',location.pathname+(qp.toString()?'?'+qp:'')+location.hash);
     if (v==='1'){ S.me.verified=true; setTimeout(()=>{ toast(`Email confirmed. Your first ${fmt(S.me.free_joins_gift||PRICE().free_joins)} joins are free`); confetti(); },400); }
@@ -4396,7 +4525,9 @@ async function renderAuth(mode){
     ${cfg.signup?`<p class="auth-foot">${mode==='login'?`New to Joinvoo? <a href="${SIGNUP}">Create an account</a>`:'Have an account? <a href="#" data-act="auth" data-m="login">Log in</a>'}</p>`:''}
     <p class="auth-foot" style="margin-top:8px"><a href="${HOME_LINK}terms" style="color:var(--faint);font-weight:500">Terms</a> · <a href="${HOME_LINK}privacy" style="color:var(--faint);font-weight:500">Privacy</a> · By Zedapex company</p>`);
   $('#af').addEventListener('submit', async e => { e.preventDefault(); const b=e.submitter; b.disabled=true;
-    try { await api('POST', mode==='login'?'/api/login':'/api/signup', {email:$('#ae').value,password:$('#ap').value}); boot(); }
+    /* round 23b review: English that is only the fallback (the browser speaks none of our languages) isn't saved, so the account's country can still pick the language at boot */
+    const keepLang = I18N.lang!=='en' || navLang()==='en';
+    try { await api('POST', mode==='login'?'/api/login':'/api/signup', {email:$('#ae').value,password:$('#ap').value,...(mode==='login'||!keepLang?{}:{lang:I18N.lang})}); boot(); }
     catch(err){ $('#aerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
 }
 
@@ -4570,9 +4701,9 @@ async function hookTest(a){
 }
 function openSnippets(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return;
-  sheet(`<h2>Connect your bot’s /start<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
+  sheet(`<h2>Connect your bot’s /start<small translate="no">${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b translate="no">${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
 }
-function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo<span class="dm-sd"> · sample data</span></b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
+function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo<span class="dm-sd"> · sample data</span></b>${Demo.sample?`<button data-act="demo-reset">${tt('demo.try','Try the setup')}</button>`:`<button data-act="demo-sample">${tt('demo.full','See a full account')}</button>`}<a class="dm-go" href="${SIGNUP}">${tt('demo.start','Start free')}</a></div>` : ''; }
 async function renderSetup(step, fromApp, opt){
   stopTimers(); clearInterval(W.poll); closeChat(true);
   W.fromApp = !!fromApp;
@@ -4583,7 +4714,7 @@ async function renderSetup(step, fromApp, opt){
   W.pickBot = !!(opt&&opt.pick) && act.length>0;
   W.bot = W.pickBot ? null : (act[0] || null);
   W.step = W.pickBot ? 1 : (step || (W.bot ? 2 : 1));
-  $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' Back to dashboard</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
+  $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' '+tt('setup.back','Back to dashboard')+'</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
     <div class="setup-body"><div class="prog" id="prog"></div><div id="stp"></div></div></div>`;
   drawStep();
 }
@@ -4693,7 +4824,7 @@ function botStep(u, pick){
       <div class="field"><label for="xu">Your bot’s username</label><input class="inp" id="xu" autocomplete="off" spellcheck="false" placeholder="@mystore_bot" value="${has?'@'+esc(u):DEMO?'@recipebox_help_bot':''}" required><span class="hint">No token needed. Joinvoo gives you a link for your ads and a hook URL for your bot.</span></div>
       <div id="xerr"></div><button class="btn primary lg wide" type="submit" id="xbtn">Create my hook ${I.arrow}</button></form>`
     : `<div class="okbar">${I.checkc}<span>Hook ready for ${esc(W.ext.title)}</span></div>
-      <p class="muted" style="font-size:14.5px">Your ad link opens <b>${esc(W.ext.title)}</b> with a code after “/start”. Add one call to your bot’s Start handler that passes that code to Joinvoo.</p>
+      <p class="muted" style="font-size:14.5px">Your ad link opens <b translate="no">${esc(W.ext.title)}</b> with a code after “/start”. Add one call to your bot’s Start handler that passes that code to Joinvoo.</p>
       ${hookPanel(W.ext)}
       <button class="btn primary lg wide" data-act="ext-continue">Next: connect your ads ${I.arrow}</button>`;
   return `<div class="step">${head}${back('bkind-back','Change bot type')}
@@ -4806,7 +4937,7 @@ addEventListener('scroll',()=>{ const t=$('#topbar'); if(t) t.classList.toggle('
 let fabY=0; addEventListener('scroll',()=>{ const y=Math.max(0,scrollY), d=y-fabY; if(Math.abs(d)<8) return; document.body.classList.toggle('fab-tuck', d>0 && y>120); fabY=y; },{passive:true});
 function drawFilters(){
   const el=$('#tbf'); if(!el) return; const f=PAGES[S.page].f; const ch=((S.chans&&S.chans.channels)||[]).filter(c=>c.status!=='removed');
-  el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''}>${esc(c.title)}</option>`).join('')}</select>`:'');
+  el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''} translate="no">${esc(c.title)}</option>`).join('')}</select>`:'');
   el.hidden = !el.innerHTML;
 }
 function refreshView(){ PAGES[S.page].fn(); }
@@ -4896,10 +5027,10 @@ function buckets(series){
   const [f,t]=range(); const m=new Map(series.map(s=>[s.day,s])); const days=[];
   for (let d=parseYmd(f); ymd(d)<=t; d=addDays(d,1)){ const s=m.get(ymd(d))||{}; days.push({d:new Date(d),clicks:s.clicks||0,joins:s.joins||0,ftd:s.ftd||0}); }
   const mode=days.length<=62?'day':days.length<=200?'week':'month';
-  if (mode==='day') return {mode,list:days.map(x=>({...x,label:x.d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}))};
+  if (mode==='day') return {mode,list:days.map(x=>({...x,label:x.d.toLocaleDateString(LOC(),{weekday:'short',month:'short',day:'numeric'})}))};
   const out=[]; let cur=null;
   for (const x of days){ const key=mode==='week'?Math.floor((x.d-parseYmd(f))/(7*864e5)):x.d.getFullYear()*12+x.d.getMonth(); if(!cur||cur.key!==key){cur={key,d:x.d,clicks:0,joins:0,ftd:0};out.push(cur);} cur.clicks+=x.clicks; cur.joins+=x.joins; cur.ftd+=x.ftd; }
-  out.forEach(b=>b.label=mode==='week'?'Week of '+b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):b.d.toLocaleDateString('en-US',{month:'long',year:'numeric'}));
+  out.forEach(b=>b.label=mode==='week'?'Week of '+b.d.toLocaleDateString(LOC(),{month:'short',day:'numeric'}):b.d.toLocaleDateString(LOC(),{month:'long',year:'numeric'}));
   return {mode,list:out};
 }
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -4919,7 +5050,7 @@ function drawPerf(el, series, anim){
   for(let i=0;i<=3;i++){ const v=max*i/3; g+=`<line class="${i?'gl':'gl0'}" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${compact(v)}</text>`; }
   g+=`<line class="gl0" x1="${L}" x2="${W-R}" y1="${fy0}" y2="${fy0}"/><text class="axl" x="${L-8}" y="${fy0-H2+10}" text-anchor="end">FTD</text>`;
   const step=Math.max(1,Math.ceil(n/(mob?5:9))), li=[]; for(let i=0;i<n;i+=step) li.push(i); if(li[li.length-1]!==n-1 && n>1){ if(n-1-li[li.length-1]<step/2) li.pop(); li.push(n-1); }
-  const sl=b=>mode==='month'?b.d.toLocaleDateString('en-US',{month:'short'}):b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const sl=b=>mode==='month'?b.d.toLocaleDateString(LOC(),{month:'short'}):b.d.toLocaleDateString(LOC(),{month:'short',day:'numeric'});
   for(const i of li) g+=`<text class="ax" x="${x(i)}" y="${H-6}" text-anchor="${n>1&&i===0&&slot<40?'start':n>1&&i===n-1&&slot<40?'end':'middle'}">${sl(list[i])}</text>`;
   const st=(i,k)=>anim&&!reduced?`style="animation:grow .8s ${Math.min(i*(n>40?8:22),500)+k}ms both var(--ease)"`:'';
   list.forEach((b,i)=>{ const hc=b.clicks?Math.max(3,T+H1-y(b.clicks)):0, hj=b.joins?Math.max(3,T+H1-y(b.joins)):0, hf=b.ftd?Math.max(2,fh(b.ftd)):0;
@@ -5013,7 +5144,7 @@ function drawKpis(st,prev,first){
     dms:{v:fmt(DM.n),raw:DM.n,d:deltaChip(DM.n,PDM.n*k,true,vl),s:tt('r19.kpi.dmso','+ {n} organic DMs',{n:fmt(DM.o)}),sp:''},
     dmrate:{v:pctS(DM.n,DM.c),raw:dmr,p:1,d:DM.c&&PDM.c?deltaChip(dmr,pdmr,true,vl):'',s:tt('r19.kpi.dmr','Ad taps that sent a DM'),sp:''},
     rate:{v:pctS(T.joins,T.clicks-DM.c),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
-    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins+DM.n)} of ${DM.n?tt('r19.kpi.leads','joins + DMs'):'joins'} · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
+    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?tt('ov.ftd.sub','{p} of {w} · {r} registered',{p:pctS(T.ftd,T.joins+DM.n),w:DM.n?tt('r19.kpi.leads','joins + DMs'):tt('cmp.noun.joins','joins'),r:fmt(T.reg)}):'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
     rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
     leaves:leftCard(T,P,vl),
   };
@@ -5086,7 +5217,7 @@ function drawTopCampaigns(rows){
   const el=$('#topc'); if(!el) return;
   if (!rows.length || (rows.length===1 && /^\(no /.test(rows[0].key))) { el.innerHTML=utmEmpty(true); return; }
   const r=rows.slice(0,6), mr=Math.max(...r.map(x=>x.join_rate),0.0001);
-  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Campaign</th><th>Clicks</th><th>Joins</th><th>Join rate</th><th>FTDs</th><th>Revenue</th></tr></thead><tbody>${r.map((x,i)=>`<tr><td class="k"><span class="rank">${i+1}</span>${esc(x.key)}</td><td data-l="Clicks">${fmt(x.clicks)}</td><td data-l="Joins">${fmt(x.joins)}</td><td data-l="Join rate"><span class="rate">${(x.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${x.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${fmt(x.ftd)}</td><td data-l="Revenue">${money0(x.revenue_cents)}</td></tr>`).join('')}</tbody></table></div>`;
+  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Campaign</th><th>Clicks</th><th>Joins</th><th>Join rate</th><th>FTDs</th><th>Revenue</th></tr></thead><tbody>${r.map((x,i)=>`<tr><td class="k"><span class="rank">${i+1}</span>${ud(x.key)}</td><td data-l="Clicks">${fmt(x.clicks)}</td><td data-l="Joins">${fmt(x.joins)}</td><td data-l="Join rate"><span class="rate">${(x.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${x.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${fmt(x.ftd)}</td><td data-l="Revenue">${money0(x.revenue_cents)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function utmEmpty(compact){
   const L=(p,code)=>`<div><span class="uh">${pm(p)}${PLAT[p].name}</span><code>${code}</code><button class="btn sm" data-act="copy" data-v="${esc(code.replace(/<\/?b>/g,'').replace(/&amp;/g,'&'))}">${I.copy} Copy</button></div>`;
@@ -5105,7 +5236,7 @@ const MET = {
   leaves:{l:'Leaves',noun:'leaves',get:m=>m.leaves,f:fmt,c:compact,proj:1,up:0},
 };
 const mDate = k => { const [y,m]=k.split('-').map(Number); return new Date(y,m-1,1); };
-const mName = (k,o={month:'long'}) => mDate(k).toLocaleDateString('en-US',o);
+const mName = (k,o={month:'long'}) => mDate(k).toLocaleDateString(LOC(),o);
 const dim = k => { const d=mDate(k); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); };
 const elapsed = m => { const n=new Date(); return Math.max(.25,(m.days_in-1)+(n.getHours()*60+n.getMinutes())/1440); };
 const projOf = (m,M) => M.proj && m.partial && m.days_in ? M.get(m)/elapsed(m)*dim(m.month) : M.get(m);
@@ -5134,19 +5265,21 @@ function drawCompareAll(anim){
   const cmpV=M.proj?proj:curV, d=prevV?deltaPct(cmpV,prevV):NaN, up=d>0, good=up===!!M.up;
   const complete=ms.filter(m=>!m.partial), best=complete.reduce((a,b)=>M.get(b)>M.get(a)?b:a, complete[0]||cur);
   const ce=mName(cur.month), pe=prev?mName(prev.month):'';
+  /* round 23b: month names come from the browser in the user's language, so every sentence with a month is a tt() key with {m}/{p} (the old English text + month only matched in October) */
+  const MK=S.cmpM in MET?S.cmpM:'joins', NOUN=tt('cmp.noun.'+MK,M.noun), LBL=tt('cmp.lbl.'+MK,M.l);
   // headline
   let h2, p;
   const any=ms.some(m=>M.get(m)>0);
   if (!any){ h2=`No ${M.noun} yet`; p=`When ${M.noun} start coming in, each month appears here so you can compare them side by side.`; }
-  else if (!prevV){ h2=`${M.f(curV)} <span class="serif">${M.noun}</span> so far`; p=`${ce} is your first month with ${M.noun}. Next month you’ll see how it compares.`; }
-  else if (Math.abs(d)<0.5){ h2=`${M.l} <span class="serif">level</span> with ${pe}`; p=M.proj?`On pace for ${M.f(proj)} in ${ce}, the same as ${pe}.`:`${M.f(curV)} in ${ce} so far, the same as ${pe}.`; }
-  else { h2=`${M.l} <span class="serif ${good?'':'dn'}">${up?'up':'down'} ${Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0)}%</span> vs ${pe}`;
-    p=M.proj?`On pace for ${M.f(proj)} in ${ce}: ${M.f(curV)} so far, day ${cur.days_in} of ${dim(cur.month)}. ${pe} finished at ${M.f(prevV)}.`:`${M.f(curV)} in ${ce} so far, against ${M.f(prevV)} for all of ${pe}.`; }
+  else if (!prevV){ h2=`${M.f(curV)} <span class="serif">${M.noun}</span> so far`; p=tt('cmp.first','{m} is your first month with {noun}. Next month you’ll see how it compares.',{m:ce,noun:NOUN}); }
+  else if (Math.abs(d)<0.5){ h2=tt('cmp.h.level','{l} <span class="serif">level</span> with {p}',{l:LBL,p:esc(pe)}); p=M.proj?tt('cmp.p.pace.same','On pace for {v} in {m}, the same as {p}.',{v:M.f(proj),m:ce,p:pe}):tt('cmp.p.sofar.same','{v} in {m} so far, the same as {p}.',{v:M.f(curV),m:ce,p:pe}); }
+  else { const dp=(Math.abs(d)>=100?Math.round(Math.abs(d)):Math.abs(d).toFixed(Math.abs(d)<10?1:0))+'%'; h2=tt(up?'cmp.h.up':'cmp.h.down',up?'{l} <span class="serif {c}">up {d}</span> vs {p}':'{l} <span class="serif {c}">down {d}</span> vs {p}',{l:LBL,c:good?'':'dn',d:dp,p:esc(pe)});
+    p=M.proj?tt('cmp.p.pace','On pace for {v} in {m}: {c} so far, day {d} of {n}. {p} finished at {pv}.',{v:M.f(proj),m:ce,c:M.f(curV),d:cur.days_in,n:dim(cur.month),p:pe,pv:M.f(prevV)}):tt('cmp.p.against','{c} in {m} so far, against {pv} for all of {p}.',{c:M.f(curV),m:ce,pv:M.f(prevV),p:pe}); }
   const pace=elapsed(cur)/dim(cur.month)*100;
-  $('#cmphero').innerHTML=`<div class="cmp-hl"><span class="eb">${esc(ce)} vs ${esc(pe||'last month')}</span><h2>${h2}</h2><p>${p}</p>
+  $('#cmphero').innerHTML=`<div class="cmp-hl"><span class="eb">${pe?tt('cmp.eb','{m} vs {p}',{m:esc(ce),p:esc(pe)}):tt('cmp.eb0','{m} vs last month',{m:esc(ce)})}</span><h2>${h2}</h2><p>${p}</p>
     <div class="pace"><span>Month progress</span><span class="pt"><i style="width:${anim?0:pace}%" data-w="${pace}"></i></span><span class="num">${Math.round(pace)}%</span></div></div>
-    <div class="cmp-nums"><div class="cmp-n"><small>${esc(ce)} so far</small><b>${M.f(curV)}</b><span>${cur.days_in} day${cur.days_in===1?'':'s'} in</span></div>
-      <div class="cmp-n"><small>${M.proj?'Projected '+esc(ce):'Change'}</small><b>${M.proj?'≈ '+M.f(proj):(prevV?(curV-prevV>=0?'+':'')+(curV-prevV).toFixed(1)+' pts':'—')}</b><span>${M.proj?'At today’s pace':'vs '+esc(pe)}</span></div>
+    <div class="cmp-nums"><div class="cmp-n"><small>${tt('cmp.msofar','{m} so far',{m:esc(ce)})}</small><b>${M.f(curV)}</b><span>${cur.days_in===1?tt('cmp.dayin1','1 day in'):tt('cmp.dayin','{n} days in',{n:cur.days_in})}</span></div>
+      <div class="cmp-n"><small>${M.proj?tt('cmp.projm','Projected {m}',{m:esc(ce)}):tt('cmp.change','Change')}</small><b>${M.proj?'≈ '+M.f(proj):(prevV?(curV-prevV>=0?'+':'')+(curV-prevV).toFixed(1)+' pts':'—')}</b><span>${M.proj?tt('cmp.atpace','At today’s pace'):tt('cmp.vsp','vs {p}',{p:esc(pe)})}</span></div>
       <div class="cmp-n"><small>${esc(pe||'Last month')}</small><b>${prev?M.f(prevV):'—'}</b><span>${prev?'Full month':'No data'}</span></div>
       <div class="cmp-n"><small>Best month</small><b>${best&&M.get(best)?M.f(M.get(best)):'—'}</b><span>${best&&M.get(best)?esc(mName(best.month,{month:'long',year:'numeric'})):'Not yet'}</span></div></div>`;
   if (anim) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const i=$('#cmphero .pt i'); if(i) i.style.width=i.dataset.w+'%'; }));
@@ -5199,7 +5332,7 @@ function drawCompare(el, ms, M, py, anim){
       if (v && (showAll || v===Math.max(...vals) || i===n-2)) g+=`<text class="vl" x="${x0+bw/2}" y="${T+H1-h-7}" text-anchor="middle" ${anim&&!reduced?`style="animation:fade .5s ${i*55+500}ms both"`:''}>${M.c(v)}</text>`;
     }
     g+='</g>';
-    const d=mDate(m.month); g+=`<text class="ml ${m.partial?'cur':''}" x="${cx}" y="${T+H1+17}" text-anchor="middle">${d.toLocaleDateString('en-US',{month:'short'})}</text>`;
+    const d=mDate(m.month); g+=`<text class="ml ${m.partial?'cur':''}" x="${cx}" y="${T+H1+17}" text-anchor="middle">${d.toLocaleDateString(LOC(),{month:'short'})}</text>`;
     if (d.getMonth()===0 || i===0) g+=`<text class="ax" x="${cx}" y="${T+H1+31}" text-anchor="middle" style="font-size:10px">${d.getFullYear()}</text>`;
   });
   if (avg){ g+=`<line class="avg" x1="${L}" x2="${W-R}" y1="${y(avg)}" y2="${y(avg)}"/><text class="avgl" x="${W-R}" y="${y(avg)-5}" text-anchor="end">avg ${M.c(avg)}</text>`; }
@@ -5208,10 +5341,10 @@ function drawCompare(el, ms, M, py, anim){
   const show=i=>{ const m=ms[i], p=ms[i-1], v=vals[i], pvv=p?M.get(p):0, dd=pvv?deltaPct(M.proj&&m.partial?proj:v,pvv):NaN;
     svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=x.dataset.g==i?1:.45);
     if(!tip){ tip=document.createElement('div'); tip.className='tip'; el.appendChild(tip); }
-    tip.innerHTML=`<div class="th">${esc(mName(m.month,{month:'long',year:'numeric'}))}${m.partial?' · so far':''}</div><div class="tr"><span><i style="background:${cj}"></i>${M.l}</span><b>${M.f(v)}</b></div>
+    tip.innerHTML=`<div class="th">${esc(mName(m.month,{month:'long',year:'numeric'}))}${m.partial?' · '+tt('cmp.sofar','so far'):''}</div><div class="tr"><span><i style="background:${cj}"></i>${M.l}</span><b>${M.f(v)}</b></div>
       ${m.partial&&M.proj?`<div class="tr"><span><i style="border:1.5px dashed ${cj};background:none"></i>Projected</span><b>≈ ${M.f(proj)}</b></div>`:''}
       ${py?`<div class="tr"><span><i style="background:${cc}"></i>${esc(mName(py[i].month,{month:'short',year:'numeric'}))}</span><b>${M.f(pv[i])}</b></div>`:''}
-      <div class="tf">${isFinite(dd)?`${dd>=0?'▲':'▼'} ${Math.abs(dd).toFixed(1)}% vs ${esc(mName(p.month,{month:'short'}))}${m.partial&&M.proj?' (at pace)':''}`:'No earlier month to compare'}${m.partial?` · day ${m.days_in} of ${dim(m.month)}`:''}</div>`;
+      <div class="tf">${isFinite(dd)?`${dd>=0?'▲':'▼'} ${tt('cmp.tip.vs','{d} vs {p}',{d:Math.abs(dd).toFixed(1)+'%',p:esc(mName(p.month,{month:'short'}))})}${m.partial&&M.proj?' '+tt('cmp.tip.pace','(at pace)'):''}`:tt('cmp.tip.none','No earlier month to compare')}${m.partial?' · '+tt('cmp.tip.day','day {d} of {n}',{d:m.days_in,n:dim(m.month)}):''}</div>`;
     const cx=L+slot*i+slot/2, tw=tip.offsetWidth; let lx=cx-tw/2; lx=Math.max(4,Math.min(el.clientWidth-tw-4,lx)); tip.style.left=lx+'px'; tip.style.top=Math.max(0,y(Math.max(v,m.partial&&M.proj?proj:0,py?pv[i]:0))-tip.offsetHeight-10+14)+'px'; };
   const hide=()=>{ tip&&tip.remove(); tip=null; svg.querySelectorAll('g[data-g]').forEach(x=>x.style.opacity=1); };
   svg.querySelectorAll('.slot').forEach(s=>{ s.addEventListener('pointerenter',()=>show(+s.dataset.i)); s.addEventListener('pointerdown',()=>show(+s.dataset.i)); });
@@ -5238,7 +5371,7 @@ function dimKey(k){
   if (S.dim==='lang'){ const n={en:'English',pt:'Portuguese',es:'Spanish',ru:'Russian',fr:'French',de:'German',it:'Italian',tr:'Turkish',ar:'Arabic',hi:'Hindi',id:'Indonesian'}[k]; return `<span class="langk">${esc(String(k).toUpperCase())}</span>${esc(tt('langname.'+k,n||k))}`; }
   if (S.dim==='country') return `<span style="margin-right:6px">${flag(k)}</span>${esc(COUNTRY[k]||k)}`;
   if (S.dim==='platform'){ const p={Meta:'meta',TikTok:'tiktok',Snapchat:'snap'}[k]; return `<span style="display:inline-flex;align-items:center;gap:8px">${p?pm(p):''}${esc(k)}</span>`; }
-  return esc(k);
+  return ud(k); /* round 23 review: campaign / ad set / ad / source names are the customer's own */
 }
 function drawBreakdown(){
   const el=$('#btbl'); if(!el) return;
@@ -5332,7 +5465,7 @@ function drawConvLog(){
   if (!rows.length){ el.innerHTML=`<div class="empty"><span class="ei">${I.conversions}</span><h3>No conversions yet</h3><p>Once your postback is live, every registration and deposit appears here with what was sent to each ad platform. You can also mark someone as deposited from their profile in People.</p><button class="btn sm" data-act="nav" data-p="people">${I.people} Open People</button></div>`; return; }
   el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Person</th><th>Event</th><th>Value</th><th>Matched</th><th style="text-align:left">Sent to</th><th>Source</th><th>When</th></tr></thead><tbody>
     ${rows.map(r=>{ const e=EVL[r.event]||[r.event,'--faint']; const who=r.first_name||r.username?nameOf(r):r.tg_user_id?'ID '+r.tg_user_id:'Unknown';
-      return `<tr><td class="k"><span style="display:inline-flex;align-items:center;gap:10px;min-width:0"><span class="av" style="width:28px;height:28px;font-size:12px;${avStyle(r.tg_user_id||r.id)}">${esc((who[0]||'?').toUpperCase())}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(who)}${r.channel_title?`<small class="faint" style="display:block;font-weight:500;font-size:12px">${esc(r.channel_title)}</small>`:''}</span></span></td>
+      return `<tr><td class="k"><span style="display:inline-flex;align-items:center;gap:10px;min-width:0"><span class="av" style="width:28px;height:28px;font-size:12px;${avStyle(r.tg_user_id||r.id)}">${esc((who[0]||'?').toUpperCase())}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis"><span translate="no">${esc(who)}</span>${r.channel_title?`<small class="faint" style="display:block;font-weight:500;font-size:12px" translate="no">${esc(r.channel_title)}</small>`:''}</span></span></td>
       <td data-l="Event"><span class="evc ev-${esc(r.event)}${r.rejected&&r.event!=='rejected'?' rej':''}">${e[0]}${r.rejected&&r.event!=='rejected'?' · rejected':''}</span></td><td data-l="Value">${r.value_cents?`<b style="font-weight:650${r.rejected?';text-decoration:line-through;color:var(--faint)':''}">${money(r.value_cents)}</b>${r.currency&&r.currency!=='USD'?' <small class="faint">'+esc(r.currency)+'</small>':''}`:'<span class="faint">—</span>'}</td>
       <td data-l="Matched">${r.matched?'<span class="chip g">Matched</span>':'<span class="chip r" title="No ad join found for this Telegram ID">Unmatched</span>'}</td>
       <td data-l="Sent to" style="text-align:left"><span style="display:inline-flex;gap:4px;flex-wrap:wrap">${[pst('meta',r.meta_status),pst('tiktok',r.tt_status),pst('snap',r.sc_status)].join('')||'<span class="faint">Not sent</span>'}</span>${r.error?`<small style="display:block;color:var(--coral-ink);white-space:normal;font-size:12px">${esc(r.error)}</small>`:''}</td>
@@ -5371,14 +5504,14 @@ function tagsFor(r, full){
   t.push(r.click_id?`<span class="chip v">Ad · ${dur(r.joined_at-(r.click_ts||r.joined_at))}</span>`:'<span class="chip y">Organic</span>');
   const st=[['meta',r.capi_status],['tiktok',r.tt_status],['snap',r.sc_status]];
   if (full){ for (const [k,s] of st) if (s==='sent'||s==='failed') t.push(pst(k,s)); return t.join(''); }
-  const m=st.filter(([,s])=>s==='sent'||s==='failed').map(([k,s])=>`<span class="${s==='failed'?'bad':''}" title="${s==='failed'?'Failed to send to':'Sent to'} ${PLAT[k].name}">${pm(k)}</span>`).join('');
+  const m=st.filter(([,s])=>s==='sent'||s==='failed').map(([k,s])=>`<span class="${s==='failed'?'bad':''}" title="${s==='failed'?tt('mt.failto','Failed to send to {p}',{p:PLAT[k].name}):tt('mt.sentto','Sent to {p}',{p:PLAT[k].name})}">${pm(k)}</span>`).join('');
   if (m) t.push(`<span class="sent">${m}</span>`);
   return t.join('');
 }
 function personRow(r,key,isNew){
   const p=r.params||{}, f=ftdOf(r), pl=platOf(r);
   const sub=[r.channel_title,p.utm_campaign||'',r.country?flag(r.country)+' '+r.country:'',ago(r.joined_at)].filter(Boolean).join(' · ');
-  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
+  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis" translate="no">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
 }
 /* which Meta match keys went with this person's events (more keys = better match quality in Events Manager) */
 function matchKeys(r){
@@ -5393,11 +5526,11 @@ function openPerson(r){
   const dev=/iPhone|iPad/.test(ua)?'iPhone':/Android/.test(ua)?'Android':ua?'Computer':'—';
   const app=/Instagram/.test(ua)?' · Instagram':/FBAN|FBAV/.test(ua)?' · Facebook':/musical_ly|TikTok|BytedanceWebview/i.test(ua)?' · TikTok':/Snapchat/i.test(ua)?' · Snapchat':'';
   const ev=S.cvEv||'ftd', hasFtd=convs.some(c=>c.event==='ftd'), hasReg=convs.some(c=>c.event==='reg');
-  const tl=[]; if (r.click_ts) tl.push([I.click,'Clicked the ad',when(r.click_ts)+(p.utm_campaign?' · '+esc(p.utm_campaign):''),'','var(--faint)']);
-  tl.push([I.join,'Joined '+esc(r.channel_title||''),when(r.joined_at)+(r.click_ts?' · '+dur(r.joined_at-r.click_ts)+' after the click':''),'','var(--brand)']);
+  const tl=[]; if (r.click_ts) tl.push([I.click,'Clicked the ad',when(r.click_ts)+(p.utm_campaign?' · '+ud(p.utm_campaign):''),'','var(--faint)']);
+  tl.push([I.join,'Joined '+ud(r.channel_title||''),when(r.joined_at)+(r.click_ts?' · '+dur(r.joined_at-r.click_ts)+' after the click':''),'','var(--brand)']);
   for (const c of convs){ const e=EVL[c.event]||[c.event,'--faint']; tl.push([c.event==='reg'?I.reg:I.coin,e[0],when(c.at)+' · '+(c.source==='manual'?'marked by hand':'from postback'),c.value_cents?money(c.value_cents)+(c.currency&&c.currency!=='USD'?' '+esc(c.currency):''):'',`var(${e[1]})`]); }
   if (r.left_at) tl.push([I.leave,'Left',when(r.left_at),'','var(--coral)']);
-  sheet(`<span class="av" style="width:40px;height:40px;${avStyle(r.tg_user_id)}">${initial(r)}</span><h2>${esc(nameOf(r))}<small>${r.username?'@'+esc(r.username)+' · ':''}${esc(r.channel_title||'')}</small></h2>`, `
+  sheet(`<span class="av" style="width:40px;height:40px;${avStyle(r.tg_user_id)}">${initial(r)}</span><h2 translate="no">${esc(nameOf(r))}<small>${r.username?'@'+esc(r.username)+' · ':''}${esc(r.channel_title||'')}</small></h2>`, `
     <div class="tags" style="justify-content:flex-start">${tagsFor(r,true)}${r.is_premium?'<span class="chip v">Telegram Premium</span>':''}${hasFtd?'<span class="ftdb">Depositor</span>':''}</div>
     ${r.suspect?`<div class="note warn"><b>${tt('fraud.why','Filtered as {r}.',{r:esc(susLabel(r.suspect_reason))})}</b> ${tt('fraud.why.p','This join is recorded but was not sent to Meta, TikTok or Snapchat, so it can’t confuse your ads.')}</div>`:''}
     <form class="conv-form" id="cvf"><h4>${I.coin}${hasFtd?'Record another conversion':'Mark as deposited or registered'}</h4>
@@ -5416,9 +5549,9 @@ function openPerson(r){
       ${r.link_name?`<div class="kv kv-tall"><span>${tt('pp.link','Invite link in Telegram')}</span><span class="kv-v"><b class="kv-ln">${esc(r.link_name)}</b><small class="kv-h">${tt('pp.link.h','Find it in Telegram → your channel → Invite links')}</small></span></div>`:''}
       <div class="kv"><span>Country</span><span>${r.country?flag(r.country)+' '+esc(COUNTRY[r.country]||r.country):'—'}</span></div>
       <div class="kv"><span>Device</span><span>${dev}${app}</span></div>
-      ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span>${esc(p.utm_campaign)}</span></div>`:''}
-      ${p.utm_content?`<div class="kv"><span>Ad</span><span>${esc(p.utm_content)}</span></div>`:''}
-      ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}
+      ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span translate="no">${esc(p.utm_campaign)}</span></div>`:''}
+      ${p.utm_content?`<div class="kv"><span>Ad</span><span translate="no">${esc(p.utm_content)}</span></div>`:''}
+      ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span translate="no">${esc(v)}</span></div>`).join('')}
       <div class="kv"><span>IP address</span><span class="mono">${esc(r.ip||'—')}</span></div></div>
       <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>${k==='meta'?matchKeys(r):''}`).join('')}</div>`
     :`<div class="note">This person joined another way, like a shared link or search. There’s no ad click to match, so nothing was sent to your ad platforms.</div>`}`);
@@ -5450,7 +5583,7 @@ function drawChannels(){
     const prow=p=>{ const on=platOn(c,p); const test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
       return `<div class="prow2">${pm(p)}<b>${PLAT[p].name}</b>${on?`<span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto">${test?'<span class="chip y" title="Test mode is on">Test</span>':''}<button class="chip g" style="cursor:pointer" data-act="plat-open" data-id="${c.id}" data-p="${p}">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${esc(platEvent(c,p))}</button></span>`:`<button class="btn sm" data-act="plat-open" data-id="${c.id}" data-p="${p}">Connect</button>`}</div>`; };
     const pool=c.pool_target?Math.min(100,c.pool/c.pool_target*100):0;
-    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
+    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3 translate="no">${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
       <div class="chan-sec"><span class="lbl">Your link for ads</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} Copy</button></div>${domPick(c,d)}</div>
       <div class="chan-sec" style="gap:4px"><span class="lbl" style="margin-bottom:4px">Ad platforms</span>${PLATS().map(prow).join('')}<div class="prow2" style="opacity:.6">${pm('google')}<b>Google Ads</b><span class="chip o">Coming soon</span></div></div>
       ${isB&&c.external?`<div class="chan-sec"><div class="prow2"><span class="chip v">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} Tracked via your bot (no token)</span></div>
@@ -5468,7 +5601,7 @@ function drawChannels(){
 }
 function openPlatform(id, p){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const on=platOn(c,p);
-  sheet(`${pm(p,1)}<h2>${PLAT[p].name}<small>${esc(c.title)}</small></h2>`, `<p class="muted" style="font-size:14px">Every join from this link is sent to your ${PLAT[p].name} ${p==='meta'?'pixel':p==='tiktok'?'pixel':'Pixel'} through ${p==='meta'?'the Conversions API':p==='tiktok'?'the Events API':'the Conversions API'}, server-side. First deposits from your postback are sent too.</p>
+  sheet(`${pm(p,1)}<h2>${PLAT[p].name}<small translate="no">${esc(c.title)}</small></h2>`, `<p class="muted" style="font-size:14px">Every join from this link is sent to your ${PLAT[p].name} ${p==='meta'?'pixel':p==='tiktok'?'pixel':'Pixel'} through ${p==='meta'?'the Conversions API':p==='tiktok'?'the Events API':'the Conversions API'}, server-side. First deposits from your postback are sent too.</p>
     <form id="mf" style="display:flex;flex-direction:column;gap:16px">${platFields(p,c,true)}
       <div id="merr"></div><div class="row-in"><button class="btn primary lg" type="submit" style="flex:1">Save</button>${on?`<button class="btn lg" type="button" data-act="test" data-id="${c.id}" data-p="${p}">Send test</button>`:''}</div></form>
     <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Where do I find these? Open the guide ${I.ext}</a>`);
@@ -5478,7 +5611,7 @@ function openPlatform(id, p){
 }
 function openBotSettings(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot=S.chans.bots.find(b=>('@'+b.username)===c.title)||S.chans.bots[0];
-  sheet(`<h2>Bot settings<small>${esc(c.title)}</small></h2>`, `<form id="bsf" style="display:flex;flex-direction:column;gap:16px">
+  sheet(`<h2>Bot settings<small translate="no">${esc(c.title)}</small></h2>`, `<form id="bsf" style="display:flex;flex-direction:column;gap:16px">
     <div class="field"><label for="sw1">Welcome message</label><textarea class="inp" id="sw1" rows="3" placeholder="Hi {name} 👋 Welcome!">${esc(c.welcome)}</textarea><span class="hint">Sent when someone presses Start. {name} becomes their first name. Leave empty to send nothing.</span></div>
     <div class="field"><label for="sw2">Button text</label><input class="inp" id="sw2" value="${esc(c.btn_text)}" placeholder="Join the group"></div>
     <div class="field"><label for="sw3">Button link</label><input class="inp" id="sw3" value="${esc(c.btn_url)}" placeholder="https://t.me/+…"></div>
@@ -5500,7 +5633,7 @@ function openChangePass(){
 function manualAdd(){
   const bots=(S.chans&&S.chans.bots.filter(b=>b.status==='active'))||[];
   sheet('<h2>Add by username</h2>', `<p class="muted">For when your bot was made admin before you connected it here.</p>
-    <form id="mmf" style="display:flex;flex-direction:column;gap:16px"><div class="field"><label for="mb">Bot</label><select class="sel" id="mb">${bots.map(b=>`<option value="${b.id}">@${esc(b.username)}</option>`).join('')}</select></div>
+    <form id="mmf" style="display:flex;flex-direction:column;gap:16px"><div class="field"><label for="mb">Bot</label><select class="sel" id="mb">${bots.map(b=>`<option value="${b.id}" translate="no">@${esc(b.username)}</option>`).join('')}</select></div>
     <div class="field"><label for="mch">Channel @username or ID</label><input class="inp" id="mch" placeholder="@mychannel"><span class="hint">Private channel? Forward a post from it to @userinfobot to get the ID.</span></div><div id="mmerr"></div><button class="btn primary lg wide" type="submit">Add channel</button></form>`);
   $('#mmf').addEventListener('submit', async e=>{ e.preventDefault();
     try { await api('POST','/api/channels',{bot_id:$('#mb').value,chat:$('#mch').value}); closeSheet(); await refreshChans(); W.channel=S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); }
@@ -5662,9 +5795,9 @@ async function viewEarn(){
     <section class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px;font-weight:650">Your referral link</b><span class="chip v">They sign up, you earn on every top-up</span></div>
       <div class="codebox"><code>${esc(r.link)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.link)}">${I.copy} Copy</button></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">WhatsApp</a><a class="btn sm" href="https://t.me/share/url?url=${encodeURIComponent(r.link)}&text=${encodeURIComponent('Track who joins your Telegram from your ads')}" target="_blank" rel="noopener">${pm('tg')} Telegram</a><a class="btn sm" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">X</a></div></section>
-    <div class="kpis">${[['Signed up',fmt(r.invited),'With your link'],['Paying referrals',fmt(r.active),'Active = they’ve paid'],['They spent',money(r.month_spend_cents),'This month'],['You earned',money(r.month_earned_cents),'This month']].slice(0,3).map(([l,v,s])=>`<section class="card kpi"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('')}</div>
+    <div class="kpis">${[['Signed up',fmt(r.invited),'With your link'],['Paying referrals',fmt(r.active),tt('ref.act30','Topped up in the last 30 days')],['They spent',money(r.month_spend_cents),'This month'],['You earned',money(r.month_earned_cents),'This month']].slice(0,3).map(([l,v,s])=>`<section class="card kpi"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('')}</div>
     <div class="tiers">${r.tiers.map((t,i)=>`<section class="card tier ${i===ti?'on':i<ti?'done':''}"><b>${Math.round(t.rate*100)}%</b><span>${t.name}</span><small>${t.min?`${t.min}+ paying referrals`:'From your first referral'}</small></section>`).join('')}</div>
-    ${r.next_tier?`<section class="card nudge"><span class="coin">${I.bolt.replace('<svg','<svg style="width:16px;height:16px"')}</span><span><b>${r.next_tier.need} more paying referral${r.next_tier.need===1?'':'s'} to reach ${Math.round(r.next_tier.rate*100)}%</b><br>A referral counts once they’ve topped up their wallet.</span></section>`:''}
+    ${r.next_tier?`<section class="card nudge"><span class="coin">${I.bolt.replace('<svg','<svg style="width:16px;height:16px"')}</span><span><b>${r.next_tier.need} more paying referral${r.next_tier.need===1?'':'s'} to reach ${Math.round(r.next_tier.rate*100)}%</b><br>${tt('ref.counts30','A referral counts while they top up at least once every 30 days. If fewer stay active, your rate goes down.')}</span></section>`:''}
     <div class="how4"><section class="card"><span class="n">1</span><b>Share your link</b><small>Media buyers, channel owners, friends.</small></section><section class="card"><span class="n">2</span><b>They top up</b><small>They run ads and pay for Joinvoo from their wallet.</small></section><section class="card"><span class="n">3</span><b>You earn 10–30%</b><small>Of what they spend, for as long as they use Joinvoo.</small></section><section class="card"><span class="n">4</span><b>Cash out or spend</b><small>Withdraw in USDT or BTC from ${money0(r.withdraw_min_cents)}, or use it on your bill.</small></section></div>
     <section class="card"><div class="card-h"><h2>Earnings by person</h2></div><div style="padding-bottom:6px">${r.people.length ? r.people.map(x=>`<div class="lrow"><span class="coin">$</span><span><b>${esc(x.email)}</b><small>${x.active||x.spend_cents?`Spent ${money(x.spend_cents)} · joined ${ago(x.joined_at)}`:`Not paying yet · joined ${ago(x.joined_at)}`}</small></span><span class="amt" style="color:${x.earned_cents?'var(--mint-ink)':'var(--faint)'}">${x.earned_cents?'+'+money(x.earned_cents):'—'}</span></div>`).join('') : `<div class="empty"><span class="ei">${I.earn}</span><h3>Your first payout starts here</h3><p>Share your link. When the people you invite start paying for Joinvoo, your earnings show up here.</p></div>`}</div></section>
     ${r.payouts&&r.payouts.length?`<section class="card"><div class="card-h"><h2>Withdrawals</h2></div><div style="padding-bottom:6px">${r.payouts.map(x=>`<div class="lrow"><span class="li" style="background:var(--brand-soft);color:var(--brand-text)">${I.download}</span><span><b>${money(x.amount_cents)} in ${x.method==='btc'?'BTC':'USDT'}</b><small>${ago(x.created_at)}</small></span><span class="chip ${x.status==='paid'?'g':x.status==='rejected'?'r':'y'}">${x.status==='paid'?'Paid':x.status==='rejected'?'Returned':'Processing'}</span></div>`).join('')}</div></section>`:''}`;
@@ -5682,8 +5815,10 @@ function openWithdraw(){
 }
 
 /* ---------- help ---------- */
+const GV = () => (!DEMO && S.cfg && S.cfg.guide_video) || {}; /* round 23 review: {mp4, poster}: which guide files exist (from /api/config) */
 function guideVideo(){
-  const card=$('#vidcard'), fb=$('#vidfb'), v=$('#gvid'); if(!card||!v) return;
+  const card=$('#vidcard'), fb=$('#vidfb'), v=$('#gvid'); if(!card) return;
+  if(!v){ card.hidden=true; if(fb) fb.hidden=false; return; } /* round 23 review: no video file on the server → the text-guide card, no <video>, no 404s */
   let done=false; const fail=()=>{ if(done) return; done=true; card.hidden=true; if(fb) fb.hidden=false; };
   v.addEventListener('error',fail); const src=v.querySelector('source'); src&&src.addEventListener('error',fail);
   // preload is "none", so check the file is really there before showing the player
@@ -5699,7 +5834,7 @@ function vooConnectBtn(){
 function viewHelp(){
   S.redraw=[]; setTimeout(guideVideo,0);
   $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow">Help &amp; Support</div><h1>How can we help?</h1><p>Real people, inside your dashboard. Most setups are done in about 10 minutes.</p></div></div>
-  <section class="card vidcard" id="vidcard"><div class="phone"><video id="gvid" controls playsinline preload="none" poster="${DEMO?'media/joinvoo-guide.jpg':'/media/joinvoo-guide.jpg'}" aria-label="Joinvoo setup guide video"><source src="${DEMO?'media/joinvoo-guide.mp4':'/media/joinvoo-guide.mp4'}" type="video/mp4"></video></div>
+  <section class="card vidcard" id="vidcard"${GV().mp4?'':' hidden'}><div class="phone">${GV().mp4?`<video id="gvid" controls playsinline preload="none"${GV().poster?' poster="/media/joinvoo-guide.jpg"':''} aria-label="Joinvoo setup guide video"><source src="/media/joinvoo-guide.mp4" type="video/mp4"></video>`:''}</div>
     <div class="vid-copy"><span class="vtag">${I.sparkles} Video · about 3 minutes</span><h2>Watch the setup guide</h2><p>See the whole setup on a phone, start to finish. Pause any time and follow along.</p>
       <ol class="vlist"><li><span class="n">1</span>Make your bot in @BotFather</li><li><span class="n">2</span>Add it to your channel, or connect your bot</li><li><span class="n">3</span>Connect Meta, TikTok or Snapchat</li><li><span class="n">4</span>Put the link in your ad and test it on your phone</li></ol>
       <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Prefer reading? Open the text guide ${I.ext}</a></div></section>
@@ -5811,17 +5946,17 @@ function drawMsgs(){
   const el=$('#msgs'); if(!el) return; const nm=(S.me&&S.me.name)||'', T=team(), lead=T[0];
   const role = n => (T.find(t=>t.name===n)||{}).role || '';
   const fresh = !CH.msgs.some(m=>!m.from_admin) && !CH.pending.length;
-  let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b>${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
+  let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b translate="no">${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
     <p>${aiSup()?tt('sup.ai.hi','Hi{n} 👋 I’m {a}, Joinvoo’s AI support assistant. Ask me anything about setup, tracking, deposits, billing or your account. A teammate can take over any time.',{n:nm?' '+esc(nm):'',a:esc(lead.name)}):`Hi${nm?' '+esc(nm):''} 👋 Ask us anything about setup, tracking, deposits or billing. We’re real people and we read every message.`}</p>
     ${fresh?`<div class="topics">${TOPICS().map(([k,ic,l,v])=>k==='guide'?`<a class="topic" href="${GUIDE}" target="_blank" rel="noopener">${ic}<span>${esc(l)}</span>${I.ext}</a>`:`<button type="button" class="topic" data-act="${k==='page'?'topic-page':'quick'}" data-v="${esc(v)}">${ic}<span>${esc(l)}</span>${I.chevr}</button>`).join('')}</div>`:''}</div>`;
   let lastDay='', prevKey='';
   CH.msgs.forEach((m,i)=>{ const d=new Date(m.created_at).toDateString();
-    if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
+    if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString(LOC(),{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
     const me=!m.from_admin, ag=me?null:(m.agent&&m.agent.name?m.agent:lead), key=me?'me':'a:'+ag.name, nx=CH.msgs[i+1], nk=nx?(!nx.from_admin?'me':'a:'+((nx.agent&&nx.agent.name)||lead.name)):'', first=key!==prevKey, last=key!==nk||!!CH.pending.length&&me;
     prevKey=key;
-    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me${m.image?' pic':''}">${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
-    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
-  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending${p&&p.img?' pic':''}">${p&&p.img?msgBody({image:p.img,body:p.body||PHOTO}):esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
+    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me${m.image?' pic':''}" translate="no">${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
+    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname"><span translate="no">${esc(ag.name)}</span>${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them" translate="no">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
+  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending${p&&p.img?' pic':''}" translate="no">${p&&p.img?msgBody({image:p.img,body:p.body||PHOTO}):esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
   if (CH.typing){ const tp=(CH.typingName&&T.find(t=>t.name===CH.typingName))||lead; h+=`<div class="mrow them">${face(tp,'sm')}<div class="typing" aria-label="${esc(tp.name)} is typing"><i></i><i></i><i></i></div></div>`; }
   if (CH.err) h+=`<div class="err" style="align-self:stretch">${esc(CH.err)}</div>`;
   /* round 20: keep the reader's place. Only stick to the bottom when they were already there (or just sent something);
@@ -5921,7 +6056,10 @@ document.addEventListener('click', e=>{
     case 'skip-meta': W.step=4; drawStep(); break;
     case 'finish': S.page='overview'; renderApp(); break;
     case 'csv': if (DEMO) toast('Downloads work on your live account',false); else location.href='/api/joins.csv?'+rq()+`&type=${S.type}&q=${encodeURIComponent(S.q)}`; break;
-    case 'logout': clearTimeout(CH.t); stopTimers(); closePop(); api('POST','/api/logout').then((r)=>{ if(r&&r.logout_url){ location.href=r.logout_url; return true; } }).catch(()=>{}).then((gone)=>{ if(!gone) renderAuth('login'); }); break;
+    case 'logout': clearTimeout(CH.t); stopTimers(); closePop();
+      /* round 23 review: nothing of this account's Joe stays behind for the next person on this browser */
+      if (typeof JOE!=='undefined'){ clearInterval(JOE.t); JOE.t=null; JOE.ins=null; JOE.at=0; JOE.chat=null; } { const jp=$('#joepop'); if(jp) jp.remove(); }
+      api('POST','/api/logout').then((r)=>{ if(r&&r.logout_url){ location.href=r.logout_url; return true; } }).catch(()=>{}).then((gone)=>{ if(!gone) renderAuth('login'); }); break;
     case 'auth': renderAuth(a.dataset.m); break;
     case 'forgot': renderForgot(); break;
     case 'change-pass': closePop(); openChangePass(); break;
@@ -6085,7 +6223,7 @@ const jrDone = ap => ap==='own'?tt('jr.done.o','Done. Your bot lets people in, J
 function openJr(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot='@'+((c.bots&&c.bots[0])||'your_bot');
   S.jrAp=jrAp(c); const mode=jrOn(c)?'on':'off';
-  sheet(`<h2>Request-to-join<small>${esc(c.title)}</small></h2>`, `${jrWhy}
+  sheet(`<h2>Request-to-join<small translate="no">${esc(c.title)}</small></h2>`, `${jrWhy}
     <form id="jrf" novalidate style="display:flex;flex-direction:column;gap:14px">${jrApprover(c,bot)}
       <div id="jrerr"></div><button class="btn primary lg wide" type="submit" data-lbl="${mode}">${jrSaveLbl(mode)}</button></form>`);
   bindJrPreview(c,bot);
@@ -6142,7 +6280,7 @@ function cmpRanges(){
   const t=new Date(), mode=S.cmpMode;
   if (mode==='days'){ const a0=addDays(t,-13); return {a:[ymd(a0),ymd(t)], b:[ymd(addDays(a0,-14)),ymd(addDays(a0,-1))], g:'day', la:'Last 14 days', lb:'14 days before'}; }
   if (mode==='weeks'){ const ws=new Date(t); ws.setHours(0,0,0,0); ws.setDate(ws.getDate()-((ws.getDay()+6)%7)); const a0=addDays(ws,-49); return {a:[ymd(a0),ymd(t)], b:[ymd(addDays(a0,-56)),ymd(addDays(a0,-1))], g:'week', la:'Last 8 weeks', lb:'8 weeks before'}; }
-  if (mode==='custom'){ const A=S.cA||[ymd(addDays(t,-6)),ymd(t)], B=S.cB||[ymd(addDays(t,-13)),ymd(addDays(t,-7))], span=Math.round((parseYmd(A[1])-parseYmd(A[0]))/864e5)+1; const f=([x,y])=>parseYmd(x).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+parseYmd(y).toLocaleDateString('en-US',{month:'short',day:'numeric'}); const pl=S.cPreset&&{today:['Today','Yesterday'],week:['This week','Last week'],month:['This month so far','Same days last month']}[S.cPreset]; return {a:A,b:B,g:span>62?'week':'day',la:pl?tt('cmp.pl.a.'+S.cPreset,pl[0]):'A · '+f(A),lb:pl?tt('cmp.pl.b.'+S.cPreset,pl[1]):'B · '+f(B)}; }
+  if (mode==='custom'){ const A=S.cA||[ymd(addDays(t,-6)),ymd(t)], B=S.cB||[ymd(addDays(t,-13)),ymd(addDays(t,-7))], span=Math.round((parseYmd(A[1])-parseYmd(A[0]))/864e5)+1; const f=([x,y])=>parseYmd(x).toLocaleDateString(LOC(),{month:'short',day:'numeric'})+' – '+parseYmd(y).toLocaleDateString(LOC(),{month:'short',day:'numeric'}); const pl=S.cPreset&&{today:['Today','Yesterday'],week:['This week','Last week'],month:['This month so far','Same days last month']}[S.cPreset]; return {a:A,b:B,g:span>62?'week':'day',la:pl?tt('cmp.pl.a.'+S.cPreset,pl[0]):'A · '+f(A),lb:pl?tt('cmp.pl.b.'+S.cPreset,pl[1]):'B · '+f(B)}; }
   const m0=new Date(t.getFullYear(),t.getMonth(),1), p0=new Date(t.getFullYear(),t.getMonth()-1,1), p1=new Date(t.getFullYear(),t.getMonth(),0);
   return {a:[ymd(m0),ymd(t)], b:[ymd(p0),ymd(p1)], g:'day', la:'This month', lb:'Last month'};
 }
@@ -6169,7 +6307,7 @@ async function loadCmpInsights(){
   let r; try { r=await api('GET',`/api/compare/insights?a_from=${R.a[0]}&a_to=${R.a[1]}&b_from=${R.b[0]}&b_to=${R.b[1]}&${tzq()}${chq()}`); } catch { el.remove(); return; }
   if (!$('#cmpins')) return; const s=r.sentences||[]; if(!s.length){ el.remove(); return; }
   const H={ftd:'FTDs',joins:'Joins',revenue_cents:'Revenue',cost_per_ftd_cents:'Cost/FTD',roas:'ROAS',spend_cents:'Spend',clicks:'Clicks'};
-  el.innerHTML=`<div class="ci-joe">${joeFace(44,{mood:(r.highlights||[]).filter(h=>h.good===false).length>1?'warn':'good'})}</div><div class="ci-b"><span class="ci-eb">${tt('cmp.joe','Joe’s read')} · ${esc(R.la)} ${tt('cmp.vs','vs')} ${esc(R.lb)}</span><p class="ci-h">${esc(s[0])}</p>${s.length>1?`<p class="ci-s">${s.slice(1).map(esc).join(' ')}</p>`:''}
+  el.innerHTML=`<div class="ci-joe">${joeFace(44,{mood:(r.highlights||[]).filter(h=>h.good===false).length>1?'warn':'good'})}</div><div class="ci-b"><span class="ci-eb">${tt('cmp.joe','Joe’s read')} · ${esc(trS(R.la))} ${tt('cmp.vs','vs')} ${esc(trS(R.lb))}</span><p class="ci-h">${esc(s[0])}</p>${s.length>1?`<p class="ci-s">${s.slice(1).map(esc).join(' ')}</p>`:''}
     <div class="ci-hl">${(r.highlights||[]).filter(h=>h.delta_pct!=null).map(h=>`<span class="ci-c ${h.good?'g':'r'}">${esc(tt('cmp.m.'+h.metric,H[h.metric]||h.metric))} ${h.delta_pct>=0?'+':''}${(+h.delta_pct).toFixed(Math.abs(h.delta_pct)<10?1:0)}%</span>`).join('')}</div></div>`;
 }
 function drawPeriods(anim){
@@ -6188,7 +6326,7 @@ function drawOverlay(el, sa, sb, k, M, R, anim){
   const bw=Math.max(4,Math.min(mob?22:34,slot*.56)), cb=css('--brand'), c2=css('--brand-2'), ink=css('--ink');
   let g=`<defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c2}"/><stop offset="1" stop-color="${cb}"/></linearGradient></defs>`;
   for(let i=0;i<=4;i++){ const v=max*i/4; g+=`<line class="gl" x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${M[2](v)}</text>`; }
-  const lab=i=>{ const key=(sa[i]||sb[i]||{}).key||''; if(/^\d{4}-\d{2}$/.test(key)) return mName(key,{month:'short'}); if(/^\d{4}-\d{2}-\d{2}$/.test(key)) return parseYmd(key).toLocaleDateString('en-US',{month:'short',day:'numeric'}); return key; };
+  const lab=i=>{ const key=(sa[i]||sb[i]||{}).key||''; if(/^\d{4}-\d{2}$/.test(key)) return mName(key,{month:'short'}); if(/^\d{4}-\d{2}-\d{2}$/.test(key)) return parseYmd(key).toLocaleDateString(LOC(),{month:'short',day:'numeric'}); return key; };
   const step=Math.max(1,Math.ceil(n/(mob?5:9)));
   for(let i=0;i<n;i++){ const h=Math.max(va(i)?3:0,T+H1-y(va(i)));
     g+=`<rect class="slot" data-i="${i}" x="${L+slot*i}" y="${T-14}" width="${slot}" height="${H1+14}"/><g data-g="${i}"><rect class="bar" x="${x(i)-bw/2}" y="${T+H1-h}" width="${bw}" height="${h}" rx="${Math.min(7,bw/3)}" fill="url(#pbg)" ${anim&&!reduced?`style="animation-delay:${Math.min(i*30,600)}ms"`:'style="animation:none"'}/></g>`;
@@ -6217,7 +6355,7 @@ async function loadCampLines(){
   const pk=$('#ccpick'), el=$('#ccchart'); if(!pk||!el) return; const R=cmpRanges();
   if (!S.ccKeys){ try { const br=await api('GET',`/api/breakdown?dim=campaign&from=${R.a[0]}&to=${R.a[1]}&${tzq()}${chq()}`); S.ccKeys=(br.rows||[]).filter(r=>!/^\(no /.test(r.key)).slice(0,8).map(r=>r.key); } catch { S.ccKeys=[]; } }
   if (!S.ccSel||!S.ccSel.length) S.ccSel=S.ccKeys.slice(0,2);
-  pk.innerHTML=S.ccKeys.length?`<span class="hint">${tt('cmp.pick','Pick up to 3')}</span>${S.ccKeys.map(k=>{ const i=S.ccSel.indexOf(k); return `<button class="ccb ${i>=0?'on':''}" data-act="ccpick" data-v="${esc(k)}" style="--cc:${i>=0?CCOL[i]:'var(--line-2)'}">${esc(k)}</button>`; }).join('')}`:`<p class="hint">${tt('cmp.nocamp','Tag your links with utm_campaign to compare campaigns.')}</p>`;
+  pk.innerHTML=S.ccKeys.length?`<span class="hint">${tt('cmp.pick','Pick up to 3')}</span>${S.ccKeys.map(k=>{ const i=S.ccSel.indexOf(k); return `<button class="ccb ${i>=0?'on':''}" data-act="ccpick" data-v="${esc(k)}" style="--cc:${i>=0?CCOL[i]:'var(--line-2)'}">${ud(k)}</button>`; }).join('')}`:`<p class="hint">${tt('cmp.nocamp','Tag your links with utm_campaign to compare campaigns.')}</p>`;
   if (!S.ccSel.length){ el.innerHTML=''; return; }
   let r; try { r=await api('GET',`/api/compare/campaigns?names=${encodeURIComponent(S.ccSel.join(','))}&from=${R.a[0]}&to=${R.a[1]}&group=${R.g}&${tzq()}${chq()}`); } catch(e){ el.innerHTML=`<div class="empty" style="padding:20px"><p>${esc(e.message)}</p></div>`; return; }
   if (!$('#ccchart')) return; S.ccData=r.series||{}; const draw=()=>drawCampLines($('#ccchart')); draw(); S.redraw=[...(S.redraw||[]),draw];
@@ -6227,7 +6365,7 @@ function drawCampLines(el){
   const n=Math.max(...sers.map(s=>s.length)), W=Math.max(280,el.clientWidth-14), mob=W<560, L=mob?38:48, Rr=10, Tt=16, H1=mob?170:220, B=26, H=Tt+H1+B, iw=W-L-Rr, x=i=>L+(n>1?iw*i/(n-1):iw/2);
   const f=k==='spend_cents'?moneyC:compact, max=niceMax(Math.max(4,...sers.flatMap(s=>s.map(p=>p[k]||0)))), y=v=>Tt+H1-v/max*H1; let g='';
   for(let i=0;i<=4;i++){ const v=max*i/4; g+=`<line class="gl" x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${f(v)}</text>`; }
-  const keys=sers[0].map(p=>p.key), step=Math.max(1,Math.ceil(n/(mob?4:8))); keys.forEach((kk,i)=>{ if(i%step===0||i===n-1) g+=`<text class="ml" x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(/^\d{4}-\d{2}-\d{2}$/.test(kk)?parseYmd(kk).toLocaleDateString('en-US',{month:'short',day:'numeric'}):kk)}</text>`; });
+  const keys=sers[0].map(p=>p.key), step=Math.max(1,Math.ceil(n/(mob?4:8))); keys.forEach((kk,i)=>{ if(i%step===0||i===n-1) g+=`<text class="ml" x="${x(i)}" y="${H-6}" text-anchor="middle">${esc(/^\d{4}-\d{2}-\d{2}$/.test(kk)?parseYmd(kk).toLocaleDateString(LOC(),{month:'short',day:'numeric'}):kk)}</text>`; });
   sers.forEach((s,j)=>{ const pts=s.map((p,i)=>[x(i),y(p[k]||0)]); g+=`<path d="${smooth(pts)}" fill="none" stroke="${CCOL[j]}" stroke-width="2.6" stroke-linecap="round"/>`; const lp=pts[pts.length-1]; if(lp) g+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="4" fill="${CCOL[j]}" stroke="${css('--surface')}" stroke-width="2"/>`; });
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(tt('cmp.camp','Campaign vs campaign'))}">${g}</svg><div class="legend" style="padding:4px 6px 0 ${L}px">${names.map((nm,j)=>`<span><i style="background:${CCOL[j]}"></i>${esc(nm)} · <b>${f(S.ccData[nm].reduce((a,p)=>a+(p[k]||0),0))}</b></span>`).join('')}</div>`;
 }
@@ -6240,7 +6378,7 @@ async function loadFunnel(){
     else { S.fdim=S.fdim||'campaign'; const q=`from=${R.a[0]}&to=${R.a[1]}&${tzq()}${chq()}`;
       const br=await api('GET',`/api/breakdown?dim=${S.fdim}&${q}`); const keys=(br.rows||[]).map(r=>r.key).slice(0,40);
       if (!keys.includes(S.fa)) S.fa=keys[0]; if (!keys.includes(S.fb)||S.fb===S.fa) S.fb=keys.find(k=>k!==S.fa);
-      ctl.innerHTML=`<div class="fsel"><select class="sel" id="fdim" aria-label="Compare">${FDIMS.map(([k,l])=>`<option value="${k}" ${S.fdim===k?'selected':''}>${l}</option>`).join('')}</select><select class="sel a" id="fa" aria-label="A">${keys.map(k=>`<option ${k===S.fa?'selected':''}>${esc(k)}</option>`).join('')}</select><span class="faint">vs</span><select class="sel b" id="fb" aria-label="B">${keys.map(k=>`<option ${k===S.fb?'selected':''}>${esc(k)}</option>`).join('')}</select></div>`;
+      ctl.innerHTML=`<div class="fsel"><select class="sel" id="fdim" aria-label="Compare">${FDIMS.map(([k,l])=>`<option value="${k}" ${S.fdim===k?'selected':''}>${l}</option>`).join('')}</select><select translate="no" class="sel a" id="fa" aria-label="A">${keys.map(k=>`<option ${k===S.fa?'selected':''}>${esc(k)}</option>`).join('')}</select><span class="faint">vs</span><select translate="no" class="sel b" id="fb" aria-label="B">${keys.map(k=>`<option ${k===S.fb?'selected':''}>${esc(k)}</option>`).join('')}</select></div>`;
       if (!S.fa||!S.fb){ el.innerHTML=`<div class="empty" style="padding:24px"><p>Need at least two ${esc(FDIMS.find(x=>x[0]===S.fdim)[1].toLowerCase())} with clicks in ${esc(R.la.toLowerCase())}.</p></div>`; return; }
       const f=await api('GET',`/api/funnel?dim=${S.fdim}&a=${encodeURIComponent(S.fa)}&b=${encodeURIComponent(S.fb)}&${q}`);
       drawFunnelCmp(f.a, f.b||{label:S.fb,counts:{}}); }
@@ -6249,7 +6387,7 @@ async function loadFunnel(){
 function drawFunnelCmp(A,B){
   const el=$('#fbody'); if(!el) return; const ca=A.counts||{}, cb=B.counts||{}, ta=Math.max(1,ca.clicks||0), tb=Math.max(1,cb.clicks||0);
   const conv=(c,i)=>i&&c[FSTEPS[i-1][0]]?(c[FSTEPS[i][0]]||0)/c[FSTEPS[i-1][0]]*100:null;
-  el.innerHTML=`<div class="fc"><div class="fc-head"><span></span><span class="fa"><i></i>${esc(A.label)}</span><span class="fb"><i></i>${esc(B.label)}</span><span class="fd">A vs B</span></div>
+  el.innerHTML=`<div class="fc"><div class="fc-head"><span></span><span class="fa"><i></i>${ud(A.label)}</span><span class="fb"><i></i>${ud(B.label)}</span><span class="fd">A vs B</span></div>
     ${FSTEPS.map(([k,l],i)=>{ const a=ca[k]||0, b=cb[k]||0, pa=conv(ca,i), pb=conv(cb,i);
       return `<div class="fc-row"><span class="fl"><b>${l}</b>${i?`<small>${pa!=null?pa.toFixed(1)+'%':'—'} / ${pb!=null?pb.toFixed(1)+'%':'—'} from ${FSTEPS[i-1][1].toLowerCase()}</small>`:'<small>Start of the funnel</small>'}</span>
         <span class="fv a"><span class="fbar"><i style="width:${Math.max(a?2:0,a/ta*100)}%"></i></span><b>${fmt(a)}</b>${i&&pa!=null?`<small class="drop">−${(100-pa).toFixed(0)}% drop</small>`:''}</span>
@@ -6263,7 +6401,7 @@ async function loadCohorts(){
   const rows=r.rows||[]; if(!rows.length){ el.innerHTML='<div class="empty" style="padding:24px"><p>Cohorts appear once people start joining.</p></div>'; return; }
   const mx=Math.max(.0001,...rows.map(x=>Math.max(x.rate_d7||0,x.rate_d30||0)));
   const cell=(v,rate)=>v==null?'<td class="hc na" data-l="">Too early</td>':`<td class="hc" style="--h:${(rate||0)/mx}"><b>${fmt(v)}</b>${rate!=null?`<small>${(rate*100).toFixed(1)}%</small>`:''}</td>`;
-  const wk=x=>x.start?parseYmd(x.start).toLocaleDateString('en-US',{month:'short',day:'numeric'}):x.cohort;
+  const wk=x=>x.start?parseYmd(x.start).toLocaleDateString(LOC(),{month:'short',day:'numeric'}):x.cohort;
   el.innerHTML=`<div class="tbl-wrap"><table class="t rt coh"><thead><tr><th>Joined week of</th><th>Joins</th><th>FTD in 1 day</th><th>FTD in 7 days</th><th>FTD in 30 days</th></tr></thead><tbody>
     ${rows.map(x=>`<tr><td class="k">${esc(wk(x))}<small class="faint" style="margin-left:6px;font-weight:500">${esc(x.cohort||'')}</small></td><td data-l="Joins">${fmt(x.joins)}</td>${cell(x.ftd_d1,x.joins?x.ftd_d1/x.joins:null).replace('data-l=""','data-l="1 day"').replace('<td class="hc"','<td class="hc" data-l="1 day"')}${cell(x.ftd_d7,x.rate_d7).replace('<td class="hc"','<td class="hc" data-l="7 days"')}${cell(x.ftd_d30,x.rate_d30).replace('<td class="hc"','<td class="hc" data-l="30 days"')}</tr>`).join('')}</tbody></table></div>
     <p class="hint" style="padding:8px 20px 16px">Darker means more of that week’s joiners deposited. Recent weeks fill in as days pass.</p>`;
@@ -6299,7 +6437,7 @@ async function drawSpendList(){
   const el=$('#splist'); if(!el) return; const [f,t]=range();
   let r; try { r=await api('GET',`/api/spend?from=${ymd(addDays(new Date(),-60))}&to=${t}`); } catch(e){ el.innerHTML=`<p class="hint" style="padding:12px 0">${esc(e.message)}</p>`; return; }
   const rows=(r.rows||[]).slice(0,12);
-  el.innerHTML=rows.length?rows.map(x=>`<div class="kv"><span>${esc(parseYmd(x.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}))} · ${x.platform&&PLAT[x.platform]?PLAT[x.platform].name:'Other'} · ${esc(x.campaign||'')}</span><span style="display:inline-flex;align-items:center;gap:8px">${money(x.amount_cents)}${x.source==='sample'?'<small class="faint">sample</small>':`<button class="btn sm ghost" data-act="sp-del" data-id="${esc(x.id)}" aria-label="Delete">${I.x}</button>`}</span></div>`).join(''):'<p class="hint" style="padding:12px 0">Nothing yet. Add your first day of spend above.</p>';
+  el.innerHTML=rows.length?rows.map(x=>`<div class="kv"><span>${esc(parseYmd(x.date).toLocaleDateString(LOC(),{month:'short',day:'numeric'}))} · ${x.platform&&PLAT[x.platform]?PLAT[x.platform].name:tt('sp.other','Other')} · ${x.campaign&&x.campaign!=='(all campaigns)'?ud(x.campaign):esc(tt('sp.allc','(all campaigns)'))}</span><span style="display:inline-flex;align-items:center;gap:8px">${money(x.amount_cents)}${x.source==='sample'?`<small class="faint">${tt('sp.sample','sample')}</small>`:`<button class="btn sm ghost" data-act="sp-del" data-id="${esc(x.id)}" aria-label="Delete">${I.x}</button>`}</span></div>`).join(''):'<p class="hint" style="padding:12px 0">Nothing yet. Add your first day of spend above.</p>';
 }
 function spendChanged(){ if (S.page==='campaigns') loadBreakdown(); if (S.page==='overview') loadOverview(false); }
 
@@ -6350,7 +6488,7 @@ async function viewWallet(){
     ${b.billing_on&&b.tracking===false?`<div class="note warn"><b>Tracking is paused.</b> ${b.state==='need_plan'?`Add at least ${crTxt(M.base_cents||P.base_cents)} credits to start this month.`:'Buy credits to start again.'} Your ads keep working meanwhile.</div>`:''}
     ${b.free_joins_left>0?`<div class="note"><b>🎁 ${fmt(b.free_joins_left)} of ${fmt(b.free_joins_gift||P.free_joins)} free joins left.</b> No credits needed yet.</div>`:''}
     ${trialCard(b)}${planCard(b)}
-    ${promo?`<section class="promo"><span class="promo-t">${I.sparkles}<span><b>${esc(promo.code)}</b> · +${promo.bonus_pct}% bonus credits${promo.ends_at?` · ends in ${Math.max(1,Math.ceil((promo.ends_at-Date.now())/864e5))} day${Math.ceil((promo.ends_at-Date.now())/864e5)>1?'s':''}`:''}</span></span><button class="btn sm" data-act="buy-tier" data-v="500" data-promo="${esc(promo.code)}">Use code</button></section>`:''}
+    ${promo?`<section class="promo"><span class="promo-t">${I.sparkles}<span><b>${esc(promo.code)}</b> · ${tt('promo.bonus','+{n}% bonus credits',{n:promo.bonus_pct})}${promo.ends_at?((nd)=>' · '+(nd===1?tt('promo.ends1','ends in 1 day'):tt('promo.ends','ends in {n} days',{n:nd})))(Math.max(1,Math.ceil((promo.ends_at-Date.now())/864e5))):''}</span></span><button class="btn sm" data-act="buy-tier" data-v="500" data-promo="${esc(promo.code)}">Use code</button></section>`:''}
     <section class="card buy"><div class="card-h"><h2>Buy credits</h2><span class="sub">${FEAT('credits_bonus')?'Bigger top-ups get bonus credits':'1 credit = $0.01'}</span></div>
       <div class="tiers4">${tiers.map(c=>{ const bo=bonusFor(c,b); return `<button class="tcard ${c===50000?'tpop':''}" data-act="buy-tier" data-v="${c/100}">${c===50000?'<em>Most popular</em>':''}<span class="tc-usd">$${fmt(c/100)}</span><b>${crTxt(c)}</b><small>credits</small>${bo.credits?`<span class="tc-bonus">+${crTxt(bo.credits)} bonus</span>`:'<span class="tc-bonus none">No bonus</span>'}</button>`; }).join('')}</div>
       <p class="hint" style="padding:0 20px 18px">${creditsPricing(b)}${rk&&rk.join_discount_pct?` Your ${esc(rk.name)} rank takes ${rk.join_discount_pct}% off every extra join.`:''}</p></section>
@@ -6366,7 +6504,7 @@ async function viewWallet(){
       <section class="card"><div class="card-h"><h2>Credit activity</h2></div><div style="padding-bottom:6px">${b.history&&b.history.length?b.history.map(h=>{ const [ic,bg,fg]=hIcon(h.kind); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg}">${ic}</span><span><b>${esc(h.note||h.kind)}${h.kind==='bonus'?' <span class="chip y" style="height:20px;font-size:11px">Bonus</span>':''}</b><small>${when(h.created_at)}${h.amount_cents?' · '+usdTxt(Math.abs(h.amount_cents)).replace('≈ ',''):''}</small></span><span class="amt" style="color:${h.amount_cents<0?'var(--muted)':'var(--mint-ink)'}">${h.amount_cents<0?'−':'+'}${crTxt(Math.abs(h.amount_cents))}</span></div>`; }).join(''):`<div class="empty"><p>Nothing yet.</p></div>`}</div></section>
       <div class="stack">
         ${methodsCard(avail)}
-        <section class="card"><div class="card-h"><h2>Top-ups</h2></div><div style="padding-bottom:6px">${(b.deposits||[]).length?b.deposits.map(d=>{ const [t,bg,fg]=mIcon({type:d.provider,label:depLabel(d)}); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg};font-weight:800;font-size:12px">${t}</span><span><b>${money(d.amount_cents)} via ${esc(depLabel(d))}</b><small>${when(d.created_at)} · ${crTxt(d.amount_cents)} credits</small></span><span class="chip ${d.status==='paid'?'g':d.status==='rejected'?'r':'y'}">${d.status==='paid'?'Added':d.status==='rejected'?'Not received':d.status==='awaiting'?'Not sent yet':'Confirming'}</span></div>`; }).join(''):`<div class="empty" style="padding:28px 18px"><span class="ei">${I.wallet}</span><p>Your top-ups will show up here.</p></div>`}</div></section></div></div>
+        <section class="card"><div class="card-h"><h2>Top-ups</h2></div><div style="padding-bottom:6px">${(b.deposits||[]).length?b.deposits.map(d=>{ const [t,bg,fg]=mIcon({type:d.provider,label:depLabel(d)}); return `<div class="lrow"><span class="li" style="background:${bg};color:${fg};font-weight:800;font-size:12px">${t}</span><span><b>${money(d.amount_cents)} via ${esc(depLabel(d))}</b><small>${when(d.created_at)} · ${tt('jb.cr','{n} credits',{n:crTxt(d.amount_cents)})}</small></span><span class="chip ${d.status==='paid'?'g':d.status==='rejected'?'r':'y'}">${d.status==='paid'?'Added':d.status==='rejected'?'Not received':d.status==='awaiting'?'Not sent yet':'Confirming'}</span></div>`; }).join(''):`<div class="empty" style="padding:28px 18px"><span class="ei">${I.wallet}</span><p>Your top-ups will show up here.</p></div>`}</div></section></div></div>
     ${enterpriseCard()}`;
   countCr($('#crn'),cr); parallax(); payReturn();
   const ref=new URLSearchParams(location.search).get('ref');
@@ -6641,7 +6779,7 @@ function jCost(m){ if (m.role!=='joe'||m.kind) return ''; const b=JB(); if(m.cos
   const paid=+m.cost_credits>0; if (paid&&b&&b.show_cost===false) return '';
   return `<span class="jm-cost ${paid?'paid':''}">${m.deep?'✨ ':''}${paid?tt('jb.cost','Cost {n} credits',{n:fmt(m.cost_credits)}):tt('jb.freec','Free')}</span>`; }
 function jmsg(m){
-  if (m.role==='user') return `<div class="jmr me"><div class="jbub me">${esc(m.text)}</div></div>`;
+  if (m.role==='user') return `<div class="jmr me"><div class="jbub me" translate="no">${esc(m.text)}</div></div>`;
   if (m.kind==='confirm') return `<div class="jmr them"><span class="jav">${joeFace(32,{animate:false})}</span><div class="jcard-msg confirm"><div class="jbub them">${mdx(m.text)}</div>
     <div class="jcm-b"><span class="jcm-i">${I.coin}</span><span><b>${tt('jb.cont.t','Keep chatting with paid answers')}</b><small>${tt('jb.cont.p','Every answer shows what it cost. Set a monthly limit any time in chat settings.')}</small></span></div>
     <div class="jcm-a"><button class="btn primary" data-act="joe-confirm" data-q="${esc(m.q||'')}" ${m.done?'disabled':''}>${tt('jb.cont','Continue with credits')} ${I.arrow}</button><button class="btn" data-act="joe-go" data-v="credits">${I.plus} ${tt('jb.topup','Top up')}</button></div></div></div>`;
@@ -6673,7 +6811,7 @@ function drawJoeCta(){
   if (c.enabled===false){ el.innerHTML=''; return; }
   const msgs=(c.messages||[]).filter(m=>m.text&&!m.kind), last=msgs[msgs.length-1], today=new Date().toDateString();
   const cont=!!last && (!last.at || new Date(+last.at||last.at).toDateString()===today);
-  const prev=cont?`${last.role==='user'?`<em>${tt('joe.you','You')}:</em> `:''}${esc(joePlain(last.text).slice(0,140))}`:esc(tt('joe.cta.p','Ask about your joins, deposits and ads, in plain words.'));
+  const prev=cont?`${last.role==='user'?`<em>${tt('joe.you','You')}:</em> <span translate="no">${esc(joePlain(last.text).slice(0,140))}</span>`:esc(joePlain(last.text).slice(0,140))}`:esc(tt('joe.cta.p','Ask about your joins, deposits and ads, in plain words.'));
   el.innerHTML=`<button class="jcta" data-act="joe-dm"><span class="jcta-av">${joeFace(44,{animate:false,mood:(JOE.ins&&JOE.ins.mood)||'good'})}${cont?'':'<i class="jc-on"></i>'}</span><span class="jcta-t"><b>${cont?tt('joe.cta.cont','Continue chat with Joe'):tt('joe.cta','Chat with Joe')}</b><small>${prev}</small></span><span class="jcta-go">${I.arrow}</span></button>`;
 }
 function joeDM(on, push=true){
@@ -6861,7 +6999,7 @@ function backupSection(c){
   if (!others.length || c.type==='bot') return '';
   return `<details class="chan-sec bk-sec"><summary><span class="bk-t"><b>${tt('bk.title','Backup channel')}</b><small>${tt('bk.sub','Channel banned? Move your ads to a backup channel in one tap.')}</small></span>${I.chev}</summary>
     <div class="bk-body"><p class="hint">${tt('bk.p','This link’s visitors go into the channel you pick: its invite links and pixel settings, with joins counted there. No need to edit your ads.')}</p>
-      <div class="row-in"><select class="sel" id="bk-${c.id}" aria-label="${tt('bk.title','Backup channel')}">${others.map(o=>`<option value="${o.id}">${esc(o.title)}</option>`).join('')}</select><button class="btn sm primary" data-act="bk-go" data-id="${c.id}">${tt('bk.go','Move traffic')}</button></div></div></details>`;
+      <div class="row-in"><select class="sel" id="bk-${c.id}" aria-label="${tt('bk.title','Backup channel')}">${others.map(o=>`<option value="${o.id}" translate="no">${esc(o.title)}</option>`).join('')}</select><button class="btn sm primary" data-act="bk-go" data-id="${c.id}">${tt('bk.go','Move traffic')}</button></div></div></details>`;
 }
 async function backupSet(id, to){
   try { await api('PATCH','/api/channels/'+id,{redirect_to:to}); await refreshChans(); drawChannels(); toast(to?tt('bk.done','Traffic moved. Your ads keep running.'):tt('bk.back','Traffic is back on this channel')); }
@@ -7497,7 +7635,7 @@ function pzList(mode){
   const ans=mode==='answered';
   return `<div class="pz-tg ${ans?'answered':''}" ${ans?'':'data-climb'}><div class="pz-tgh"><b>Telegram</b><span class="pz-unr"><i class="pz-tot">${ans?0:3}</i> ${tt('pz.unread','unread')}</span></div>
     ${rows.map(([p,t],i)=>`<div class="pz-row" style="--i:${i}"><span class="pz-av">${pzPerson(PZ_AV[i])}</span><span class="pz-rb"><b>${tt('pz.lead','New lead')}</b><small class="pz-prev">${esc(p)}</small><small class="pz-rep">${sisLogo(12)} ${tt('pz.rep','Closer: here’s your link 👇')}</small></span><span class="pz-rm"><small>${t}</small><i class="pz-badge">1</i><i class="pz-ok">✓✓</i></span></div>`).join('')}
-    <div class="pz-foot"><span class="pz-late">${I.clock} ${tt('pz.last','Last reply')} <b class="pz-timer">3h 02m</b> ${tt('pz.ago','ago')}</span><span class="pz-fast">${I.bolt} ${tt('pz.replied','Replied in')} <b class="pz-sw">00:00:02</b></span></div></div>`;
+    <div class="pz-foot"><span class="pz-late">${I.clock} ${tt('pz.lastago','Last reply {t} ago',{t:'<b class="pz-timer">3h 02m</b>'})}</span><span class="pz-fast">${I.bolt} ${tt('pz.replied','Replied in')} <b class="pz-sw">00:00:02</b></span></div></div>`;
 }
 const PZ={
   wait:()=>`<div class="pz pz-wait" data-k="wait">${pzList('drown')}</div>`,
@@ -7712,7 +7850,7 @@ function limitsCard(d){
   const plan=planName(L.plan), part=(o,one,many)=>o.max==null?nNoun(o.used||0,one,many):`${fmt(o.used||0)} of ${nNoun(o.max,one,many)}`;
   const locked=visChans(d).filter(c=>c.locked).length, full=k=>{ const o=k==='c'?ch:bt; return o.max!=null&&(o.used||0)>=o.max; };
   const sub = locked ? tt('lim.sub.over','{n} over your {p} limit and not tracking. Upgrade, or remove one you don’t use.',{n:nNoun(locked,'channel is','channels are'),p:plan})
-    : full('c')||full('b') ? tt('lim.sub.full','You’ve used every {k} on {p}. Upgrade for unlimited, or remove one to make room.',{k:full('c')&&full('b')?'channel and bot':full('c')?'channel':'bot',p:plan})
+    : full('c')||full('b') ? (full('c')&&full('b')?tt('lim.sub.full.cb','You’ve used every channel and bot on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}):full('c')?tt('lim.sub.full.c','You’ve used every channel on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}):tt('lim.sub.full.b','You’ve used every bot on {p}. Upgrade for unlimited, or remove one to make room.',{p:plan}))
     : tt('lim.sub.ok','Room for {a} and {b} more on {p}.',{a:ch.max==null?'unlimited channels':nNoun(Math.max(0,ch.max-(ch.used||0)),'channel','channels'),b:bt.max==null?'unlimited bots':nNoun(Math.max(0,bt.max-(bt.used||0)),'bot','bots'),p:plan});
   const meter=(lab,o)=>{ const used=o.used||0, max=o.max, p=max?Math.min(100,used/max*100):100, st=max==null?'':used>max?'over':used>=max?'full':'';
     return `<div class="lm-m ${st}"><span class="lm-t"><span>${lab}</span><b class="num">${max==null?fmt(used)+' · ∞':`${fmt(used)}<small> / ${fmt(max)}</small>`}</b></span><span class="lm-bar" role="progressbar" aria-label="${esc(lab)}" aria-valuenow="${used}" aria-valuemin="0" ${max!=null?`aria-valuemax="${max}"`:''}><i style="--w:${p}%"></i></span></div>`; };
@@ -7734,7 +7872,7 @@ function botsCard(d){
   const L=d.limits, bmax=L&&!L.unlimited&&L.bots?L.bots.max:null;
   return `<section class="card bots-card"><div class="card-h"><h2>${I.bot} ${tt('bots.title','Your bots')}</h2><span class="sub">${bmax!=null?tt('bots.of','{a} of {b} on {p}',{a:fmt(bots.filter(b=>b.status==='active').length),b:fmt(bmax),p:planName(L.plan)}):tt('bots.n','{n} connected',{n:fmt(bots.length)})}</span></div>
     <div class="bot-list">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length, ok=b.status==='active';
-      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
+      return `<div class="bot-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small><span class="bot-st ${ok?'ok':'warn'}"><i></i>${ok?tt('bots.active','Active'):esc(String(b.status||'').replace(/_/g,' '))}</span> · ${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span>
         <button class="btn sm ghost bot-x" data-act="bot-rm" data-id="${b.id}">${UNPLUG}<span>${tt('bots.disc','Disconnect')}</span></button></div>`; }).join('')}</div>
     <button class="bot-add" data-act="bot-new">${I.plus} ${tt('bots.add','Add a new bot')}</button></section>`;
 }
@@ -7745,7 +7883,7 @@ function botPickStep(){
     <span class="step-ico">${I.bot}</span>
     <h1>${tt('bp.h','Which bot should track it?')}</h1><p class="lede">${tt('bp.p','Use a bot you already connected, or add a new one. One bot can track many channels.')}</p>
     <div class="bpick">${bots.map((b,i)=>{ const n=b.channels!=null?b.channels:botChans(d,b).length;
-      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
+      return `<button class="bpk-row" data-act="bot-pick" data-id="${b.id}"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small>${n===1?tt('bots.used1','used by 1 channel'):tt('bots.usedn','used by {n} channels',{n:fmt(n)})}</small></span><span class="bpk-go">${I.chevr}</span></button>`; }).join('')}
       <button class="bpk-row bpk-new" data-act="bot-pick-new"><span class="bot-av new">${I.plus}</span><span class="bot-n"><b>${tt('bp.new','Add a new bot')}</b><small>${bfull?tt('bp.new.full','{a} of {b} bots used',{a:fmt(bt.used),b:fmt(bt.max)}):tt('bp.new.p','Paste a token from @BotFather')}</small></span>${bfull?`<span class="chip y">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} ${planName(L.plan)}</span>`:`<span class="bpk-go">${I.chevr}</span>`}</button></div></div>`;
 }
 /* ---------- 402 limit sheet: never a dead end ---------- */
@@ -7769,8 +7907,8 @@ function drawLimitSheet(){
     return; }
   if (X.view==='list'){
     const d=S.chans||{bots:[],channels:[]};
-    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b>@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
-      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b>${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
+    const rows=isB ? d.bots.filter(b=>b.status!=='deleted').map((b,i)=>{ const n=botOnly(d,b).length; return `<div class="rm-row"><span class="bot-av" style="background:${CH_GRAD[(i+3)%CH_GRAD.length]}">${I.bot}</span><span class="bot-n"><b translate="no">@${esc(b.username)}</b><small>${n?tt('lim.bt.only','Only bot on {n}',{n:nNoun(n,'channel','channels')}):tt('lim.bt.free','Safe to disconnect')}</small></span><button class="btn sm danger" data-act="bot-rm" data-id="${b.id}" data-from="lim">${tt('bots.disc','Disconnect')}</button></div>`; }).join('')
+      : visChans(d).map((c,i)=>`<div class="rm-row"><span class="chan-ico sm" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='bot'?I.bot:chInit(c.title)}</span><span class="bot-n"><b translate="no">${esc(c.title)}</b><small>${c.locked?`<span style="color:var(--amber-ink);font-weight:700">${tt('lim.notrack','Not tracking')}</span>`:c.type==='bot'?tt('ch.botsubs','Bot subscribers'):c.type==='channel'?tt('ch.channel','Channel'):tt('ch.group','Group')}</small></span><button class="btn sm danger" data-act="ch-rm" data-id="${c.id}" data-from="lim">${tt('lim.rm','Remove')}</button></div>`).join('');
     sheet(head, `<button class="link" style="align-self:flex-start" data-act="lim-back">${I.chevl} ${tt('common.back','Back')}</button>
       <div><h3 class="rm-h">${isB?tt('lim.bt.pick','Which bot can go?'):tt('lim.ch.pick','Which channel can go?')}</h3><p class="muted" style="font-size:14px;margin-top:4px">${tt('lim.pick.p','Past stats stay in your reports. Only new tracking stops.')}</p></div>
       <div class="rm-list">${rows||`<div class="note">${tt('lim.none','Nothing to remove.')}</div>`}</div>`);
@@ -7793,7 +7931,7 @@ function goUpgrade(){
 /* ---------- remove channel / disconnect bot ---------- */
 function openRemoveChannel(id, from){
   const c=((S.chans&&S.chans.channels)||[]).find(x=>String(x.id)===String(id)); if(!c) return; closePop();
-  sheet(`<h2>${tt('rm.h','Remove channel')}<small>${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
+  sheet(`<h2>${tt('rm.h','Remove channel')}<small translate="no">${esc(c.title)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${TRASH}</span><b>${tt('rm.q','Stop tracking {t}?',{t:esc(c.title)})}</b><span>${tt('rm.p','Past stats stay. Your ad links for this channel stop working.')}</span></div>
     ${c.tracking_url?`<div class="rm-link"><span class="lbl">${tt('rm.link','This link stops working')}</span><code>${esc(c.tracking_url)}</code></div>`:''}
     ${c.type!=='bot'?`<div class="note">${tt('rm.tg','Joinvoo stops making invite links for it. You can remove the bot from the channel’s admins in Telegram too.')}</div>`:''}
     <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="ch-rm-go" data-id="${c.id}" data-from="${esc(from||'')}">${TRASH} ${tt('rm.go','Remove channel')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
@@ -7814,8 +7952,8 @@ function afterRemove(){
 function openRemoveBot(id, from){
   const d=S.chans||{bots:[],channels:[]}, b=d.bots.find(x=>String(x.id)===String(id)); if(!b) return; closePop();
   const only=botOnly(d,b);
-  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small>@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
-    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li>${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
+  sheet(`<h2>${tt('rmb.h','Disconnect bot')}<small translate="no">@${esc(b.username)}</small></h2>`, `<div class="rm-hero"><span class="rm-ic">${UNPLUG}</span><b>${tt('rmb.q','Disconnect @{u}?',{u:esc(b.username)})}</b><span>${tt('rmb.p','Joinvoo stops using this bot. Past stats stay.')}</span></div>
+    ${only.length?`<div class="note warn"><b>${only.length===1?tt('rmb.only1','This channel only uses this bot, so it stops tracking:'):tt('rmb.onlyn','These channels only use this bot, so they stop tracking:')}</b><ul class="rm-ul">${only.map(c=>`<li translate="no">${esc(c.title)}</li>`).join('')}</ul></div>`:`<div class="note">${tt('rmb.safe','No channel depends on this bot alone, so all your channels keep tracking.')}</div>`}
     <div id="rmerr"></div><button class="btn lg wide rm-go" data-act="bot-rm-go" data-id="${b.id}" data-from="${esc(from||'')}">${UNPLUG} ${tt('rmb.go','Disconnect bot')}</button><button class="btn ghost wide" data-act="${from==='lim'?'lim-list':'close'}">${tt('rm.keep','Keep it')}</button>`);
 }
 async function removeBotGo(btn){
@@ -8075,7 +8213,7 @@ async function domRemoveGo(a){
 function openDomLimit(lim){
   const plan=planName(lim.plan), price=((S.chans&&S.chans.limits)||{}).pro_price_usd;
   sheet(`<h2>${tt('dm.lim.h','Domain limit reached')}<small>${plan} plan</small></h2>`, `<div class="lim-hero"><div class="lh-slots" aria-hidden="true">${Array.from({length:Math.min(lim.max||1,6)},(_,i)=>`<i style="--d:${i*90}ms">${I.globe}</i>`).join('')}<span class="lh-plus">${I.lock}</span></div>
-      <b>${tt('dm.lim.b','You’ve used {a} of {b} link {n} on {p}',{a:fmt(lim.used),b:fmt(lim.max),n:lim.max===1?'domain':'domains',p:plan})}</b><span>${tt('dm.lim.p','Upgrade for unlimited link domains, or remove one you don’t use to make room.')}</span></div>
+      <b>${(lim.max===1?tt('dm.lim.b1','You’ve used {a} of {b} link domain on {p}',{a:fmt(lim.used),b:fmt(lim.max),p:plan}):tt('dm.lim.bn','You’ve used {a} of {b} link domains on {p}',{a:fmt(lim.used),b:fmt(lim.max),p:plan}))}</b><span>${tt('dm.lim.p','Upgrade for unlimited link domains, or remove one you don’t use to make room.')}</span></div>
     <div class="lim-opts"><button class="lim-opt pro" data-act="lim-up"><span class="lo-ic">${I.sparkles}</span><span class="lo-t"><b>${tt('lim.o.up','Upgrade to Pro')}</b><small>${tt('dm.lim.up','Unlimited channels, bots and link domains')}${price?` · $${fmt(price)}/${tt('lim.mo','month')}`:''}</small></span><span class="lo-go">${I.arrow}</span></button>
       <button class="lim-opt" data-act="dm-lim-list"><span class="lo-ic">${TRASH}</span><span class="lo-t"><b>${tt('dm.lim.rm','Remove a domain')}</b><small>${tt('lim.o.rm.p','Frees a slot right away. Past stats stay.')}</small></span><span class="lo-go">${I.chevr}</span></button></div>
     <button class="btn ghost wide" data-act="close">${tt('lim.later','Not now')}</button>`);
@@ -8364,7 +8502,7 @@ async function drawNext(T, counts){
 function alertRows(list){
   const out=[];
   for (const c of list){
-    if (c.lost_at && c.failed_over_to) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||tt('al.backup','your backup'))})}</b><small>${esc(c.title)} · ${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}</small></span><button class="btn sm" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.details','Details')}</button></div>`);
+    if (c.lost_at && c.failed_over_to) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||tt('al.backup','your backup'))})}</b><small translate="no">${esc(c.title)} · ${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}</small></span><button class="btn sm" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.details','Details')}</button></div>`);
     else if (c.lost_at) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost2','“{t}” was lost',{t:esc(c.title)})}</b><small>${esc(lostWhy(c.lost_reason))}. ${tt('al.pick.p','Your ads are still sending people there.')}</small></span><button class="btn sm primary" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.pick','Pick a backup channel')}</button></div>`);
     else if (c.can_switch_back) out.push(`<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back','“{t}” is back',{t:esc(c.title)})}</b><small>${tt('al.back.p','Your ads still go to {b}. Switch back when you’re ready.',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`);
     if (c.deadlink_at) out.push(`<div class="al17 warn"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.dl','Your ad link may be blocked')}</b><small>${tt('al.dl.p','Clicks on {t} stopped. Switch to another link domain in one tap.',{t:esc(c.title)})}</small></span><button class="btn sm primary" data-act="dl-open" data-id="${c.id}">${tt('al.dl.b','Switch domain')}</button></div>`);
@@ -8404,8 +8542,8 @@ function drawBest(rows){
   if (!r.length){ el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2></div><div class="best-empty"><p>${tt('r.best.e','Add your ad name to your link to see which ad brings the most deposits.')}</p><button class="btn sm" data-act="nav" data-p="campaigns">${tt('r.best.how','Show me how')} ${I.arrow}</button></div>`; return; }
   const b=r[0], top=r.slice(1,4), cpf=b.spend_cents&&b.ftd?b.spend_cents/b.ftd:null;
   el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2><button class="link" data-act="nav" data-p="campaigns">${tt('r.allads','All ads')} ${I.arrow}</button></div>
-    <div class="best-b"><span class="best-crown">${I.sparkles}</span><div class="best-n"><b>${esc(b.key)}</b><small>${fmt(b.joins)} ${tt('r.joins','joins')} · ${fmt(b.ftd||0)} ${tt('r.deps','deposits')}${cpf?` · ${money(cpf)} ${tt('r.perdep','per deposit')}`:''}</small></div></div>
-    ${top.length?`<ol class="best-l">${top.map((x,i)=>`<li><span class="rank">${i+2}</span><span class="bl-k">${esc(x.key)}</span><span class="num">${fmt(x.ftd||0)} ${tt('r.dep','dep.')}</span></li>`).join('')}</ol>`:''}`;
+    <div class="best-b"><span class="best-crown">${I.sparkles}</span><div class="best-n"><b translate="no">${esc(b.key)}</b><small>${fmt(b.joins)} ${tt('r.joins','joins')} · ${fmt(b.ftd||0)} ${tt('r.deps','deposits')}${cpf?` · ${money(cpf)} ${tt('r.perdep','per deposit')}`:''}</small></div></div>
+    ${top.length?`<ol class="best-l">${top.map((x,i)=>`<li><span class="rank">${i+2}</span><span class="bl-k" translate="no">${esc(x.key)}</span><span class="num">${fmt(x.ftd||0)} ${tt('r.dep','dep.')}</span></li>`).join('')}</ol>`:''}`;
 }
 function drawSpendCard(T){
   const el=$('#rspend'); if(!el) return;
@@ -8426,7 +8564,7 @@ async function metaBox(el, full){
   if (!m.connected){ el.innerHTML=head(m.status==='reconnect_needed'?tt('mt.re.p','Your Meta login expired. Reconnect to keep spend coming in.'):tt('mt.nc.p','Spend per campaign comes in every hour. We only read spend, never change your ads.'))+(own?`<a class="btn sm primary wide" href="${esc(m.connect_url||'/auth/meta/start')}" data-act="meta-connect">${m.status==='reconnect_needed'?tt('mt.recon','Reconnect Meta'):tt('mt.connect','Connect Meta ad account')}</a>`:`<p class="hint">${tt('mt.owner','Ask the account owner to connect Meta.')}</p>`); return; }
   const acc=m.accounts||[];
   el.innerHTML=head(`${tt('mt.on','Connected')}${m.fb_name?' · '+esc(m.fb_name):''} · ${m.last_sync_at?tt('mt.synced','synced {t}',{t:ago(m.last_sync_at)}):tt('mt.never','not synced yet')}`,`<span class="chip g"><i class="d"></i>${tt('mt.live','Live')}</span>`)
-    +(full?`<div class="mb-acc">${acc.map(a=>`<label class="mb-a${a.supported?'':' off'}"><input type="checkbox" data-meta-acc="${esc(a.id)}" ${a.selected?'checked':''} ${a.supported&&own?'':'disabled'}><span><b>${esc(a.name)}</b><small>${esc(a.currency)}${a.last_error?' · '+esc(a.last_error):''}</small></span></label>`).join('')}</div>
+    +(full?`<div class="mb-acc">${acc.map(a=>`<label class="mb-a${a.supported?'':' off'}"><input type="checkbox" data-meta-acc="${esc(a.id)}" ${a.selected?'checked':''} ${a.supported&&own?'':'disabled'}><span><b translate="no">${esc(a.name)}</b><small>${esc(a.currency)}${a.last_error?' · '+esc(a.last_error):''}</small></span></label>`).join('')}</div>
       <div class="mb-act">${own?`<button class="btn sm" data-act="meta-sync">${I.refresh} ${tt('mt.sync','Sync now')}</button><button class="btn sm ghost" data-act="meta-off">${tt('mt.off','Disconnect')}</button>`:''}<button class="btn sm ghost" data-act="meta-map">${tt('mt.map','Match campaigns to channels')}</button></div><div id="metamap"></div>`
     :`<button class="btn sm wide" data-act="nav" data-p="results">${tt('mt.manage','Manage in Results')} ${I.arrow}</button>`);
 }
@@ -8434,8 +8572,8 @@ async function metaMap(){
   const el=$('#metamap'); if(!el) return; el.innerHTML='<div class="sk" style="height:80px;margin-top:10px"></div>';
   let r; try { r=await api('GET','/api/meta/campaigns'); } catch(e){ el.innerHTML=`<p class="hint">${esc(e.message)}</p>`; return; }
   const chs=visChans(S.chans).filter(c=>c.status!=='removed');
-  el.innerHTML=`<div class="mm-l">${(r.campaigns||[]).map(c=>`<div class="mm-r"><span class="mm-n"><b>${esc(c.name)}</b><small>${money0(c.spend_7d_cents||0)} ${tt('mt.7d','last 7 days')}${c.mapped_by==='auto'?' · '+tt('mt.auto','matched by itself'):''}</small></span>
-    <select class="sel" data-meta-camp="${esc(c.campaign_id)}" aria-label="${esc(tt('mt.chan','Channel'))}"><option value="">${tt('mt.none','Not matched')}</option>${chs.map(x=>`<option value="${x.id}" ${x.id===c.channel_id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')||`<p class="hint">${tt('mt.nocamp','No campaigns with spend yet.')}</p>`}</div>`;
+  el.innerHTML=`<div class="mm-l">${(r.campaigns||[]).map(c=>`<div class="mm-r"><span class="mm-n"><b translate="no">${esc(c.name)}</b><small>${money0(c.spend_7d_cents||0)} ${tt('mt.7d','last 7 days')}${c.mapped_by==='auto'?' · '+tt('mt.auto','matched by itself'):''}</small></span>
+    <select class="sel" data-meta-camp="${esc(c.campaign_id)}" aria-label="${esc(tt('mt.chan','Channel'))}"><option value="">${tt('mt.none','Not matched')}</option>${chs.map(x=>`<option value="${x.id}" ${x.id===c.channel_id?'selected':''} translate="no">${esc(x.title)}</option>`).join('')}</select></div>`).join('')||`<p class="hint">${tt('mt.nocamp','No campaigns with spend yet.')}</p>`}</div>`;
 }
 
 /* ---------- depositor audience (lookalike of people who deposited) ---------- */
@@ -8501,7 +8639,7 @@ drawChannels = function(){
   const d=S.chans, el=$('#cl'); if(!d) return; if(!el){ csRefresh(); sideSheetRefresh(); return; } const list=visChans(d);
   el.innerHTML=`${limitsCard(d)}<div class="chs">${list.map((c,i)=>{ const plats=PLATS().filter(p=>platOn(c,p));
     return `<article class="card ch17${c.lost_at?' lost':''}${c.locked?' locked':''}" data-ch="${c.id}">
-      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='dm'?ICO_DM.replace('<svg','<svg style="width:20px;height:20px"'):c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
+      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='dm'?ICO_DM.replace('<svg','<svg style="width:20px;height:20px"'):c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b translate="no">${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
       ${chBanner(c)}${c.locked?chLockNote(c):''}
       <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>${utmCard17(c)}</div>
       <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${c.type==='dm'?tt('r19.today','messages today'):tt('ch17.today','joins today')}</span>
@@ -8544,7 +8682,7 @@ function openCS(id, tab){
   const c=chById(id); if(!c) return; closePop();
   const tabs=csTabs(c); if (!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
   S.cs={id:c.id, tab}; S.csPlat=null; S.side=null;
-  sheet(`<h2>${tt('cs.h','Channel settings')}<small>${esc(c.title)}</small></h2>`, `<div class="cs-tabs" role="tablist" id="cstabs"></div><div id="csbody" class="cs-body"></div>`);
+  sheet(`<h2>${tt('cs.h','Channel settings')}<small translate="no">${esc(c.title)}</small></h2>`, `<div class="cs-tabs" role="tablist" id="cstabs"></div><div id="csbody" class="cs-body"></div>`);
   const sh=$('.sheet'); if (sh) sh.classList.add('cs-sheet');
   drawCS();
 }
@@ -8607,7 +8745,7 @@ function csBody(c, tab){
       : c.can_switch_back ? `<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back2','Channel is back')}</b><small>${tt('al.back3','Ads still go to {b}',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`
       : `<div class="al17 ok soft"><span class="al-ic">${I.shield}</span><span class="al-t"><b>${c.backup_channel_id?tt('bk.prot','Protected'):tt('bk.unprot','Not protected yet')}</b><small>${c.backup_channel_id?tt('bk.prot.p','If this channel is banned or your bot is removed, your ads move to {b}.',{b:esc(c.backup_title||'')}):tt('bk.unprot.p','Pick a backup so a ban never stops your ads.')}</small></span></div>`;
     return `${csHelp(tt('cs.bk.h','If this channel is lost'),tt('cs.bk.p','Choose where your ad link sends people if Telegram bans the channel or your bot is removed.'))}${state}
-      ${others.length?`<div class="field"><label for="csbk">${tt('cs.bk.l','Backup channel')}</label><select class="sel" id="csbk" data-csbk="${c.id}"><option value="">${tt('cs.bk.none','No backup')}</option>${others.map(o=>`<option value="${o.id}" ${o.id===c.backup_channel_id?'selected':''}>${esc(o.title)}</option>`).join('')}</select><span class="hint">${tt('cs.bk.hint','Another channel or group of yours. Its invite links and pixel are used, and joins count there.')}</span></div>
+      ${others.length?`<div class="field"><label for="csbk">${tt('cs.bk.l','Backup channel')}</label><select class="sel" id="csbk" data-csbk="${c.id}"><option value="">${tt('cs.bk.none','No backup')}</option>${others.map(o=>`<option value="${o.id}" ${o.id===c.backup_channel_id?'selected':''} translate="no">${esc(o.title)}</option>`).join('')}</select><span class="hint">${tt('cs.bk.hint','Another channel or group of yours. Its invite links and pixel are used, and joins count there.')}</span></div>
       <div class="cs-row${c.backup_channel_id?'':' dim'}"><span class="mr-t"><b>${tt('cs.auto','Switch automatically')}</b><small>${tt('cs.auto.p','Move your ads the moment this channel is lost. We always tell you.')}</small></span>${sw('cs-auto',c.backup_channel_id&&c.auto_failover,tt('cs.auto','Switch automatically'),`data-id="${c.id}" ${c.backup_channel_id?'':'disabled'}`)}</div>
       ${!c.lost_at&&!c.can_switch_back?`<details class="cs-more"${c.redirect_to?' open':''}><summary>${tt('cs.bk.now','Move traffic right now')} ${I.chev}</summary>${backupSection(c)||`<p class="hint">${tt('cs.bk.none2','Add another channel first.')}</p>`}</details>`:''}`
       :`<div class="note">${tt('cs.bk.add','Add a second channel or group to use it as a backup.')}</div><button class="btn" data-act="add-channel">${I.plus} ${tt('ch17.add','Add channel')}</button>`}`; }
@@ -8642,7 +8780,7 @@ function dlList(r, id){
 }
 function openDeadlink(id){
   const c=chById(id); if(!c) return; S.side=null;
-  sheet(`<h2>${tt('al.dl','Your ad link may be blocked')}<small>${esc(c.title)}</small></h2>`, `<p class="muted cs-lead">${tt('dl.p','Clicks on this link stopped while your ads usually bring people now. Move your ad link to another domain, then paste the new link in your ads.')}</p><div id="dlsheet" class="dl-list"><div class="sk" style="height:120px"></div></div><div id="dlres"></div>`);
+  sheet(`<h2>${tt('al.dl','Your ad link may be blocked')}<small translate="no">${esc(c.title)}</small></h2>`, `<p class="muted cs-lead">${tt('dl.p','Clicks on this link stopped while your ads usually bring people now. Move your ad link to another domain, then paste the new link in your ads.')}</p><div id="dlsheet" class="dl-list"><div class="sk" style="height:120px"></div></div><div id="dlres"></div>`);
   dlLoad(id, $('#dlsheet'));
 }
 async function dlPick(a){
@@ -8680,7 +8818,7 @@ function drawTeam(){
     ${pro?`<span class="st-bar"><i style="width:${pctv}%"></i></span>`:''}</section>
     <section class="card"><div class="card-h"><h2>${tt('team.people','People')}</h2><span class="sub">${nNoun(ms.length,'person','people')}</span></div>
     ${ms.length?`<div class="tm-l">${ms.map(m=>{ const [cc,lb]=ST_T[m.status]||['o',m.status]; const chs=(m.channel_ids||[]).map(id=>(r.channels||[]).find(c=>c.id===id)).filter(Boolean);
-      return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b>${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>esc(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
+      return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b translate="no">${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>ud(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
         <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':m.role==='helper'?'g':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
       :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('team.e','Just you for now')}</h3><p>${tt('team.e.p','Invite a media buyer and compare results side by side.')}</p><button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>`}</section>
     ${ms.some(m=>m.status==='active')?`<button class="card row17" data-act="nav" data-p="leaderboard"><span class="mr-ic">${I.results}</span><span class="mr-t"><b>${tt('team.lb','Compare your buyers')}</b><small>${tt('team.lb.p','Joins, deposits and cost per deposit, per person')}</small></span><span class="mr-go">${I.chevr}</span></button>`:''}`;
@@ -8695,7 +8833,7 @@ function inviteForm(m){
     <div class="field"><span class="lbl">${tt('team.role','Role')}</span><div class="role-pick" role="radiogroup">
       <button type="button" class="rp" role="radio" data-act="tm-role" data-v="buyer" aria-checked="${role==='buyer'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.b','Media buyer')}</b><small>${tt('team.r.b.p','Sees only the channels you pick')}</small></span></button>
       <button type="button" class="rp" role="radio" data-act="tm-role" data-v="manager" aria-checked="${role==='manager'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.m','Manager')}</b><small>${tt('team.r.m.p','Sees every channel. Never billing or team.')}</small></span></button></div></div>
-    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span>${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
+    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span translate="no">${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
     <div id="tmerr"></div><button class="btn primary lg wide" type="submit">${m?tt('common.save','Save'):tt('team.send','Send invite')}</button></form>`;
 }
 function openInvite(m){
@@ -8744,8 +8882,8 @@ function drawReport(){
 }
 const arrow17 = (a,b) => { if(!b&&!a) return ''; if(!b) return ' ↑'; const d=(a-b)/b*100; return Math.abs(d)<0.5?' →0%':` ${d>0?'↑':'↓'}${Math.abs(d).toFixed(0)}%`; };
 function repText(R){
-  const T=R.totals||{}, P=R.previous||{}, d=parseYmd(R.day).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});
-  return `📊 <b>Joinvoo daily report · ${esc(d)}</b>\n\n👆 Clicks: <b>${fmt(T.clicks)}</b>${arrow17(T.clicks,P.clicks)}\n👥 Joins: <b>${fmt(T.joins)}</b>${arrow17(T.joins,P.joins)}\n💰 Deposits: <b>${fmt(T.ftd)}</b>${arrow17(T.ftd,P.ftd)}\n💵 Revenue: <b>${money0(T.revenue_cents)}</b>${arrow17(T.revenue_cents,P.revenue_cents)}\n📉 Spend: <b>${money0(T.spend_cents)}</b>${arrow17(T.spend_cents,P.spend_cents)}\n🎯 Cost per join: <b>${centsOr(T.cost_per_join_cents)}</b>\n🏦 Cost per deposit: <b>${centsOr(T.cost_per_ftd_cents)}</b>${R.best_channel?`\n\n🏆 Best channel: <b>${esc(R.best_channel.title)}</b> (${fmt(R.best_channel.n)} ${esc(R.best_channel.by)})`:''}${R.best_campaign?`\n🚀 Best campaign: <b>${esc(R.best_campaign.name)}</b>`:''}`;
+  const T=R.totals||{}, P=R.previous||{}, d=parseYmd(R.day).toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'});
+  return `📊 <b>Joinvoo daily report · ${esc(d)}</b>\n\n👆 Clicks: <b>${fmt(T.clicks)}</b>${arrow17(T.clicks,P.clicks)}\n👥 Joins: <b>${fmt(T.joins)}</b>${arrow17(T.joins,P.joins)}\n💰 Deposits: <b>${fmt(T.ftd)}</b>${arrow17(T.ftd,P.ftd)}\n💵 Revenue: <b>${money0(T.revenue_cents)}</b>${arrow17(T.revenue_cents,P.revenue_cents)}\n📉 Spend: <b>${money0(T.spend_cents)}</b>${arrow17(T.spend_cents,P.spend_cents)}\n🎯 Cost per join: <b>${centsOr(T.cost_per_join_cents)}</b>\n🏦 Cost per deposit: <b>${centsOr(T.cost_per_ftd_cents)}</b>${R.best_channel?`\n\n🏆 Best channel: <b translate="no">${esc(R.best_channel.title)}</b> (${fmt(R.best_channel.n)} ${esc(R.best_channel.by)})`:''}${R.best_campaign?`\n🚀 Best campaign: <b translate="no">${esc(R.best_campaign.name)}</b>`:''}`;
 }
 async function repPreview(R){
   const el=$('#repmsg'); if(!el) return;
@@ -8885,11 +9023,19 @@ const TUT = [
  {id:'t9',title:'Read your results',where:'Results',text:"Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report."},
  {id:'t10',title:'Invite a setup helper',where:'More › Team',text:"Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time."},
 ];
-function tutPlan(t){
+function tutPlan(t, L){
   const sents=(t.text.match(/[^.!?]+[.!?]+["”]?/g)||[t.text]).map(s=>s.trim()).filter(Boolean);
+  /* round 23b: the same tutorial in the user's language (public/i18n/tut.<lang>.json): same sentences, one per screen beat */
+  const tl=L&&L[t.id]; if (tl&&Array.isArray(tl.sents)&&tl.sents.length===sents.length&&tl.sents.every(x=>typeof x==='string'&&x.trim())){ /* round 23b review: a blank/odd sentence falls back to English instead of crashing */ const w=tl.sents.map(s=>s.length/5.5+1.6), W=w.reduce((a,b)=>a+b,0); return {sents:tl.sents,w,W,secs:W/150*60,tl}; }
   const w=sents.map(s=>s.split(/\s+/).length+1.6), W=w.reduce((a,b)=>a+b,0);
   return {sents,w,W,secs:W/150*60};
 }
+/* round 23b: translated scripts + voice-overs per language. Voice: media/tutorials/<lang>/<id>.mp3 (made by scripts/make-voiceovers.js);
+   if that file isn't there yet, the English voice plays with captions in the user's language. */
+const TUTL={}, TUTLP={};
+/* round 23b review: one fetch per language even when two tutorials are opened at once; a network error isn't cached for the whole session (a 404 is) */
+function tutLang(){ const l=I18N.lang; if (!l||l==='en') return Promise.resolve(null); if (TUTL[l]!==undefined) return Promise.resolve(TUTL[l]);
+  return TUTLP[l]||(TUTLP[l]=fetch(`i18n/tut.${l}.json`).then(r=>r.ok?r.json():null).then(j=>(TUTL[l]=j&&typeof j==='object'?j:null),()=>{ delete TUTLP[l]; return null; })); }
 const tutLen = id => { const t=TUT.find(x=>x.id===id); return t?Math.round(tutPlan(t).secs)+'s':''; };
 
 /* ---------- mini replicas of the real screens (virtual phone screen: 300 × 560) ---------- */
@@ -8922,7 +9068,7 @@ const SCR = {
   'jv-hello': () => JV(`<div class="m-hero"><span class="m-hlogo">${I.mark}</span><b>Let’s get you tracking</b><small>Three quick steps. Every join matched to the exact ad.</small></div>
     <div class="m-card m-steps"><div class="m-st" data-t="st1"><span class="n">1</span>Make your tracking bot</div><div class="m-st"><span class="n">2</span>Add it to your channel</div><div class="m-st"><span class="n">3</span>Connect Meta</div></div>${M.btn('start','Start setup →','p wide')}`, false, 'Welcome'),
   'jv-s1': () => JV(`<div class="m-prog"><i class="on">1</i><em></em><i>2</i><em></em><i>3</i></div><b class="m-h1">Make your tracking bot.</b>
-    <div class="m-card m-steps" data-t="howto"><div class="m-st"><span class="n">1</span>Open <b>@BotFather</b></div><div class="m-st"><span class="n">2</span>Send <code>/newbot</code></div><div class="m-st"><span class="n">3</span>Pick a username ending in <b>bot</b></div><div class="m-st"><span class="n">4</span>Paste the token below</div></div>
+    <div class="m-card m-steps" data-t="howto"><div class="m-st"><span class="n">1</span>Open <b>@BotFather</b></div><div class="m-st"><span class="n">2</span>Send <code>/newbot</code></div><div class="m-st"><span class="n">3</span>${tt('tm.s3','Pick a username ending in {b}',{b:'<b>bot</b>'})}</div><div class="m-st"><span class="n">4</span>${tt('tm.s4','Paste the token below')}</div></div>
     ${M.lab('Bot token')}${M.inp('tokinp','123456789:AAH4k…','','mono')}${M.btn('connect','Connect bot →','p wide')}`, false, 'Setup'),
   'jv-s1ok': () => JV(`<div class="m-prog"><i class="ok">✓</i><em class="ok"></em><i class="on">2</i><em></em><i>3</i></div><div class="m-ok h" data-t="ok">${I.checkc}<span>@dailydeals_track_bot is connected</span></div>
     <div class="m-hero sm"><span class="m-burst">${I.sparkles}</span><b>Your bot is ready</b><small>Next: add it to your channel.</small></div>${M.btn('next','Next: add to my channel →','p wide')}`, false, 'Setup'),
@@ -9107,14 +9253,16 @@ BEATS.t10 = {poster:'jv-accounts10', b:[
 function tutPoster(id){ const b=BEATS[id]; const h=(SCR[b&&b.poster]||SCR['jv-ov'])().replace(/(class="[^"]*)\bh\b/g,'$1h on'); return `<span class="tv-vp poster m-all">${h}</span>`; }
 
 /* ---------- the player ---------- */
-let TP=null;
+let TP=null, tutSeq=0;
 const fmtT = s => { s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
-function tutOpen(id){
-  const t=TUT.find(x=>x.id===id); if(!t) return; if (TP) tutClose(true);
-  closePop(); const plan=tutPlan(t), opener=document.activeElement;
+async function tutOpen(id){
+  const t=TUT.find(x=>x.id===id); if(!t) return; const seq=++tutSeq, opener=document.activeElement; const L=await tutLang();
+  if (seq!==tutSeq) return; /* round 23b review: two quick taps (or a close) while the script loads: only the latest open wins, never two players or a stale one */
+  if (TP) tutClose(true);
+  closePop(); const plan=tutPlan(t,L), lang=plan.tl?I18N.lang:null;
   document.body.insertAdjacentHTML('beforeend', `<div class="tvp" role="dialog" aria-modal="true" aria-label="${esc(t.title)}"><div class="tv-scrim" data-act="tut-close"></div>
     <div class="tv"><div class="tv-top"><span class="tv-eb">${I.play}${tt('tut.eb','Tutorial')}</span><b class="tv-title">${esc(tt('tut.'+t.id,t.title))}</b><button class="tv-x" data-act="tut-close" aria-label="${esc(tt('common.close','Close'))}">${I.x}</button></div>
-      <div class="tv-stage" id="tvs"><div class="tv-side"><span class="tv-mk">${I.mark}<b>Joinvoo</b></span><b class="tv-h">${esc(tt('tut.'+t.id,t.title))}</b><span class="tv-where">${esc(t.where)}</span><span class="tv-chap" id="tvchap"></span></div>
+      <div class="tv-stage" id="tvs"><div class="tv-side"><span class="tv-mk">${I.mark}<b>Joinvoo</b></span><b class="tv-h">${esc(tt('tut.'+t.id,t.title))}</b><span class="tv-where">${esc((plan.tl&&plan.tl.where)||t.where)}</span><span class="tv-chap" id="tvchap"></span></div>
         <div class="tv-devbox" id="tvdb"><div class="tv-dev" id="tvdev"><div class="tv-vp" id="tvvp"></div></div></div>
         <span class="tv-finger" id="tvf" aria-hidden="true"><i></i></span>
         <button class="tv-big" data-act="tut-toggle" aria-label="${esc(tt('tut.play','Play'))}">${I.play}</button>
@@ -9129,16 +9277,18 @@ function tutOpen(id){
   tutStarts(); tutFit(); addEventListener('resize', tutFit);
   /* voice-over if it exists, else captions on a timer */
   const a=P.audio=new Audio(); a.preload='auto';
+  P.lang=lang; P.voiceLang=!!lang; P.tl=plan.tl||null;
   const done=m=>{ if(TP!==P||P.mode) return; P.mode=m; if(m==='audio'&&isFinite(a.duration)&&a.duration>3){ P.D=a.duration; } else { P.mode='timer'; } tutStarts(); $('#tvcc').hidden=P.mode!=='timer'; if(P.want) tutPlay(); };
-  a.addEventListener('loadedmetadata',()=>done('audio')); a.addEventListener('error',()=>done('timer')); a.addEventListener('ended',()=>{ if(TP===P) tutEnd(); });
-  a.src=(DEMO?'':'/')+'media/tutorials/'+id+'.mp3';
-  setTimeout(()=>done('timer'), 2500);
+  a.addEventListener('loadedmetadata',()=>done('audio')); a.addEventListener('error',()=>{ if (TP===P&&P.voiceLang&&!P.mode){ P.voiceLang=false; a.src=(DEMO?'':'/')+'media/tutorials/'+id+'.mp3'; return; } done('timer'); }); a.addEventListener('ended',()=>{ if(TP===P) tutEnd(); });
+  a.src=(DEMO?'':'/')+'media/tutorials/'+(lang?lang+'/':'')+id+'.mp3';
+  setTimeout(()=>done('timer'), lang?4500:2500);
   P.raf=requestAnimationFrame(tutTick);
   $('.tv-x').focus({preventScroll:true});
   tutBarBind();
 }
 function tutStarts(){ const P=TP; let c=0; P.starts=P.plan.w.map(w=>{ const s=c; c+=w; return s/P.plan.W*P.D; });
-  { const T=TUT.find(x=>x.id===P.id); if (P.mode==='audio' && T && T.marks && T.marks.length===P.starts.length && T.marks[T.marks.length-1]<P.D){ P.starts=T.marks.slice(); P.starts[0]=0; } } /* round 19: exact sentence times (voice after a music intro) */
+  if (P.mode==='audio' && P.voiceLang){ const mk=P.tl&&P.tl.marks; if (mk&&mk.length===P.starts.length&&mk[mk.length-1]<P.D){ P.starts=mk.slice(); P.starts[0]=0; } }
+  else { const T=TUT.find(x=>x.id===P.id); if (P.mode==='audio' && T && T.marks && T.marks.length===P.starts.length && T.marks[T.marks.length-1]<P.D){ P.starts=T.marks.slice(); P.starts[0]=0; } } /* round 19: exact sentence times (voice after a music intro) */
   const d=$('#tvdots'); if(d) d.innerHTML=P.starts.slice(1).map(s=>`<i style="left:${s/P.D*100}%"></i>`).join(''); const b=$('#tvbar'); if(b) b.setAttribute('aria-valuemax',Math.round(P.D)); }
 function tutFit(){
   const P=TP; if(!P) return; const db=$('#tvdb'), dev=$('#tvdev'); if(!db||!dev) return;
@@ -9157,7 +9307,7 @@ function tutUI(){ const P=TP; if(!P) return; const on=P.playing||(P.want&&!P.mod
 function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); tutEndBtns(P.id); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); tutMark(P.id); }
 function tutSeek(t){ const P=TP; if(!P) return; P.t=Math.max(0,Math.min(P.D,t)); if(P.mode==='audio'){ try{ P.audio.currentTime=P.t; }catch{} } P.cur=-1; P.seek=true; $('#tvend').hidden=P.t<P.D-.05; tutUpdate(); }
 function tutClose(quick){
-  const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
+  tutSeq++; const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
   try{ P.audio.pause(); P.audio.removeAttribute('src'); P.audio.load(); }catch{}
   const r=P.root; if (quick||reduced) r.remove(); else { r.classList.add('out'); setTimeout(()=>r.remove(),220); }
   if (!$('.sheet')) document.body.style.overflow='';
@@ -9268,11 +9418,12 @@ function tutMark(id){
 }
 const tutMin = ids => Math.max(1, Math.round(ids.reduce((a,id)=>{ const t=TUT.find(x=>x.id===id); return a+(t?tutPlan(t).secs:0); },0)/60));
 /* cards: n=true numbers them 1→2→3 (the "Start here" row) */
+/* round 23b review: once the user's tut.<lang>.json is loaded, the cards show the same translated "where" as the player */
 function tutCards(ids, n){
   const seen=tutSeen();
   return `<div class="tut-grid${n?' tut-steps':''}">${ids.map((id,i)=>{ const t=TUT.find(x=>x.id===id); if(!t) return ''; const s=seen.has(id);
     return `<button class="tut-card${s?' seen':''}" data-act="tut" data-v="${id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(id)}</span><span class="tut-play">${I.play}</span>${n?`<span class="tut-n">${i+1}</span>`:''}<span class="tut-ck" title="${esc(tt('tutp.seen','Watched'))}">${I.check}</span><em>${tutLen(id)}</em></span>
-      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc(t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
+      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc((I18N.lang!=='en'&&TUTL[I18N.lang]&&TUTL[I18N.lang][id]&&TUTL[I18N.lang][id].where)||t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
 }
 function tutProg(){
   const el=$('#tutprog'); if(!el) return; const n=TUT.filter(t=>tutSeen().has(t.id)).length;
@@ -9446,7 +9597,7 @@ inviteForm = function(m){
   const tmr=ymdIn(Date.now()+864e5), exp=m&&m.expires_at?ymdIn(m.expires_at):'';
   return `<form id="tmf" class="cs-form" novalidate>${m?'':`<div class="field"><label for="tme">${tt('team.email','Their email')}</label><input class="inp" id="tme" type="email" autocomplete="off" inputmode="email" placeholder="${role==='helper'?'helper@example.com':'buyer@example.com'}" required></div>`}
     <div class="field"><span class="lbl">${tt('team.role','Role')}</span><div class="role-pick" role="radiogroup">${rp('helper',tt('team.r.h','Setup helper'),freeChip)}${rp('manager',tt('team.r.m','Manager'))}${rp('buyer',tt('team.r.b','Media buyer'))}</div></div>
-    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span>${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
+    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span translate="no">${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
     <details class="field tm-exp"${exp?' open':''}><summary>${I.clock}<span>${tt('team.exp.h','Access ends on')}</span><small>${exp?'':tt('team.exp.opt','Optional')}</small>${I.chev}</summary>
       <div class="tm-exp-b"><input class="inp" id="tmx" type="date" min="${tmr}" value="${exp}" aria-label="${esc(tt('team.exp.h','Access ends on'))}">${exp?`<button type="button" class="btn sm ghost" data-act="tm-exp-clear">${tt('team.exp.clear','No end date')}</button>`:''}</div>
       <small class="hint">${tt('team.exp.p','Their access stops by itself at the end of that day.')}</small></details>
@@ -9642,7 +9793,7 @@ function dmStep(u, pick){
 
 /* ---- "Is this your manager?" (anyone with Telegram Premium can add a bot, so the owner confirms) ---- */
 function dmAsk(c){
-  return `<div class="r19-ask" role="group"><span class="r19-ask-ic">${ICO_DM}</span><span class="r19-ask-t"><b>${tt('r19.ask','Is this your manager?')}</b><small>${tt('r19.ask.p','{n} connected your bot in Telegram Business.',{n:`<b>${esc(c.title)}</b>${c.username?' (@'+esc(c.username)+')':''}`})}</small></span>
+  return `<div class="r19-ask" role="group"><span class="r19-ask-ic">${ICO_DM}</span><span class="r19-ask-t"><b>${tt('r19.ask','Is this your manager?')}</b><small>${tt('r19.ask.p','{n} connected your bot in Telegram Business.',{n:`<b translate="no">${esc(c.title)}</b>${c.username?' (@'+esc(c.username)+')':''}`})}</small></span>
     <span class="r19-ask-b"><button class="btn sm primary" data-act="r19-ok" data-id="${c.id}">${tt('r19.yes','Yes, that’s my manager')}</button><button class="btn sm ghost" data-act="r19-no" data-id="${c.id}">${tt('r19.no','Not mine')}</button></span></div>`;
 }
 async function dmApprove(id, a){
@@ -9959,7 +10110,19 @@ async function uqDemo(src){
     quality:(()=>{ const R=[.078,.131,.184], V=[540,1020,1610], P=[only,m[2],m[3]+m[4]+m[5]];
       const buckets=P.map((p,i)=>({funnels:i===2?'3+':String(i+1),people:p,depositors:Math.round(p*R[i]),deposits:Math.round(p*R[i]*1.4),deposit_rate:Math.round(R[i]*1000)/10,revenue_cents:p*V[i],value_per_person_cents:V[i]}));
       const mp=P[1]+P[2], md=buckets[1].depositors+buckets[2].depositors;
-      return {has_deposits:true,locked:false,buckets,multi_earn:Math.round(md*.42),multi:{people:mp,depositors:md,deposit_rate:mp?Math.round(md/mp*1000)/10:0},rate_lift:mp&&buckets[0].deposit_rate?Math.round((md/mp*100)/buckets[0].deposit_rate*100)/100:null}; })(), computed_at:Date.now(), demo:true };
+      return {has_deposits:true,locked:false,buckets,multi_earn:Math.round(md*.42),multi:{people:mp,depositors:md,deposit_rate:mp?Math.round(md/mp*1000)/10:0},rate_lift:mp&&buckets[0].deposit_rate?Math.round((md/mp*100)/buckets[0].deposit_rate*100)/100:null}; })(),
+    platforms:uqDemoPlat(src==='ads'?people:Math.round(people*.86)), computed_at:Date.now(), demo:true };
+}
+/* demo: Facebook and TikTok with a believable overlap, spend and deposit rates */
+function uqDemoPlat(N){
+  if (!N) return {people:0,known:0,list:[],combos:[],claimed:0,multi:0,multi_pct:0};
+  const both=Math.round(N*.071), fb=Math.round(N*.63)+Math.round(both/2), tk=N-fb+both, pc=(a,b)=>b?Math.round(a/b*1000)/10:0;
+  const sF=Math.round(fb*178), sT=Math.round(tk*131), dF=Math.round(fb*.094), dT=Math.round(tk*.071);
+  const row=(key,people,sp,d)=>({key,name:key==='meta'?'Facebook':'TikTok',people,only_here:people-both,shared:both,shared_pct:pc(both,people),depositors:d,deposit_rate:pc(d,people),revenue_cents:null,spend_cents:sp,cost_per_person_cents:Math.round(sp/people),cost_per_new_cents:Math.round(sp/Math.max(1,people-both))});
+  const one=N-both, d1=Math.round(one*.079), d2=Math.round(both*.138);
+  return {people:N,claimed:fb+tk,known:2,multi:both,multi_pct:pc(both,N),list:[row('meta',fb,sF,dF),row('tiktok',tk,sT,dT)],combos:[{keys:['meta','tiktok'],people:both}],
+    has_deposits:true,locked:false,has_spend:true,spend_cents:sF+sT,cost_per_person_cents:Math.round((sF+sT)/N),cost_if_added_cents:Math.round((sF+sT)/(fb+tk)),
+    quality:{one:{people:one,depositors:d1,deposit_rate:pc(d1,one)},multi:{people:both,depositors:d2,deposit_rate:pc(d2,both)},rate_lift:Math.round(pc(d2,both)/pc(d1,one)*100)/100}};
 }
 const uqMem = new Map();
 async function uqLoad(src=UQ.src){
@@ -10013,15 +10176,90 @@ function uqDraw(d){
     <ol class="uq-dist">${d.dist.map(x=>`<li><span class="k">${x.plus?tt('uq.dist.5','5 or more'):x.funnels===1?tt('uq.dist.1','1 funnel'):tt('uq.dist.n','{n} funnels',{n:x.funnels})}</span><span class="uq-mini"><i style="transform:scaleX(${x.people/maxD})"></i></span><span class="v num">${fmt(x.people)}<small>${uqPct(d.people?x.people/d.people*100:0)}</small></span></li>`).join('')}</ol></section>`;
   const pairs=d.pairs.filter(p=>p.people>0);
   const pr=`<section class="card"><div class="card-h"><h2>${tt('uq.pairs.h','Funnels sharing people')}</h2><span class="sub">${tt('uq.pairs.s','Most shared first')}</span></div>
-    ${pairs.length?`<ul class="uq-pairs">${pairs.slice(0,6).map(p=>`<li class="uq-pair"><span class="uq-venn"><i></i><i></i></span><span class="uq-pt"><b>${esc(p.a.title)} + ${esc(p.b.title)}</b><small>${tt('uq.pairs.pct','{p} of the smaller funnel',{p:uqPct(p.pct_of_smaller)})}</small></span><span class="uq-pn"><b class="num">${fmt(p.people)}</b><small>${tt('uq.people','people')}</small></span></li>`).join('')}</ul>`
+    ${pairs.length?`<ul class="uq-pairs">${pairs.slice(0,6).map(p=>`<li class="uq-pair"><span class="uq-venn"><i></i><i></i></span><span class="uq-pt"><b translate="no">${esc(p.a.title)} + ${esc(p.b.title)}</b><small>${tt('uq.pairs.pct','{p} of the smaller funnel',{p:uqPct(p.pct_of_smaller)})}</small></span><span class="uq-pn"><b class="num">${fmt(p.people)}</b><small>${tt('uq.people','people')}</small></span></li>`).join('')}</ul>`
       :`<div class="empty" style="padding:28px 18px"><p>${one?tt('uq.pairs.one','Add a second funnel to see who joins more than one.'):tt('uq.pairs.none','No one is in more than one of your funnels. Every join is a new person.')}</p></div>`}</section>`;
   const fl=`<section class="card"><div class="card-h"><h2>${tt('uq.f.h','Each funnel')}</h2>${DEMO?'':`<button class="btn sm" data-act="uq-csv" ${d.repeat_people?'':'disabled'}>${I.download} ${tt('uq.csv','People in 2+ funnels')}</button>`}</div>
     <div class="uq-key"><span><i style="background:var(--mint-ink)"></i>${tt('uq.k.only','Only in this funnel')}</span><span><i style="background:var(--brand)"></i>${tt('uq.k.shared','Also in another funnel')}</span></div>
-    <div class="uq-fl">${d.funnels.map(f=>`<div class="uq-f"><div class="uq-fn"><span class="uq-fi">${uqIcon(f.type)}</span><span><b>${esc(f.title)}</b><small>${uqType(f.type)}${f.removed?' · '+tt('uq.removed','removed'):''}</small></span></div>
+    <div class="uq-fl">${d.funnels.map(f=>`<div class="uq-f"><div class="uq-fn"><span class="uq-fi">${uqIcon(f.type)}</span><span><b translate="no">${esc(f.title)}</b><small>${uqType(f.type)}${f.removed?' · '+tt('uq.removed','removed'):''}</small></span></div>
       <div class="uq-split"><span class="uq-mini"><i class="o" style="width:${f.people?f.only_here/f.people*100:0}%"></i><i class="s" style="width:${f.people?f.shared/f.people*100:0}%"></i></span><small>${f.shared?tt('uq.f.sh','{p} also in another funnel',{p:uqPct(f.shared_pct)}):tt('uq.f.only','Everyone here is only here')}</small></div>
       <div class="uq-fv"><b class="num">${fmt(f.people)}</b><small>${tt('uq.people','people')}</small></div></div>`).join('')}</div></section>`;
-  rest.innerHTML=`<div class="uq-g">${dist}${pr}</div>${uqDeposits(d)}${fl}${!one&&d.repeat_people?uqHow(d):''}
+  rest.innerHTML=`${ads?uqPlat(d):uqPlatTease(d)}<div class="uq-g">${dist}${pr}</div>${uqDeposits(d)}${fl}${!one&&d.repeat_people?uqHow(d):''}
     <p class="uq-foot">${tt('uq.foot','Counted by Telegram ID, so each person counts once. Someone with two Telegram accounts counts twice. Fake joins are left out. Clicks without a join aren’t included.')}</p>`;
+}
+/* ---- round 22: By ad platform (From ads). Each paid person once across Facebook, TikTok and Snapchat. ---- */
+const UQ_PC = { meta:'#0866FF', tiktok:'var(--ink)', snapchat:'#E0A800', other:'var(--faint)' };
+const uqPlName = k => k==='meta'?'Facebook':k==='tiktok'?'TikTok':k==='snapchat'?'Snapchat':tt('uq.pl.other','Other ads');
+const uqPlDot = k => `<i class="uq-pd" style="background:${UQ_PC[k]||UQ_PC.other}"></i>`;
+/* Everyone view: one line that opens the platform view, only when 2+ ad platforms brought people */
+function uqPlatTease(d){
+  const pl=d.platforms; if(!pl||pl.known<2||!pl.people) return '';
+  const names=pl.list.filter(x=>x.key!=='other'&&x.people).map(x=>uqPlName(x.key)).join(' + ');
+  return `<button class="card uq-strip uq-plt" data-act="uq-src" data-v="ads"><span class="mr-ic">${I.target}</span><span>${pl.multi
+    ?tt('uq.pl.tease','<b>{n}</b> people came from more than one ad platform ({names}).',{n:fmt(pl.multi),names:esc(names)})
+    :tt('uq.pl.tease0','See your paid people by ad platform: {names}.',{names:esc(names)})} <b>${tt('uq.pl.tease.go','See by ad platform')}</b></span>${I.arrow}</button>`;
+}
+/* proportional two-circle diagram: areas match people, the overlap matches people from both */
+function uqVenn(a,b,both){
+  const lens=(r1,r2,d)=>{ if(d>=r1+r2) return 0; if(d<=Math.abs(r1-r2)) return Math.PI*Math.min(r1,r2)**2;
+    const x=r1*r1*Math.acos(Math.min(1,Math.max(-1,(d*d+r1*r1-r2*r2)/(2*d*r1)))), y=r2*r2*Math.acos(Math.min(1,Math.max(-1,(d*d+r2*r2-r1*r1)/(2*d*r2))));
+    return x+y-.5*Math.sqrt(Math.max(0,(-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2))); };
+  const big=Math.max(a.people,b.people,1), s=78/Math.sqrt(big/Math.PI);
+  const r1=Math.max(18,Math.sqrt(a.people/Math.PI)*s), r2=Math.max(18,Math.sqrt(b.people/Math.PI)*s), target=both*s*s;
+  let lo=Math.abs(r1-r2), hi=r1+r2;
+  if (both<=0) lo=hi; else for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(lens(r1,r2,m)>target) lo=m; else hi=m; }
+  const dd=both<=0?r1+r2+10:(lo+hi)/2, W=320, x1=(W-(dd+r1+r2))/2+r1, x2=x1+dd, cy=92;
+  const bl=tt('uq.pl.both','{n} both',{n:fmt(both)}), pw=Math.min(W-8,Math.max(92,bl.length*8+26));
+  const mid = both>0 ? Math.min(Math.max((x1+r1+x2-r2)/2,pw/2+4),W-pw/2-4) : W/2;
+  const lab=(x,r,n,c)=> r>=30?`<text x="${x.toFixed(1)}" y="${cy+6}" text-anchor="middle" class="uq-vn" style="fill:${c}">${fmt(n)}</text>`:'';
+  return `<svg class="uq-venn2" viewBox="0 0 ${W} 196" role="img" aria-label="${esc(tt('uq.pl.venn','{a}: {an} people. {b}: {bn} people. {n} from both.',{a:uqPlName(a.key),an:fmt(a.people),b:uqPlName(b.key),bn:fmt(b.people),n:fmt(both)}))}">
+    <circle cx="${x1.toFixed(1)}" cy="${cy}" r="${r1.toFixed(1)}" style="fill:${UQ_PC[a.key]};stroke:${UQ_PC[a.key]}" class="c"/>
+    <circle cx="${x2.toFixed(1)}" cy="${cy}" r="${r2.toFixed(1)}" style="fill:${UQ_PC[b.key]};stroke:${UQ_PC[b.key]}" class="c"/>
+    ${lab(x1-(both>0?Math.min(r1*.25,dd*.2):0),r1,a.only_here,UQ_PC[a.key])}${lab(x2+(both>0?Math.min(r2*.25,dd*.2):0),r2,b.only_here,UQ_PC[b.key])}
+    ${both>0?`<line x1="${mid.toFixed(1)}" y1="${cy+8}" x2="${mid.toFixed(1)}" y2="174" class="ln"/><g class="uq-vb"><rect x="${(mid-pw/2).toFixed(1)}" y="168" width="${pw.toFixed(1)}" height="26" rx="13"/><text x="${mid.toFixed(1)}" y="185.5" text-anchor="middle">${esc(bl)}</text></g>`:''}
+  </svg>`;
+}
+function uqPlat(d){
+  const pl=d.platforms;
+  if(!pl||!pl.people) return '';
+  if(pl.known<2) return ''; // one ad platform: nothing to compare, so no empty card
+  const head=`<div class="card-h"><h2>${tt('uq.pl.h','By ad platform')}</h2><span class="sub">${tt('uq.pl.s','People from your ad clicks, each counted once')}</span></div>`;
+  const L=pl.list.filter(x=>x.people||x.spend_cents), known=L.filter(x=>x.key!=='other'&&x.people);
+  const two = known.length===2 && pl.combos.every(c=>c.keys.every(k=>k===known[0].key||k===known[1].key));
+  const bothN = two ? (pl.combos.find(c=>c.keys.length===2)||{people:0}).people : 0;
+  const pic = two ? uqVenn(known[0],known[1],bothN)
+    : `<ul class="uq-combos">${pl.combos.length?pl.combos.slice(0,5).map(c=>`<li><span class="dots">${c.keys.map(uqPlDot).join('')}</span><b>${c.keys.map(uqPlName).map(esc).join(' + ')}</b><span class="num">${fmt(c.people)}</span></li>`).join('')
+      :`<li class="none">${tt('uq.pl.nocombo','No one came from more than one platform.')}</li>`}</ul>`;
+  /* round 23 review: "Platforms added up" counts Facebook/TikTok/Snapchat only, so it is compared with the people from those three (known_people) */
+  const dep=pl.has_deposits, sp=pl.has_spend;
+  const say=`<div class="uq-pl-say">
+      <div class="uq-pl-nums"><div class="cl"><small>${tt('uq.pl.claim','Platforms added up')}</small><b class="num">${fmt(pl.claimed)}</b></div>
+        <span class="ar" aria-hidden="true">${I.arrow}</span>
+        <div class="rl"><small>${tt('uq.pl.real','Different people')}</small><b class="num">${fmt(pl.known_people??pl.people)}</b></div></div>
+      <p>${pl.multi?tt('uq.pl.lead','<b>{n}</b> people ({p}) clicked ads on more than one platform. Added up, your platforms count them more than once. Here each person counts once.',{n:fmt(pl.multi),p:uqPct(pl.multi_pct)})
+        :tt('uq.pl.lead0','No one clicked your ads on more than one platform. Every platform brought you different people.')}</p>
+      ${sp&&pl.cost_per_person_cents?`<div class="uq-pl-cost"><span><small>${tt('uq.pl.cpp','Real cost per paid person')}</small><b class="num">${money(pl.cost_per_person_cents)}</b></span>${pl.multi&&pl.cost_if_added_cents?`<span class="was"><small>${tt('uq.pl.cpa','If you add the platforms up')}</small><b class="num">${money(pl.cost_if_added_cents)}</b></span>`:''}</div>`:''}
+    </div>`;
+  const cols=['k','s', ...(dep?['d']:[]), ...(sp?['c']:[])];
+  const hdr={k:tt('uq.pl.c.k','Platform'),s:tt('uq.pl.c.s','New to you vs also elsewhere'),d:tt('uq.dep.c2','Deposit rate'),c:tt('uq.pl.c.c','Cost per new person')};
+  const cell=(x,c)=>{
+    if(c==='k') return `<span class="k" role="cell">${uqPlDot(x.key)}<span><b>${esc(uqPlName(x.key))}</b><small>${fmt(x.people)} ${x.people===1?tt('uq.person','person'):tt('uq.people','people')}</small></span></span>`;
+    if(c==='s') return `<span class="sp" role="cell"><span class="uq-mini"><i class="o" style="width:${x.people?x.only_here/x.people*100:0}%"></i><i class="s" style="width:${x.people?x.shared/x.people*100:0}%"></i></span><small>${x.people?tt('uq.pl.new','{n} new to you · {s} also from another platform',{n:fmt(x.only_here),s:fmt(x.shared)}):tt('uq.pl.nojoin','Spend, but no one joined from it in these dates')}</small></span>`;
+    if(c==='d') return `<span class="r num" role="cell"><small class="rl">${hdr.d}</small>${x.deposit_rate==null?'—':uqPct(x.deposit_rate)}</span>`;
+    return `<span class="r num v" role="cell"><small class="rl">${hdr.c}</small>${x.cost_per_new_cents?money(x.cost_per_new_cents):'—'}${x.cost_per_person_cents&&x.cost_per_new_cents!==x.cost_per_person_cents?`<small class="pp">${tt('uq.pl.cpp.s','{m} per person',{m:money(x.cost_per_person_cents)})}</small>`:''}</span>`;
+  };
+  const grid=`<div class="uq-plt-t c${cols.length}" role="table"><div class="uq-plr h" role="row">${cols.map(c=>`<span role="columnheader">${hdr[c]}</span>`).join('')}</div>
+    ${L.map(x=>`<div class="uq-plr" role="row">${cols.map(c=>cell(x,c)).join('')}</div>`).join('')}</div>`;
+  const q=pl.quality, lift=q&&q.rate_lift;
+  const ql = q&&q.multi.people ? (lift!=null&&lift>=1.05?tt('uq.pl.q.more','People who clicked on 2+ platforms deposit <b>{x}×</b> as often ({a} vs {b}).',{x:lift.toFixed(1),a:uqPct(q.multi.deposit_rate),b:uqPct(q.one.deposit_rate)})
+    : lift!=null&&lift<=0.95?tt('uq.pl.q.less','People who clicked on 2+ platforms deposit less often ({a} vs {b}).',{a:uqPct(q.multi.deposit_rate),b:uqPct(q.one.deposit_rate)})
+    : lift!=null?tt('uq.pl.q.same','People who clicked on 2+ platforms deposit about as often as everyone else.'):'') : '';
+  return `<section class="card uq-pl">${head}
+    <div class="uq-pl-top"><div class="uq-pl-pic">${pic}${two?`<div class="uq-pl-key">${known.map(x=>`<span>${uqPlDot(x.key)}<b>${esc(uqPlName(x.key))}</b> ${fmt(x.people)}</span>`).join('')}</div>`:''}</div>${say}</div>
+    ${grid}
+    ${ql?`<p class="uq-pl-q">${I.coin}<span>${ql}</span></p>`:''}
+    ${!sp&&FEAT('spend')&&!DEMO?`<p class="hint uq-pl-hint">${tt('uq.pl.nospend','Add your ad spend and this shows what each new person really costs on each platform.')} <button class="link" data-act="spend">${tt('uq.pl.addspend','Add spend')}</button></p>`:''}
+    <p class="uq-pl-how">${tt('uq.pl.how','The platform comes from the ad click Joinvoo tracked (Facebook click ID, TikTok click ID or Snapchat click ID). “New to you” = people no other platform brought in these dates. People who saw an ad but joined without clicking it aren’t included.')}</p>
+  </section>`;
 }
 /* Who deposits: people in 1 vs 2 vs 3+ funnels (everything the people who joined in these dates deposited since) */
 function uqDeposits(d){
@@ -10045,13 +10283,13 @@ function uqHow(d){
   const chs=visChans(S.chans).filter(c=>c.status!=='removed'&&c.pixel_id);
   const top=d.pairs[0], pick=(top&&chs.find(c=>c.id===top.a.id||c.id===top.b.id))||chs[0];
   return `<details class="card uq-how"><summary><span class="mr-ic">${I.target}</span><span><b>${tt('uq.how.h','Want a funnel to find only new people?')}</b><small>${tt('uq.how.s','Optional. People in more than one funnel can earn you more than once, so often they’re worth it. When a funnel should only reach new people, exclude the ones already in another funnel.')}</small></span>${I.chev}</summary>
-    ${pick?`<label class="hint" for="uqch" style="display:block;margin-top:14px">${tt('uq.how.pick','People already in')}</label><select class="sel" id="uqch" data-uq-how>${chs.map(c=>`<option value="${c.id}" ${c.id===pick.id?'selected':''}>${esc(c.title)}</option>`).join('')}</select><div id="uqhow">${uqSteps(pick)}</div>`
+    ${pick?`<label class="hint" for="uqch" style="display:block;margin-top:14px">${tt('uq.how.pick','People already in')}</label><select class="sel" id="uqch" data-uq-how>${chs.map(c=>`<option value="${c.id}" ${c.id===pick.id?'selected':''} translate="no">${esc(c.title)}</option>`).join('')}</select><div id="uqhow">${uqSteps(pick)}</div>`
       :`<p class="hint" style="margin-top:12px">${tt('uq.how.nopx','Connect Meta to your funnels first (Channels → Settings → Ad platforms). Joinvoo then sends every join to your pixel, and you can build the audience from it.')}</p>`}</details>`;
 }
 function uqSteps(c){
   const ev=c.event_name||(c.type==='dm'?'Lead':'Subscribe');
   return `<div class="uq-keys"><div class="dm-rec"><span class="dm-k">${tt('au.ev','Event')}</span><div class="codebox"><code>${esc(ev)}</code><button class="btn sm" data-act="copy" data-v="${esc(ev)}">${I.copy}</button></div></div>
-    <div class="dm-rec"><span class="dm-k">content_name</span><div class="codebox"><code>${esc(c.title)}</code><button class="btn sm" data-act="copy" data-v="${esc(c.title)}">${I.copy}</button></div></div></div>
+    <div class="dm-rec"><span class="dm-k">content_name</span><div class="codebox"><code translate="no">${esc(c.title)}</code><button class="btn sm" data-act="copy" data-v="${esc(c.title)}">${I.copy}</button></div></div></div>
     <ol class="au-steps">${[tt('uq.st1','In Meta Ads Manager, open Audiences → Create audience → Custom audience → Website.'),
       tt('uq.st2','Pick your pixel ({px}) and the event {ev}.',{px:esc(c.pixel_id),ev:`<b>${esc(ev)}</b>`}),
       tt('uq.st3','Tap Refine by → Parameters, and choose content_name contains “{t}”. Joinvoo sends the funnel name with every join.',{t:esc(c.title)}),
@@ -10089,6 +10327,46 @@ async function uqStrip(){
   el.hidden=false;
 }
 { const vo=viewOverview; viewOverview=async function(){ const p=vo(); try { await p; } finally { uqStrip(); } }; }
+/* ================= round 23: My profile → Where you're logged in =================
+   Every device logged in to this account (browser, system, country, last active), sign out one or all others.
+   GET /api/sessions, POST /api/sessions/end {id} | {others:true}. New-device emails are sent by the server (feature.login_alerts). */
+const secRel = ts => { try { const s=(ts-Date.now())/1000, a=Math.abs(s), rf=new Intl.RelativeTimeFormat(I18N.lang||'en',{numeric:'auto'});
+  if (a<90) return tt('sec.now','Active now'); if (a<3600) return rf.format(Math.round(s/60),'minute'); if (a<86400) return rf.format(Math.round(s/3600),'hour'); if (a<30*86400) return rf.format(Math.round(s/86400),'day');
+  return new Date(ts).toLocaleDateString(I18N.lang||'en',{day:'numeric',month:'short',year:'numeric'}); } catch { return ago(ts); } };
+const secDev = x => x.browser&&x.os ? tt('sec.dev','{b} on {o}',{b:esc(x.browser),o:esc(x.os)}) : x.os||x.browser ? esc(x.os||x.browser) : tt('sec.unknown','Unknown device');
+const SEC_PH = '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', SEC_PC = '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M2 19.5h20"/>';
+function secDemo(){ const n=Date.now(); return { alerts:true, sessions:[
+  {id:'d1',current:true,os:'iPhone',browser:'Safari',mobile:true,country:'NG',flag:'🇳🇬',city:'Lagos',ip:'102.89.7.••',signed_in_at:n-3*864e5,last_active_at:n},
+  {id:'d2',current:false,os:'Mac',browser:'Chrome',mobile:false,country:'NG',flag:'🇳🇬',city:'Lagos',ip:'105.112.4.••',signed_in_at:n-9*864e5,last_active_at:n-4*3600e3},
+  {id:'d3',current:false,os:'Android',browser:'Chrome',mobile:true,country:'KE',flag:'🇰🇪',city:'Nairobi',ip:'41.90.66.••',signed_in_at:n-12*864e5,last_active_at:n-2*864e5}] }; }
+async function secMount(){
+  if (S.page!=='me') return; const v=$('#view .view'); if(!v || $('#secsess')) return;
+  v.insertAdjacentHTML('beforeend',`<section class="card sec" id="secsess"><div class="card-h"><h2>${I.shield} ${tt('sec.h','Where you’re logged in')}</h2><span class="sub">${tt('sec.s','Every device logged in to your account. Don’t recognise one? Sign it out and change your password.')}</span></div>
+    <div class="sec-list" id="seclist"><div class="sk" style="height:58px;margin:6px 0"></div><div class="sk" style="height:58px;margin:6px 0"></div></div></section>`);
+  let d; try { d = DEMO ? secDemo() : await api('GET','/api/sessions'); } catch(e){ const l=$('#seclist'); if(l) l.innerHTML=`<p class="hint" style="padding:8px 4px">${esc(e.message)}</p>`; return; }
+  secDraw(d);
+}
+function secDraw(d){
+  const l=$('#seclist'); if(!l) return; const L=d.sessions||[], others=L.filter(x=>!x.current).length;
+  l.innerHTML=`${L.map(x=>{ const place=[x.city, x.country?(()=>{ try{ return new Intl.DisplayNames([I18N.lang||'en'],{type:'region'}).of(x.country); }catch{ return x.country; } })():''].filter(Boolean).join(', ');
+    return `<div class="sec-row${x.current?' cur':''}"><span class="sec-ic" aria-hidden="true">${sv(x.mobile||/iPhone|Android|iPad/.test(x.os||'')?SEC_PH:SEC_PC)}</span>
+      <span class="sec-t"><b>${secDev(x)}${x.current?` <em class="sec-me">${tt('sec.this','This device')}</em>`:''}</b>
+        <small>${x.legacy?tt('sec.legacy','Logged in before devices were recorded'):[place?`${x.flag||''} ${esc(place)}`:'', x.ip?`<span class="mono">${esc(x.ip)}</span>`:'', x.via==='voosquare'?'VooSquare':''].filter(Boolean).join(' · ')}</small>
+        <small class="sec-when">${x.current?tt('sec.now','Active now'):x.last_active_at?tt('sec.last','Last active {t}',{t:secRel(x.last_active_at)}):''}${x.signed_in_at?' · '+(Date.now()-x.signed_in_at<90000?tt('sec.justnow','signed in just now'):tt('sec.since','signed in {t}',{t:secRel(x.signed_in_at)})):''}</small></span>
+      ${x.current?'':`<button class="btn sm" data-act="sec-end" data-id="${esc(x.id)}">${I.logout} ${tt('sec.out','Sign out')}</button>`}</div>`; }).join('')}
+    <div class="sec-foot">${others?`<button class="btn sm danger" data-act="sec-others">${I.logout} ${tt('sec.others','Sign out all other devices')} (${others})</button>`:`<span class="hint">${tt('sec.only','Only this device is logged in.')}</span>`}
+      <button class="btn sm" data-act="change-pass">${I.lock} ${tt('sec.pass','Change password')}</button></div>
+    ${d.alerts?`<p class="hint sec-note">${I.mail} ${tt('sec.alert','We email you whenever someone logs in from a new device.')}</p>`:''}`;
+}
+async function secEnd(body){
+  if (DEMO){ toast(tt('sec.demo','Works on your live account'),false); return; }
+  try { const r=await api('POST','/api/sessions/end',body); if (r.current){ location.href='/login'; return; }
+    toast(body.others?tt('sec.done.all','Signed out of {n} other devices',{n:r.ended}):tt('sec.done','Signed out')); secDraw(await api('GET','/api/sessions')); } catch(e){ toast(e.message,false); }
+}
+document.addEventListener('click', e=>{ const a=e.target.closest('[data-act]'); if(!a) return;
+  if (a.dataset.act==='sec-end'){ secEnd({id:a.dataset.id}); }
+  if (a.dataset.act==='sec-others'){ if (confirm(tt('sec.confirm','Sign out every other device? You stay logged in here.'))) secEnd({others:true}); } });
+{ const vm=viewMe; viewMe=async function(){ await vm(); secMount(); }; }
 
 /* ================= DEMO BACKEND (sample data, in the browser) ================= */
 const Demo = (() => {
@@ -10362,8 +10640,8 @@ const Demo = (() => {
       if (body.approve_after!==undefined) c.approve_after=Math.round(+body.approve_after);
       if (ap!=='joinvoo' && c.pending_requests==null) c.pending_requests=ap==='own'?3:0; return {ok:true}; }
     if (p==='/api/billing'&&method==='GET'){ const b=await handle0(method,path,body); const bonus=bonusRows.reduce((a,x)=>a+x.amount_cents,0);
-      b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $300 top-up',amount_cents:1500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
-      const sb=sample?1500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
+      b.history=[...bonusRows,...(sample?[{kind:'bonus',note:'Bonus +5% for a $1,500 top-up',amount_cents:7500,created_at:Date.now()-20*864e5+60e3}]:[]),...(b.history||[])].sort((x,y)=>y.created_at-x.created_at);
+      const sb=sample?7500:0; b.balance_cents+=bonus+sb; const life=b.deposited_cents; let ri=0; RANKS.forEach((r,i)=>{ if(life>=r.min_cents) ri=i; }); const R=RANKS[ri], N=RANKS[ri+1];
       b.credits={balance:b.balance_cents,bought:b.deposited_cents,bonus:bonus+sb,used:b.used_cents};
       b.rank={name:R.name,next:N?{name:N.name,need_cents:N.min_cents-life}:null,lifetime_cents:life,join_discount_pct:R.join_discount_pct,perks:R.perks};
       b.bonus_tiers=TIERS; b.ranks=RANKS; b.custom_pricing=null; b.promo={code:'LAUNCH10',bonus_pct:10,ends_at:Date.now()+4*864e5+5*3600e3}; return b; }
@@ -10375,7 +10653,7 @@ const Demo = (() => {
 
   /* ---------- Round 6 demo: profile, plans/trial, locks, fraud joins, smart links, compare insights, Joe ---------- */
   const qp6=new URLSearchParams(location.search);
-  let profile={nickname:'',gender:'male',avatar:null,lang:'en',tz:null};
+  let profile={nickname:'',gender:'male',avatar:null,lang:null,tz:null};
   /* Round 6 A: levels (leads = joins + bot starts, rolling 30 days) */
   const LEVELS6=[{id:'rookie',name:'Rookie',from:0},{id:'hustler',name:'Hustler',from:1000},{id:'operator',name:'Operator',from:5000},{id:'shark',name:'Shark',from:25000},{id:'whale',name:'Whale',from:100000},{id:'kraken',name:'Kraken',from:300000},{id:'legend',name:'Legend',from:1000000}];
   let showLevel=true;
@@ -10586,7 +10864,7 @@ const Demo = (() => {
         {email:'mi•••@gmail.com',joined_at:Date.now()-26*D,active:true,spend_cents:37350,earned_cents:7470},
         {email:'om•••@yahoo.com',joined_at:Date.now()-12*D,active:true,spend_cents:31000,earned_cents:6200},
         {email:'ha•••@gmail.com',joined_at:Date.now()-26*3600e3,active:false,spend_cents:0,earned_cents:0}]:[];
-      const tiers=[{name:'Starter',min:0,rate:.1},{name:'Pro',min:3,rate:.2},{name:'Elite',min:10,rate:.3}]; const active=ppl.filter(x=>x.active).length;
+      const tiers=[{name:'Starter',min:0,rate:.05},{name:'Growth',min:30,rate:.1},{name:'Pro',min:100,rate:.15},{name:'Elite',min:250,rate:.2},{name:'Legend',min:500,rate:.3}]; const active=ppl.filter(x=>x.active).length;
       const tier=[...tiers].reverse().find(t=>active>=t.min), next=tiers.find(t=>t.min>active);
       const earned=ppl.reduce((a,b)=>a+b.earned_cents,0), paidOut=payouts.reduce((a,b)=>a+b.amount_cents,0), bal=Math.max(0,earned-paidOut-credit), month=sample?14280:0;
       return {link:'https://joinvoo.com/r/em7k2q',code:'em7k2q',invited:ppl.length,active,tier:tier.name,rate:tier.rate,next_tier:next&&{name:next.name,rate:next.rate,need:next.min-active},tiers,
@@ -10606,13 +10884,13 @@ const Demo = (() => {
       extraConvs.push({...c,ch:row&&row.channel_id,row:{id:80000+extraConvs.length,event:e2,value_cents:c.value_cents,currency:c.currency,txid:null,source:'manual',matched:1,created_at:c.at,meta_status:row&&row.click_id&&ch&&on(ch,'meta')?'sent':'none',tt_status:row&&row.click_id&&ch&&on(ch,'tiktok')&&e2!=='dep'?'sent':'none',sc_status:row&&row.click_id&&ch&&on(ch,'snap')&&e2!=='dep'?'sent':'none',error:null,tg_user_id:row&&row.tg_user_id,first_name:row&&row.first_name,last_name:row&&row.last_name,username:row&&row.username,click_id:row&&row.click_id,channel_title:row&&row.channel_title}});
       return {ok:true,id:Date.now(),event:e2,attributed:!!(row&&row.click_id)}; }
     if (p==='/api/billing'){ const st=stats(new URLSearchParams(`from=${ymd(new Date(new Date().getFullYear(),new Date().getMonth(),1))}&to=${ymd(new Date())}`)); const j=st.totals.joins; const mc=3000+Math.max(0,j-2000)*2;
-      const used=sample?mc+42000:(!sample&&j<500?0:(j||liveClicks.length?mc:0)); const dep=deposits.filter(d=>d.status==='paid').reduce((a,b)=>a+b.amount_cents,0)+(sample?60000:0);
+      const used=sample?mc+42000:(!sample&&j<500?0:(j||liveClicks.length?mc:0)); const dep=deposits.filter(d=>d.status==='paid').reduce((a,b)=>a+b.amount_cents,0)+(sample?250000:0); /* round 23b: the sample account has a healthy balance (was negative: "wallet empty" on a demo looked broken) */
       const free=sample?0:Math.max(0,500-j), active=free===0&&!!(j||liveClicks.length||sample), D=864e5, now=Date.now(), welcome=0;
       const history=[...(active?[{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime()+9*3600e3}]:[]),
         ...(j>2000?[{kind:'joins',note:`${fmt(j-2000)} extra joins`,amount_cents:-(j-2000)*2,created_at:now-3600e3}]:[]),
         ...deposits.filter(d=>d.status==='paid').map(d=>({kind:'deposit',note:'Top-up via '+(d.method_label||(d.provider==='crypto'?'USDT':d.provider[0].toUpperCase()+d.provider.slice(1))),amount_cents:d.amount_cents,created_at:d.created_at})),
         ...(credit?[{kind:'refcredit',note:'From referral earnings',amount_cents:credit,created_at:now-60e3}]:[]),
-        ...(sample?[{kind:'deposit',note:'Top-up via Paystack',amount_cents:30000,created_at:now-20*D},{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:now-31*D},{kind:'deposit',note:'Top-up via USDT',amount_cents:30000,created_at:now-48*D}]:[]),
+        ...(sample?[{kind:'deposit',note:'Top-up via Paystack',amount_cents:150000,created_at:now-20*D},{kind:'plan',note:'Monthly plan',amount_cents:-3000,created_at:now-31*D},{kind:'deposit',note:'Top-up via USDT',amount_cents:100000,created_at:now-48*D}]:[]),
         {kind:'welcome',note:'Welcome gift: first 500 tracked joins free',amount_cents:0,created_at:sample?now-60*D:now-5*60e3}].sort((x,y)=>y.created_at-x.created_at);
       const bal=dep+credit+welcome-used;
       return {free_joins_left:free,free_joins_gift:500,balance_cents:bal,deposited_cents:dep,credit_cents:credit+welcome,welcome_cents:welcome,used_cents:used,tracking:free>0||bal>0||!active,state:free>0?'trial':bal>0?'active':'empty',billing_on:true,history,month:{joins:j,cents:active?mc:0,plan_paid:active,extra_joins:Math.max(0,j-2000),included:2000,base_cents:3000,per_join_cents:2},methods:{paystack:true,flutterwave:true,crypto:true},pay_methods:PAYM,usdt_address:'TQ7vEXAMPLEdemoAddressJoinvoo9x2M',min_deposit_cents:1000,ngn_per_usd:1600,deposits:sample&&!deposits.length?[{provider:'paystack',method_id:'paystack',method_label:'Paystack',amount_cents:30000,status:'paid',created_at:Date.now()-20*864e5},{provider:'manual',method_id:'m_usdt',method_label:'USDT (TRC20)',amount_cents:30037,status:'paid',created_at:Date.now()-48*864e5}]:deposits}; }
@@ -10958,6 +11236,9 @@ const Demo = (() => {
   }
   function useSampleQuiet(){ sample=true; db=sampleDb(); }
   if (H18) useSampleQuiet();
+  /* round 23b: "Try the live demo" opens a full sample account straight away (an empty new account looked like a real sign-up and confused visitors).
+     ?setup=1 starts empty to try the setup; the demo bar switches between the two. */
+  else if (!q11.has('setup')) { useSampleQuiet(); support=[{id:sid++,from_admin:1,demo:true,body:'Hi Alex 👋 Your Snapchat pixel on Fit in 30 is still in test mode. Switch it off on the Channels page when you’re ready to go live, and shout if you want a hand with the deposit postback.',created_at:Date.now()-50*60e3}]; }
   return {handle:handle19,addChannel,addDM,useSample,reset,config:config11,get sample(){return sample;},pbk:null,r17reset(){ r17=null; }};
 })();
 

@@ -42,7 +42,7 @@ let tok = 7712045600, txn = 1;
   // back on: the next payment earns again
   await post(ADM, `/api/admin/users/${aId}/flags`, { no_commission: false });
   x = await payingCustomer('two@x.com'); ref = (await A('/api/referrals')).j;
-  assert(ref.earned_cents === 300, 'commissions back on: 10% of the next paid plan ($3.00), earned ' + ref.earned_cents);
+  assert(ref.earned_cents === 150, 'commissions back on: 5% (first tier, round 23b) of the next paid plan ($1.50), earned ' + ref.earned_cents);
 
   // ---- "Don't count as revenue"
   let ov = (await ADM('/api/admin/overview')).j; const rev0 = ov.revenue_month_cents;
@@ -53,7 +53,7 @@ let tok = 7712045600, txn = 1;
   assert(ov.revenue_month_cents === rev0 && ov.excluded_month_cents === 4000 && ov.excluded_users === 1 && ov.revenue_all_cents === rev0, 'its $40 is left out of revenue and shown as “not counted”');
   assert(ov.days.reduce((a, y) => a + y.revenue_cents, 0) === rev0, 'daily revenue chart leaves it out too');
   assert((ov.paid_by_method || []).reduce((a, y) => a + y.cents, 0) === rev0, 'revenue by payment method leaves it out too');
-  ref = (await A('/api/referrals')).j; assert(ref.earned_cents === 300, 'nobody earns commission on an excluded account (still ' + ref.earned_cents + ')');
+  ref = (await A('/api/referrals')).j; assert(ref.earned_cents === 150, 'nobody earns commission on an excluded account (still ' + ref.earned_cents + ')');
   const dep = (await ADM('/api/admin/deposits?status=paid')).j.deposits.find((y) => y.email === 'gift@x.com'); assert(dep && dep.exclude_revenue === 1, 'deposits list marks it');
   // gifts from admin were never revenue
   const gId = await uidOf('gift@x.com');

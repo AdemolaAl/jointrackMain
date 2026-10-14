@@ -118,7 +118,7 @@ const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
   const html = (await ADM('/api/admin/emails/broadcast/preview')).t;
   assert(/<b>cost per FTD<\/b>/.test(html) && /href="https:\/\/joinvoo\.com\/guide"/.test(html), 'broadcast email template renders **bold** and links');
   let list = (await ADM('/api/admin/broadcasts')).j;
-  assert(list.broadcasts[0].id === bid && list.broadcasts[0].sent_count === 3 && list.broadcasts[0].read_count === 1 && list.broadcasts[0].emailed === 2 && list.levels.length === 7 && list.langs.length === 5, 'past broadcasts with sent/read/emailed counts');
+  assert(list.broadcasts[0].id === bid && list.broadcasts[0].sent_count === 3 && list.broadcasts[0].read_count === 1 && list.broadcasts[0].emailed === 2 && list.levels.length === 7 && list.langs.length === 11, 'past broadcasts with sent/read/emailed counts');
   r = await del(ADM, '/api/admin/broadcasts/' + bid);
   assert(r.s === 200 && r.j.removed === 2 && (await inbox(U, '?kind=update')).items.some((x) => x.id === it.id) && !(await inbox(V, '?kind=update')).items.some((x) => x.title === 'Snapchat cost per FTD is live'), 'delete removes unread copies, keeps read ones');
   assert((await ADM('/api/admin/broadcasts')).j.broadcasts.every((b) => b.id !== bid), 'deleted broadcast gone from the list');
@@ -164,5 +164,5 @@ const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
 
   // ---------- admin page has the new section ----------
   const page = await fetch(B + '/admin').then((x) => x.text());
-  assert(page.includes('Inbox / Broadcast') && page.includes('/api/admin/broadcasts/preview'), 'admin page ships the Inbox / Broadcast section');
+  assert(page.includes('Broadcasts') && page.includes('/api/admin/broadcasts/preview'), 'admin page ships the Broadcasts section');
 })().catch((e) => { console.log('FAIL: crashed', e.stack); process.exitCode = 1; });

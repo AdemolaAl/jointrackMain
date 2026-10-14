@@ -1,0 +1,35 @@
+<style>
+/* ================= Round 23: My profile → Where you're logged in ================= */
+.sec .card-h h2{display:flex;align-items:center;gap:8px}.sec .card-h h2 svg{width:18px;height:18px;color:var(--brand-text)}
+.sec-list{display:flex;flex-direction:column;padding:2px 16px 14px}
+.sec-row{display:flex;align-items:center;gap:14px;padding:12px 6px}
+.sec-row+.sec-row{border-top:1px solid var(--line)}
+.sec-ic{flex:none;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--sunk);color:var(--muted)}
+.sec-ic svg{width:21px;height:21px}
+.sec-row.cur .sec-ic{background:var(--brand-soft);color:var(--brand-text)}
+.sec-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sec-t b{font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sec-t small{font-size:12.5px;color:var(--muted);line-height:1.4;overflow-wrap:anywhere}.sec-t small.sec-when{color:var(--faint)}
+.sec-me{font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--mint-soft);color:var(--mint-ink)}
+.sec-row .btn{flex:none}
+.sec-foot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 6px 2px;border-top:1px solid var(--line);margin-top:2px}
+.sec-note{display:flex;align-items:center;gap:6px;margin:10px 6px 0}.sec-note svg{width:15px;height:15px;flex:none}
+@media (max-width:520px){.sec-list{padding:2px 10px 12px}.sec-row{gap:10px;align-items:flex-start}.sec-ic{width:36px;height:36px;border-radius:12px}
+  .sec-row .btn{padding:0 10px}.sec-foot .btn{flex:1 1 auto;justify-content:center}}
+/* ================= round 23 review: Arabic, right to left ([dir=rtl] is set on <html> by loadLang) ================= */
+[dir=rtl] .side{border-right:0;border-left:1px solid var(--line)}
+[dir=rtl] .shell.col .side .collapse svg{transform:none}
+[dir=rtl] .side .collapse svg{transform:rotate(180deg)}
+[dir=rtl] .fab{right:auto;left:26px}                                   /* support launcher on the left */
+[dir=rtl] .chat{right:auto;left:18px}
+[dir=rtl] .sup-launch{padding:0 9px 0 6px}
+[dir=rtl] .sup-launch .badge{right:auto;left:-3px}
+[dir=rtl] svg.rtl-flip{transform:scaleX(-1)}                            /* arrows / chevrons */
+[dir=rtl] .num,[dir=rtl] .money{unicode-bidi:isolate;direction:ltr}  /* "-5,778" stays "-5,778", not "5,778-" */
+@media (max-width:900px){
+  [dir=rtl] .side{left:auto;right:0;transform:translateX(102%)}           /* phone drawer slides in from the right */
+  [dir=rtl] .shell.open .side{transform:none}
+  [dir=rtl] .fab{right:auto;left:16px}
+  [dir=rtl] .chat{left:0}
+}
+</style>

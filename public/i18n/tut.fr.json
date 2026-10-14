@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Créez votre bot de suivi",
+  "where": "Étape 1 de la configuration",
+  "sents": [
+   "Bienvenue sur Joinvoo.",
+   "D’abord, créons votre bot de suivi.",
+   "Ça prend environ une minute.",
+   "Ouvrez Telegram et recherchez BotFather, celui avec le badge bleu.",
+   "Appuyez sur Démarrer, puis envoyez slash new bot.",
+   "Donnez n’importe quel nom à votre bot, puis un nom d’utilisateur qui se termine par le mot bot.",
+   "BotFather vous envoie un long token.",
+   "Copiez-le, revenez sur Joinvoo, collez-le dans le champ, et appuyez sur Connecter.",
+   "C’est tout.",
+   "Votre bot est prêt."
+  ]
+ },
+ "t2": {
+  "title": "Ajoutez votre bot à votre canal",
+  "where": "Étape 2 de la configuration",
+  "sents": [
+   "Ajoutez maintenant votre bot à votre canal.",
+   "Dans Telegram, ouvrez votre canal et appuyez sur son nom.",
+   "Appuyez sur Administrateurs, puis sur Ajouter un administrateur.",
+   "Recherchez votre bot et ajoutez-le.",
+   "Vérifiez que \"Inviter des utilisateurs via un lien\" est activé, puis appuyez sur Enregistrer.",
+   "Revenez sur Joinvoo.",
+   "Il trouve votre canal tout seul en quelques secondes.",
+   "Si vous voulez suivre un bot plutôt qu’un canal, choisissez \"Mon bot\" et suivez les mêmes étapes simples."
+  ]
+ },
+ "t3": {
+  "title": "Connecter Meta",
+  "where": "Étape 3 de la configuration · Réglages du canal › Plateformes publicitaires",
+  "sents": [
+   "Ensuite, connectez Meta, pour que chaque adhésion soit renvoyée à vos publicités.",
+   "Dans le Gestionnaire d’événements de Meta, copiez votre Pixel ID.",
+   "Puis ouvrez les Paramètres, trouvez Conversions API, et générez un token d’accès.",
+   "Collez les deux dans Joinvoo et appuyez sur Envoyer un test.",
+   "Quand vous voyez \"Test reçu\", c’est terminé.",
+   "Copiez maintenant votre lien publicitaire depuis la carte de votre canal, et mettez-le dans votre pub.",
+   "Chaque adhésion apparaît dans Meta, associée au clic exact."
+  ]
+ },
+ "t4": {
+  "title": "Suivre les dépôts avec la demande d’adhésion",
+  "where": "Réglages du canal › Méthode d’adhésion",
+  "sents": [
+   "Vous voulez voir qui dépose, et pas seulement qui rejoint ?",
+   "Activez la demande d’adhésion.",
+   "Ouvrez les Réglages de votre canal, puis Méthode d’adhésion.",
+   "Choisissez qui fait entrer les gens.",
+   "Joinvoo peut les accepter instantanément, et envoyer votre message de bienvenue avec votre lien de l’offre.",
+   "Ou, si vous avez déjà votre propre bot de bienvenue, choisissez \"Mon propre bot\", et Joinvoo se contente du suivi.",
+   "Gardez la balise ID Telegram dans votre lien de l’offre, et chaque dépôt est associé à la bonne personne et à la bonne pub."
+  ]
+ },
+ "t5": {
+  "title": "Envoyez des gens depuis votre propre site",
+  "where": "Réglages du canal › Votre propre site",
+  "sents": [
+   "Vous avez déjà votre propre page de destination ?",
+   "Gardez-la.",
+   "Ouvrez les Réglages de votre canal, puis \"Votre propre site\".",
+   "Choisissez quand les gens passent sur Telegram : instantanément, quand ils appuient sur votre bouton, ou après quelques secondes.",
+   "Copiez l’unique ligne de code, et collez-la dans votre page.",
+   "Les visiteurs arrivent sur votre page, puis vont directement dans Telegram.",
+   "Et chaque adhésion reste associée au clic exact sur la pub."
+  ]
+ },
+ "t6": {
+  "title": "Utilisez votre propre domaine",
+  "where": "Canaux › Votre domaine de liens",
+  "sents": [
+   "Vous pouvez utiliser vos liens publicitaires sur votre propre domaine, comme go point votre marque point com.",
+   "Ouvrez Canaux, puis \"Votre domaine de liens\", et tapez votre sous-domaine.",
+   "Joinvoo vous montre deux enregistrements.",
+   "Ajoutez-les là où vous avez acheté votre domaine, dans vos réglages DNS.",
+   "Puis appuyez sur Vérifier maintenant.",
+   "Quand c’est indiqué En direct, vos nouveaux liens utilisent votre propre domaine, et vos anciens liens continuent de fonctionner.",
+   "L’offre Basic inclut un domaine.",
+   "Avec Pro, vos domaines sont illimités."
+  ]
+ },
+ "t7": {
+  "title": "Connectez le Démarrer de votre propre bot",
+  "where": "Réglages du bot › Ping de démarrage du bot",
+  "sents": [
+   "Vous envoyez vos pubs vers votre propre bot, et vous ne voulez pas partager son token ?",
+   "Pas de souci.",
+   "Ouvrez les Réglages du bot, puis \"Connectez le Démarrer de votre propre bot\".",
+   "Copiez le code tout prêt pour votre bot, ou l’adresse web pour les outils sans code comme ManyChat ou SendPulse.",
+   "Appuyez sur Envoyer un test.",
+   "Désormais, chaque fois que quelqu’un appuie sur Démarrer, votre bot prévient Joinvoo, et l’adhésion est associée à la pub exacte."
+  ]
+ },
+ "t8": {
+  "title": "Ajoutez votre équipe",
+  "where": "Plus › Équipe",
+  "sents": [
+   "Vous travaillez en équipe ?",
+   "Ouvrez Plus, puis Équipe, et appuyez sur Inviter.",
+   "Saisissez l’e-mail de votre acheteur et choisissez un rôle.",
+   "Les gestionnaires voient tous les canaux.",
+   "Les acheteurs ne voient que les canaux que vous leur attribuez.",
+   "Pro inclut trois membres d’équipe, et vous pouvez en ajouter d’autres à tout moment.",
+   "Dans Résultats, comparez vos acheteurs côte à côte, et voyez qui vous apporte les dépôts les moins chers."
+  ]
+ },
+ "t9": {
+  "title": "Lisez vos résultats",
+  "where": "Résultats",
+  "sents": [
+   "Voici comment lire vos chiffres.",
+   "Ouvrez Résultats.",
+   "En haut, vous voyez les adhésions, les dépôts et le coût par dépôt.",
+   "Ajoutez vos dépenses publicitaires, ou connectez votre compte publicitaire, et Joinvoo calcule votre coût par adhésion et votre retour sur dépenses publicitaires.",
+   "Appuyez sur une personne pour voir la pub, la campagne et le clic exacts d’où elle vient.",
+   "Et chaque matin, Joinvoo peut envoyer ce résumé directement sur votre Telegram.",
+   "Activez-le dans Plus, puis Rapport quotidien."
+  ]
+ },
+ "t10": {
+  "title": "Inviter un assistant de configuration",
+  "where": "Plus › Équipe",
+  "sents": [
+   "Besoin que quelqu’un configure Joinvoo pour vous, sans partager votre mot de passe ?",
+   "Ouvrez Plus, puis Équipe, et appuyez sur Inviter.",
+   "Choisissez Assistant de configuration.",
+   "C’est gratuit avec toutes les offres.",
+   "Saisissez son e-mail, ou copiez le lien d’invitation et envoyez-le sur WhatsApp.",
+   "Votre assistant peut configurer vos bots, vos canaux et vos pubs, mais il ne voit ni votre facturation ni votre argent.",
+   "S’il aide plusieurs clients, il voit tous leurs comptes au même endroit.",
+   "Vous pouvez le retirer à tout moment."
+  ]
+ },
+ "t11": {
+  "title": "Pourquoi suivre les messages envoyés à votre manager",
+  "where": "Étape 2 de la configuration · Suivi des DM",
+  "sents": [
+   "Vos pubs envoient les gens directement dans le chat d’un manager sur Telegram ?",
+   "Alors ceci vous concerne.",
+   "Pour l’instant, Meta ne voit qu’un appui sur votre lien.",
+   "Elle ne voit pas qui a vraiment écrit à votre manager, alors elle apprend à trouver des gens qui appuient puis repartent.",
+   "Vous payez des clics, pendant que votre manager attend de vraies conversations.",
+   "Joinvoo règle ça en suivant chaque premier message.",
+   "D’abord, dans BotFather, ouvrez les réglages de votre bot et activez Business Mode.",
+   "Ensuite, sur le Telegram du manager, ouvrez Paramètres, puis Telegram Business, puis Chatbots, et ajoutez votre bot.",
+   "De retour sur Joinvoo, appuyez sur Oui, c’est mon manager, et vous obtenez un nouveau lien publicitaire.",
+   "Connectez Meta, et mettez ce lien dans votre pub.",
+   "Quand quelqu’un appuie sur votre pub et envoie son premier message, Joinvoo l’associe à la pub exacte, et envoie un Lead à Meta.",
+   "Désormais, Meta apprend des gens qui commencent vraiment une conversation, donc votre coût par message baisse et votre manager reçoit de meilleurs prospects.",
+   "Et Joinvoo ne répond jamais, et n’enregistre jamais ce que les gens écrivent."
+  ]
+ },
+ "t12": {
+  "title": "Configurez votre mini app",
+  "where": "Réglages du canal › Ouverture",
+  "sents": [
+   "Pour un suivi le plus précis possible, envoyez les gens vers votre manager via une mini app.",
+   "Ouvrez les Réglages du chat, puis Ouverture, et choisissez Via votre mini app.",
+   "Copiez l’adresse web que Joinvoo vous montre.",
+   "Dans BotFather, envoyez slash new app, choisissez votre bot, et collez l’adresse.",
+   "BotFather vous envoie un lien.",
+   "Collez-le dans Joinvoo, et appuyez sur Enregistrer.",
+   "Ouvrez la mini app une fois, et elle passe au vert.",
+   "Désormais, Telegram indique à Joinvoo exactement qui a appuyé sur votre pub, donc chaque message est associé à la bonne pub."
+  ]
+ },
+ "t13": {
+  "title": "Envoyer les événements à votre serveur",
+  "where": "Conversions › Intégrations",
+  "sents": [
+   "Vous voulez que chaque adhésion, chaque message et chaque dépôt soient envoyés à votre propre serveur dès qu’ils ont lieu ?",
+   "Ouvrez Conversions, puis Intégrations, et faites défiler jusqu’à Envoyer les événements à votre serveur.",
+   "Appuyez sur Ajouter un webhook, et collez l’adresse de votre serveur, comme votre CRM, votre propre bot, ou un lien Zapier ou Make.",
+   "Cochez les événements que vous voulez, comme les adhésions, les premiers messages et les premiers dépôts, puis appuyez sur Ajouter un webhook.",
+   "Copiez la clé de signature, pour que votre serveur puisse vérifier que chaque événement vient bien de Joinvoo.",
+   "Appuyez maintenant sur Envoyer un test, et quand votre serveur répond, la carte affiche Fonctionnel.",
+   "À partir de maintenant, chaque événement arrive avec la personne, son ID Telegram, et la campagne et la pub d’où elle vient.",
+   "Et si votre serveur tombe en panne, Joinvoo réessaie pour vous, donc rien ne se perd."
+  ]
+ },
+ "t14": {
+  "title": "Transmettez les détails de votre annonce à votre offre",
+  "where": "Réglages du canal › Lien de l’offre",
+  "sents": [
+   "Vous voulez que votre offre ou votre tracker sache de quelle campagne et de quelle pub vient chaque personne ?",
+   "Ouvrez les réglages de votre canal, et trouvez votre lien de l’offre, ou le lien du bouton de votre bot.",
+   "Sous le lien, appuyez sur une balise, comme campagne, pub, ou sub un, et Joinvoo l’ajoute au lien pour vous.",
+   "Dans votre pub, gardez vos paramètres d’URL habituels sur votre lien Joinvoo, comme le nom de la campagne et le nom de la pub.",
+   "Quand quelqu’un appuie sur votre pub, Joinvoo remplit chaque balise avec les infos de cette personne.",
+   "Votre offre voit maintenant la campagne, la pub et l’ID Telegram derrière chaque visite, donc chaque dépôt est associé à la bonne pub.",
+   "Les balises fonctionnent aussi dans votre message de bienvenue."
+  ]
+ }
+}

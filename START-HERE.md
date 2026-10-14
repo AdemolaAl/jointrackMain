@@ -4,7 +4,16 @@ This folder is the complete, current Joinvoo: website, dashboard, admin, server,
 
 Joinvoo is already live on Railway with real users. This update is safe to deploy on top: the database only gets new tables and columns, sessions and balances stay, and new features stay off until you switch them on.
 
-## New in this update (round 21): Unique people report
+**Deploying round 23? Follow `DEPLOY-ROUND23.md` (step by step, ~30 minutes).**
+
+## New in this update (round 23): 11 languages, login safety, new admin
+Arabic, Hindi, Indonesian, Turkish, Vietnamese and Swahili added (11 languages; emails and support too). "Where you're logged in" + new-device emails. Admin redesigned (side menu, countries, analytics for any dates, team/test accounts kept out of totals, simpler broadcasts). Support answers faster and states the exact balance. Security pass by independent reviewers. Details: UPGRADE.md → Round 23. Existing users are not affected.
+
+## Round 22: By ad platform
+
+Results → Unique people → **From ads** now has a **By ad platform** card: each paid person counted once across Facebook, TikTok and Snapchat, who came from more than one platform, and what each new person really costs per platform. Read-only, no database changes. Details at the top of **UPGRADE.md**.
+
+## Round 21: Unique people report
 
 Results → **Unique people** counts each person once across all funnels and shows who joined more than one. Read-only: no database changes, runs in a background thread so tracking is never slowed. Details at the top of **UPGRADE.md**.
 

@@ -169,9 +169,9 @@ async function hookTest(a){
 }
 function openSnippets(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return;
-  sheet(`<h2>Connect your bot’s /start<small>${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b>${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
+  sheet(`<h2>Connect your bot’s /start<small translate="no">${esc(c.title)} · no token</small></h2>`, `<p class="muted" style="font-size:14px">Your ad link opens <b translate="no">${esc(c.title)}</b> with a code after “/start”. Your bot passes that code to Joinvoo, so each person is matched to the ad they came from.</p>${hookPanel(c)}`);
 }
-function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo<span class="dm-sd"> · sample data</span></b>${Demo.sample?'<button data-act="demo-reset">Start setup again</button>':'<button data-act="demo-sample">Skip to a full account</button>'}<a href="${HOME}">Homepage</a></div>` : ''; }
+function demoBar(){ return DEMO ? `<div class="demo"><b>Live demo<span class="dm-sd"> · sample data</span></b>${Demo.sample?`<button data-act="demo-reset">${tt('demo.try','Try the setup')}</button>`:`<button data-act="demo-sample">${tt('demo.full','See a full account')}</button>`}<a class="dm-go" href="${SIGNUP}">${tt('demo.start','Start free')}</a></div>` : ''; }
 async function renderSetup(step, fromApp, opt){
   stopTimers(); clearInterval(W.poll); closeChat(true);
   W.fromApp = !!fromApp;
@@ -182,7 +182,7 @@ async function renderSetup(step, fromApp, opt){
   W.pickBot = !!(opt&&opt.pick) && act.length>0;
   W.bot = W.pickBot ? null : (act[0] || null);
   W.step = W.pickBot ? 1 : (step || (W.bot ? 2 : 1));
-  $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' Back to dashboard</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
+  $('#root').innerHTML = `${demoBar()}<div class="setup"><div class="setup-bar">${logo()}${W.fromApp||setupState().done?'<button class="btn sm" data-act="leave-setup">'+I.chevl+' '+tt('setup.back','Back to dashboard')+'</button>':(DEMO?'<button class="btn sm ghost" data-act="leave-setup">Skip for now</button>':'<button class="btn sm ghost" data-act="logout">Log out</button>')}</div>
     <div class="setup-body"><div class="prog" id="prog"></div><div id="stp"></div></div></div>`;
   drawStep();
 }
@@ -292,7 +292,7 @@ function botStep(u, pick){
       <div class="field"><label for="xu">Your bot’s username</label><input class="inp" id="xu" autocomplete="off" spellcheck="false" placeholder="@mystore_bot" value="${has?'@'+esc(u):DEMO?'@recipebox_help_bot':''}" required><span class="hint">No token needed. Joinvoo gives you a link for your ads and a hook URL for your bot.</span></div>
       <div id="xerr"></div><button class="btn primary lg wide" type="submit" id="xbtn">Create my hook ${I.arrow}</button></form>`
     : `<div class="okbar">${I.checkc}<span>Hook ready for ${esc(W.ext.title)}</span></div>
-      <p class="muted" style="font-size:14.5px">Your ad link opens <b>${esc(W.ext.title)}</b> with a code after “/start”. Add one call to your bot’s Start handler that passes that code to Joinvoo.</p>
+      <p class="muted" style="font-size:14.5px">Your ad link opens <b translate="no">${esc(W.ext.title)}</b> with a code after “/start”. Add one call to your bot’s Start handler that passes that code to Joinvoo.</p>
       ${hookPanel(W.ext)}
       <button class="btn primary lg wide" data-act="ext-continue">Next: connect your ads ${I.arrow}</button>`;
   return `<div class="step">${head}${back('bkind-back','Change bot type')}
@@ -405,7 +405,7 @@ addEventListener('scroll',()=>{ const t=$('#topbar'); if(t) t.classList.toggle('
 let fabY=0; addEventListener('scroll',()=>{ const y=Math.max(0,scrollY), d=y-fabY; if(Math.abs(d)<8) return; document.body.classList.toggle('fab-tuck', d>0 && y>120); fabY=y; },{passive:true});
 function drawFilters(){
   const el=$('#tbf'); if(!el) return; const f=PAGES[S.page].f; const ch=((S.chans&&S.chans.channels)||[]).filter(c=>c.status!=='removed');
-  el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''}>${esc(c.title)}</option>`).join('')}</select>`:'');
+  el.innerHTML = (f && ch.length>1?`<select class="sel" id="fc" aria-label="Channel"><option value="">All channels</option>${ch.map(c=>`<option value="${c.id}" ${String(S.channel)===String(c.id)?'selected':''} translate="no">${esc(c.title)}</option>`).join('')}</select>`:'');
   el.hidden = !el.innerHTML;
 }
 function refreshView(){ PAGES[S.page].fn(); }

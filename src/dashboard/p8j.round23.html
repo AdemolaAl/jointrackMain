@@ -1,0 +1,40 @@
+/* ================= round 23: My profile → Where you're logged in =================
+   Every device logged in to this account (browser, system, country, last active), sign out one or all others.
+   GET /api/sessions, POST /api/sessions/end {id} | {others:true}. New-device emails are sent by the server (feature.login_alerts). */
+const secRel = ts => { try { const s=(ts-Date.now())/1000, a=Math.abs(s), rf=new Intl.RelativeTimeFormat(I18N.lang||'en',{numeric:'auto'});
+  if (a<90) return tt('sec.now','Active now'); if (a<3600) return rf.format(Math.round(s/60),'minute'); if (a<86400) return rf.format(Math.round(s/3600),'hour'); if (a<30*86400) return rf.format(Math.round(s/86400),'day');
+  return new Date(ts).toLocaleDateString(I18N.lang||'en',{day:'numeric',month:'short',year:'numeric'}); } catch { return ago(ts); } };
+const secDev = x => x.browser&&x.os ? tt('sec.dev','{b} on {o}',{b:esc(x.browser),o:esc(x.os)}) : x.os||x.browser ? esc(x.os||x.browser) : tt('sec.unknown','Unknown device');
+const SEC_PH = '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', SEC_PC = '<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M2 19.5h20"/>';
+function secDemo(){ const n=Date.now(); return { alerts:true, sessions:[
+  {id:'d1',current:true,os:'iPhone',browser:'Safari',mobile:true,country:'NG',flag:'🇳🇬',city:'Lagos',ip:'102.89.7.••',signed_in_at:n-3*864e5,last_active_at:n},
+  {id:'d2',current:false,os:'Mac',browser:'Chrome',mobile:false,country:'NG',flag:'🇳🇬',city:'Lagos',ip:'105.112.4.••',signed_in_at:n-9*864e5,last_active_at:n-4*3600e3},
+  {id:'d3',current:false,os:'Android',browser:'Chrome',mobile:true,country:'KE',flag:'🇰🇪',city:'Nairobi',ip:'41.90.66.••',signed_in_at:n-12*864e5,last_active_at:n-2*864e5}] }; }
+async function secMount(){
+  if (S.page!=='me') return; const v=$('#view .view'); if(!v || $('#secsess')) return;
+  v.insertAdjacentHTML('beforeend',`<section class="card sec" id="secsess"><div class="card-h"><h2>${I.shield} ${tt('sec.h','Where you’re logged in')}</h2><span class="sub">${tt('sec.s','Every device logged in to your account. Don’t recognise one? Sign it out and change your password.')}</span></div>
+    <div class="sec-list" id="seclist"><div class="sk" style="height:58px;margin:6px 0"></div><div class="sk" style="height:58px;margin:6px 0"></div></div></section>`);
+  let d; try { d = DEMO ? secDemo() : await api('GET','/api/sessions'); } catch(e){ const l=$('#seclist'); if(l) l.innerHTML=`<p class="hint" style="padding:8px 4px">${esc(e.message)}</p>`; return; }
+  secDraw(d);
+}
+function secDraw(d){
+  const l=$('#seclist'); if(!l) return; const L=d.sessions||[], others=L.filter(x=>!x.current).length;
+  l.innerHTML=`${L.map(x=>{ const place=[x.city, x.country?(()=>{ try{ return new Intl.DisplayNames([I18N.lang||'en'],{type:'region'}).of(x.country); }catch{ return x.country; } })():''].filter(Boolean).join(', ');
+    return `<div class="sec-row${x.current?' cur':''}"><span class="sec-ic" aria-hidden="true">${sv(x.mobile||/iPhone|Android|iPad/.test(x.os||'')?SEC_PH:SEC_PC)}</span>
+      <span class="sec-t"><b>${secDev(x)}${x.current?` <em class="sec-me">${tt('sec.this','This device')}</em>`:''}</b>
+        <small>${x.legacy?tt('sec.legacy','Logged in before devices were recorded'):[place?`${x.flag||''} ${esc(place)}`:'', x.ip?`<span class="mono">${esc(x.ip)}</span>`:'', x.via==='voosquare'?'VooSquare':''].filter(Boolean).join(' · ')}</small>
+        <small class="sec-when">${x.current?tt('sec.now','Active now'):x.last_active_at?tt('sec.last','Last active {t}',{t:secRel(x.last_active_at)}):''}${x.signed_in_at?' · '+(Date.now()-x.signed_in_at<90000?tt('sec.justnow','signed in just now'):tt('sec.since','signed in {t}',{t:secRel(x.signed_in_at)})):''}</small></span>
+      ${x.current?'':`<button class="btn sm" data-act="sec-end" data-id="${esc(x.id)}">${I.logout} ${tt('sec.out','Sign out')}</button>`}</div>`; }).join('')}
+    <div class="sec-foot">${others?`<button class="btn sm danger" data-act="sec-others">${I.logout} ${tt('sec.others','Sign out all other devices')} (${others})</button>`:`<span class="hint">${tt('sec.only','Only this device is logged in.')}</span>`}
+      <button class="btn sm" data-act="change-pass">${I.lock} ${tt('sec.pass','Change password')}</button></div>
+    ${d.alerts?`<p class="hint sec-note">${I.mail} ${tt('sec.alert','We email you whenever someone logs in from a new device.')}</p>`:''}`;
+}
+async function secEnd(body){
+  if (DEMO){ toast(tt('sec.demo','Works on your live account'),false); return; }
+  try { const r=await api('POST','/api/sessions/end',body); if (r.current){ location.href='/login'; return; }
+    toast(body.others?tt('sec.done.all','Signed out of {n} other devices',{n:r.ended}):tt('sec.done','Signed out')); secDraw(await api('GET','/api/sessions')); } catch(e){ toast(e.message,false); }
+}
+document.addEventListener('click', e=>{ const a=e.target.closest('[data-act]'); if(!a) return;
+  if (a.dataset.act==='sec-end'){ secEnd({id:a.dataset.id}); }
+  if (a.dataset.act==='sec-others'){ if (confirm(tt('sec.confirm','Sign out every other device? You stay logged in here.'))) secEnd({others:true}); } });
+{ const vm=viewMe; viewMe=async function(){ await vm(); secMount(); }; }

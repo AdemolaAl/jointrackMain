@@ -115,3 +115,6 @@ h1,h2,h3{overflow-wrap:break-word}
 /* small pills and inline nav links keep their look but get a 44px hit area */
 .hit44{position:relative}
 .hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+/* round 23 review: Arabic (right to left): arrows in buttons point the other way, on every page (moved here from home.html so sign-up and login get it) */
+[dir=rtl] .btn svg:not(.pi svg){transform:scaleX(-1)}
+[dir=rtl] .btn:hover svg:not(.pi svg){transform:scaleX(-1) translateX(3px)}

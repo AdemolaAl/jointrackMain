@@ -19,7 +19,7 @@ function dimKey(k){
   if (S.dim==='lang'){ const n={en:'English',pt:'Portuguese',es:'Spanish',ru:'Russian',fr:'French',de:'German',it:'Italian',tr:'Turkish',ar:'Arabic',hi:'Hindi',id:'Indonesian'}[k]; return `<span class="langk">${esc(String(k).toUpperCase())}</span>${esc(tt('langname.'+k,n||k))}`; }
   if (S.dim==='country') return `<span style="margin-right:6px">${flag(k)}</span>${esc(COUNTRY[k]||k)}`;
   if (S.dim==='platform'){ const p={Meta:'meta',TikTok:'tiktok',Snapchat:'snap'}[k]; return `<span style="display:inline-flex;align-items:center;gap:8px">${p?pm(p):''}${esc(k)}</span>`; }
-  return esc(k);
+  return ud(k); /* round 23 review: campaign / ad set / ad / source names are the customer's own */
 }
 function drawBreakdown(){
   const el=$('#btbl'); if(!el) return;
@@ -113,7 +113,7 @@ function drawConvLog(){
   if (!rows.length){ el.innerHTML=`<div class="empty"><span class="ei">${I.conversions}</span><h3>No conversions yet</h3><p>Once your postback is live, every registration and deposit appears here with what was sent to each ad platform. You can also mark someone as deposited from their profile in People.</p><button class="btn sm" data-act="nav" data-p="people">${I.people} Open People</button></div>`; return; }
   el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Person</th><th>Event</th><th>Value</th><th>Matched</th><th style="text-align:left">Sent to</th><th>Source</th><th>When</th></tr></thead><tbody>
     ${rows.map(r=>{ const e=EVL[r.event]||[r.event,'--faint']; const who=r.first_name||r.username?nameOf(r):r.tg_user_id?'ID '+r.tg_user_id:'Unknown';
-      return `<tr><td class="k"><span style="display:inline-flex;align-items:center;gap:10px;min-width:0"><span class="av" style="width:28px;height:28px;font-size:12px;${avStyle(r.tg_user_id||r.id)}">${esc((who[0]||'?').toUpperCase())}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(who)}${r.channel_title?`<small class="faint" style="display:block;font-weight:500;font-size:12px">${esc(r.channel_title)}</small>`:''}</span></span></td>
+      return `<tr><td class="k"><span style="display:inline-flex;align-items:center;gap:10px;min-width:0"><span class="av" style="width:28px;height:28px;font-size:12px;${avStyle(r.tg_user_id||r.id)}">${esc((who[0]||'?').toUpperCase())}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis"><span translate="no">${esc(who)}</span>${r.channel_title?`<small class="faint" style="display:block;font-weight:500;font-size:12px" translate="no">${esc(r.channel_title)}</small>`:''}</span></span></td>
       <td data-l="Event"><span class="evc ev-${esc(r.event)}${r.rejected&&r.event!=='rejected'?' rej':''}">${e[0]}${r.rejected&&r.event!=='rejected'?' · rejected':''}</span></td><td data-l="Value">${r.value_cents?`<b style="font-weight:650${r.rejected?';text-decoration:line-through;color:var(--faint)':''}">${money(r.value_cents)}</b>${r.currency&&r.currency!=='USD'?' <small class="faint">'+esc(r.currency)+'</small>':''}`:'<span class="faint">—</span>'}</td>
       <td data-l="Matched">${r.matched?'<span class="chip g">Matched</span>':'<span class="chip r" title="No ad join found for this Telegram ID">Unmatched</span>'}</td>
       <td data-l="Sent to" style="text-align:left"><span style="display:inline-flex;gap:4px;flex-wrap:wrap">${[pst('meta',r.meta_status),pst('tiktok',r.tt_status),pst('snap',r.sc_status)].join('')||'<span class="faint">Not sent</span>'}</span>${r.error?`<small style="display:block;color:var(--coral-ink);white-space:normal;font-size:12px">${esc(r.error)}</small>`:''}</td>
@@ -152,14 +152,14 @@ function tagsFor(r, full){
   t.push(r.click_id?`<span class="chip v">Ad · ${dur(r.joined_at-(r.click_ts||r.joined_at))}</span>`:'<span class="chip y">Organic</span>');
   const st=[['meta',r.capi_status],['tiktok',r.tt_status],['snap',r.sc_status]];
   if (full){ for (const [k,s] of st) if (s==='sent'||s==='failed') t.push(pst(k,s)); return t.join(''); }
-  const m=st.filter(([,s])=>s==='sent'||s==='failed').map(([k,s])=>`<span class="${s==='failed'?'bad':''}" title="${s==='failed'?'Failed to send to':'Sent to'} ${PLAT[k].name}">${pm(k)}</span>`).join('');
+  const m=st.filter(([,s])=>s==='sent'||s==='failed').map(([k,s])=>`<span class="${s==='failed'?'bad':''}" title="${s==='failed'?tt('mt.failto','Failed to send to {p}',{p:PLAT[k].name}):tt('mt.sentto','Sent to {p}',{p:PLAT[k].name})}">${pm(k)}</span>`).join('');
   if (m) t.push(`<span class="sent">${m}</span>`);
   return t.join('');
 }
 function personRow(r,key,isNew){
   const p=r.params||{}, f=ftdOf(r), pl=platOf(r);
   const sub=[r.channel_title,p.utm_campaign||'',r.country?flag(r.country)+' '+r.country:'',ago(r.joined_at)].filter(Boolean).join(' · ');
-  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
+  return `<button class="prow ${isNew?'new':''}" data-act="person" data-k="${key}"><span class="av" style="${avStyle(r.tg_user_id)}">${initial(r)}${pl?`<span class="pdot pm ${pl}">${PM[pl]}</span>`:''}</span><span class="who"><b><span style="overflow:hidden;text-overflow:ellipsis" translate="no">${esc(nameOf(r))}</span>${f?`<span class="ftdb" title="First deposit">FTD ${f.value_cents?money0(f.value_cents):''}</span>`:''}</b><small>${esc(sub)}</small></span><span class="tags">${tagsFor(r)}</span><span class="prow-go" aria-hidden="true">${I.chevr}</span></button>`;
 }
 /* which Meta match keys went with this person's events (more keys = better match quality in Events Manager) */
 function matchKeys(r){
@@ -174,11 +174,11 @@ function openPerson(r){
   const dev=/iPhone|iPad/.test(ua)?'iPhone':/Android/.test(ua)?'Android':ua?'Computer':'—';
   const app=/Instagram/.test(ua)?' · Instagram':/FBAN|FBAV/.test(ua)?' · Facebook':/musical_ly|TikTok|BytedanceWebview/i.test(ua)?' · TikTok':/Snapchat/i.test(ua)?' · Snapchat':'';
   const ev=S.cvEv||'ftd', hasFtd=convs.some(c=>c.event==='ftd'), hasReg=convs.some(c=>c.event==='reg');
-  const tl=[]; if (r.click_ts) tl.push([I.click,'Clicked the ad',when(r.click_ts)+(p.utm_campaign?' · '+esc(p.utm_campaign):''),'','var(--faint)']);
-  tl.push([I.join,'Joined '+esc(r.channel_title||''),when(r.joined_at)+(r.click_ts?' · '+dur(r.joined_at-r.click_ts)+' after the click':''),'','var(--brand)']);
+  const tl=[]; if (r.click_ts) tl.push([I.click,'Clicked the ad',when(r.click_ts)+(p.utm_campaign?' · '+ud(p.utm_campaign):''),'','var(--faint)']);
+  tl.push([I.join,'Joined '+ud(r.channel_title||''),when(r.joined_at)+(r.click_ts?' · '+dur(r.joined_at-r.click_ts)+' after the click':''),'','var(--brand)']);
   for (const c of convs){ const e=EVL[c.event]||[c.event,'--faint']; tl.push([c.event==='reg'?I.reg:I.coin,e[0],when(c.at)+' · '+(c.source==='manual'?'marked by hand':'from postback'),c.value_cents?money(c.value_cents)+(c.currency&&c.currency!=='USD'?' '+esc(c.currency):''):'',`var(${e[1]})`]); }
   if (r.left_at) tl.push([I.leave,'Left',when(r.left_at),'','var(--coral)']);
-  sheet(`<span class="av" style="width:40px;height:40px;${avStyle(r.tg_user_id)}">${initial(r)}</span><h2>${esc(nameOf(r))}<small>${r.username?'@'+esc(r.username)+' · ':''}${esc(r.channel_title||'')}</small></h2>`, `
+  sheet(`<span class="av" style="width:40px;height:40px;${avStyle(r.tg_user_id)}">${initial(r)}</span><h2 translate="no">${esc(nameOf(r))}<small>${r.username?'@'+esc(r.username)+' · ':''}${esc(r.channel_title||'')}</small></h2>`, `
     <div class="tags" style="justify-content:flex-start">${tagsFor(r,true)}${r.is_premium?'<span class="chip v">Telegram Premium</span>':''}${hasFtd?'<span class="ftdb">Depositor</span>':''}</div>
     ${r.suspect?`<div class="note warn"><b>${tt('fraud.why','Filtered as {r}.',{r:esc(susLabel(r.suspect_reason))})}</b> ${tt('fraud.why.p','This join is recorded but was not sent to Meta, TikTok or Snapchat, so it can’t confuse your ads.')}</div>`:''}
     <form class="conv-form" id="cvf"><h4>${I.coin}${hasFtd?'Record another conversion':'Mark as deposited or registered'}</h4>
@@ -197,9 +197,9 @@ function openPerson(r){
       ${r.link_name?`<div class="kv kv-tall"><span>${tt('pp.link','Invite link in Telegram')}</span><span class="kv-v"><b class="kv-ln">${esc(r.link_name)}</b><small class="kv-h">${tt('pp.link.h','Find it in Telegram → your channel → Invite links')}</small></span></div>`:''}
       <div class="kv"><span>Country</span><span>${r.country?flag(r.country)+' '+esc(COUNTRY[r.country]||r.country):'—'}</span></div>
       <div class="kv"><span>Device</span><span>${dev}${app}</span></div>
-      ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span>${esc(p.utm_campaign)}</span></div>`:''}
-      ${p.utm_content?`<div class="kv"><span>Ad</span><span>${esc(p.utm_content)}</span></div>`:''}
-      ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('')}
+      ${p.utm_campaign?`<div class="kv"><span>Campaign</span><span translate="no">${esc(p.utm_campaign)}</span></div>`:''}
+      ${p.utm_content?`<div class="kv"><span>Ad</span><span translate="no">${esc(p.utm_content)}</span></div>`:''}
+      ${Object.entries(p).filter(([k])=>!['utm_campaign','utm_content'].includes(k)).map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span translate="no">${esc(v)}</span></div>`).join('')}
       <div class="kv"><span>IP address</span><span class="mono">${esc(r.ip||'—')}</span></div></div>
       <div class="box"><h4>Sent to ad platforms</h4>${[['meta',r.capi_status,r.capi_error],['tiktok',r.tt_status,r.tt_error],['snap',r.sc_status,r.sc_error]].map(([k,s,e])=>`<div class="kv"><span style="display:inline-flex;align-items:center;gap:8px">${pm(k)}${PLAT[k].name}</span><span>${s&&s!=='none'?pst(k,s):'<span class="faint">Not connected</span>'}${e?`<small style="display:block;color:var(--coral-ink);font-weight:500">${esc(e)}</small>`:''}</span></div>${k==='meta'?matchKeys(r):''}`).join('')}</div>`
     :`<div class="note">This person joined another way, like a shared link or search. There’s no ad click to match, so nothing was sent to your ad platforms.</div>`}`);

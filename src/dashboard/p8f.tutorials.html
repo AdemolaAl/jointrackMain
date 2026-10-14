@@ -15,11 +15,19 @@ const TUT = [
  {id:'t9',title:'Read your results',where:'Results',text:"Here's how to read your numbers. Open Results. At the top, you see joins, deposits, and cost per deposit. Add your ad spend, or connect your ad account, and Joinvoo works out your cost per join and your return on ad spend. Tap any person to see the exact ad, campaign and click they came from. And every morning, Joinvoo can send this summary straight to your Telegram. Turn it on in More, then Daily report."},
  {id:'t10',title:'Invite a setup helper',where:'More › Team',text:"Need someone to set up Joinvoo for you, without sharing your password? Open More, then Team, and tap Invite. Choose Setup helper. It's free on every plan. Enter their email, or copy the invite link and send it on WhatsApp. Your helper can set up your bots, channels and ads, but they can't see your billing or your money. If they help many clients, they see all their accounts in one place. You can remove them any time."},
 ];
-function tutPlan(t){
+function tutPlan(t, L){
   const sents=(t.text.match(/[^.!?]+[.!?]+["”]?/g)||[t.text]).map(s=>s.trim()).filter(Boolean);
+  /* round 23b: the same tutorial in the user's language (public/i18n/tut.<lang>.json): same sentences, one per screen beat */
+  const tl=L&&L[t.id]; if (tl&&Array.isArray(tl.sents)&&tl.sents.length===sents.length&&tl.sents.every(x=>typeof x==='string'&&x.trim())){ /* round 23b review: a blank/odd sentence falls back to English instead of crashing */ const w=tl.sents.map(s=>s.length/5.5+1.6), W=w.reduce((a,b)=>a+b,0); return {sents:tl.sents,w,W,secs:W/150*60,tl}; }
   const w=sents.map(s=>s.split(/\s+/).length+1.6), W=w.reduce((a,b)=>a+b,0);
   return {sents,w,W,secs:W/150*60};
 }
+/* round 23b: translated scripts + voice-overs per language. Voice: media/tutorials/<lang>/<id>.mp3 (made by scripts/make-voiceovers.js);
+   if that file isn't there yet, the English voice plays with captions in the user's language. */
+const TUTL={}, TUTLP={};
+/* round 23b review: one fetch per language even when two tutorials are opened at once; a network error isn't cached for the whole session (a 404 is) */
+function tutLang(){ const l=I18N.lang; if (!l||l==='en') return Promise.resolve(null); if (TUTL[l]!==undefined) return Promise.resolve(TUTL[l]);
+  return TUTLP[l]||(TUTLP[l]=fetch(`i18n/tut.${l}.json`).then(r=>r.ok?r.json():null).then(j=>(TUTL[l]=j&&typeof j==='object'?j:null),()=>{ delete TUTLP[l]; return null; })); }
 const tutLen = id => { const t=TUT.find(x=>x.id===id); return t?Math.round(tutPlan(t).secs)+'s':''; };
 
 /* ---------- mini replicas of the real screens (virtual phone screen: 300 × 560) ---------- */
@@ -52,7 +60,7 @@ const SCR = {
   'jv-hello': () => JV(`<div class="m-hero"><span class="m-hlogo">${I.mark}</span><b>Let’s get you tracking</b><small>Three quick steps. Every join matched to the exact ad.</small></div>
     <div class="m-card m-steps"><div class="m-st" data-t="st1"><span class="n">1</span>Make your tracking bot</div><div class="m-st"><span class="n">2</span>Add it to your channel</div><div class="m-st"><span class="n">3</span>Connect Meta</div></div>${M.btn('start','Start setup →','p wide')}`, false, 'Welcome'),
   'jv-s1': () => JV(`<div class="m-prog"><i class="on">1</i><em></em><i>2</i><em></em><i>3</i></div><b class="m-h1">Make your tracking bot.</b>
-    <div class="m-card m-steps" data-t="howto"><div class="m-st"><span class="n">1</span>Open <b>@BotFather</b></div><div class="m-st"><span class="n">2</span>Send <code>/newbot</code></div><div class="m-st"><span class="n">3</span>Pick a username ending in <b>bot</b></div><div class="m-st"><span class="n">4</span>Paste the token below</div></div>
+    <div class="m-card m-steps" data-t="howto"><div class="m-st"><span class="n">1</span>Open <b>@BotFather</b></div><div class="m-st"><span class="n">2</span>Send <code>/newbot</code></div><div class="m-st"><span class="n">3</span>${tt('tm.s3','Pick a username ending in {b}',{b:'<b>bot</b>'})}</div><div class="m-st"><span class="n">4</span>${tt('tm.s4','Paste the token below')}</div></div>
     ${M.lab('Bot token')}${M.inp('tokinp','123456789:AAH4k…','','mono')}${M.btn('connect','Connect bot →','p wide')}`, false, 'Setup'),
   'jv-s1ok': () => JV(`<div class="m-prog"><i class="ok">✓</i><em class="ok"></em><i class="on">2</i><em></em><i>3</i></div><div class="m-ok h" data-t="ok">${I.checkc}<span>@dailydeals_track_bot is connected</span></div>
     <div class="m-hero sm"><span class="m-burst">${I.sparkles}</span><b>Your bot is ready</b><small>Next: add it to your channel.</small></div>${M.btn('next','Next: add to my channel →','p wide')}`, false, 'Setup'),
@@ -237,14 +245,16 @@ BEATS.t10 = {poster:'jv-accounts10', b:[
 function tutPoster(id){ const b=BEATS[id]; const h=(SCR[b&&b.poster]||SCR['jv-ov'])().replace(/(class="[^"]*)\bh\b/g,'$1h on'); return `<span class="tv-vp poster m-all">${h}</span>`; }
 
 /* ---------- the player ---------- */
-let TP=null;
+let TP=null, tutSeq=0;
 const fmtT = s => { s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
-function tutOpen(id){
-  const t=TUT.find(x=>x.id===id); if(!t) return; if (TP) tutClose(true);
-  closePop(); const plan=tutPlan(t), opener=document.activeElement;
+async function tutOpen(id){
+  const t=TUT.find(x=>x.id===id); if(!t) return; const seq=++tutSeq, opener=document.activeElement; const L=await tutLang();
+  if (seq!==tutSeq) return; /* round 23b review: two quick taps (or a close) while the script loads: only the latest open wins, never two players or a stale one */
+  if (TP) tutClose(true);
+  closePop(); const plan=tutPlan(t,L), lang=plan.tl?I18N.lang:null;
   document.body.insertAdjacentHTML('beforeend', `<div class="tvp" role="dialog" aria-modal="true" aria-label="${esc(t.title)}"><div class="tv-scrim" data-act="tut-close"></div>
     <div class="tv"><div class="tv-top"><span class="tv-eb">${I.play}${tt('tut.eb','Tutorial')}</span><b class="tv-title">${esc(tt('tut.'+t.id,t.title))}</b><button class="tv-x" data-act="tut-close" aria-label="${esc(tt('common.close','Close'))}">${I.x}</button></div>
-      <div class="tv-stage" id="tvs"><div class="tv-side"><span class="tv-mk">${I.mark}<b>Joinvoo</b></span><b class="tv-h">${esc(tt('tut.'+t.id,t.title))}</b><span class="tv-where">${esc(t.where)}</span><span class="tv-chap" id="tvchap"></span></div>
+      <div class="tv-stage" id="tvs"><div class="tv-side"><span class="tv-mk">${I.mark}<b>Joinvoo</b></span><b class="tv-h">${esc(tt('tut.'+t.id,t.title))}</b><span class="tv-where">${esc((plan.tl&&plan.tl.where)||t.where)}</span><span class="tv-chap" id="tvchap"></span></div>
         <div class="tv-devbox" id="tvdb"><div class="tv-dev" id="tvdev"><div class="tv-vp" id="tvvp"></div></div></div>
         <span class="tv-finger" id="tvf" aria-hidden="true"><i></i></span>
         <button class="tv-big" data-act="tut-toggle" aria-label="${esc(tt('tut.play','Play'))}">${I.play}</button>
@@ -259,16 +269,18 @@ function tutOpen(id){
   tutStarts(); tutFit(); addEventListener('resize', tutFit);
   /* voice-over if it exists, else captions on a timer */
   const a=P.audio=new Audio(); a.preload='auto';
+  P.lang=lang; P.voiceLang=!!lang; P.tl=plan.tl||null;
   const done=m=>{ if(TP!==P||P.mode) return; P.mode=m; if(m==='audio'&&isFinite(a.duration)&&a.duration>3){ P.D=a.duration; } else { P.mode='timer'; } tutStarts(); $('#tvcc').hidden=P.mode!=='timer'; if(P.want) tutPlay(); };
-  a.addEventListener('loadedmetadata',()=>done('audio')); a.addEventListener('error',()=>done('timer')); a.addEventListener('ended',()=>{ if(TP===P) tutEnd(); });
-  a.src=(DEMO?'':'/')+'media/tutorials/'+id+'.mp3';
-  setTimeout(()=>done('timer'), 2500);
+  a.addEventListener('loadedmetadata',()=>done('audio')); a.addEventListener('error',()=>{ if (TP===P&&P.voiceLang&&!P.mode){ P.voiceLang=false; a.src=(DEMO?'':'/')+'media/tutorials/'+id+'.mp3'; return; } done('timer'); }); a.addEventListener('ended',()=>{ if(TP===P) tutEnd(); });
+  a.src=(DEMO?'':'/')+'media/tutorials/'+(lang?lang+'/':'')+id+'.mp3';
+  setTimeout(()=>done('timer'), lang?4500:2500);
   P.raf=requestAnimationFrame(tutTick);
   $('.tv-x').focus({preventScroll:true});
   tutBarBind();
 }
 function tutStarts(){ const P=TP; let c=0; P.starts=P.plan.w.map(w=>{ const s=c; c+=w; return s/P.plan.W*P.D; });
-  { const T=TUT.find(x=>x.id===P.id); if (P.mode==='audio' && T && T.marks && T.marks.length===P.starts.length && T.marks[T.marks.length-1]<P.D){ P.starts=T.marks.slice(); P.starts[0]=0; } } /* round 19: exact sentence times (voice after a music intro) */
+  if (P.mode==='audio' && P.voiceLang){ const mk=P.tl&&P.tl.marks; if (mk&&mk.length===P.starts.length&&mk[mk.length-1]<P.D){ P.starts=mk.slice(); P.starts[0]=0; } }
+  else { const T=TUT.find(x=>x.id===P.id); if (P.mode==='audio' && T && T.marks && T.marks.length===P.starts.length && T.marks[T.marks.length-1]<P.D){ P.starts=T.marks.slice(); P.starts[0]=0; } } /* round 19: exact sentence times (voice after a music intro) */
   const d=$('#tvdots'); if(d) d.innerHTML=P.starts.slice(1).map(s=>`<i style="left:${s/P.D*100}%"></i>`).join(''); const b=$('#tvbar'); if(b) b.setAttribute('aria-valuemax',Math.round(P.D)); }
 function tutFit(){
   const P=TP; if(!P) return; const db=$('#tvdb'), dev=$('#tvdev'); if(!db||!dev) return;
@@ -287,7 +299,7 @@ function tutUI(){ const P=TP; if(!P) return; const on=P.playing||(P.want&&!P.mod
 function tutEnd(){ const P=TP; if(!P) return; P.playing=false; P.want=false; P.t=P.D; tutUpdate(); tutEndBtns(P.id); $('#tvend').hidden=false; tutUI(); if(P.f) P.f.classList.remove('on'); tutMark(P.id); }
 function tutSeek(t){ const P=TP; if(!P) return; P.t=Math.max(0,Math.min(P.D,t)); if(P.mode==='audio'){ try{ P.audio.currentTime=P.t; }catch{} } P.cur=-1; P.seek=true; $('#tvend').hidden=P.t<P.D-.05; tutUpdate(); }
 function tutClose(quick){
-  const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
+  tutSeq++; const P=TP; if(!P) return; TP=null; cancelAnimationFrame(P.raf); removeEventListener('resize', tutFit);
   try{ P.audio.pause(); P.audio.removeAttribute('src'); P.audio.load(); }catch{}
   const r=P.root; if (quick||reduced) r.remove(); else { r.classList.add('out'); setTimeout(()=>r.remove(),220); }
   if (!$('.sheet')) document.body.style.overflow='';
@@ -398,11 +410,12 @@ function tutMark(id){
 }
 const tutMin = ids => Math.max(1, Math.round(ids.reduce((a,id)=>{ const t=TUT.find(x=>x.id===id); return a+(t?tutPlan(t).secs:0); },0)/60));
 /* cards: n=true numbers them 1→2→3 (the "Start here" row) */
+/* round 23b review: once the user's tut.<lang>.json is loaded, the cards show the same translated "where" as the player */
 function tutCards(ids, n){
   const seen=tutSeen();
   return `<div class="tut-grid${n?' tut-steps':''}">${ids.map((id,i)=>{ const t=TUT.find(x=>x.id===id); if(!t) return ''; const s=seen.has(id);
     return `<button class="tut-card${s?' seen':''}" data-act="tut" data-v="${id}"><span class="tut-th"><span class="tut-mini" aria-hidden="true">${tutPoster(id)}</span><span class="tut-play">${I.play}</span>${n?`<span class="tut-n">${i+1}</span>`:''}<span class="tut-ck" title="${esc(tt('tutp.seen','Watched'))}">${I.check}</span><em>${tutLen(id)}</em></span>
-      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc(t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
+      <span class="tut-t"><b>${esc(tt('tut.'+id,t.title))}</b><small>${esc((I18N.lang!=='en'&&TUTL[I18N.lang]&&TUTL[I18N.lang][id]&&TUTL[I18N.lang][id].where)||t.where)}</small><span class="sr">${s?esc(tt('tutp.seen','Watched')):''}</span></span></button>`; }).join('')}</div>`;
 }
 function tutProg(){
   const el=$('#tutprog'); if(!el) return; const n=TUT.filter(t=>tutSeen().has(t.id)).length;

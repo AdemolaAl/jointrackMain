@@ -10,29 +10,51 @@ const DEMO = !!window.JP_DEMO;
 /* ---------- i18n: tt('key','English') everywhere; English is the source, app.<lang>.json adds translations.
    Language: ?lang= > saved (localStorage jv_lang / users.lang) > browser > en. Static English text already in templates
    is translated by the same dictionaries (auto.* keys) through a light text-node pass. ---------- */
-const LANGS=[['en','🇬🇧','English'],['ru','🇷🇺','Русский'],['fr','🇫🇷','Français'],['pt','🇵🇹','Português'],['es','🇪🇸','Español']];
+const LANGS=[['en','🇬🇧','English'],['ru','🇷🇺','Русский'],['fr','🇫🇷','Français'],['pt','🇧🇷','Português'],['es','🇪🇸','Español'],['ar','🇸🇦','العربية'],['hi','🇮🇳','हिन्दी'],['id','🇮🇩','Bahasa Indonesia'],['tr','🇹🇷','Türkçe'],['vi','🇻🇳','Tiếng Việt'],['sw','🇰🇪','Kiswahili']];
 const I18N={lang:'en', dict:{}, rev:null, en:null};
+/* round 23 review: dates ("Oct 13") in the user's language; Latin digits everywhere, like the rest of the numbers */
+const LOC=()=>I18N.lang==='en'?'en-US':I18N.lang+'-u-nu-latn';
 function tt(k, en, vars){ let s=(I18N.lang!=='en'&&I18N.dict[k]!=null)?I18N.dict[k]:en; if(s==null) s=k; if(vars) s=String(s).replace(/\{(\w+)\}/g,(m,x)=>vars[x]!=null?vars[x]:m); return s; }
 const pickLang = () => { const q=new URLSearchParams(location.search).get('lang'); let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{}
-  const nav=(navigator.language||'en').slice(0,2).toLowerCase(), ok=l=>LANGS.some(x=>x[0]===l); return ok(q)?q:ok(saved)?saved:ok(nav)?nav:'en'; };
+  const ok=l=>LANGS.some(x=>x[0]===l), nav=navLang(); return ok(q)?q:ok(saved)?saved:nav||'en'; };
+/* round 23b: the first language in the browser's list that Joinvoo speaks (a German+English browser gets English, not nothing) */
+const navLang = () => { const ls=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']).map(x=>String(x).slice(0,2).toLowerCase()); return ls.find(l=>LANGS.some(x=>x[0]===l))||null; };
+/* …and when the browser speaks none of our languages, the account's country decides (only where one language clearly fits) */
+const COUNTRY_LANG={BR:'pt',PT:'pt',AO:'pt',MZ:'pt',MX:'es',AR:'es',CO:'es',CL:'es',PE:'es',VE:'es',EC:'es',GT:'es',CU:'es',BO:'es',DO:'es',HN:'es',PY:'es',SV:'es',NI:'es',CR:'es',PA:'es',UY:'es',ES:'es',RU:'ru',BY:'ru',KZ:'ru',KG:'ru',FR:'fr',SN:'fr',CI:'fr',ML:'fr',BF:'fr',NE:'fr',TG:'fr',BJ:'fr',GA:'fr',CD:'fr',CG:'fr',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',JO:'ar',KW:'ar',QA:'ar',BH:'ar',OM:'ar',YE:'ar',LY:'ar',SY:'ar',LB:'ar',PS:'ar',SD:'ar',ID:'id',TR:'tr',VN:'vi',TZ:'sw'};
 async function loadLang(l){
-  I18N.lang=LANGS.some(x=>x[0]===l)?l:'en'; document.documentElement.lang=I18N.lang;
+  I18N.lang=LANGS.some(x=>x[0]===l)?l:'en'; document.documentElement.lang=I18N.lang; document.documentElement.dir=I18N.lang==='ar'?'rtl':'ltr'; /* round 23: Arabic reads right to left */
   if (I18N.lang==='en'){ I18N.dict={}; return; }
   try { const [d,e]=await Promise.all([fetch(`i18n/app.${I18N.lang}.json`).then(r=>r.ok?r.json():{}), I18N.en?Promise.resolve(I18N.en):fetch('i18n/app.en.json').then(r=>r.ok?r.json():{})]);
-    I18N.dict=d||{}; I18N.en=e||{}; I18N.rev=new Map(); for (const [k,v] of Object.entries(I18N.en)) if (!I18N.rev.has(v)||k.startsWith('auto.')) I18N.rev.set(v,k); }
+    I18N.dict=d||{}; I18N.en=e||{}; I18N.rev=new Map(); I18N.pats=[];
+    for (const [k,v] of Object.entries(I18N.en)){ if (!I18N.rev.has(v)||k.startsWith('auto.')) I18N.rev.set(v,k);
+      /* round 23: "Clicks on {x0} stopped." style strings: {xN} matches any text, {N} a number */
+      if (k.startsWith('auto.')&&/\{x\d+\}/.test(v)&&I18N.dict[k]){ const names=[]; const lits=v.split(/\{x?\d+\}/).filter(Boolean).sort((a,b)=>b.length-a.length);
+        const src='^'+v.replace(/[.*+?^$()|[\]\\]/g,'\\$&').replace(/\\?\{(x?\d+)\\?\}/g,(m,n)=>{ names.push(n); return n[0]==='x'?'(.+?)':'([$€£₦]?\\d[\\d,.:]*(?:%|×)?)'; })+'$';
+        try { I18N.pats.push({re:new RegExp(src), names, k, lit:lits[0]||''}); } catch {} } } }
   catch { I18N.dict={}; }
 }
 function trNode(root){
   if (I18N.lang==='en' || !I18N.rev || !root) return;
   /* exact match first; then numbers become {0},{1}… so "12 of 20 deposits" finds "{0} of {1} deposits" */
   const tr=s=>{ const v=s.trim(); let k=I18N.rev.get(v); if (k&&I18N.dict[k]) return s.replace(v,I18N.dict[k]);
-    if (!/\d/.test(v)) return null; const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?(?:%|×|[kKmMh]\b)?/g,m=>'{'+(nums.push(m)-1)+'}');
-    k=I18N.rev.get(p); if (!k||!I18N.dict[k]) return null; return s.replace(v,I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m)); };
-  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>n.parentNode&&/^(SCRIPT|STYLE|CODE|TEXTAREA|PRE)$/i.test(n.parentNode.nodeName)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
+    if (/\d/.test(v)){ const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?(?:%|×|[kKmMh]\b)?/g,m=>'{'+(nums.push(m)-1)+'}');
+      k=I18N.rev.get(p); if (k&&I18N.dict[k]) return s.replace(v,I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m)); }
+    return /[A-Za-z]{2}/.test(v)?trPat(s,v):null; };
+  const trPat=(s,v)=>{ for (const P of I18N.pats||[]){ if (P.lit&&!v.includes(P.lit)) continue; const m=P.re.exec(v); if(!m) continue;
+      const val={}; P.names.forEach((n,i)=>{ let x=m[i+1]; const kk=I18N.rev.get(x); if (n[0]==='x'&&kk&&I18N.dict[kk]) x=I18N.dict[kk]; val[n]=x; });
+      return s.replace(v,I18N.dict[P.k].replace(/\{(x?\d+)\}/g,(mm,n)=>val[n]!=null?val[n]:mm)); }
+    return null; };
+  /* round 23 review: never touch the customer's own data (channel/campaign/people names, chat messages…): skip anything inside translate="no" */
+  const noTr=el=>!!(el&&el.closest&&el.closest('[translate="no"]'));
+  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>n.parentNode&&(/^(SCRIPT|STYLE|CODE|TEXTAREA|PRE)$/i.test(n.parentNode.nodeName)||noTr(n.parentNode))?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT});
   const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   for (const n of nodes){ const v=n.nodeValue; if (!v||v.trim().length<2) continue; const x=tr(v); if (x!=null) n.nodeValue=x; }
-  (root.querySelectorAll?root.querySelectorAll('[placeholder],[aria-label],[title]'):[]).forEach(el=>{ for (const a of ['placeholder','aria-label','title']){ const v=el.getAttribute(a); if(v){ const x=tr(v); if(x!=null) el.setAttribute(a,x); } } });
+  /* round 23b: include the added element itself (a chart <svg aria-label> added on its own was skipped) */
+  [...(root.getAttribute?[root]:[]),...(root.querySelectorAll?root.querySelectorAll('[placeholder],[aria-label],[title],[data-l]'):[])].forEach(el=>{ if (noTr(el)) return; for (const a of ['placeholder','aria-label','title','data-l']){ /* data-l: phone table column labels */ const v=el.getAttribute(a); if(v){ const x=tr(v); if(x!=null) el.setAttribute(a,x); } } });
 }
+/* round 23b: translate one English UI label (exact, or with numbers) — for labels glued into a longer line */
+function trS(s){ if (I18N.lang==='en'||!I18N.rev||s==null) return s; const v=String(s); let k=I18N.rev.get(v); if (k&&I18N.dict[k]) return I18N.dict[k];
+  const nums=[]; const p=v.replace(/[$€£₦]?\d(?:[\d,.:]*\d)?%?/g,m=>'{'+(nums.push(m)-1)+'}'); k=I18N.rev.get(p); return k&&I18N.dict[k]?I18N.dict[k].replace(/\{(\d+)\}/g,(m,i)=>nums[i]!=null?nums[i]:m):v; }
 let trQ=null; const trObs=new MutationObserver(ms=>{ if (I18N.lang==='en') return; if (!trQ){ trQ=new Set(); requestAnimationFrame(()=>{ const q=trQ; trQ=null; q.forEach(n=>trNode(n)); }); }
   for (const m of ms) for (const n of m.addedNodes){ if (n.nodeType===1) trQ.add(n); else if (n.nodeType===3&&n.parentNode) trQ.add(n.parentNode); } });
 trObs.observe(document.body,{childList:true,subtree:true});
@@ -41,6 +63,8 @@ const HOME_LINK = DEMO ? '' : '/';
 const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* round 23 review: the customer's own text (campaign / ad names, people) inside a line: escaped and never auto-translated. Our "(no campaign tag)" style labels still are. */
+const ud = s => /^\(no /.test(String(s ?? '')) ? esc(s) : `<span translate="no">${esc(s)}</span>`;
 const fmt = n => Math.round(n||0).toLocaleString('en-US');
 const pct = (a,b) => b ? a/b*100 : 0;
 const pctS = (a,b,d=1) => b ? pct(a,b).toFixed(d)+'%' : '—';
@@ -106,6 +130,8 @@ const I = {
   globe:sv('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.5 3.5 5.3 3.5 8.5s-1 6-3.5 8.5c-2.5-2.5-3.5-5.3-3.5-8.5s1-6 3.5-8.5z"/>'),
   filter:sv('<path d="M4 5.5h16l-6.2 7.3v5.2l-3.6 1.8v-7z"/>'),
 };
+/* round 23 review: arrows and chevrons point the other way in Arabic (right to left): CSS flips svg.rtl-flip under [dir=rtl] */
+for (const k of ['arrow','chevl','chevr','send']) I[k]=I[k].replace('<svg ','<svg class="rtl-flip" ');
 /* Simplified platform marks (generic shapes, labelled with text wherever shown) */
 const PM = {
   meta:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M3.5 12.5c0-3 1.6-5 3.5-5 3.2 0 6.8 10 10 10 1.9 0 3.5-2 3.5-5s-1.6-5-3.5-5c-3.2 0-6.8 10-10 10-1.9 0-3.5-2-3.5-5z"/></svg>',
@@ -148,12 +174,13 @@ const rq = () => { const [f,t]=range(); return `from=${f}&to=${t}&${tzq()}${chq(
 function prevRange(){ const [f0,t0]=range(), span=Math.round((parseYmd(t0)-parseYmd(f0))/864e5)+1; return [ymd(addDays(parseYmd(f0),-span)), ymd(addDays(parseYmd(f0),-1)), span]; }
 function rangeLabel(){
   if (S.preset!=='custom') return PRESETS.find(p=>p[0]===S.preset)[1];
-  const [f,t]=range(), o={month:'short',day:'numeric'}; return parseYmd(f).toLocaleDateString('en-US',o)+' – '+parseYmd(t).toLocaleDateString('en-US',o);
+  const [f,t]=range(), o={month:'short',day:'numeric'}; return parseYmd(f).toLocaleDateString(LOC(),o)+' – '+parseYmd(t).toLocaleDateString(LOC(),o);
 }
 const vsLabel = () => S.preset==='today' ? 'vs yesterday' : S.preset==='custom' ? 'vs previous period' : 'vs previous '+({'7d':'7 days','30d':'30 days','90d':'3 months','180d':'6 months','365d':'12 months'})[S.preset];
-function ago(ts){ const s=Math.max(0,(Date.now()-ts)/1000); if(s<45) return 'just now'; if(s<3600) return Math.max(1,Math.floor(s/60))+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago'; const d=Math.floor(s/86400); return d<30?d+'d ago':new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function ago(ts){ const s=Math.max(0,(Date.now()-ts)/1000);
+  if (typeof I18N!=='undefined'&&I18N.lang&&I18N.lang!=='en'){ try { const rf=new Intl.RelativeTimeFormat(I18N.lang,{numeric:'auto',style:'short'}); if(s<45) return rf.format(0,'second'); if(s<3600) return rf.format(-Math.max(1,Math.floor(s/60)),'minute'); if(s<86400) return rf.format(-Math.floor(s/3600),'hour'); const d=Math.floor(s/86400); if(d<30) return rf.format(-d,'day'); return new Date(ts).toLocaleDateString(I18N.lang,{month:'short',day:'numeric'}); } catch {} } /* round 23: in the user's language */ if(s<45) return 'just now'; if(s<3600) return Math.max(1,Math.floor(s/60))+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago'; const d=Math.floor(s/86400); return d<30?d+'d ago':new Date(ts).toLocaleDateString(LOC(),{month:'short',day:'numeric'}); }
 function dur(ms){ const s=Math.max(0,Math.round(ms/1000)); if(s<60) return s+'s'; if(s<3600) return Math.round(s/60)+'m'; return (s/3600).toFixed(1)+'h'; }
-const when = ts => new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const when = ts => new Date(ts).toLocaleString(LOC(),{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 const clock = ts => new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 const flag = cc => cc && /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map(c=>127397+c.charCodeAt(0))) : '';
 const COUNTRY = {US:'United States',GB:'United Kingdom',DE:'Germany',FR:'France',ES:'Spain',IT:'Italy',NL:'Netherlands',BR:'Brazil',MX:'Mexico',IN:'India',AE:'UAE',SA:'Saudi Arabia',ZA:'South Africa',KE:'Kenya',NG:'Nigeria',GH:'Ghana',CA:'Canada',AU:'Australia',PH:'Philippines',ID:'Indonesia',TR:'Türkiye',PL:'Poland',JP:'Japan',EG:'Egypt',MA:'Morocco',CM:'Cameroon'};
@@ -195,7 +222,8 @@ async function boot(){
   if (!S.cfgLoaded){ S.cfgLoaded=true; await Promise.all([loadConfig(), loadLang(pickLang())]); }
   const rt=qp.get('reset'); if (rt && !DEMO) return renderReset(rt);
   try { S.me = await api('GET','/api/me'); } catch(e){ if(!DEMO && e.status!==401) renderAuth('login'); return; }
-  { let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{} if (S.me && S.me.lang && S.me.lang!==I18N.lang && !saved && !qp.get('lang')) await loadLang(S.me.lang); }
+  { let saved=null; try{ saved=localStorage.getItem('jv_lang'); }catch{} if (S.me && S.me.lang && S.me.lang!==I18N.lang && !saved && !qp.get('lang')) await loadLang(S.me.lang);
+    else if (S.me && !S.me.lang && !saved && !qp.get('lang') && !navLang()){ const cl=COUNTRY_LANG[String(S.me.country||'').toUpperCase()]; if (cl && cl!==I18N.lang) await loadLang(cl); } }
   const v=qp.get('verified');
   if (v){ qp.delete('verified'); history.replaceState(null,'',location.pathname+(qp.toString()?'?'+qp:'')+location.hash);
     if (v==='1'){ S.me.verified=true; setTimeout(()=>{ toast(`Email confirmed. Your first ${fmt(S.me.free_joins_gift||PRICE().free_joins)} joins are free`); confetti(); },400); }
@@ -289,6 +317,8 @@ async function renderAuth(mode){
     ${cfg.signup?`<p class="auth-foot">${mode==='login'?`New to Joinvoo? <a href="${SIGNUP}">Create an account</a>`:'Have an account? <a href="#" data-act="auth" data-m="login">Log in</a>'}</p>`:''}
     <p class="auth-foot" style="margin-top:8px"><a href="${HOME_LINK}terms" style="color:var(--faint);font-weight:500">Terms</a> · <a href="${HOME_LINK}privacy" style="color:var(--faint);font-weight:500">Privacy</a> · By Zedapex company</p>`);
   $('#af').addEventListener('submit', async e => { e.preventDefault(); const b=e.submitter; b.disabled=true;
-    try { await api('POST', mode==='login'?'/api/login':'/api/signup', {email:$('#ae').value,password:$('#ap').value}); boot(); }
+    /* round 23b review: English that is only the fallback (the browser speaks none of our languages) isn't saved, so the account's country can still pick the language at boot */
+    const keepLang = I18N.lang!=='en' || navLang()==='en';
+    try { await api('POST', mode==='login'?'/api/login':'/api/signup', {email:$('#ae').value,password:$('#ap').value,...(mode==='login'||!keepLang?{}:{lang:I18N.lang})}); boot(); }
     catch(err){ $('#aerr').innerHTML=`<div class="err">${esc(err.message)}</div>`; b.disabled=false; } });
 }

@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Tạo bot theo dõi của bạn",
+  "where": "Thiết lập bước 1",
+  "sents": [
+   "Chào mừng bạn đến với Joinvoo.",
+   "Trước tiên, hãy cùng tạo bot theo dõi của bạn.",
+   "Việc này chỉ mất khoảng một phút.",
+   "Mở Telegram và tìm BotFather, tài khoản có dấu tích xanh.",
+   "Nhấn Bắt đầu, rồi gửi gạch chéo new bot.",
+   "Đặt cho bot một cái tên bất kỳ, rồi chọn một username kết thúc bằng chữ bot.",
+   "BotFather sẽ gửi cho bạn một mã token dài.",
+   "Sao chép mã đó, quay lại Joinvoo, dán vào ô, rồi nhấn Kết nối.",
+   "Vậy là xong.",
+   "Bot của bạn đã sẵn sàng."
+  ]
+ },
+ "t2": {
+  "title": "Thêm bot vào kênh của bạn",
+  "where": "Thiết lập bước 2",
+  "sents": [
+   "Giờ hãy thêm bot vào kênh của bạn.",
+   "Trong Telegram, mở kênh của bạn và nhấn vào tên kênh.",
+   "Nhấn Quản trị viên, rồi Thêm quản trị viên.",
+   "Tìm bot của bạn và thêm vào.",
+   "Hãy chắc chắn \"Mời người dùng qua liên kết\" đã được bật, rồi nhấn Lưu.",
+   "Quay lại Joinvoo.",
+   "Joinvoo sẽ tự tìm thấy kênh của bạn trong vài giây.",
+   "Nếu bạn muốn theo dõi một bot thay vì một kênh, hãy chọn \"Bot của tôi\" và làm theo các bước đơn giản tương tự."
+  ]
+ },
+ "t3": {
+  "title": "Kết nối Meta",
+  "where": "Thiết lập bước 3 · Cài đặt kênh › Nền tảng quảng cáo",
+  "sents": [
+   "Tiếp theo, hãy kết nối Meta để mọi lượt tham gia đều được gửi về quảng cáo của bạn.",
+   "Trong Meta Events Manager, sao chép Pixel ID của bạn.",
+   "Sau đó mở Cài đặt, tìm Conversions API, và tạo một mã truy cập.",
+   "Dán cả hai vào Joinvoo và nhấn Gửi thử.",
+   "Khi bạn thấy \"Đã nhận bản thử\", vậy là xong.",
+   "Giờ hãy sao chép link quảng cáo từ thẻ kênh của bạn, và gắn nó vào quảng cáo.",
+   "Mọi lượt tham gia đều hiện trong Meta, khớp với đúng lượt nhấp."
+  ]
+ },
+ "t4": {
+  "title": "Theo dõi nạp tiền bằng yêu cầu tham gia",
+  "where": "Cài đặt kênh › Cách tham gia",
+  "sents": [
+   "Bạn muốn biết ai nạp tiền, chứ không chỉ ai tham gia?",
+   "Hãy bật yêu cầu tham gia.",
+   "Mở Cài đặt của kênh, rồi Cách tham gia.",
+   "Chọn ai sẽ duyệt người vào kênh.",
+   "Joinvoo có thể duyệt họ ngay lập tức, và gửi tin nhắn chào mừng kèm liên kết offer của bạn.",
+   "Hoặc, nếu bạn đã có bot chào mừng riêng, hãy chọn \"Bot riêng của tôi\", và Joinvoo chỉ việc theo dõi.",
+   "Hãy giữ thẻ Telegram ID trong liên kết offer, và mọi lần nạp tiền sẽ được khớp với đúng người và đúng quảng cáo."
+  ]
+ },
+ "t5": {
+  "title": "Đưa người dùng từ website của bạn",
+  "where": "Cài đặt kênh › Trang web của bạn",
+  "sents": [
+   "Bạn đã có trang đích riêng?",
+   "Cứ giữ nguyên trang đó.",
+   "Mở Cài đặt của kênh, rồi \"Website của bạn\".",
+   "Chọn thời điểm mọi người chuyển sang Telegram: ngay lập tức, khi họ nhấn nút của bạn, hoặc sau vài giây.",
+   "Sao chép một dòng mã đó, và dán vào trang của bạn.",
+   "Khách truy cập vào trang của bạn, rồi đi thẳng vào Telegram.",
+   "Và mọi lượt tham gia vẫn được khớp với đúng lượt nhấp quảng cáo."
+  ]
+ },
+ "t6": {
+  "title": "Dùng tên miền riêng",
+  "where": "Kênh › Tên miền liên kết của bạn",
+  "sents": [
+   "Bạn có thể chạy link quảng cáo trên tên miền riêng, ví dụ như go chấm thương hiệu của bạn chấm com.",
+   "Mở Kênh, rồi \"Tên miền link của bạn\", và nhập tên miền phụ.",
+   "Joinvoo sẽ hiển thị hai bản ghi.",
+   "Hãy thêm chúng ở nơi bạn đã mua tên miền, trong phần cài đặt DNS.",
+   "Sau đó nhấn Kiểm tra ngay.",
+   "Khi hiện Trực tiếp, các link mới sẽ dùng tên miền riêng của bạn, còn link cũ vẫn hoạt động bình thường.",
+   "Gói Basic có một tên miền.",
+   "Gói Pro cho bạn không giới hạn tên miền."
+  ]
+ },
+ "t7": {
+  "title": "Kết nối Start của bot riêng",
+  "where": "Cài đặt bot › Ping khi bot start",
+  "sents": [
+   "Bạn đưa quảng cáo về bot riêng của mình, và không muốn chia sẻ token của bot?",
+   "Không vấn đề gì.",
+   "Mở Cài đặt của bot, rồi \"Kết nối Start của bot riêng\".",
+   "Sao chép đoạn mã có sẵn cho bot của bạn, hoặc địa chỉ web dành cho các công cụ không cần code như ManyChat hay SendPulse.",
+   "Nhấn Gửi thử.",
+   "Giờ đây, mỗi khi có người nhấn Bắt đầu, bot sẽ báo cho Joinvoo, và lượt tham gia được khớp với đúng quảng cáo."
+  ]
+ },
+ "t8": {
+  "title": "Thêm đội nhóm",
+  "where": "Thêm › Đội nhóm",
+  "sents": [
+   "Bạn làm việc theo nhóm?",
+   "Mở Thêm, rồi Nhóm, và nhấn Mời.",
+   "Nhập email của buyer và chọn một vai trò.",
+   "Quản lý xem được mọi kênh.",
+   "Buyer chỉ thấy những kênh bạn giao cho họ.",
+   "Gói Pro có sẵn ba thành viên, và bạn có thể thêm người bất cứ lúc nào.",
+   "Trong Kết quả, hãy so sánh các buyer cạnh nhau, và xem ai mang về lượt nạp tiền rẻ nhất."
+  ]
+ },
+ "t9": {
+  "title": "Đọc kết quả của bạn",
+  "where": "Kết quả",
+  "sents": [
+   "Đây là cách đọc các con số của bạn.",
+   "Mở Kết quả.",
+   "Ở trên cùng, bạn thấy lượt tham gia, lượt nạp tiền, và chi phí cho mỗi lượt nạp.",
+   "Nhập chi phí quảng cáo, hoặc kết nối tài khoản quảng cáo, và Joinvoo sẽ tính chi phí cho mỗi lượt tham gia và lợi nhuận trên chi phí quảng cáo.",
+   "Nhấn vào bất kỳ ai để xem chính xác quảng cáo, chiến dịch và lượt nhấp mà họ đến từ đó.",
+   "Và mỗi sáng, Joinvoo có thể gửi bản tóm tắt này thẳng tới Telegram của bạn.",
+   "Hãy bật nó trong Thêm, rồi Báo cáo hằng ngày."
+  ]
+ },
+ "t10": {
+  "title": "Mời người hỗ trợ thiết lập",
+  "where": "Thêm › Đội nhóm",
+  "sents": [
+   "Bạn cần ai đó thiết lập Joinvoo giúp mà không phải chia sẻ mật khẩu?",
+   "Mở Thêm, rồi Nhóm, và nhấn Mời.",
+   "Chọn Người hỗ trợ thiết lập.",
+   "Tính năng này miễn phí ở mọi gói.",
+   "Nhập email của họ, hoặc sao chép link mời và gửi qua WhatsApp.",
+   "Người hỗ trợ có thể thiết lập bot, kênh và quảng cáo, nhưng không thể xem thanh toán hay tiền của bạn.",
+   "Nếu họ hỗ trợ nhiều khách hàng, họ sẽ thấy tất cả tài khoản ở cùng một nơi.",
+   "Bạn có thể xóa họ bất cứ lúc nào."
+  ]
+ },
+ "t11": {
+  "title": "Vì sao nên theo dõi tin nhắn gửi tới quản lý",
+  "where": "Thiết lập bước 2 · Theo dõi tin nhắn",
+  "sents": [
+   "Quảng cáo của bạn đưa người dùng thẳng tới khung chat của quản lý trên Telegram?",
+   "Vậy thì phần này rất quan trọng.",
+   "Hiện tại, Meta chỉ thấy một lượt nhấn vào link của bạn.",
+   "Meta không thấy ai thực sự đã nhắn tin cho quản lý, nên nó học cách tìm những người chỉ nhấn rồi bỏ đi.",
+   "Bạn trả tiền cho lượt nhấp, trong khi quản lý của bạn ngồi chờ những cuộc trò chuyện thật.",
+   "Joinvoo khắc phục điều đó bằng cách theo dõi mọi tin nhắn đầu tiên.",
+   "Đầu tiên, trong BotFather, mở cài đặt của bot và bật Business Mode.",
+   "Sau đó, trên Telegram của quản lý, mở Cài đặt, rồi Telegram Business, rồi Chatbot, và thêm bot của bạn vào.",
+   "Quay lại Joinvoo, nhấn Đúng, đó là quản lý của tôi, và bạn sẽ nhận được một link quảng cáo mới.",
+   "Kết nối Meta, và gắn link đó vào quảng cáo.",
+   "Khi ai đó nhấn vào quảng cáo và gửi tin nhắn đầu tiên, Joinvoo sẽ khớp nó với đúng quảng cáo, và gửi một sự kiện Lead tới Meta.",
+   "Giờ Meta học từ những người thực sự bắt đầu trò chuyện, nên chi phí mỗi tin nhắn giảm và quản lý của bạn nhận được khách tiềm năng tốt hơn.",
+   "Và Joinvoo không bao giờ trả lời, cũng không bao giờ lưu nội dung mọi người viết."
+  ]
+ },
+ "t12": {
+  "title": "Thiết lập mini app của bạn",
+  "where": "Cài đặt kênh › Cách mở",
+  "sents": [
+   "Để theo dõi chính xác nhất, hãy đưa người dùng tới quản lý của bạn qua một mini app.",
+   "Mở Cài đặt của cuộc trò chuyện, rồi Cách mở, và chọn Qua mini app của bạn.",
+   "Sao chép địa chỉ web mà Joinvoo hiển thị.",
+   "Trong BotFather, gửi gạch chéo new app, chọn bot của bạn, và dán địa chỉ đó vào.",
+   "BotFather sẽ gửi cho bạn một link.",
+   "Dán link đó lại vào Joinvoo, và nhấn Lưu.",
+   "Mở mini app một lần, và nó sẽ chuyển sang màu xanh lá.",
+   "Giờ Telegram sẽ báo cho Joinvoo chính xác ai đã nhấn vào quảng cáo, nên mọi tin nhắn đều được khớp."
+  ]
+ },
+ "t13": {
+  "title": "Gửi sự kiện tới server của bạn",
+  "where": "Chuyển đổi › Tích hợp",
+  "sents": [
+   "Bạn muốn mọi lượt tham gia, tin nhắn và lượt nạp tiền được gửi tới server của bạn ngay khi chúng xảy ra?",
+   "Mở Chuyển đổi, rồi Tích hợp, và cuộn xuống phần Gửi sự kiện tới server của bạn.",
+   "Nhấn Thêm webhook, và dán địa chỉ server của bạn, ví dụ CRM, bot riêng, hoặc một link Zapier hay Make.",
+   "Đánh dấu các sự kiện bạn muốn, như lượt tham gia, tin nhắn đầu tiên và lần nạp tiền đầu tiên, rồi nhấn Thêm webhook.",
+   "Sao chép khóa ký bí mật, để server có thể kiểm tra mỗi sự kiện thật sự đến từ Joinvoo.",
+   "Giờ nhấn Gửi thử, và khi server phản hồi, thẻ sẽ hiện Đang hoạt động.",
+   "Từ giờ, mỗi sự kiện sẽ đến kèm thông tin người dùng, Telegram ID của họ, cùng chiến dịch và quảng cáo mà họ đến từ đó.",
+   "Và nếu server của bạn có lúc bị sập, Joinvoo sẽ tự thử lại giúp bạn, nên không mất gì cả."
+  ]
+ },
+ "t14": {
+  "title": "Chuyển thông tin quảng cáo sang offer",
+  "where": "Cài đặt kênh › Liên kết offer",
+  "sents": [
+   "Bạn muốn offer hoặc tracker của mình biết mỗi người đến từ chiến dịch và quảng cáo nào?",
+   "Mở cài đặt của kênh, và tìm liên kết offer, hoặc link nút bấm của bot.",
+   "Bên dưới link, nhấn vào một thẻ, như campaign, ad, hoặc sub one, và Joinvoo sẽ thêm nó vào link cho bạn.",
+   "Trong quảng cáo, hãy giữ nguyên các tham số URL quen thuộc trên link Joinvoo, như tên chiến dịch và tên quảng cáo.",
+   "Khi ai đó nhấn vào quảng cáo, Joinvoo sẽ điền thông tin của người đó vào từng thẻ.",
+   "Giờ offer của bạn thấy được chiến dịch, quảng cáo và Telegram ID đằng sau mỗi lượt truy cập, nên mỗi lần nạp tiền đều được khớp ngược về đúng quảng cáo.",
+   "Thẻ cũng hoạt động trong tin nhắn chào mừng."
+  ]
+ }
+}

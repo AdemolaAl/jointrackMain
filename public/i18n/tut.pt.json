@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Crie seu bot de rastreamento",
+  "where": "Etapa 1 da configuração",
+  "sents": [
+   "Boas-vindas ao Joinvoo.",
+   "Primeiro, vamos criar o seu bot de rastreamento.",
+   "Leva mais ou menos um minuto.",
+   "Abra o Telegram e busque por BotFather, aquele com o selo azul.",
+   "Toque em Iniciar e depois envie barra new bot.",
+   "Dê qualquer nome ao seu bot e depois um nome de usuário que termine com a palavra bot.",
+   "O BotFather envia para você um token longo.",
+   "Copie, volte ao Joinvoo, cole na caixa e toque em Conectar.",
+   "É só isso.",
+   "Seu bot está pronto."
+  ]
+ },
+ "t2": {
+  "title": "Adicione seu bot ao seu canal",
+  "where": "Etapa 2 da configuração",
+  "sents": [
+   "Agora adicione o seu bot ao seu canal.",
+   "No Telegram, abra o seu canal e toque no nome dele.",
+   "Toque em Administradores e depois em Adicionar Administrador.",
+   "Busque o seu bot e adicione.",
+   "Confira se \"Convidar usuários via link\" está ativado e toque em Salvar.",
+   "Volte ao Joinvoo.",
+   "Ele encontra o seu canal sozinho em poucos segundos.",
+   "Se quiser rastrear um bot em vez de um canal, escolha \"Meu bot\" e siga os mesmos passos simples."
+  ]
+ },
+ "t3": {
+  "title": "Conectar a Meta",
+  "where": "Etapa 3 da configuração · Configurações do canal › Plataformas de anúncios",
+  "sents": [
+   "Agora, conecte a Meta, para que cada entrada seja enviada de volta aos seus anúncios.",
+   "No Gerenciador de Eventos da Meta, copie o seu Pixel ID.",
+   "Depois abra as Configurações, encontre a Conversions API e gere um token de acesso.",
+   "Cole os dois no Joinvoo e toque em Enviar teste.",
+   "Quando aparecer \"Teste recebido\", está tudo certo.",
+   "Agora copie o link do anúncio no card do seu canal e coloque no seu anúncio.",
+   "Cada entrada aparece na Meta, ligada ao clique exato."
+  ]
+ },
+ "t4": {
+  "title": "Rastreie depósitos com a solicitação de entrada",
+  "where": "Configurações do canal › Forma de entrada",
+  "sents": [
+   "Quer ver quem deposita, e não só quem entra?",
+   "Ative a solicitação de entrada.",
+   "Abra as Configurações do seu canal e depois Forma de entrada.",
+   "Escolha quem deixa as pessoas entrarem.",
+   "O Joinvoo pode aprovar a entrada na hora e enviar a sua mensagem de boas-vindas com o seu link da oferta.",
+   "Ou, se você já tem o seu próprio bot de boas-vindas, escolha \"Meu próprio bot\", e o Joinvoo só rastreia.",
+   "Mantenha a tag do ID do Telegram no seu link da oferta, e cada depósito é ligado à pessoa certa e ao anúncio certo."
+  ]
+ },
+ "t5": {
+  "title": "Envie pessoas do seu próprio site",
+  "where": "Configurações do canal › Seu próprio site",
+  "sents": [
+   "Já tem a sua própria landing page?",
+   "Pode mantê-la.",
+   "Abra as Configurações do seu canal e depois \"Seu próprio site\".",
+   "Escolha quando as pessoas vão para o Telegram: na hora, quando tocarem no seu botão ou depois de alguns segundos.",
+   "Copie a linha única de código e cole na sua página.",
+   "Os visitantes chegam na sua página e vão direto para o Telegram.",
+   "E cada entrada continua ligada ao clique exato no anúncio."
+  ]
+ },
+ "t6": {
+  "title": "Use seu próprio domínio",
+  "where": "Canais › Seu domínio de links",
+  "sents": [
+   "Você pode usar os seus links de anúncio no seu próprio domínio, como go ponto sua marca ponto com.",
+   "Abra Canais, depois \"Seu domínio de links\", e digite o seu subdomínio.",
+   "O Joinvoo mostra dois registros.",
+   "Adicione os dois onde você comprou o seu domínio, nas configurações de DNS.",
+   "Depois toque em Verificar agora.",
+   "Quando aparecer Ao vivo, os seus novos links usam o seu próprio domínio, e os links antigos continuam funcionando.",
+   "O plano Basic inclui um domínio.",
+   "O Pro oferece domínios ilimitados."
+  ]
+ },
+ "t7": {
+  "title": "Conecte o Start do seu próprio bot",
+  "where": "Configurações do bot › Ping de Start do bot",
+  "sents": [
+   "Está enviando seus anúncios para o seu próprio bot e não quer compartilhar o token dele?",
+   "Sem problema.",
+   "Abra as Configurações do bot e depois \"Conecte o Start do seu próprio bot\".",
+   "Copie o código pronto para o seu bot, ou o endereço web para construtores sem código, como ManyChat ou SendPulse.",
+   "Toque em Enviar um teste.",
+   "Agora, toda vez que alguém tocar em Iniciar, o seu bot avisa o Joinvoo, e a entrada é ligada ao anúncio exato."
+  ]
+ },
+ "t8": {
+  "title": "Adicione sua equipe",
+  "where": "Mais › Equipe",
+  "sents": [
+   "Trabalha com uma equipe?",
+   "Abra Mais, depois Equipe, e toque em Convidar.",
+   "Digite o e-mail do seu comprador e escolha uma função.",
+   "Gerentes veem todos os canais.",
+   "Compradores veem só os canais que você der a eles.",
+   "O Pro inclui três membros na equipe, e você pode adicionar mais quando quiser.",
+   "Em Resultados, compare os seus compradores lado a lado e veja quem traz os depósitos mais baratos."
+  ]
+ },
+ "t9": {
+  "title": "Leia seus resultados",
+  "where": "Resultados",
+  "sents": [
+   "Veja como ler os seus números.",
+   "Abra Resultados.",
+   "No topo, você vê entradas, depósitos e custo por depósito.",
+   "Adicione o seu investimento em anúncios, ou conecte a sua conta de anúncios, e o Joinvoo calcula o seu custo por entrada e o seu retorno sobre o investimento em anúncios.",
+   "Toque em qualquer pessoa para ver o anúncio, a campanha e o clique exatos de onde ela veio.",
+   "E toda manhã, o Joinvoo pode enviar esse resumo direto para o seu Telegram.",
+   "Ative em Mais, depois Relatório diário."
+  ]
+ },
+ "t10": {
+  "title": "Convidar um ajudante de configuração",
+  "where": "Mais › Equipe",
+  "sents": [
+   "Precisa de alguém para configurar o Joinvoo para você, sem compartilhar a sua senha?",
+   "Abra Mais, depois Equipe, e toque em Convidar.",
+   "Escolha Ajudante de configuração.",
+   "É grátis em todos os planos.",
+   "Digite o e-mail da pessoa, ou copie o link de convite e envie pelo WhatsApp.",
+   "O seu ajudante pode configurar os seus bots, canais e anúncios, mas não vê o seu faturamento nem o seu dinheiro.",
+   "Se ele ajuda muitos clientes, vê todas as contas em um só lugar.",
+   "Você pode remover essa pessoa quando quiser."
+  ]
+ },
+ "t11": {
+  "title": "Por que rastrear mensagens para o seu gerente",
+  "where": "Etapa 2 da configuração · Rastreamento de DMs",
+  "sents": [
+   "Os seus anúncios mandam as pessoas direto para o chat de um gerente no Telegram?",
+   "Então isto é importante.",
+   "Hoje, a Meta só vê um toque no seu link.",
+   "Ela não vê quem realmente mandou mensagem para o seu gerente, então aprende a encontrar pessoas que tocam e vão embora.",
+   "Você paga por cliques, enquanto o seu gerente fica esperando conversas de verdade.",
+   "O Joinvoo resolve isso rastreando cada primeira mensagem.",
+   "Primeiro, no BotFather, abra as configurações do seu bot e ative o Business Mode.",
+   "Depois, no Telegram do gerente, abra Configurações, depois Telegram Business, depois Chatbots, e adicione o seu bot.",
+   "De volta ao Joinvoo, toque em Sim, esse é meu gerente, e você recebe um novo link de anúncio.",
+   "Conecte a Meta e coloque esse link no seu anúncio.",
+   "Quando alguém toca no seu anúncio e envia a primeira mensagem, o Joinvoo liga essa mensagem ao anúncio exato e envia um Lead para a Meta.",
+   "Agora a Meta aprende com pessoas que realmente começam uma conversa, então o seu custo por mensagem cai e o seu gerente recebe leads melhores.",
+   "E o Joinvoo nunca responde e nunca salva o que as pessoas escrevem."
+  ]
+ },
+ "t12": {
+  "title": "Configure seu mini app",
+  "where": "Configurações do canal › Como abre",
+  "sents": [
+   "Para o rastreamento mais preciso, mande as pessoas para o seu gerente por um mini app.",
+   "Abra as Configurações do chat, depois Como abre, e escolha Pelo seu mini app.",
+   "Copie o endereço web que o Joinvoo mostra.",
+   "No BotFather, envie barra new app, escolha o seu bot e cole o endereço.",
+   "O BotFather envia um link para você.",
+   "Cole esse link de volta no Joinvoo e toque em Salvar.",
+   "Abra o mini app uma vez, e ele fica verde.",
+   "Agora o Telegram diz ao Joinvoo exatamente quem tocou no seu anúncio, então cada mensagem é ligada ao anúncio certo."
+  ]
+ },
+ "t13": {
+  "title": "Enviar eventos para o seu servidor",
+  "where": "Conversões › Integrações",
+  "sents": [
+   "Quer que cada entrada, mensagem e depósito seja enviado para o seu próprio servidor no momento em que acontece?",
+   "Abra Conversões, depois Integrações, e role até Enviar eventos para o seu servidor.",
+   "Toque em Adicionar webhook e cole o endereço do seu servidor, como o seu CRM, o seu próprio bot ou um link do Zapier ou do Make.",
+   "Marque os eventos que você quer, como entradas, primeiras mensagens e primeiros depósitos, e toque em Adicionar webhook.",
+   "Copie o segredo de assinatura, para que o seu servidor possa conferir se cada evento vem mesmo do Joinvoo.",
+   "Agora toque em Enviar teste, e quando o seu servidor responder, o card mostra Funcionando.",
+   "A partir de agora, cada evento chega com a pessoa, o ID do Telegram dela e a campanha e o anúncio de onde ela veio.",
+   "E se o seu servidor cair, o Joinvoo tenta de novo para você, então nada se perde."
+  ]
+ },
+ "t14": {
+  "title": "Passe os detalhes do seu anúncio para sua oferta",
+  "where": "Configurações do canal › Link da oferta",
+  "sents": [
+   "Quer que a sua oferta ou o seu tracker saiba de qual campanha e de qual anúncio cada pessoa veio?",
+   "Abra as configurações do seu canal e encontre o seu link da oferta, ou o link do botão do seu bot.",
+   "Embaixo do link, toque em uma tag, como campanha, anúncio ou sub um, e o Joinvoo adiciona a tag ao link para você.",
+   "No seu anúncio, mantenha os parâmetros de URL de sempre no seu link do Joinvoo, como o nome da campanha e o nome do anúncio.",
+   "Quando alguém toca no seu anúncio, o Joinvoo preenche cada tag com os dados dessa pessoa.",
+   "Agora a sua oferta vê a campanha, o anúncio e o ID do Telegram por trás de cada visita, então cada depósito é ligado de volta ao anúncio.",
+   "As tags também funcionam na sua mensagem de boas-vindas."
+  ]
+ }
+}

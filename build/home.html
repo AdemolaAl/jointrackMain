@@ -52,6 +52,7 @@ header.top nav a.login{color:var(--ink);font-weight:700}
 .ctas{display:flex;gap:12px;flex-wrap:wrap}
 .btn.play .pi{width:30px;height:30px;margin:-6px 0 -6px -10px;border-radius:50%;display:grid;place-items:center;background:#5b3df5;color:#fff;box-shadow:0 0 0 0 rgba(91,61,245,.45);animation:pring 2.4s cubic-bezier(.2,.6,.3,1) infinite}
 .btn.play .pi svg{width:13px;height:13px;margin-left:2px}
+[dir=rtl] .btn.play .pi{margin:-6px -10px -6px 0} /* round 23: Arabic (round 23 review: the arrow flip moved to shared.css) */
 .btn.play:hover .pi svg{transform:none}
 @keyframes pring{0%{box-shadow:0 0 0 0 rgba(91,61,245,.45)}70%,100%{box-shadow:0 0 0 12px rgba(91,61,245,0)}}
 .checks{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14.5px;font-weight:600;color:var(--muted);margin:0}
@@ -727,7 +728,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         </div></div>
       </div>
       <aside class="botwarn" role="note"><span class="bw-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M2 13v2M22 13v2"/></svg></span><div><b>Many of your “joins” aren’t real people.</b><span>Bots and junk placements like Audience Network inflate your joins, and Meta keeps buying more of them. Joinvoo filters out the fakes and reports only real joins, so your ads learn from real people.</span></div></aside>
-      <p class="closed">Sign-ups are closed right now. Existing customers can still log in.</p>
+      <p class="closed" aria-live="polite"></p><!-- round 23: filled only when sign-ups are really closed, so search engines and AI readers never see it on an open site -->
     </div>
   </div>
   <div class="wrap strip"><span>Works with</span>
@@ -1100,6 +1101,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
   /* live numbers from /api/config: free joins, trial, plan prices, limits, feature switches */
   (window.JV_CONFIG||Promise.resolve(null)).then(c=>{ if(!c) return;
     const f=c.features; if(f) ['signup','snapchat','tiktok','enterprise'].forEach(k=>{ if(f[k]===false) document.body.classList.add('no-'+k); });
+    if(f&&f.signup===false) document.querySelectorAll('p.closed').forEach(p=>p.textContent=(window._t||String)('Sign-ups are closed right now. Existing customers can still log in.'));
     const fj=c.pricing&&c.pricing.free_joins; if(fj>0) $$('.fj').forEach(x=>x.textContent=fmt(fj));
     if(c.trial&&c.trial.days) $$('.tdays').forEach(x=>x.textContent=c.trial.days);
     const cents=v=>v>=100?'$'+(v/100).toLocaleString('en-US',{maximumFractionDigits:2}):v+'¢';

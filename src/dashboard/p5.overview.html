@@ -21,10 +21,10 @@ function buckets(series){
   const [f,t]=range(); const m=new Map(series.map(s=>[s.day,s])); const days=[];
   for (let d=parseYmd(f); ymd(d)<=t; d=addDays(d,1)){ const s=m.get(ymd(d))||{}; days.push({d:new Date(d),clicks:s.clicks||0,joins:s.joins||0,ftd:s.ftd||0}); }
   const mode=days.length<=62?'day':days.length<=200?'week':'month';
-  if (mode==='day') return {mode,list:days.map(x=>({...x,label:x.d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}))};
+  if (mode==='day') return {mode,list:days.map(x=>({...x,label:x.d.toLocaleDateString(LOC(),{weekday:'short',month:'short',day:'numeric'})}))};
   const out=[]; let cur=null;
   for (const x of days){ const key=mode==='week'?Math.floor((x.d-parseYmd(f))/(7*864e5)):x.d.getFullYear()*12+x.d.getMonth(); if(!cur||cur.key!==key){cur={key,d:x.d,clicks:0,joins:0,ftd:0};out.push(cur);} cur.clicks+=x.clicks; cur.joins+=x.joins; cur.ftd+=x.ftd; }
-  out.forEach(b=>b.label=mode==='week'?'Week of '+b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):b.d.toLocaleDateString('en-US',{month:'long',year:'numeric'}));
+  out.forEach(b=>b.label=mode==='week'?'Week of '+b.d.toLocaleDateString(LOC(),{month:'short',day:'numeric'}):b.d.toLocaleDateString(LOC(),{month:'long',year:'numeric'}));
   return {mode,list:out};
 }
 const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -44,7 +44,7 @@ function drawPerf(el, series, anim){
   for(let i=0;i<=3;i++){ const v=max*i/3; g+=`<line class="${i?'gl':'gl0'}" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${compact(v)}</text>`; }
   g+=`<line class="gl0" x1="${L}" x2="${W-R}" y1="${fy0}" y2="${fy0}"/><text class="axl" x="${L-8}" y="${fy0-H2+10}" text-anchor="end">FTD</text>`;
   const step=Math.max(1,Math.ceil(n/(mob?5:9))), li=[]; for(let i=0;i<n;i+=step) li.push(i); if(li[li.length-1]!==n-1 && n>1){ if(n-1-li[li.length-1]<step/2) li.pop(); li.push(n-1); }
-  const sl=b=>mode==='month'?b.d.toLocaleDateString('en-US',{month:'short'}):b.d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const sl=b=>mode==='month'?b.d.toLocaleDateString(LOC(),{month:'short'}):b.d.toLocaleDateString(LOC(),{month:'short',day:'numeric'});
   for(const i of li) g+=`<text class="ax" x="${x(i)}" y="${H-6}" text-anchor="${n>1&&i===0&&slot<40?'start':n>1&&i===n-1&&slot<40?'end':'middle'}">${sl(list[i])}</text>`;
   const st=(i,k)=>anim&&!reduced?`style="animation:grow .8s ${Math.min(i*(n>40?8:22),500)+k}ms both var(--ease)"`:'';
   list.forEach((b,i)=>{ const hc=b.clicks?Math.max(3,T+H1-y(b.clicks)):0, hj=b.joins?Math.max(3,T+H1-y(b.joins)):0, hf=b.ftd?Math.max(2,fh(b.ftd)):0;
@@ -138,7 +138,7 @@ function drawKpis(st,prev,first){
     dms:{v:fmt(DM.n),raw:DM.n,d:deltaChip(DM.n,PDM.n*k,true,vl),s:tt('r19.kpi.dmso','+ {n} organic DMs',{n:fmt(DM.o)}),sp:''},
     dmrate:{v:pctS(DM.n,DM.c),raw:dmr,p:1,d:DM.c&&PDM.c?deltaChip(dmr,pdmr,true,vl):'',s:tt('r19.kpi.dmr','Ad taps that sent a DM'),sp:''},
     rate:{v:pctS(T.joins,T.clicks-DM.c),raw:rate,p:1,d:deltaChip(rate,prate,true,vl),s:'Clicks that became joins',sp:spark(rs,css('--sky-ink'))},
-    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?`${pctS(T.ftd,T.joins+DM.n)} of ${DM.n?tt('r19.kpi.leads','joins + DMs'):'joins'} · ${fmt(T.reg)} registered`:'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
+    ftd:{v:fmt(T.ftd),raw:T.ftd,d:hasConv?deltaChip(T.ftd,P.ftd||0,true,vl):'',s:hasConv?tt('ov.ftd.sub','{p} of {w} · {r} registered',{p:pctS(T.ftd,T.joins+DM.n),w:DM.n?tt('r19.kpi.leads','joins + DMs'):tt('cmp.noun.joins','joins'),r:fmt(T.reg)}):'<a class="ks" href="#conversions" data-act="nav" data-p="conversions">Set up deposit tracking →</a>',sp:hasConv?spark(sv('ftd'),css('--mint-ink')):''},
     rev:{v:money0(T.revenue_cents),raw:T.revenue_cents,m:1,d:hasConv?deltaChip(T.revenue_cents,P.revenue_cents||0,true,vl):'',s:hasConv?(T.ftd?`${money0(T.revenue_cents/T.ftd)} avg first deposit`:'From your postbacks'):'Reported by your postbacks',sp:''},
     leaves:leftCard(T,P,vl),
   };
@@ -211,7 +211,7 @@ function drawTopCampaigns(rows){
   const el=$('#topc'); if(!el) return;
   if (!rows.length || (rows.length===1 && /^\(no /.test(rows[0].key))) { el.innerHTML=utmEmpty(true); return; }
   const r=rows.slice(0,6), mr=Math.max(...r.map(x=>x.join_rate),0.0001);
-  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Campaign</th><th>Clicks</th><th>Joins</th><th>Join rate</th><th>FTDs</th><th>Revenue</th></tr></thead><tbody>${r.map((x,i)=>`<tr><td class="k"><span class="rank">${i+1}</span>${esc(x.key)}</td><td data-l="Clicks">${fmt(x.clicks)}</td><td data-l="Joins">${fmt(x.joins)}</td><td data-l="Join rate"><span class="rate">${(x.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${x.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${fmt(x.ftd)}</td><td data-l="Revenue">${money0(x.revenue_cents)}</td></tr>`).join('')}</tbody></table></div>`;
+  el.innerHTML=`<div class="tbl-wrap"><table class="t rt"><thead><tr><th>Campaign</th><th>Clicks</th><th>Joins</th><th>Join rate</th><th>FTDs</th><th>Revenue</th></tr></thead><tbody>${r.map((x,i)=>`<tr><td class="k"><span class="rank">${i+1}</span>${ud(x.key)}</td><td data-l="Clicks">${fmt(x.clicks)}</td><td data-l="Joins">${fmt(x.joins)}</td><td data-l="Join rate"><span class="rate">${(x.join_rate*100).toFixed(1)}%<span class="rb"><i style="width:${x.join_rate/mr*100}%"></i></span></span></td><td data-l="FTDs">${fmt(x.ftd)}</td><td data-l="Revenue">${money0(x.revenue_cents)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function utmEmpty(compact){
   const L=(p,code)=>`<div><span class="uh">${pm(p)}${PLAT[p].name}</span><code>${code}</code><button class="btn sm" data-act="copy" data-v="${esc(code.replace(/<\/?b>/g,'').replace(/&amp;/g,'&'))}">${I.copy} Copy</button></div>`;

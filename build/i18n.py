@@ -17,7 +17,7 @@ How it works
 import json, re
 from html.parser import HTMLParser
 
-LANGS = ['en', 'ru', 'fr', 'pt', 'es']
+LANGS = ['en', 'ru', 'fr', 'pt', 'es', 'ar', 'hi', 'id', 'tr', 'vi', 'sw']
 
 def norm(s):
     return re.sub(r'\s+', ' ', s).strip()
@@ -134,16 +134,17 @@ def compile_lang(tr, en_keys):
 RUNTIME = r'''<script>
 /* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
 (function(){
-  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  var L=['en','ru','fr','pt','es','ar','hi','id','tr','vi','sw'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇧🇷','Português'],es:['🇪🇸','Español'],ar:['🇸🇦','العربية'],hi:['🇮🇳','हिन्दी'],id:['🇮🇩','Bahasa Indonesia'],tr:['🇹🇷','Türkçe'],vi:['🇻🇳','Tiếng Việt'],sw:['🇰🇪','Kiswahili']};
   function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
   function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
   var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
-  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
-  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  var navs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']), nav=null;
+  for(var ni=0;ni<navs.length&&!nav;ni++){ var c2=String(navs[ni]).slice(0,2).toLowerCase(); if(L.indexOf(c2)>=0) nav=c2; }
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:nav||'en';
   if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
   var D={};
   if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
-  document.documentElement.lang=lang; window.JV_LANG=lang;
+  document.documentElement.lang=lang; if(lang==='ar') document.documentElement.dir='rtl'; window.JV_LANG=lang;
   window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
   function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
     for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }

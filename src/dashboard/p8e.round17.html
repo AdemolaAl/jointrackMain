@@ -216,7 +216,7 @@ async function drawNext(T, counts){
 function alertRows(list){
   const out=[];
   for (const c of list){
-    if (c.lost_at && c.failed_over_to) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||tt('al.backup','your backup'))})}</b><small>${esc(c.title)} · ${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}</small></span><button class="btn sm" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.details','Details')}</button></div>`);
+    if (c.lost_at && c.failed_over_to) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost','Channel lost — ads moved to {b}',{b:esc(c.failed_over_title||tt('al.backup','your backup'))})}</b><small translate="no">${esc(c.title)} · ${esc(lostWhy(c.lost_reason))} · ${ago(c.lost_at)}</small></span><button class="btn sm" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.details','Details')}</button></div>`);
     else if (c.lost_at) out.push(`<div class="al17 bad"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.lost2','“{t}” was lost',{t:esc(c.title)})}</b><small>${esc(lostWhy(c.lost_reason))}. ${tt('al.pick.p','Your ads are still sending people there.')}</small></span><button class="btn sm primary" data-act="cs-open" data-id="${c.id}" data-tab="backup">${tt('al.pick','Pick a backup channel')}</button></div>`);
     else if (c.can_switch_back) out.push(`<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back','“{t}” is back',{t:esc(c.title)})}</b><small>${tt('al.back.p','Your ads still go to {b}. Switch back when you’re ready.',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`);
     if (c.deadlink_at) out.push(`<div class="al17 warn"><span class="al-ic">${I.alert}</span><span class="al-t"><b>${tt('al.dl','Your ad link may be blocked')}</b><small>${tt('al.dl.p','Clicks on {t} stopped. Switch to another link domain in one tap.',{t:esc(c.title)})}</small></span><button class="btn sm primary" data-act="dl-open" data-id="${c.id}">${tt('al.dl.b','Switch domain')}</button></div>`);
@@ -256,8 +256,8 @@ function drawBest(rows){
   if (!r.length){ el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2></div><div class="best-empty"><p>${tt('r.best.e','Add your ad name to your link to see which ad brings the most deposits.')}</p><button class="btn sm" data-act="nav" data-p="campaigns">${tt('r.best.how','Show me how')} ${I.arrow}</button></div>`; return; }
   const b=r[0], top=r.slice(1,4), cpf=b.spend_cents&&b.ftd?b.spend_cents/b.ftd:null;
   el.innerHTML=`<div class="card-h"><h2>${tt('r.best','Best ad')}</h2><button class="link" data-act="nav" data-p="campaigns">${tt('r.allads','All ads')} ${I.arrow}</button></div>
-    <div class="best-b"><span class="best-crown">${I.sparkles}</span><div class="best-n"><b>${esc(b.key)}</b><small>${fmt(b.joins)} ${tt('r.joins','joins')} · ${fmt(b.ftd||0)} ${tt('r.deps','deposits')}${cpf?` · ${money(cpf)} ${tt('r.perdep','per deposit')}`:''}</small></div></div>
-    ${top.length?`<ol class="best-l">${top.map((x,i)=>`<li><span class="rank">${i+2}</span><span class="bl-k">${esc(x.key)}</span><span class="num">${fmt(x.ftd||0)} ${tt('r.dep','dep.')}</span></li>`).join('')}</ol>`:''}`;
+    <div class="best-b"><span class="best-crown">${I.sparkles}</span><div class="best-n"><b translate="no">${esc(b.key)}</b><small>${fmt(b.joins)} ${tt('r.joins','joins')} · ${fmt(b.ftd||0)} ${tt('r.deps','deposits')}${cpf?` · ${money(cpf)} ${tt('r.perdep','per deposit')}`:''}</small></div></div>
+    ${top.length?`<ol class="best-l">${top.map((x,i)=>`<li><span class="rank">${i+2}</span><span class="bl-k" translate="no">${esc(x.key)}</span><span class="num">${fmt(x.ftd||0)} ${tt('r.dep','dep.')}</span></li>`).join('')}</ol>`:''}`;
 }
 function drawSpendCard(T){
   const el=$('#rspend'); if(!el) return;
@@ -278,7 +278,7 @@ async function metaBox(el, full){
   if (!m.connected){ el.innerHTML=head(m.status==='reconnect_needed'?tt('mt.re.p','Your Meta login expired. Reconnect to keep spend coming in.'):tt('mt.nc.p','Spend per campaign comes in every hour. We only read spend, never change your ads.'))+(own?`<a class="btn sm primary wide" href="${esc(m.connect_url||'/auth/meta/start')}" data-act="meta-connect">${m.status==='reconnect_needed'?tt('mt.recon','Reconnect Meta'):tt('mt.connect','Connect Meta ad account')}</a>`:`<p class="hint">${tt('mt.owner','Ask the account owner to connect Meta.')}</p>`); return; }
   const acc=m.accounts||[];
   el.innerHTML=head(`${tt('mt.on','Connected')}${m.fb_name?' · '+esc(m.fb_name):''} · ${m.last_sync_at?tt('mt.synced','synced {t}',{t:ago(m.last_sync_at)}):tt('mt.never','not synced yet')}`,`<span class="chip g"><i class="d"></i>${tt('mt.live','Live')}</span>`)
-    +(full?`<div class="mb-acc">${acc.map(a=>`<label class="mb-a${a.supported?'':' off'}"><input type="checkbox" data-meta-acc="${esc(a.id)}" ${a.selected?'checked':''} ${a.supported&&own?'':'disabled'}><span><b>${esc(a.name)}</b><small>${esc(a.currency)}${a.last_error?' · '+esc(a.last_error):''}</small></span></label>`).join('')}</div>
+    +(full?`<div class="mb-acc">${acc.map(a=>`<label class="mb-a${a.supported?'':' off'}"><input type="checkbox" data-meta-acc="${esc(a.id)}" ${a.selected?'checked':''} ${a.supported&&own?'':'disabled'}><span><b translate="no">${esc(a.name)}</b><small>${esc(a.currency)}${a.last_error?' · '+esc(a.last_error):''}</small></span></label>`).join('')}</div>
       <div class="mb-act">${own?`<button class="btn sm" data-act="meta-sync">${I.refresh} ${tt('mt.sync','Sync now')}</button><button class="btn sm ghost" data-act="meta-off">${tt('mt.off','Disconnect')}</button>`:''}<button class="btn sm ghost" data-act="meta-map">${tt('mt.map','Match campaigns to channels')}</button></div><div id="metamap"></div>`
     :`<button class="btn sm wide" data-act="nav" data-p="results">${tt('mt.manage','Manage in Results')} ${I.arrow}</button>`);
 }
@@ -286,8 +286,8 @@ async function metaMap(){
   const el=$('#metamap'); if(!el) return; el.innerHTML='<div class="sk" style="height:80px;margin-top:10px"></div>';
   let r; try { r=await api('GET','/api/meta/campaigns'); } catch(e){ el.innerHTML=`<p class="hint">${esc(e.message)}</p>`; return; }
   const chs=visChans(S.chans).filter(c=>c.status!=='removed');
-  el.innerHTML=`<div class="mm-l">${(r.campaigns||[]).map(c=>`<div class="mm-r"><span class="mm-n"><b>${esc(c.name)}</b><small>${money0(c.spend_7d_cents||0)} ${tt('mt.7d','last 7 days')}${c.mapped_by==='auto'?' · '+tt('mt.auto','matched by itself'):''}</small></span>
-    <select class="sel" data-meta-camp="${esc(c.campaign_id)}" aria-label="${esc(tt('mt.chan','Channel'))}"><option value="">${tt('mt.none','Not matched')}</option>${chs.map(x=>`<option value="${x.id}" ${x.id===c.channel_id?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div>`).join('')||`<p class="hint">${tt('mt.nocamp','No campaigns with spend yet.')}</p>`}</div>`;
+  el.innerHTML=`<div class="mm-l">${(r.campaigns||[]).map(c=>`<div class="mm-r"><span class="mm-n"><b translate="no">${esc(c.name)}</b><small>${money0(c.spend_7d_cents||0)} ${tt('mt.7d','last 7 days')}${c.mapped_by==='auto'?' · '+tt('mt.auto','matched by itself'):''}</small></span>
+    <select class="sel" data-meta-camp="${esc(c.campaign_id)}" aria-label="${esc(tt('mt.chan','Channel'))}"><option value="">${tt('mt.none','Not matched')}</option>${chs.map(x=>`<option value="${x.id}" ${x.id===c.channel_id?'selected':''} translate="no">${esc(x.title)}</option>`).join('')}</select></div>`).join('')||`<p class="hint">${tt('mt.nocamp','No campaigns with spend yet.')}</p>`}</div>`;
 }
 
 /* ---------- depositor audience (lookalike of people who deposited) ---------- */
@@ -353,7 +353,7 @@ drawChannels = function(){
   const d=S.chans, el=$('#cl'); if(!d) return; if(!el){ csRefresh(); sideSheetRefresh(); return; } const list=visChans(d);
   el.innerHTML=`${limitsCard(d)}<div class="chs">${list.map((c,i)=>{ const plats=PLATS().filter(p=>platOn(c,p));
     return `<article class="card ch17${c.lost_at?' lost':''}${c.locked?' locked':''}" data-ch="${c.id}">
-      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='dm'?ICO_DM.replace('<svg','<svg style="width:20px;height:20px"'):c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b>${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
+      <div class="c-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${c.type==='dm'?ICO_DM.replace('<svg','<svg style="width:20px;height:20px"'):c.type==='bot'?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><span class="c-n"><b translate="no">${esc(c.title)}</b><span class="c-sub"><small>${CH_TYPE(c)}</small>${chPill(c)}</span></span><button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>
       ${chBanner(c)}${c.locked?chLockNote(c):''}
       <div class="c-link"><span class="lbl">${tt('ch17.link','Ad link')}</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} ${tt('common.copy','Copy')}</button></div>${utmCard17(c)}</div>
       <div class="c-foot"><span class="c-today"><b class="num" data-today="${esc(c.title)}">${R17.today[c.title]!=null?fmt(R17.today[c.title]):'–'}</b> ${c.type==='dm'?tt('r19.today','messages today'):tt('ch17.today','joins today')}</span>
@@ -396,7 +396,7 @@ function openCS(id, tab){
   const c=chById(id); if(!c) return; closePop();
   const tabs=csTabs(c); if (!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
   S.cs={id:c.id, tab}; S.csPlat=null; S.side=null;
-  sheet(`<h2>${tt('cs.h','Channel settings')}<small>${esc(c.title)}</small></h2>`, `<div class="cs-tabs" role="tablist" id="cstabs"></div><div id="csbody" class="cs-body"></div>`);
+  sheet(`<h2>${tt('cs.h','Channel settings')}<small translate="no">${esc(c.title)}</small></h2>`, `<div class="cs-tabs" role="tablist" id="cstabs"></div><div id="csbody" class="cs-body"></div>`);
   const sh=$('.sheet'); if (sh) sh.classList.add('cs-sheet');
   drawCS();
 }
@@ -459,7 +459,7 @@ function csBody(c, tab){
       : c.can_switch_back ? `<div class="al17 ok"><span class="al-ic">${I.checkc}</span><span class="al-t"><b>${tt('al.back2','Channel is back')}</b><small>${tt('al.back3','Ads still go to {b}',{b:esc(c.failed_over_title||'')})}</small></span><button class="btn sm primary" data-act="sw-back" data-id="${c.id}">${tt('al.swb','Switch back')}</button></div>`
       : `<div class="al17 ok soft"><span class="al-ic">${I.shield}</span><span class="al-t"><b>${c.backup_channel_id?tt('bk.prot','Protected'):tt('bk.unprot','Not protected yet')}</b><small>${c.backup_channel_id?tt('bk.prot.p','If this channel is banned or your bot is removed, your ads move to {b}.',{b:esc(c.backup_title||'')}):tt('bk.unprot.p','Pick a backup so a ban never stops your ads.')}</small></span></div>`;
     return `${csHelp(tt('cs.bk.h','If this channel is lost'),tt('cs.bk.p','Choose where your ad link sends people if Telegram bans the channel or your bot is removed.'))}${state}
-      ${others.length?`<div class="field"><label for="csbk">${tt('cs.bk.l','Backup channel')}</label><select class="sel" id="csbk" data-csbk="${c.id}"><option value="">${tt('cs.bk.none','No backup')}</option>${others.map(o=>`<option value="${o.id}" ${o.id===c.backup_channel_id?'selected':''}>${esc(o.title)}</option>`).join('')}</select><span class="hint">${tt('cs.bk.hint','Another channel or group of yours. Its invite links and pixel are used, and joins count there.')}</span></div>
+      ${others.length?`<div class="field"><label for="csbk">${tt('cs.bk.l','Backup channel')}</label><select class="sel" id="csbk" data-csbk="${c.id}"><option value="">${tt('cs.bk.none','No backup')}</option>${others.map(o=>`<option value="${o.id}" ${o.id===c.backup_channel_id?'selected':''} translate="no">${esc(o.title)}</option>`).join('')}</select><span class="hint">${tt('cs.bk.hint','Another channel or group of yours. Its invite links and pixel are used, and joins count there.')}</span></div>
       <div class="cs-row${c.backup_channel_id?'':' dim'}"><span class="mr-t"><b>${tt('cs.auto','Switch automatically')}</b><small>${tt('cs.auto.p','Move your ads the moment this channel is lost. We always tell you.')}</small></span>${sw('cs-auto',c.backup_channel_id&&c.auto_failover,tt('cs.auto','Switch automatically'),`data-id="${c.id}" ${c.backup_channel_id?'':'disabled'}`)}</div>
       ${!c.lost_at&&!c.can_switch_back?`<details class="cs-more"${c.redirect_to?' open':''}><summary>${tt('cs.bk.now','Move traffic right now')} ${I.chev}</summary>${backupSection(c)||`<p class="hint">${tt('cs.bk.none2','Add another channel first.')}</p>`}</details>`:''}`
       :`<div class="note">${tt('cs.bk.add','Add a second channel or group to use it as a backup.')}</div><button class="btn" data-act="add-channel">${I.plus} ${tt('ch17.add','Add channel')}</button>`}`; }
@@ -494,7 +494,7 @@ function dlList(r, id){
 }
 function openDeadlink(id){
   const c=chById(id); if(!c) return; S.side=null;
-  sheet(`<h2>${tt('al.dl','Your ad link may be blocked')}<small>${esc(c.title)}</small></h2>`, `<p class="muted cs-lead">${tt('dl.p','Clicks on this link stopped while your ads usually bring people now. Move your ad link to another domain, then paste the new link in your ads.')}</p><div id="dlsheet" class="dl-list"><div class="sk" style="height:120px"></div></div><div id="dlres"></div>`);
+  sheet(`<h2>${tt('al.dl','Your ad link may be blocked')}<small translate="no">${esc(c.title)}</small></h2>`, `<p class="muted cs-lead">${tt('dl.p','Clicks on this link stopped while your ads usually bring people now. Move your ad link to another domain, then paste the new link in your ads.')}</p><div id="dlsheet" class="dl-list"><div class="sk" style="height:120px"></div></div><div id="dlres"></div>`);
   dlLoad(id, $('#dlsheet'));
 }
 async function dlPick(a){
@@ -532,7 +532,7 @@ function drawTeam(){
     ${pro?`<span class="st-bar"><i style="width:${pctv}%"></i></span>`:''}</section>
     <section class="card"><div class="card-h"><h2>${tt('team.people','People')}</h2><span class="sub">${nNoun(ms.length,'person','people')}</span></div>
     ${ms.length?`<div class="tm-l">${ms.map(m=>{ const [cc,lb]=ST_T[m.status]||['o',m.status]; const chs=(m.channel_ids||[]).map(id=>(r.channels||[]).find(c=>c.id===id)).filter(Boolean);
-      return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b>${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>esc(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
+      return `<div class="tm-r"><span class="lb-av" style="${avStyle(m.id)}">${esc(((m.name||m.email||'?')[0]||'?').toUpperCase())}</span><span class="tm-n"><b translate="no">${esc(m.name||m.email)}</b><small>${m.name?esc(m.email)+' · ':''}${m.role==='buyer'?(chs.length?chs.map(c=>ud(c.title)).join(', '):tt('team.noch','No channels yet')):tt('team.allch','All channels')}</small>
         <span class="tm-chips"><span class="chip ${m.role==='manager'?'v':m.role==='helper'?'g':'b'}">${ROLE_T(m.role)}</span>${m.status!=='active'?`<span class="chip ${cc}">${tt('team.st.'+m.status,lb)}</span>`:''}</span></span><button class="ch-more" data-act="tm-menu" data-id="${m.id}" aria-label="${esc(tt('team.more','Options'))}">${DOTS}</button></div>`; }).join('')}</div>`
       :`<div class="empty"><span class="ei">${I.team}</span><h3>${tt('team.e','Just you for now')}</h3><p>${tt('team.e.p','Invite a media buyer and compare results side by side.')}</p><button class="btn primary sm" data-act="team-invite">${I.plus} ${tt('team.invite','Invite')}</button></div>`}</section>
     ${ms.some(m=>m.status==='active')?`<button class="card row17" data-act="nav" data-p="leaderboard"><span class="mr-ic">${I.results}</span><span class="mr-t"><b>${tt('team.lb','Compare your buyers')}</b><small>${tt('team.lb.p','Joins, deposits and cost per deposit, per person')}</small></span><span class="mr-go">${I.chevr}</span></button>`:''}`;
@@ -547,7 +547,7 @@ function inviteForm(m){
     <div class="field"><span class="lbl">${tt('team.role','Role')}</span><div class="role-pick" role="radiogroup">
       <button type="button" class="rp" role="radio" data-act="tm-role" data-v="buyer" aria-checked="${role==='buyer'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.b','Media buyer')}</b><small>${tt('team.r.b.p','Sees only the channels you pick')}</small></span></button>
       <button type="button" class="rp" role="radio" data-act="tm-role" data-v="manager" aria-checked="${role==='manager'}"><span class="o-rad"></span><span class="mr-t"><b>${tt('team.r.m','Manager')}</b><small>${tt('team.r.m.p','Sees every channel. Never billing or team.')}</small></span></button></div></div>
-    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span>${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
+    <div class="field" id="tmch" ${role==='buyer'?'':'hidden'}><span class="lbl">${tt('team.ch','Their channels')}</span><div class="ch-pick">${chs.map(c=>`<label class="cp"><input type="checkbox" value="${c.id}" ${sel.has(c.id)?'checked':''}><span translate="no">${esc(c.title)}</span></label>`).join('')||`<span class="hint">${tt('team.noch2','Add a channel first.')}</span>`}</div></div>
     <div id="tmerr"></div><button class="btn primary lg wide" type="submit">${m?tt('common.save','Save'):tt('team.send','Send invite')}</button></form>`;
 }
 function openInvite(m){
@@ -596,8 +596,8 @@ function drawReport(){
 }
 const arrow17 = (a,b) => { if(!b&&!a) return ''; if(!b) return ' ↑'; const d=(a-b)/b*100; return Math.abs(d)<0.5?' →0%':` ${d>0?'↑':'↓'}${Math.abs(d).toFixed(0)}%`; };
 function repText(R){
-  const T=R.totals||{}, P=R.previous||{}, d=parseYmd(R.day).toLocaleDateString('en-US',{weekday:'short',day:'numeric',month:'short'});
-  return `📊 <b>Joinvoo daily report · ${esc(d)}</b>\n\n👆 Clicks: <b>${fmt(T.clicks)}</b>${arrow17(T.clicks,P.clicks)}\n👥 Joins: <b>${fmt(T.joins)}</b>${arrow17(T.joins,P.joins)}\n💰 Deposits: <b>${fmt(T.ftd)}</b>${arrow17(T.ftd,P.ftd)}\n💵 Revenue: <b>${money0(T.revenue_cents)}</b>${arrow17(T.revenue_cents,P.revenue_cents)}\n📉 Spend: <b>${money0(T.spend_cents)}</b>${arrow17(T.spend_cents,P.spend_cents)}\n🎯 Cost per join: <b>${centsOr(T.cost_per_join_cents)}</b>\n🏦 Cost per deposit: <b>${centsOr(T.cost_per_ftd_cents)}</b>${R.best_channel?`\n\n🏆 Best channel: <b>${esc(R.best_channel.title)}</b> (${fmt(R.best_channel.n)} ${esc(R.best_channel.by)})`:''}${R.best_campaign?`\n🚀 Best campaign: <b>${esc(R.best_campaign.name)}</b>`:''}`;
+  const T=R.totals||{}, P=R.previous||{}, d=parseYmd(R.day).toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'});
+  return `📊 <b>Joinvoo daily report · ${esc(d)}</b>\n\n👆 Clicks: <b>${fmt(T.clicks)}</b>${arrow17(T.clicks,P.clicks)}\n👥 Joins: <b>${fmt(T.joins)}</b>${arrow17(T.joins,P.joins)}\n💰 Deposits: <b>${fmt(T.ftd)}</b>${arrow17(T.ftd,P.ftd)}\n💵 Revenue: <b>${money0(T.revenue_cents)}</b>${arrow17(T.revenue_cents,P.revenue_cents)}\n📉 Spend: <b>${money0(T.spend_cents)}</b>${arrow17(T.spend_cents,P.spend_cents)}\n🎯 Cost per join: <b>${centsOr(T.cost_per_join_cents)}</b>\n🏦 Cost per deposit: <b>${centsOr(T.cost_per_ftd_cents)}</b>${R.best_channel?`\n\n🏆 Best channel: <b translate="no">${esc(R.best_channel.title)}</b> (${fmt(R.best_channel.n)} ${esc(R.best_channel.by)})`:''}${R.best_campaign?`\n🚀 Best campaign: <b translate="no">${esc(R.best_campaign.name)}</b>`:''}`;
 }
 async function repPreview(R){
   const el=$('#repmsg'); if(!el) return;

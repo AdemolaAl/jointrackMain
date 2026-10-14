@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Takip botunuzu oluşturun",
+  "where": "Kurulum adımı 1",
+  "sents": [
+   "Joinvoo'ya hoş geldiniz.",
+   "Önce takip botunuzu oluşturalım.",
+   "Yaklaşık bir dakika sürer.",
+   "Telegram'ı açın ve mavi tikli BotFather'ı arayın.",
+   "Başlat'a dokunun, ardından eğik çizgi new bot gönderin.",
+   "Botunuza istediğiniz bir ad verin, ardından sonu bot kelimesiyle biten bir kullanıcı adı seçin.",
+   "BotFather size uzun bir token gönderir.",
+   "Kopyalayın, Joinvoo'ya dönün, kutuya yapıştırın ve Bağla'ya dokunun.",
+   "Hepsi bu kadar.",
+   "Botunuz hazır."
+  ]
+ },
+ "t2": {
+  "title": "Botunuzu kanalınıza ekleyin",
+  "where": "Kurulum adımı 2",
+  "sents": [
+   "Şimdi botunuzu kanalınıza ekleyin.",
+   "Telegram'da kanalınızı açın ve adına dokunun.",
+   "Yöneticiler'e, ardından Yönetici Ekle'ye dokunun.",
+   "Botunuzu arayın ve ekleyin.",
+   "\"Bağlantıyla kullanıcı davet et\" seçeneğinin açık olduğundan emin olun, ardından Kaydet'e dokunun.",
+   "Joinvoo'ya geri dönün.",
+   "Joinvoo birkaç saniye içinde kanalınızı kendiliğinden bulur.",
+   "Kanal yerine bir botu takip etmek istiyorsanız \"Botum\" seçeneğini seçin ve aynı basit adımları izleyin."
+  ]
+ },
+ "t3": {
+  "title": "Meta'yı bağla",
+  "where": "Kurulum adımı 3 · Kanal ayarları › Reklam platformları",
+  "sents": [
+   "Sonra Meta'yı bağlayın, böylece her katılım reklamlarınıza geri gönderilir.",
+   "Meta Events Manager'da Pixel ID'nizi kopyalayın.",
+   "Ardından Ayarlar'ı açın, Conversions API'yi bulun ve bir erişim token'ı oluşturun.",
+   "İkisini de Joinvoo'ya yapıştırın ve Test gönder'e dokunun.",
+   "\"Test alındı\" yazısını gördüğünüzde işlem tamamdır.",
+   "Şimdi kanal kartınızdan reklam bağlantınızı kopyalayın ve reklamınıza ekleyin.",
+   "Her katılım, tam olarak ilgili tıklamayla eşleşmiş şekilde Meta'da görünür."
+  ]
+ },
+ "t4": {
+  "title": "Katılma isteğiyle yatırımları takip edin",
+  "where": "Kanal ayarları › Katılım yöntemi",
+  "sents": [
+   "Sadece kimin katıldığını değil, kimin yatırım yaptığını da görmek ister misiniz?",
+   "Katılma isteğini açın.",
+   "Kanalınızın Ayarlar bölümünü, ardından Katılım yöntemi'ni açın.",
+   "Kişileri kimin içeri alacağını seçin.",
+   "Joinvoo onları anında içeri alabilir ve teklif bağlantınızla birlikte karşılama mesajınızı gönderebilir.",
+   "Ya da zaten kendi karşılama botunuz varsa \"Kendi botum\" seçeneğini seçin, Joinvoo yalnızca takip eder.",
+   "Teklif bağlantınızdaki Telegram ID etiketini koruyun, böylece her yatırım doğru kişiyle ve doğru reklamla eşleşir."
+  ]
+ },
+ "t5": {
+  "title": "Kendi web sitenizden kişi gönderin",
+  "where": "Kanal ayarları › Kendi web siteniz",
+  "sents": [
+   "Zaten kendi açılış sayfanız var mı?",
+   "Onu koruyun.",
+   "Kanalınızın Ayarlar bölümünü, ardından \"Kendi web siteniz\" bölümünü açın.",
+   "Kişilerin Telegram'a ne zaman gideceğini seçin: anında, butonunuza dokunduklarında ya da birkaç saniye sonra.",
+   "Tek satırlık kodu kopyalayın ve sayfanıza yapıştırın.",
+   "Ziyaretçiler sayfanıza gelir, ardından doğrudan Telegram'a geçer.",
+   "Ve her katılım yine tam olarak ilgili reklam tıklamasıyla eşleşir."
+  ]
+ },
+ "t6": {
+  "title": "Kendi alan adınızı kullanın",
+  "where": "Kanallar › Bağlantı alan adınız",
+  "sents": [
+   "Reklam bağlantılarınızı kendi alan adınızda çalıştırabilirsiniz, go nokta markanız nokta com gibi.",
+   "Kanallar'ı, ardından \"Bağlantı alan adınız\" bölümünü açın ve alt alan adınızı yazın.",
+   "Joinvoo size iki kayıt gösterir.",
+   "Bunları alan adınızı satın aldığınız yerde, DNS ayarlarınıza ekleyin.",
+   "Ardından Şimdi kontrol et'e dokunun.",
+   "Canlı yazısını gördüğünüzde yeni bağlantılarınız kendi alan adınızı kullanır ve eski bağlantılarınız çalışmaya devam eder.",
+   "Basic bir alan adı içerir.",
+   "Pro size sınırsız alan adı sunar."
+  ]
+ },
+ "t7": {
+  "title": "Kendi botunuzun Start komutunu bağlayın",
+  "where": "Bot ayarları › Bot start ping'i",
+  "sents": [
+   "Reklamlarınızı kendi botunuza mı gönderiyorsunuz ve token'ını paylaşmak istemiyor musunuz?",
+   "Sorun değil.",
+   "Botun Ayarlar bölümünü, ardından \"Kendi botunuzun Start komutunu bağlayın\" bölümünü açın.",
+   "Botunuz için hazır kodu ya da ManyChat veya SendPulse gibi kodsuz araçlar için web adresini kopyalayın.",
+   "Test gönder'e dokunun.",
+   "Artık biri Başlat'a her bastığında botunuz Joinvoo'ya haber verir ve katılım tam olarak ilgili reklamla eşleşir."
+  ]
+ },
+ "t8": {
+  "title": "Ekibinizi ekleyin",
+  "where": "Daha fazla › Ekip",
+  "sents": [
+   "Bir ekiple mi çalışıyorsunuz?",
+   "Daha fazla'yı, ardından Ekip'i açın ve Davet et'e dokunun.",
+   "Medya alıcınızın e-posta adresini girin ve bir rol seçin.",
+   "Yöneticiler tüm kanalları görür.",
+   "Alıcılar yalnızca onlara verdiğiniz kanalları görür.",
+   "Pro üç ekip üyesi içerir ve istediğiniz zaman daha fazlasını ekleyebilirsiniz.",
+   "Sonuçlar bölümünde alıcılarınızı yan yana karşılaştırın ve en ucuz yatırımları kimin getirdiğini görün."
+  ]
+ },
+ "t9": {
+  "title": "Sonuçlarınızı okuyun",
+  "where": "Sonuçlar",
+  "sents": [
+   "Rakamlarınızı nasıl okuyacağınız şöyle.",
+   "Sonuçlar'ı açın.",
+   "En üstte katılımları, yatırımları ve yatırım başına maliyeti görürsünüz.",
+   "Reklam harcamanızı ekleyin ya da reklam hesabınızı bağlayın, Joinvoo katılım başına maliyetinizi ve reklam harcamasının getirisini hesaplar.",
+   "Kişinin geldiği reklamı, kampanyayı ve tıklamayı tam olarak görmek için herhangi bir kişiye dokunun.",
+   "Ayrıca Joinvoo her sabah bu özeti doğrudan Telegram'ınıza gönderebilir.",
+   "Bunu Daha fazla, ardından Günlük rapor bölümünden açın."
+  ]
+ },
+ "t10": {
+  "title": "Kurulum yardımcısı davet edin",
+  "where": "Daha fazla › Ekip",
+  "sents": [
+   "Şifrenizi paylaşmadan Joinvoo'yu sizin için kuracak birine mi ihtiyacınız var?",
+   "Daha fazla'yı, ardından Ekip'i açın ve Davet et'e dokunun.",
+   "Kurulum yardımcısı'nı seçin.",
+   "Tüm planlarda ücretsizdir.",
+   "E-posta adresini girin ya da davet bağlantısını kopyalayıp WhatsApp'tan gönderin.",
+   "Yardımcınız botlarınızı, kanallarınızı ve reklamlarınızı kurabilir, ancak faturalarınızı ve paranızı göremez.",
+   "Birçok müşteriye yardım ediyorsa tüm hesaplarını tek bir yerde görür.",
+   "Onu istediğiniz zaman kaldırabilirsiniz."
+  ]
+ },
+ "t11": {
+  "title": "Yöneticinize gelen mesajları neden takip etmelisiniz",
+  "where": "Kurulum adımı 2 · DM takibi",
+  "sents": [
+   "Reklamlarınız kişileri doğrudan Telegram'daki bir yöneticinin sohbetine mi gönderiyor?",
+   "O zaman bu konu sizin için önemli.",
+   "Şu anda Meta yalnızca bağlantınıza yapılan bir dokunuşu görüyor.",
+   "Yöneticinize gerçekten kimin mesaj gönderdiğini göremiyor, bu yüzden dokunup ayrılan kişileri bulmayı öğreniyor.",
+   "Siz tıklamalar için ödeme yaparken yöneticiniz gerçek sohbetleri bekleyip duruyor.",
+   "Joinvoo her ilk mesajı takip ederek bunu çözer.",
+   "Önce BotFather'da botunuzun ayarlarını açın ve Business Mode'u etkinleştirin.",
+   "Ardından yöneticinin Telegram'ında Ayarlar'ı, sonra Telegram Business'ı, sonra Sohbet botları'nı açın ve botunuzu ekleyin.",
+   "Joinvoo'ya döndüğünüzde Evet, bu benim yöneticim seçeneğine dokunun ve yeni bir reklam bağlantısı alın.",
+   "Meta'yı bağlayın ve bu bağlantıyı reklamınıza ekleyin.",
+   "Biri reklamınıza dokunup ilk mesajını gönderdiğinde Joinvoo bunu tam olarak ilgili reklamla eşleştirir ve Meta'ya bir Potansiyel Müşteri olayı gönderir.",
+   "Artık Meta gerçekten sohbet başlatan kişilerden öğrenir, böylece mesaj başına maliyetiniz düşer ve yöneticiniz daha iyi potansiyel müşteriler alır.",
+   "Ve Joinvoo asla yanıt vermez, insanların yazdıklarını da asla kaydetmez."
+  ]
+ },
+ "t12": {
+  "title": "Mini uygulamanızı kurun",
+  "where": "Kanal ayarları › Nasıl açılır",
+  "sents": [
+   "En hassas takip için kişileri yöneticinize bir mini uygulama üzerinden gönderin.",
+   "Sohbetin Ayarlar bölümünü, ardından Nasıl açılır'ı açın ve Mini uygulamanız üzerinden seçeneğini seçin.",
+   "Joinvoo'nun size gösterdiği web adresini kopyalayın.",
+   "BotFather'da eğik çizgi new app gönderin, botunuzu seçin ve adresi yapıştırın.",
+   "BotFather size bir bağlantı gönderir.",
+   "Bunu Joinvoo'ya geri yapıştırın ve Kaydet'e dokunun.",
+   "Mini uygulamayı bir kez açın, yeşile döner.",
+   "Artık Telegram, reklamınıza tam olarak kimin dokunduğunu Joinvoo'ya bildirir, böylece her mesaj eşleşir."
+  ]
+ },
+ "t13": {
+  "title": "Olayları kendi sunucunuza gönderin",
+  "where": "Dönüşümler › Entegrasyonlar",
+  "sents": [
+   "Her katılımın, mesajın ve yatırımın gerçekleştiği anda kendi sunucunuza gönderilmesini ister misiniz?",
+   "Dönüşümler'i, ardından Entegrasyonlar'ı açın ve Olayları kendi sunucunuza gönderin bölümüne kadar aşağı kaydırın.",
+   "Webhook ekle'ye dokunun ve sunucunuzun adresini yapıştırın, örneğin CRM'iniz, kendi botunuz ya da bir Zapier veya Make bağlantısı.",
+   "İstediğiniz olayları işaretleyin, örneğin katılımlar, ilk mesajlar ve ilk yatırımlar, ardından Webhook ekle'ye dokunun.",
+   "İmzalama anahtarını kopyalayın, böylece sunucunuz her olayın gerçekten Joinvoo'dan geldiğini doğrulayabilir.",
+   "Şimdi Test gönder'e dokunun, sunucunuz yanıt verdiğinde kartta Çalışıyor yazar.",
+   "Bundan sonra her olay, kişiyle, onun Telegram ID'siyle ve geldiği kampanya ile reklamla birlikte ulaşır.",
+   "Sunucunuz bir gün çökerse Joinvoo sizin için yeniden dener, böylece hiçbir şey kaybolmaz."
+  ]
+ },
+ "t14": {
+  "title": "Reklamınızın bilgilerini teklifinize aktarın",
+  "where": "Kanal ayarları › Teklif bağlantısı",
+  "sents": [
+   "Teklifinizin ya da takip aracınızın, her kişinin hangi kampanyadan ve reklamdan geldiğini bilmesini ister misiniz?",
+   "Kanalınızın ayarlarını açın ve teklif bağlantınızı ya da botunuzun buton bağlantısını bulun.",
+   "Bağlantının altında kampanya, reklam ya da sub bir gibi bir etikete dokunun, Joinvoo onu sizin için bağlantıya ekler.",
+   "Reklamınızda, Joinvoo bağlantınızdaki her zamanki URL parametrelerinizi koruyun, örneğin kampanya adı ve reklam adı.",
+   "Biri reklamınıza dokunduğunda Joinvoo her etiketi o kişinin bilgileriyle doldurur.",
+   "Teklifiniz artık her ziyaretin arkasındaki kampanyayı, reklamı ve Telegram ID'yi görür, böylece her yatırım reklama geri eşleşir.",
+   "Etiketler karşılama mesajınızda da çalışır."
+  ]
+ }
+}

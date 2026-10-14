@@ -2,6 +2,98 @@
 
 This guide is for a developer who already runs Joinvoo on Railway with real customers. You can install this update without logging anyone out or losing any data. Expect about 15 minutes, most of it spent checking.
 
+## Round 23 — Languages, login safety, new admin, support fixes, security pass (13 October 2026)
+
+Install on top of round 22. **Existing users keep working exactly as before**: nobody is logged out, nobody's language changes (a saved language always wins), no balances, links, tracking or charges change. The database gets a few **added** columns/tables (below); nothing is removed or rewritten. Back up first anyway.
+
+### Database (added automatically on start, safe to run twice)
+- `sessions`: `created_at, last_seen, ua, ip, country, city, dev` (old sessions show as "Earlier sign-in").
+- New table `devices` (known browsers per user) + index `sessions_user`.
+- `users.secured_at` (makes the "This wasn't me" link single-use).
+- `ticket_msgs.tr_body, tr_lang, tr_note`, `tickets.lang` (support translation).
+
+### What's new for customers
+- **11 languages**: English, Russian, French, Portuguese (Brazil), Spanish (Latin America), plus **Arabic (right-to-left), Hindi, Indonesian, Turkish, Vietnamese, Swahili**. Dashboard, website and emails. The browser language is picked on first visit; a language the user chose is never overridden. Customer data (channel names, campaign names, links) is never translated.
+- **Emails in the user's language** (welcome, reset, alerts, new-login).
+- **My profile → Where you're logged in**: every signed-in browser with device, place and last active; "Sign out" one or "Sign out all others".
+- **New-device email** (switch: `login_alerts`): a sign-in from a browser never used before sends an email with a **"This wasn't me"** button → signs out everywhere, sets a random password, emails a reset link. Single-use.
+- **Support in the customer's language** (switch: `support_translate`): customers write in their language; staff see the English next to it; staff reply in English and it is sent translated. Numbers, money, links, codes and @names are checked after translation; if anything differs the reply is NOT sent and staff see why. The AI also answers in the customer's language.
+- **Support answers faster**: first-message delay cut, and when the team is "away" but an admin is online, the AI answers after 45 s if no human has replied (before: it could stay silent).
+- **Support AI is accurate about balance and free features**: it gets the exact balance line ("5,990,100 credits (about $59,901.00)") and a FREE FEATURES fact: Unique people, By ad platform, Who deposits and Where you're logged in are free on every plan.
+
+### Admin (redesigned)
+- Side menu, "Needs you" overview, search, dark mode, simpler wording.
+- **Team or test accounts**: switch on a user ("keep out of totals"). They're left out of wallets total, customer counts, active users, money analytics and countries (their joins still count for tracking). Staff invited from Admin are marked automatically. Overview shows team wallets separately.
+- **Analytics**: any date range (or presets), compared with the previous period, daily chart, CSV download.
+- **Countries**: customers, new customers, active, joins, paid, top-ups per country; best-performing chart; quiet countries.
+- **Broadcasts**: 3-step composer with ready templates and a preview; sending is blocked while `[placeholders]` are left in.
+- API: `GET /api/admin/analytics(.csv)?from&to` (permission `overview.view`), cached 2 min (10 min for past ranges).
+
+### Security pass (independent reviewers)
+Staff accounts protected from admin reset/suspend by non-owners · reset of a **never-verified** account from a new browser (only when email is set up) **pauses** (does not delete) team members and webhooks that someone else could have added, unlinks Telegram chats, rotates the postback key only if it wasn't used in 30 days, and leaves an inbox note · Joe "test as customer" needs `users.view` · password change rate-limited · bot forward URLs pinned (no private-network requests) · Telegram chat names can't inject links · stricter CSP/HSTS · cross-site `/logout` ignored · promo codes re-checked at payment (bonus paid once) · refund/chargeback takes back the matching share of bonus credits · anonymous visitors use at most 30% of the daily support AI budget.
+
+### Translation clean-up (no English left)
+- Compare page: every sentence with a month name is now a proper translation (before, "Projected {month}" and similar only matched in October). Plurals ("channel and bot", "link domain(s)", "+N% bonus credits") are separate translations. 45 customer-facing server messages (top-up limits, seats, pixels, promo codes…) now translate in the dashboard. Chart labels added on their own are translated too.
+- Hindi uses Devanagari for everyday words (लिंक, बॉट, चैनल, क्रेडिट); Swahili rewritten with Swahili terms (krediti, pochi, kiungo, amana). Literal Telegram/Meta/BotFather button names stay as those apps show them.
+
+### Tutorials in every language + smarter language pick
+- **Tutorial scripts translated** into all 10 languages (`public/i18n/tut.<lang>.json`, same sentences as the English so every screen change lines up). Captions, the menu path and the phone screens in the tutorials now show in the user's language.
+- **Voice-overs per language:** the player plays `media/tutorials/<lang>/<id>.mp3` when it exists; until then it plays the English voice with captions in the user's language (never breaks). **Make them from Admin** → Settings → Integrations & API keys: paste the ElevenLabs key, then **Tutorial voices → Make voices** (live at once, no deploy; stored on the data volume; edited tutorials show “needs a new voice” and only those are remade). Guide: `docs/TUTORIAL-VOICES.md`. About 75,000 credits for all 10 languages, ~7,500 each. Developers can also use the terminal:
+  `ELEVENLABS_API_KEY=sk_... node scripts/make-voiceovers.js` (shows the cost) → add `--yes` to make them (or `--yes es pt ru` for some languages, `--yes --only t1 es` for one to listen first). Then `sh src/dashboard/make.sh` and deploy. Voices are in `scripts/voiceovers.voices.json` (native voices picked: Latin American Spanish, Brazilian Portuguese, Russian, Modern Standard Arabic, Turkish, Swahili; French, Hindi, Indonesian, Vietnamese are picked automatically and the script prints the name). The script also writes each sentence's exact start time, so screens change exactly with the voice.
+- **Language pick:** the first language in the browser's list that Joinvoo speaks (a German+English browser now gets English). If the browser speaks none of them, the account's country decides where one language clearly fits (Brazil → Portuguese, Mexico → Spanish, Russia → Russian, Saudi Arabia/Egypt → Arabic, Indonesia, Turkey, Vietnam, Tanzania, French-speaking West Africa…). A language the user chose always wins. Sign-ups now save the language, so emails arrive in it.
+- Fix: the demo forced English on every visitor; the "Language is…" error listed only 5 languages; `/media/tutorials/<lang>/…` is now served.
+
+### Referral tiers (decided by Ejiro)
+- Refer & earn tiers: 5% from the first paying referral, 10% at 30, 15% at 100, 20% at 250, 30% at 500 (was 10% / 20% at 3 / 30% at 10).
+- A referral only counts as active while they keep funding: a real-money top-up paid in the last 30 days (refunded or charged-back top-ups don't count). When active referrals drop below a tier, the rate drops with them. Commission is still paid on what referrals SPEND, not on what they deposit, and money already earned never changes.
+- ⚠️ If Admin → Settings → Pricing → Referral tiers was ever saved, those saved tiers stay in use: change them there to match.
+- "Up to 50%" stays on the VooSquare affiliate page only (a separate program). The support AI knows the difference and quotes the live tiers and the 30-day rule.
+- The Refer & earn page explains it: "Topped up in the last 30 days" and "A referral counts while they top up at least once every 30 days. If fewer stay active, your rate goes down."
+
+### Live demo
+- "Try the live demo" now opens straight into a full sample account (healthy balance, real-looking numbers) instead of an empty new account that looked like a real sign-up. The demo bar has "Try the setup" (start empty) and a "Start free" button. `/demo?setup=1` opens the empty setup directly.
+
+### Smarter support AI (round 23b)
+- New "Think like our best human agent" rules: checks the account before answering, finds the cause, gives exact steps, re-checks after a fix, points out problems the customer didn't mention (bot disconnected, tracking paused, failed sends, balance running out), one question at a time, crisp hand-over notes. More room per answer (8 steps, longer replies).
+- 44 verified "Solved cases" added to `joe/support.md` (setup, pixels, postbacks, domains, billing, plans, security…); wrong menu paths fixed ("Join method", "Your bots → Add a new bot").
+- **Correct AI** (Admin → Support, on any AI answer): write the answer the AI should have given → saved as a lesson with what not to say; every AI chat learns it. "Save + send" also sends it to the customer through the normal reply. Personal details are removed from lessons. Needs `support.reply`.
+- Tip: for the most human-like answers pick a stronger model in Admin → Settings → Support AI (model).
+
+### Website
+- The "sign-ups are closed" text is only added to the page when sign-ups are really off; the support widget greeting no longer promises "a real person answers".
+
+### Tests
+`tests/e2e-round23.js` (sessions, alerts, analytics, translation), `tests/e2e-round23b.js` (security + money fixes, 87 checks). Full suite: 2,108 ok; the only fail is the old date-dependent check in `e2e-audit.js` (it expects a full-month Pro charge; mid-month proration is correct).
+
+### Deploy
+Back up, replace files, redeploy. Then in Admin → Settings → Features check `login_alerts` and `support_translate` are on (default on), and that an email (Resend) key is set so alerts go out. Rollback = deploy round 22 (the added columns are ignored by it).
+
+## Round 22 — Unique people → By ad platform (13 October 2026)
+
+Install on top of round 21. **Nothing changes for existing users, and nothing in the database changes**: no new tables or columns, no migrations. Tracking, charging and what is sent to Meta/TikTok/Snapchat are untouched. It works on joins already tracked.
+
+### What it is
+- On **Results → Unique people**, with **From ads** on, a new card **"By ad platform"**. Each paid person counted once across Facebook, TikTok and Snapchat:
+  - platforms added up vs different people (e.g. 25,581 → 23,885) and people who clicked ads on 2+ platforms
+  - a two-circle diagram sized to the real numbers (Facebook only / both / TikTok only); with 3+ platforms, a list of combinations instead
+  - per platform: people, **new to you** (no other platform brought them) vs also from another platform, deposit rate, **cost per new person** and cost per person
+  - **real cost per paid person** vs the cost if you add the platforms up (needs ad spend; without it the card shows an "Add spend" link)
+  - how often people from 2+ platforms deposit compared with people from one
+- In the **Everyone** view, one line ("N people came from more than one ad platform… See by ad platform") switches to it.
+- Only shows when 2+ ad platforms brought people in those dates. One platform = no card, nothing empty.
+- The download "People in 2+ funnels" gets one more column at the end: `ad_platforms` (e.g. `Facebook | TikTok`).
+- Joe and support: the `unique_people` tool now includes `by_ad_platform`; `joe/knowledge.md` and `joe/support.md` have a new section ("Am I paying Facebook and TikTok for the same people?").
+- Languages: English, Russian, French, Portuguese, Spanish. Phone, desktop and dark mode checked.
+
+### How it works (for Ademola)
+- The platform comes from the click on each ad join: `fbclid` → Facebook, `ttclid` → TikTok, `ScCid` → Snapchat, otherwise "Other ads" — the same rule as Campaigns → Platform. Fake joins are left out, same as the rest of the report.
+- Computed inside the existing Unique people background thread (`UNIQ_CODE`, new temp tables `uniq_pl`, `uniq_pm`), on the read-only connection. Spend comes from the `spend` table for the same calendar days; media buyers see only their channels' joins and spend.
+- API: `platforms` in `GET /api/unique` (also in the Everyone view, for the one-line link). Same cache, same limits, same admin switch (**Unique people report**): switch it off and this goes too.
+- Tests: `tests/e2e-round22.js` (30 checks: counts, combos, spend, cost per new person, deposits, CSV column, Joe with and without an AI key, media buyer scope, read-only). `e2e-round21.js` updated for the new CSV column. Fake AI on port 4964.
+
+### Deploy
+Same as any update: back up, replace the files, redeploy. No settings to change. Rollback = deploy round 21 again (nothing to undo in the database).
+
 ## Round 21 — Unique people report (13 October 2026)
 
 **Nothing changes for existing users, and nothing in the database changes.** No new tables or columns, no migrations. The report only reads the `joins` table that already exists. Tracking, billing, links and every other screen work exactly as before.

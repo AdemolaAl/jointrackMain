@@ -32,7 +32,7 @@ dashboard (/app), admin (/admin), website, blog ──► server.js (JSON API + 
 | telegram webhook | `onUpdate` → `onBotUpdate` (bot Starts), `chat_member` joins, `onJoinRequest` (request-to-join mode); all joins go through `recordJoin` (fraud filter, send, count, charge) |
 | conversions | `recordConversion` (postback or manual: reg, ftd, dep, sale, qualified, rejected), `onPostback` |
 | click page | `clickPage` (pixels + redirect), `onClick` (records click, hands out an invite link), fake-click flags |
-| unique people (round 21) | `uniqueReport`, `uniqueCsv`: `UNIQ_CODE` runs in a `worker_threads` Worker on a read-only connection (temp tables `uniq_p`, `uniq_n`), cached per account + scope + range; main-thread fallback only with `UNIQUE_THREAD=off` |
+| unique people (round 21) | `uniqueReport`, `uniqueCsv`: `UNIQ_CODE` runs in a `worker_threads` Worker on a read-only connection (temp tables `uniq_p`, `uniq_n`), cached per account + scope + range; main-thread fallback only with `UNIQUE_THREAD=off`. Round 22: `platforms` (temp tables `uniq_pl`, `uniq_pm`; platform from the join's click: fbclid / ttclid / ScCid / other; spend per platform from `spend`) |
 | reports | `stats`, `breakdown` (campaign, adset, ad, lang, source, country, platform, channel), `comparePeriods`, `compareInsights`, `compareCampaigns`, `compare` (months), `funnel`, `cohorts`, `joinsQuery`, `conversionsView` |
 | profile, levels, Joe | `profileChanges`, `meView`, `levelView`/`updateLevel`, `giveCredits`, Joe (`joeInsights`, `joeRules`, `joeAi`, tools) |
 | `api()` | every `/api/*` route for customers; `adminApi()` for `/api/admin/*` |
@@ -186,3 +186,11 @@ The test runner starts a fresh server per suite on :3999 with an empty database,
 | e2e-staff.js | roles on representative endpoints (support, finance, marketing, viewer, admin), invites (new and existing accounts), per-person permissions, custom roles, owner protection, suspend/remove, chat assignment, audit log and filters |
 | e2e-round9.js | sister-product card: defaults, UTM tags, admin edits and validation, click counter + rate limit, off switches |
 | e2e-round8.js | country on sign-up / me (30-day lock, admin override, history), /api/geo, /api/countries, country-filtered payment methods, masked secrets, Paystack + Stripe top-ups with signed webhooks, replay, amount/currency checks and verify-on-return, crypto/manual methods, logos, admin country filter / overview / broadcast audience, Integrations & API keys |
+
+
+## Round 23 additions
+- **Sessions/devices**: `startSession` → `sessionOpened` (stores ua/ip/country/dev); `deviceSeen` on `/api/me`; known device = `jv_dev` cookie in `devices` only. `newLoginAlert` → template `new_login` → `/secure-account` (POST signs out all, random password, reset email, `users.secured_at` single-use). Routes `GET /api/sessions`, `POST /api/sessions/end {id|others}`.
+- **Admin analytics**: `adminRun` inside `UNIQ_CODE` (read-only worker), integer day buckets, previous period of equal length, per-country breakdown; `adminAnalytics` caches; `users.exclude_revenue` = team/test (out of money and customer totals, joins still count).
+- **i18n**: `LANGS` (server, dashboard p3.core, build/i18n.py) = en ru fr pt es ar hi id tr vi sw; `ar` sets `dir=rtl` (CSS in p2g.css.html). Dashboard layer: exact → number template → `auto.*` patterns; anything under `translate="no"` (use `ud()`) is skipped.
+- **Support translation**: `trIn` (customer → English, sets `tickets.lang` by majority), `trOut` (English → customer); `trLocks` compares numbers/money/links/codes before sending; mismatch = not sent. Switch `support_translate`.
+- **Support timing**: `supKick` 800 ms debounce; `supRun` answers after 45 s in away mode if no human replied.

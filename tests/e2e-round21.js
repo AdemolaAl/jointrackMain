@@ -126,7 +126,7 @@ const tokenOf = (url) => url.split('/join-team/')[1];
     r = await O('/api/unique.csv?' + q);
     let lines = r.t.trim().split('\n');
     assert(r.s === 200 && /text\/csv/.test(r.h.get('content-type')) && /joinvoo-unique-people\.csv/.test(r.h.get('content-disposition')), 'CSV download');
-    assert(lines[0] === 'tg_user_id,username,first_name,last_name,funnels,funnel_names,first_funnel,first_joined' && lines.length === 12, 'CSV: header + 11 people in 2+ funnels');
+    assert(lines[0] === 'tg_user_id,username,first_name,last_name,funnels,funnel_names,first_funnel,first_joined,ad_platforms' && lines.length === 12, 'CSV: header + 11 people in 2+ funnels');
     const c1 = lines[1].split(',');
     assert(c1[0] === '8001' && c1[1] === 'p8001new' && c1[4] === '3' && c1[5] === 'Alpha | Charlie | Bravo' && c1[6] === 'Alpha', 'CSV: the 3-funnel person first, newest username, funnels in the order they joined');
     r = await O('/api/unique.csv?' + q + '&min=1&in=' + Cc.id); lines = r.t.trim().split('\n');

@@ -1,0 +1,197 @@
+{
+ "t1": {
+  "title": "Buat bot pelacak Anda",
+  "where": "Langkah penyiapan 1",
+  "sents": [
+   "Selamat datang di Joinvoo.",
+   "Pertama, ayo buat bot pelacak kamu.",
+   "Cuma butuh sekitar satu menit.",
+   "Buka Telegram dan cari BotFather, yang ada centang birunya.",
+   "Ketuk Mulai, lalu kirim garis miring new bot.",
+   "Beri bot kamu nama apa saja, lalu username yang diakhiri dengan kata bot.",
+   "BotFather akan mengirimkan token yang panjang.",
+   "Salin token itu, kembali ke Joinvoo, tempel di kotak, lalu ketuk Hubungkan.",
+   "Selesai.",
+   "Bot kamu sudah siap."
+  ]
+ },
+ "t2": {
+  "title": "Tambahkan bot ke channel Anda",
+  "where": "Langkah penyiapan 2",
+  "sents": [
+   "Sekarang, tambahkan bot kamu ke channel kamu.",
+   "Di Telegram, buka channel kamu, lalu ketuk namanya.",
+   "Ketuk Administrator, lalu Tambah Admin.",
+   "Cari bot kamu, lalu tambahkan.",
+   "Pastikan \"Undang pengguna lewat tautan\" sudah aktif, lalu ketuk Simpan.",
+   "Kembali ke Joinvoo.",
+   "Joinvoo akan menemukan channel kamu dengan sendirinya dalam beberapa detik.",
+   "Kalau kamu mau melacak bot, bukan channel, pilih \"Bot saya\" dan ikuti langkah sederhana yang sama."
+  ]
+ },
+ "t3": {
+  "title": "Hubungkan Meta",
+  "where": "Langkah penyiapan 3 · Pengaturan channel › Platform iklan",
+  "sents": [
+   "Berikutnya, hubungkan Meta, supaya setiap orang yang bergabung dilaporkan kembali ke iklan kamu.",
+   "Di Meta Events Manager, salin Pixel ID kamu.",
+   "Lalu buka Pengaturan, cari Conversions API, dan buat token akses.",
+   "Tempel keduanya di Joinvoo, lalu ketuk Kirim tes.",
+   "Saat kamu melihat \"Tes diterima\", berarti sudah selesai.",
+   "Sekarang salin tautan iklan dari kartu channel kamu, lalu pasang di iklan kamu.",
+   "Setiap orang yang bergabung akan muncul di Meta, dicocokkan dengan klik yang tepat."
+  ]
+ },
+ "t4": {
+  "title": "Lacak deposit dengan minta bergabung",
+  "where": "Pengaturan channel › Metode bergabung",
+  "sents": [
+   "Mau tahu siapa yang deposit, bukan cuma siapa yang bergabung?",
+   "Aktifkan minta bergabung.",
+   "Buka Pengaturan channel kamu, lalu Metode bergabung.",
+   "Pilih siapa yang menerima orang masuk.",
+   "Joinvoo bisa langsung menerima mereka, lalu mengirim pesan sambutan kamu beserta tautan penawaran kamu.",
+   "Atau, kalau kamu sudah punya bot sambutan sendiri, pilih \"Bot saya sendiri\", dan Joinvoo cukup melacak saja.",
+   "Biarkan tag Telegram ID tetap ada di tautan penawaran kamu, dan setiap deposit akan dicocokkan dengan orang dan iklan yang tepat."
+  ]
+ },
+ "t5": {
+  "title": "Kirim orang dari situs web Anda sendiri",
+  "where": "Pengaturan channel › Situs web Anda sendiri",
+  "sents": [
+   "Sudah punya landing page sendiri?",
+   "Tetap pakai saja.",
+   "Buka Pengaturan channel kamu, lalu \"Situs web Anda sendiri\".",
+   "Pilih kapan orang diarahkan ke Telegram: langsung, saat mereka mengetuk tombol kamu, atau setelah beberapa detik.",
+   "Salin satu baris kode itu, lalu tempel di halaman kamu.",
+   "Pengunjung masuk ke halaman kamu, lalu langsung menuju Telegram.",
+   "Dan setiap orang yang bergabung tetap dicocokkan dengan klik iklan yang tepat."
+  ]
+ },
+ "t6": {
+  "title": "Gunakan domain Anda sendiri",
+  "where": "Channel › Domain tautan Anda",
+  "sents": [
+   "Kamu bisa menjalankan tautan iklan di domain kamu sendiri, misalnya go titik brand kamu titik com.",
+   "Buka Channel, lalu \"Domain link Anda\", dan ketik subdomain kamu.",
+   "Joinvoo akan menunjukkan dua record.",
+   "Tambahkan keduanya di tempat kamu membeli domain, di pengaturan DNS kamu.",
+   "Lalu ketuk Periksa sekarang.",
+   "Saat muncul tulisan Aktif, tautan baru kamu sudah memakai domain kamu sendiri, dan tautan lama tetap berfungsi.",
+   "Paket Basic sudah termasuk satu domain.",
+   "Paket Pro memberimu domain tanpa batas."
+  ]
+ },
+ "t7": {
+  "title": "Hubungkan Start bot Anda sendiri",
+  "where": "Pengaturan bot › Ping Start bot",
+  "sents": [
+   "Mengarahkan iklan ke bot kamu sendiri, tapi tidak mau membagikan tokennya?",
+   "Tidak masalah.",
+   "Buka Pengaturan bot, lalu \"Hubungkan Start bot Anda sendiri\".",
+   "Salin kode siap pakai untuk bot kamu, atau alamat web untuk builder tanpa kode seperti ManyChat atau SendPulse.",
+   "Ketuk Kirim uji.",
+   "Sekarang, setiap kali seseorang menekan Mulai, bot kamu memberi tahu Joinvoo, dan orang itu dicocokkan dengan iklan yang tepat."
+  ]
+ },
+ "t8": {
+  "title": "Tambahkan tim Anda",
+  "where": "Lainnya › Tim",
+  "sents": [
+   "Bekerja bersama tim?",
+   "Buka Lainnya, lalu Tim, dan ketuk Undang.",
+   "Masukkan email buyer kamu dan pilih perannya.",
+   "Manajer bisa melihat semua channel.",
+   "Buyer hanya melihat channel yang kamu berikan.",
+   "Paket Pro sudah termasuk tiga anggota tim, dan kamu bisa menambah lagi kapan saja.",
+   "Di Hasil, bandingkan para buyer kamu berdampingan, dan lihat siapa yang memberimu deposit paling murah."
+  ]
+ },
+ "t9": {
+  "title": "Baca hasil Anda",
+  "where": "Hasil",
+  "sents": [
+   "Begini cara membaca angka-angka kamu.",
+   "Buka Hasil.",
+   "Di bagian atas, kamu bisa melihat jumlah yang bergabung, deposit, dan biaya per deposit.",
+   "Masukkan biaya iklan kamu, atau hubungkan akun iklan kamu, lalu Joinvoo akan menghitung biaya per orang bergabung dan imbal hasil belanja iklan kamu.",
+   "Ketuk siapa saja untuk melihat iklan, kampanye, dan klik persis yang membawa mereka.",
+   "Dan setiap pagi, Joinvoo bisa mengirim ringkasan ini langsung ke Telegram kamu.",
+   "Aktifkan di Lainnya, lalu Laporan harian."
+  ]
+ },
+ "t10": {
+  "title": "Undang pembantu setup",
+  "where": "Lainnya › Tim",
+  "sents": [
+   "Butuh orang untuk menyiapkan Joinvoo, tanpa harus membagikan kata sandi kamu?",
+   "Buka Lainnya, lalu Tim, dan ketuk Undang.",
+   "Pilih Asisten penyiapan.",
+   "Gratis di semua paket.",
+   "Masukkan email mereka, atau salin tautan undangan lalu kirim lewat WhatsApp.",
+   "Asisten kamu bisa menyiapkan bot, channel, dan iklan kamu, tapi tidak bisa melihat tagihan atau uang kamu.",
+   "Kalau mereka membantu banyak klien, mereka bisa melihat semua akun itu di satu tempat.",
+   "Kamu bisa menghapus mereka kapan saja."
+  ]
+ },
+ "t11": {
+  "title": "Kenapa melacak pesan ke manajer Anda",
+  "where": "Langkah penyiapan 2 · Pelacakan DM",
+  "sents": [
+   "Apakah iklan kamu mengarahkan orang langsung ke chat manajer di Telegram?",
+   "Kalau iya, bagian ini penting.",
+   "Saat ini, Meta hanya melihat ketukan pada tautan kamu.",
+   "Meta tidak bisa melihat siapa yang benar-benar mengirim pesan ke manajer kamu, jadi Meta belajar mencari orang yang mengetuk lalu pergi.",
+   "Kamu membayar klik, sementara manajer kamu duduk menunggu percakapan sungguhan.",
+   "Joinvoo memperbaikinya dengan melacak setiap pesan pertama.",
+   "Pertama, di BotFather, buka pengaturan bot kamu dan aktifkan Business Mode.",
+   "Lalu, di Telegram milik manajer, buka Pengaturan, lalu Telegram Business, lalu Chatbot, dan tambahkan bot kamu.",
+   "Kembali ke Joinvoo, ketuk Ya, itu manajer saya, dan kamu akan mendapat tautan iklan baru.",
+   "Hubungkan Meta, lalu pasang tautan itu di iklan kamu.",
+   "Saat seseorang mengetuk iklan kamu dan mengirim pesan pertamanya, Joinvoo mencocokkannya dengan iklan yang tepat, lalu mengirim Lead ke Meta.",
+   "Sekarang Meta belajar dari orang yang benar-benar memulai percakapan, jadi biaya per pesan kamu turun dan manajer kamu mendapat prospek yang lebih bagus.",
+   "Dan Joinvoo tidak pernah membalas, dan tidak pernah menyimpan apa yang ditulis orang."
+  ]
+ },
+ "t12": {
+  "title": "Siapkan mini app Anda",
+  "where": "Pengaturan channel › Cara membuka",
+  "sents": [
+   "Untuk pelacakan yang paling akurat, arahkan orang ke manajer kamu lewat mini app.",
+   "Buka Pengaturan chat, lalu Cara membuka, dan pilih Lewat mini app Anda.",
+   "Salin alamat web yang ditunjukkan Joinvoo.",
+   "Di BotFather, kirim garis miring new app, pilih bot kamu, lalu tempel alamatnya.",
+   "BotFather akan mengirimkan sebuah tautan.",
+   "Tempel tautan itu kembali di Joinvoo, lalu ketuk Simpan.",
+   "Buka mini app itu sekali, dan statusnya akan berubah hijau.",
+   "Sekarang Telegram memberi tahu Joinvoo siapa persisnya yang mengetuk iklan kamu, jadi setiap pesan bisa dicocokkan."
+  ]
+ },
+ "t13": {
+  "title": "Kirim event ke server Anda sendiri",
+  "where": "Konversi › Integrasi",
+  "sents": [
+   "Mau setiap orang yang bergabung, setiap pesan, dan setiap deposit langsung dikirim ke server kamu sendiri saat itu juga?",
+   "Buka Konversi, lalu Integrasi, dan gulir ke bawah ke Kirim event ke server Anda sendiri.",
+   "Ketuk Tambah webhook, lalu tempel alamat server kamu, misalnya CRM kamu, bot kamu sendiri, atau tautan Zapier atau Make.",
+   "Centang event yang kamu mau, misalnya bergabung, pesan pertama, dan deposit pertama, lalu ketuk Tambah webhook.",
+   "Salin kunci rahasia penandatanganan, supaya server kamu bisa memastikan setiap event benar-benar berasal dari Joinvoo.",
+   "Sekarang ketuk Kirim tes, dan saat server kamu menjawab, kartunya akan bertuliskan Berfungsi.",
+   "Mulai sekarang, setiap event datang bersama data orangnya, Telegram ID mereka, serta kampanye dan iklan asal mereka.",
+   "Dan kalau server kamu sedang mati, Joinvoo akan mencoba lagi untukmu, jadi tidak ada yang hilang."
+  ]
+ },
+ "t14": {
+  "title": "Teruskan detail iklan Anda ke penawaran",
+  "where": "Pengaturan channel › Tautan penawaran",
+  "sents": [
+   "Mau penawaran atau tracker kamu tahu setiap orang datang dari kampanye dan iklan yang mana?",
+   "Buka pengaturan channel kamu, lalu cari tautan penawaran kamu, atau tautan tombol bot kamu.",
+   "Di bawah tautan itu, ketuk sebuah tag, misalnya kampanye, iklan, atau sub satu, dan Joinvoo akan menambahkannya ke tautan untukmu.",
+   "Di iklan kamu, tetap pakai parameter URL seperti biasa di tautan Joinvoo kamu, misalnya nama kampanye dan nama iklan.",
+   "Saat seseorang mengetuk iklan kamu, Joinvoo mengisi setiap tag dengan data orang tersebut.",
+   "Sekarang penawaran kamu bisa melihat kampanye, iklan, dan Telegram ID di balik setiap kunjungan, jadi setiap deposit dicocokkan kembali dengan iklannya.",
+   "Tag juga berfungsi di pesan sambutan kamu."
+  ]
+ }
+}

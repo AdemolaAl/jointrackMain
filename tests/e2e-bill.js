@@ -97,12 +97,12 @@ const sleep = (t) => new Promise((r) => setTimeout(r, t));
   const go2 = await fetch(B + new URL(ch2.tracking_url).pathname + '/go', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"url":"https://x.com/?fbclid=1"}' }).then((x) => x.json());
   assert(/start=/.test(go2.url) && (await C2('/api/billing')).j.balance_cents === 1000, 'paid account: plan charged from real money');
   ref = (await A('/api/referrals')).j;
-  assert(ref.earned_cents === 300 && ref.balance_cents === 300 && ref.withdrawable_cents === 0, 'referrer earns 10% of the paid plan ($3.00), still settling');
+  assert(ref.earned_cents === 150 && ref.balance_cents === 150 && ref.withdrawable_cents === 0, 'referrer earns 5% (first tier, round 23b) of the paid plan ($1.50), still settling');
   r = await post(A, '/api/referrals/withdraw', { method: 'usdt', details: 'T' + 'A'.repeat(33) });
   assert(r.s === 400, 'cannot withdraw under $300 / while settling');
   r = await post(A, '/api/referrals/credit');
   const abill = (await A('/api/billing')).j; ref = (await A('/api/referrals')).j;
-  assert(abill.balance_cents === 3300 && ref.balance_cents === 0, 'moving earnings to wallet adds to balance and empties referral balance');
+  assert(abill.balance_cents === 3150 && ref.balance_cents === 0, 'moving earnings to wallet adds to balance and empties referral balance');
 
   // admin credit, suspend
   const users = (await ADM('/api/admin/users?q=buyer@x.com')).j.users;

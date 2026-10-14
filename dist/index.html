@@ -1,16 +1,17 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>window.JP_DEMO=true</script></head><body><script>
 /* Joinvoo website i18n: ?lang= > saved choice > browser language > English. Dictionary: i18n/web.<lang>.json */
 (function(){
-  var L=['en','ru','fr','pt','es'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇵🇹','Português'],es:['🇪🇸','Español']};
+  var L=['en','ru','fr','pt','es','ar','hi','id','tr','vi','sw'], N={en:['🇬🇧','English'],ru:['🇷🇺','Русский'],fr:['🇫🇷','Français'],pt:['🇧🇷','Português'],es:['🇪🇸','Español'],ar:['🇸🇦','العربية'],hi:['🇮🇳','हिन्दी'],id:['🇮🇩','Bahasa Indonesia'],tr:['🇹🇷','Türkçe'],vi:['🇻🇳','Tiếng Việt'],sw:['🇰🇪','Kiswahili']};
   function norm(s){ return String(s).replace(/\s+/g,' ').trim(); }
   function h(s){ s=norm(s); var x=2166136261; for(var i=0;i<s.length;i++){ var c=s.codePointAt(i); if(c>0xffff) i++; x=Math.imul((x^c)>>>0,16777619)>>>0; } return x.toString(36); }
   var q=null, saved=null; try{ q=new URLSearchParams(location.search).get('lang'); }catch(e){} try{ saved=localStorage.getItem('jv_lang'); }catch(e){}
-  var nav=((navigator.languages&&navigator.languages[0])||navigator.language||'en').slice(0,2).toLowerCase();
-  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:L.indexOf(nav)>=0?nav:'en';
+  var navs=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||'en']), nav=null;
+  for(var ni=0;ni<navs.length&&!nav;ni++){ var c2=String(navs[ni]).slice(0,2).toLowerCase(); if(L.indexOf(c2)>=0) nav=c2; }
+  var lang=L.indexOf(q)>=0?q:L.indexOf(saved)>=0?saved:nav||'en';
   if(L.indexOf(q)>=0){ try{ localStorage.setItem('jv_lang',q); }catch(e){} }
   var D={};
   if(lang!=='en'){ try{ var x=new XMLHttpRequest(); x.open('GET','i18n/web.'+lang+'.json',false); x.send(); if(x.status===200) D=JSON.parse(x.responseText)||{}; }catch(e){ D={}; } }
-  document.documentElement.lang=lang; window.JV_LANG=lang;
+  document.documentElement.lang=lang; if(lang==='ar') document.documentElement.dir='rtl'; window.JV_LANG=lang;
   window._t=function(en){ var k=h(en); return D[k]!=null?D[k]:en; };
   function apply(){ if(lang==='en') return; var i, el, v, a=document.querySelectorAll('[data-i18n]:not([data-i18n-ok])');
     for(i=0;i<a.length;i++){ el=a[i]; v=D[el.getAttribute('data-i18n')]; el.setAttribute('data-i18n-ok',''); if(v!=null) el.innerHTML=v; }
@@ -162,6 +163,9 @@ h1,h2,h3{overflow-wrap:break-word}
 /* small pills and inline nav links keep their look but get a 44px hit area */
 .hit44{position:relative}
 .hit44::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+/* round 23 review: Arabic (right to left): arrows in buttons point the other way, on every page (moved here from home.html so sign-up and login get it) */
+[dir=rtl] .btn svg:not(.pi svg){transform:scaleX(-1)}
+[dir=rtl] .btn:hover svg:not(.pi svg){transform:scaleX(-1) translateX(3px)}
 
 /* Simple homepage: hero → how it works (3 steps) → why buyers switch (4 tiles) → pricing (Basic | Pro) → FAQ (5) → final CTA.
    "Watch how it works" opens an in-page player (#xp): a 30-second scripted animation with captions, optional audio. */
@@ -206,6 +210,7 @@ header.top nav a.login{color:var(--ink);font-weight:700}
 .ctas{display:flex;gap:12px;flex-wrap:wrap}
 .btn.play .pi{width:30px;height:30px;margin:-6px 0 -6px -10px;border-radius:50%;display:grid;place-items:center;background:#5b3df5;color:#fff;box-shadow:0 0 0 0 rgba(91,61,245,.45);animation:pring 2.4s cubic-bezier(.2,.6,.3,1) infinite}
 .btn.play .pi svg{width:13px;height:13px;margin-left:2px}
+[dir=rtl] .btn.play .pi{margin:-6px -10px -6px 0} /* round 23: Arabic (round 23 review: the arrow flip moved to shared.css) */
 .btn.play:hover .pi svg{transform:none}
 @keyframes pring{0%{box-shadow:0 0 0 0 rgba(91,61,245,.45)}70%,100%{box-shadow:0 0 0 12px rgba(91,61,245,0)}}
 .checks{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:14.5px;font-weight:600;color:var(--muted);margin:0}
@@ -881,7 +886,7 @@ html:not([lang=en]) .hcopy h1{font-size:clamp(32px,4.4vw,58px)}
         </div></div>
       </div>
       <aside class="botwarn" role="note"><span class="bw-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M2 13v2M22 13v2"/></svg></span><div data-i18n="1gu9fm4"><b>Many of your “joins” aren’t real people.</b><span>Bots and junk placements like Audience Network inflate your joins, and Meta keeps buying more of them. Joinvoo filters out the fakes and reports only real joins, so your ads learn from real people.</span></div></aside>
-      <p data-i18n="13ccj6" class="closed">Sign-ups are closed right now. Existing customers can still log in.</p>
+      <p class="closed" aria-live="polite"></p><!-- round 23: filled only when sign-ups are really closed, so search engines and AI readers never see it on an open site -->
     </div>
   </div>
   <div class="wrap strip"><span data-i18n="1o61hxv">Works with</span>
@@ -1266,7 +1271,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   <div class="sp-body" id="spBody" aria-live="polite">
     <div class="sp-card" id="spWelcome">
       <div class="sp-who" id="spWho"></div>
-      <p data-i18n="1av0i9p" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat. A real person answers.</p>
+      <p data-i18n="1tyl46s" id="spHello">Hi 👋 Ask us anything about tracking Telegram joins and deposits from Meta, TikTok or Snapchat.</p>
       <div class="sp-quick" id="spQuick">
         <button data-i18n="obgtty" type="button" data-q="how">How does tracking work? <span>→</span></button>
         <button data-i18n="19h2n9m" type="button" data-q="price">Pricing <span>→</span></button>
@@ -1543,6 +1548,7 @@ body.mcta-on .sp{bottom:calc(162px + env(safe-area-inset-bottom,0px));height:min
   /* live numbers from /api/config: free joins, trial, plan prices, limits, feature switches */
   (window.JV_CONFIG||Promise.resolve(null)).then(c=>{ if(!c) return;
     const f=c.features; if(f) ['signup','snapchat','tiktok','enterprise'].forEach(k=>{ if(f[k]===false) document.body.classList.add('no-'+k); });
+    if(f&&f.signup===false) document.querySelectorAll('p.closed').forEach(p=>p.textContent=(window._t||String)('Sign-ups are closed right now. Existing customers can still log in.'));
     const fj=c.pricing&&c.pricing.free_joins; if(fj>0) $$('.fj').forEach(x=>x.textContent=fmt(fj));
     if(c.trial&&c.trial.days) $$('.tdays').forEach(x=>x.textContent=c.trial.days);
     const cents=v=>v>=100?'$'+(v/100).toLocaleString('en-US',{maximumFractionDigits:2}):v+'¢';

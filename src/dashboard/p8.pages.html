@@ -15,7 +15,7 @@ function drawChannels(){
     const prow=p=>{ const on=platOn(c,p); const test=(p==='meta'&&c.test_code)||(p==='tiktok'&&c.tt_test_code)||(p==='snap'&&c.sc_test);
       return `<div class="prow2">${pm(p)}<b>${PLAT[p].name}</b>${on?`<span style="display:inline-flex;gap:6px;align-items:center;flex-wrap:nowrap;margin-left:auto">${test?'<span class="chip y" title="Test mode is on">Test</span>':''}<button class="chip g" style="cursor:pointer" data-act="plat-open" data-id="${c.id}" data-p="${p}">${I.check.replace('<svg','<svg style="width:12px;height:12px"')} ${esc(platEvent(c,p))}</button></span>`:`<button class="btn sm" data-act="plat-open" data-id="${c.id}" data-p="${p}">Connect</button>`}</div>`; };
     const pool=c.pool_target?Math.min(100,c.pool/c.pool_target*100):0;
-    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3>${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
+    return `<article class="card chan${c.locked?' locked':''}" data-ch="${c.id}"><div class="chan-top"><span class="chan-ico" style="background:${CH_GRAD[i%CH_GRAD.length]}">${isB?I.bot.replace('<svg','<svg style="width:20px;height:20px"'):chInit(c.title)}</span><div><h3 translate="no">${esc(c.title)}</h3><small>${isB?(c.external?'Bot subscribers · no token':'Bot subscribers'):c.type==='channel'?'Channel':'Group'}${!isB&&c.bots[0]?' · @'+esc(c.bots[0])+(c.bots.length>1?` +${c.bots.length-1} bot`:''):''}</small></div>${st}<button class="ch-more" data-act="ch-menu" data-id="${c.id}" aria-label="${esc(tt('ch.more','More options for {t}',{t:c.title}))}" aria-haspopup="menu">${DOTS}</button></div>${c.locked?chLockNote(c):''}
       <div class="chan-sec"><span class="lbl">Your link for ads</span><div class="codebox"><code>${esc(c.tracking_url)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(c.tracking_url)}">${I.copy} Copy</button></div>${domPick(c,d)}</div>
       <div class="chan-sec" style="gap:4px"><span class="lbl" style="margin-bottom:4px">Ad platforms</span>${PLATS().map(prow).join('')}<div class="prow2" style="opacity:.6">${pm('google')}<b>Google Ads</b><span class="chip o">Coming soon</span></div></div>
       ${isB&&c.external?`<div class="chan-sec"><div class="prow2"><span class="chip v">${I.lock.replace('<svg','<svg style="width:12px;height:12px"')} Tracked via your bot (no token)</span></div>
@@ -33,7 +33,7 @@ function drawChannels(){
 }
 function openPlatform(id, p){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const on=platOn(c,p);
-  sheet(`${pm(p,1)}<h2>${PLAT[p].name}<small>${esc(c.title)}</small></h2>`, `<p class="muted" style="font-size:14px">Every join from this link is sent to your ${PLAT[p].name} ${p==='meta'?'pixel':p==='tiktok'?'pixel':'Pixel'} through ${p==='meta'?'the Conversions API':p==='tiktok'?'the Events API':'the Conversions API'}, server-side. First deposits from your postback are sent too.</p>
+  sheet(`${pm(p,1)}<h2>${PLAT[p].name}<small translate="no">${esc(c.title)}</small></h2>`, `<p class="muted" style="font-size:14px">Every join from this link is sent to your ${PLAT[p].name} ${p==='meta'?'pixel':p==='tiktok'?'pixel':'Pixel'} through ${p==='meta'?'the Conversions API':p==='tiktok'?'the Events API':'the Conversions API'}, server-side. First deposits from your postback are sent too.</p>
     <form id="mf" style="display:flex;flex-direction:column;gap:16px">${platFields(p,c,true)}
       <div id="merr"></div><div class="row-in"><button class="btn primary lg" type="submit" style="flex:1">Save</button>${on?`<button class="btn lg" type="button" data-act="test" data-id="${c.id}" data-p="${p}">Send test</button>`:''}</div></form>
     <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Where do I find these? Open the guide ${I.ext}</a>`);
@@ -43,7 +43,7 @@ function openPlatform(id, p){
 }
 function openBotSettings(id){
   const c=S.chans.channels.find(x=>String(x.id)===String(id)); if(!c) return; const bot=S.chans.bots.find(b=>('@'+b.username)===c.title)||S.chans.bots[0];
-  sheet(`<h2>Bot settings<small>${esc(c.title)}</small></h2>`, `<form id="bsf" style="display:flex;flex-direction:column;gap:16px">
+  sheet(`<h2>Bot settings<small translate="no">${esc(c.title)}</small></h2>`, `<form id="bsf" style="display:flex;flex-direction:column;gap:16px">
     <div class="field"><label for="sw1">Welcome message</label><textarea class="inp" id="sw1" rows="3" placeholder="Hi {name} 👋 Welcome!">${esc(c.welcome)}</textarea><span class="hint">Sent when someone presses Start. {name} becomes their first name. Leave empty to send nothing.</span></div>
     <div class="field"><label for="sw2">Button text</label><input class="inp" id="sw2" value="${esc(c.btn_text)}" placeholder="Join the group"></div>
     <div class="field"><label for="sw3">Button link</label><input class="inp" id="sw3" value="${esc(c.btn_url)}" placeholder="https://t.me/+…"></div>
@@ -65,7 +65,7 @@ function openChangePass(){
 function manualAdd(){
   const bots=(S.chans&&S.chans.bots.filter(b=>b.status==='active'))||[];
   sheet('<h2>Add by username</h2>', `<p class="muted">For when your bot was made admin before you connected it here.</p>
-    <form id="mmf" style="display:flex;flex-direction:column;gap:16px"><div class="field"><label for="mb">Bot</label><select class="sel" id="mb">${bots.map(b=>`<option value="${b.id}">@${esc(b.username)}</option>`).join('')}</select></div>
+    <form id="mmf" style="display:flex;flex-direction:column;gap:16px"><div class="field"><label for="mb">Bot</label><select class="sel" id="mb">${bots.map(b=>`<option value="${b.id}" translate="no">@${esc(b.username)}</option>`).join('')}</select></div>
     <div class="field"><label for="mch">Channel @username or ID</label><input class="inp" id="mch" placeholder="@mychannel"><span class="hint">Private channel? Forward a post from it to @userinfobot to get the ID.</span></div><div id="mmerr"></div><button class="btn primary lg wide" type="submit">Add channel</button></form>`);
   $('#mmf').addEventListener('submit', async e=>{ e.preventDefault();
     try { await api('POST','/api/channels',{bot_id:$('#mb').value,chat:$('#mch').value}); closeSheet(); await refreshChans(); W.channel=S.chans.channels[S.chans.channels.length-1]; W.step=3; drawStep(); }
@@ -227,9 +227,9 @@ async function viewEarn(){
     <section class="card" style="padding:18px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px;font-weight:650">Your referral link</b><span class="chip v">They sign up, you earn on every top-up</span></div>
       <div class="codebox"><code>${esc(r.link)}</code><button class="btn sm primary" data-act="copy" data-v="${esc(r.link)}">${I.copy} Copy</button></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="https://wa.me/?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">WhatsApp</a><a class="btn sm" href="https://t.me/share/url?url=${encodeURIComponent(r.link)}&text=${encodeURIComponent('Track who joins your Telegram from your ads')}" target="_blank" rel="noopener">${pm('tg')} Telegram</a><a class="btn sm" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(share)}" target="_blank" rel="noopener">X</a></div></section>
-    <div class="kpis">${[['Signed up',fmt(r.invited),'With your link'],['Paying referrals',fmt(r.active),'Active = they’ve paid'],['They spent',money(r.month_spend_cents),'This month'],['You earned',money(r.month_earned_cents),'This month']].slice(0,3).map(([l,v,s])=>`<section class="card kpi"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('')}</div>
+    <div class="kpis">${[['Signed up',fmt(r.invited),'With your link'],['Paying referrals',fmt(r.active),tt('ref.act30','Topped up in the last 30 days')],['They spent',money(r.month_spend_cents),'This month'],['You earned',money(r.month_earned_cents),'This month']].slice(0,3).map(([l,v,s])=>`<section class="card kpi"><span class="kl">${l}</span><div class="kv-row"><span class="kn">${v}</span></div><span class="ks">${s}</span></section>`).join('')}</div>
     <div class="tiers">${r.tiers.map((t,i)=>`<section class="card tier ${i===ti?'on':i<ti?'done':''}"><b>${Math.round(t.rate*100)}%</b><span>${t.name}</span><small>${t.min?`${t.min}+ paying referrals`:'From your first referral'}</small></section>`).join('')}</div>
-    ${r.next_tier?`<section class="card nudge"><span class="coin">${I.bolt.replace('<svg','<svg style="width:16px;height:16px"')}</span><span><b>${r.next_tier.need} more paying referral${r.next_tier.need===1?'':'s'} to reach ${Math.round(r.next_tier.rate*100)}%</b><br>A referral counts once they’ve topped up their wallet.</span></section>`:''}
+    ${r.next_tier?`<section class="card nudge"><span class="coin">${I.bolt.replace('<svg','<svg style="width:16px;height:16px"')}</span><span><b>${r.next_tier.need} more paying referral${r.next_tier.need===1?'':'s'} to reach ${Math.round(r.next_tier.rate*100)}%</b><br>${tt('ref.counts30','A referral counts while they top up at least once every 30 days. If fewer stay active, your rate goes down.')}</span></section>`:''}
     <div class="how4"><section class="card"><span class="n">1</span><b>Share your link</b><small>Media buyers, channel owners, friends.</small></section><section class="card"><span class="n">2</span><b>They top up</b><small>They run ads and pay for Joinvoo from their wallet.</small></section><section class="card"><span class="n">3</span><b>You earn 10–30%</b><small>Of what they spend, for as long as they use Joinvoo.</small></section><section class="card"><span class="n">4</span><b>Cash out or spend</b><small>Withdraw in USDT or BTC from ${money0(r.withdraw_min_cents)}, or use it on your bill.</small></section></div>
     <section class="card"><div class="card-h"><h2>Earnings by person</h2></div><div style="padding-bottom:6px">${r.people.length ? r.people.map(x=>`<div class="lrow"><span class="coin">$</span><span><b>${esc(x.email)}</b><small>${x.active||x.spend_cents?`Spent ${money(x.spend_cents)} · joined ${ago(x.joined_at)}`:`Not paying yet · joined ${ago(x.joined_at)}`}</small></span><span class="amt" style="color:${x.earned_cents?'var(--mint-ink)':'var(--faint)'}">${x.earned_cents?'+'+money(x.earned_cents):'—'}</span></div>`).join('') : `<div class="empty"><span class="ei">${I.earn}</span><h3>Your first payout starts here</h3><p>Share your link. When the people you invite start paying for Joinvoo, your earnings show up here.</p></div>`}</div></section>
     ${r.payouts&&r.payouts.length?`<section class="card"><div class="card-h"><h2>Withdrawals</h2></div><div style="padding-bottom:6px">${r.payouts.map(x=>`<div class="lrow"><span class="li" style="background:var(--brand-soft);color:var(--brand-text)">${I.download}</span><span><b>${money(x.amount_cents)} in ${x.method==='btc'?'BTC':'USDT'}</b><small>${ago(x.created_at)}</small></span><span class="chip ${x.status==='paid'?'g':x.status==='rejected'?'r':'y'}">${x.status==='paid'?'Paid':x.status==='rejected'?'Returned':'Processing'}</span></div>`).join('')}</div></section>`:''}`;
@@ -247,8 +247,10 @@ function openWithdraw(){
 }
 
 /* ---------- help ---------- */
+const GV = () => (!DEMO && S.cfg && S.cfg.guide_video) || {}; /* round 23 review: {mp4, poster}: which guide files exist (from /api/config) */
 function guideVideo(){
-  const card=$('#vidcard'), fb=$('#vidfb'), v=$('#gvid'); if(!card||!v) return;
+  const card=$('#vidcard'), fb=$('#vidfb'), v=$('#gvid'); if(!card) return;
+  if(!v){ card.hidden=true; if(fb) fb.hidden=false; return; } /* round 23 review: no video file on the server → the text-guide card, no <video>, no 404s */
   let done=false; const fail=()=>{ if(done) return; done=true; card.hidden=true; if(fb) fb.hidden=false; };
   v.addEventListener('error',fail); const src=v.querySelector('source'); src&&src.addEventListener('error',fail);
   // preload is "none", so check the file is really there before showing the player
@@ -264,7 +266,7 @@ function vooConnectBtn(){
 function viewHelp(){
   S.redraw=[]; setTimeout(guideVideo,0);
   $('#view').innerHTML = `<div class="view"><div class="ph"><div><div class="eyebrow">Help &amp; Support</div><h1>How can we help?</h1><p>Real people, inside your dashboard. Most setups are done in about 10 minutes.</p></div></div>
-  <section class="card vidcard" id="vidcard"><div class="phone"><video id="gvid" controls playsinline preload="none" poster="${DEMO?'media/joinvoo-guide.jpg':'/media/joinvoo-guide.jpg'}" aria-label="Joinvoo setup guide video"><source src="${DEMO?'media/joinvoo-guide.mp4':'/media/joinvoo-guide.mp4'}" type="video/mp4"></video></div>
+  <section class="card vidcard" id="vidcard"${GV().mp4?'':' hidden'}><div class="phone">${GV().mp4?`<video id="gvid" controls playsinline preload="none"${GV().poster?' poster="/media/joinvoo-guide.jpg"':''} aria-label="Joinvoo setup guide video"><source src="/media/joinvoo-guide.mp4" type="video/mp4"></video>`:''}</div>
     <div class="vid-copy"><span class="vtag">${I.sparkles} Video · about 3 minutes</span><h2>Watch the setup guide</h2><p>See the whole setup on a phone, start to finish. Pause any time and follow along.</p>
       <ol class="vlist"><li><span class="n">1</span>Make your bot in @BotFather</li><li><span class="n">2</span>Add it to your channel, or connect your bot</li><li><span class="n">3</span>Connect Meta, TikTok or Snapchat</li><li><span class="n">4</span>Put the link in your ad and test it on your phone</li></ol>
       <a class="link" href="${GUIDE}" target="_blank" rel="noopener">Prefer reading? Open the text guide ${I.ext}</a></div></section>
@@ -376,17 +378,17 @@ function drawMsgs(){
   const el=$('#msgs'); if(!el) return; const nm=(S.me&&S.me.name)||'', T=team(), lead=T[0];
   const role = n => (T.find(t=>t.name===n)||{}).role || '';
   const fresh = !CH.msgs.some(m=>!m.from_admin) && !CH.pending.length;
-  let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b>${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
+  let h=`<div class="welcome"><div class="wl-h">${face(lead,'md')}<div><b translate="no">${esc(lead.name)}</b><small>${esc(role(lead.name)||'Joinvoo support')}</small></div></div>
     <p>${aiSup()?tt('sup.ai.hi','Hi{n} 👋 I’m {a}, Joinvoo’s AI support assistant. Ask me anything about setup, tracking, deposits, billing or your account. A teammate can take over any time.',{n:nm?' '+esc(nm):'',a:esc(lead.name)}):`Hi${nm?' '+esc(nm):''} 👋 Ask us anything about setup, tracking, deposits or billing. We’re real people and we read every message.`}</p>
     ${fresh?`<div class="topics">${TOPICS().map(([k,ic,l,v])=>k==='guide'?`<a class="topic" href="${GUIDE}" target="_blank" rel="noopener">${ic}<span>${esc(l)}</span>${I.ext}</a>`:`<button type="button" class="topic" data-act="${k==='page'?'topic-page':'quick'}" data-v="${esc(v)}">${ic}<span>${esc(l)}</span>${I.chevr}</button>`).join('')}</div>`:''}</div>`;
   let lastDay='', prevKey='';
   CH.msgs.forEach((m,i)=>{ const d=new Date(m.created_at).toDateString();
-    if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
+    if (d!==lastDay){ lastDay=d; prevKey=''; h+=`<div class="day-sep"><span>${d===new Date().toDateString()?'Today':new Date(m.created_at).toLocaleDateString(LOC(),{weekday:'short',month:'short',day:'numeric'})}</span></div>`; }
     const me=!m.from_admin, ag=me?null:(m.agent&&m.agent.name?m.agent:lead), key=me?'me':'a:'+ag.name, nx=CH.msgs[i+1], nk=nx?(!nx.from_admin?'me':'a:'+((nx.agent&&nx.agent.name)||lead.name)):'', first=key!==prevKey, last=key!==nk||!!CH.pending.length&&me;
     prevKey=key;
-    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me${m.image?' pic':''}">${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
-    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname">${esc(ag.name)}${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
-  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending${p&&p.img?' pic':''}">${p&&p.img?msgBody({image:p.img,body:p.body||PHOTO}):esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
+    if (me) h+=`<div class="mrow me"><div class="mcol"><div class="msg me${m.image?' pic':''}" translate="no">${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div>${last?meFace(28):'<span class="face-gap"></span>'}</div>`;
+    else h+=`<div class="mrow them">${last?face(ag,'sm'):'<span class="face-gap"></span>'}<div class="mcol">${first?`<div class="mname"><span translate="no">${esc(ag.name)}</span>${ag.ai?' <em class="ai-tag">AI</em>':''}${role(ag.name)?` <span>· ${esc(role(ag.name))}</span>`:''}</div>`:''}<div class="msg them" translate="no">${m.demo?'<span class="demo-tag">Demo reply</span>\n':''}${msgBody(m)}</div>${last?`<div class="msg-t">${clock(m.created_at)}</div>`:''}</div></div>`; });
+  for (const p of CH.pending) h+=`<div class="mrow me"><div class="mcol"><div class="msg me pending${p&&p.img?' pic':''}" translate="no">${p&&p.img?msgBody({image:p.img,body:p.body||PHOTO}):esc(p)}</div><div class="msg-t">Sending…</div></div></div>`;
   if (CH.typing){ const tp=(CH.typingName&&T.find(t=>t.name===CH.typingName))||lead; h+=`<div class="mrow them">${face(tp,'sm')}<div class="typing" aria-label="${esc(tp.name)} is typing"><i></i><i></i><i></i></div></div>`; }
   if (CH.err) h+=`<div class="err" style="align-self:stretch">${esc(CH.err)}</div>`;
   /* round 20: keep the reader's place. Only stick to the bottom when they were already there (or just sent something);
@@ -486,7 +488,10 @@ document.addEventListener('click', e=>{
     case 'skip-meta': W.step=4; drawStep(); break;
     case 'finish': S.page='overview'; renderApp(); break;
     case 'csv': if (DEMO) toast('Downloads work on your live account',false); else location.href='/api/joins.csv?'+rq()+`&type=${S.type}&q=${encodeURIComponent(S.q)}`; break;
-    case 'logout': clearTimeout(CH.t); stopTimers(); closePop(); api('POST','/api/logout').then((r)=>{ if(r&&r.logout_url){ location.href=r.logout_url; return true; } }).catch(()=>{}).then((gone)=>{ if(!gone) renderAuth('login'); }); break;
+    case 'logout': clearTimeout(CH.t); stopTimers(); closePop();
+      /* round 23 review: nothing of this account's Joe stays behind for the next person on this browser */
+      if (typeof JOE!=='undefined'){ clearInterval(JOE.t); JOE.t=null; JOE.ins=null; JOE.at=0; JOE.chat=null; } { const jp=$('#joepop'); if(jp) jp.remove(); }
+      api('POST','/api/logout').then((r)=>{ if(r&&r.logout_url){ location.href=r.logout_url; return true; } }).catch(()=>{}).then((gone)=>{ if(!gone) renderAuth('login'); }); break;
     case 'auth': renderAuth(a.dataset.m); break;
     case 'forgot': renderForgot(); break;
     case 'change-pass': closePop(); openChangePass(); break;
